@@ -237,9 +237,9 @@ keymap.set("n", "[[", "<cmd>lua vim.lsp.buf.definition()<cr>", { desc = "Previou
 -- ============================================================================
 -- By defining these globally, the vim-markdownfootnotes plugin will
 -- see them and NOT create its default conflicting <leader>r mapping.
-keymap.set({"n", "i"}, "<leader>mr", "<Plug>ReturnFromFootnote", { desc = "Return from Footnote" })
-keymap.set({"n", "i"}, "<leader>mf", "<Plug>AddVimMarkdownFootnote", { desc = "Add Footnote" })
-keymap.set({"n", "i"}, "<leader>mi", "<Plug>VimMarkdownFootnoteShortcut", { desc = "Footnote Shortcut" })
+keymap.set({ "n", "i" }, "<leader>mr", "<Plug>ReturnFromFootnote", { desc = "Return from Footnote" })
+keymap.set({ "n", "i" }, "<leader>mf", "<Plug>AddVimMarkdownFootnote", { desc = "Add Footnote" })
+keymap.set({ "n", "i" }, "<leader>mi", "<Plug>VimMarkdownFootnoteShortcut", { desc = "Footnote Shortcut" })
 
 -- General code runner
 -- Universal run command that detects file type
@@ -340,9 +340,10 @@ keymap.set("n", "<leader>cb", function()
   )
 end, { desc = "show cursor" })
 
-keymap.set("n", "q", function()
-  vim.print("q is remapped to Q in Normal mode!")
-end)
+
+-- ============================================================================
+-- MACRO & ESCAPE FIXES
+-- ============================================================================
 keymap.set("n", "Q", "q", { desc = "Record macro" })
 
 keymap.set("n", "<Esc>", function()
@@ -350,114 +351,123 @@ keymap.set("n", "<Esc>", function()
 end, { desc = "close floating win" })
 
 
+-- ============================================================================
+-- SMART COMMENTING (Context-Aware, Multi-line Support, No Extra Plugins)
+-- ============================================================================
 
--- Function to uncomment lines by removing comment delimiters
-local function uncomment_lines()
-  -- Get the current filetype
+local function smart_comment(action)
   local ft = vim.bo.filetype
 
-  -- Define comment patterns for different filetypes
-  -- Pattern captures leading whitespace in group 1, then matches comment delimiter + optional space
-  local comment_patterns = {
-    python = "^(%s*)#%s?",
-    lua = "^(%s*)%-%-%s?",
-    javascript = "^(%s*)//%s?",
-    typescript = "^(%s*)//%s?",
-    java = "^(%s*)//%s?",
-    c = "^(%s*)//%s?",
-    cpp = "^(%s*)//%s?",
-    rust = "^(%s*)//%s?",
-    go = "^(%s*)//%s?",
-    php = "^(%s*)//%s?",
-    ruby = "^(%s*)#%s?",
-    sh = "^(%s*)#%s?",
-    bash = "^(%s*)#%s?",
-    zsh = "^(%s*)#%s?",
-    vim = '^(%s*)"%s?',
-    sql = "^(%s*)%-%-%s?",
-    r = "^(%s*)#%s?",
-    perl = "^(%s*)#%s?",
-    yaml = "^(%s*)#%s?",
-    toml = "^(%s*)#%s?",
-    tex = "^(%s*)%%%s?",
-    matlab = "^(%s*)%%%s?",
-    haskell = "^(%s*)%-%-%s?",
-    cs = "^(%s*)//%s?",
-    swift = "^(%s*)//%s?",
-    kotlin = "^(%s*)//%s?",
-    scala = "^(%s*)//%s?",
-    elixir = "^(%s*)#%s?",
-    clojure = "^(%s*);+%s?",
-    lisp = "^(%s*);+%s?",
-    scheme = "^(%s*);+%s?",
-    julia = "^(%s*)#%s?",
-    dart = "^(%s*)//%s?",
-    groovy = "^(%s*)//%s?",
+  -- Base delimiters (Written safely so chat UI doesn't hide them!)
+  local line_delims = {
+    python = "#",
+    lua = "--",
+    javascript = "//",
+    typescript = "//",
+    java = "//",
+    c = "//",
+    cpp = "//",
+    rust = "//",
+    go = "//",
+    ruby = "#",
+    sh = "#",
+    bash = "#",
+    vim = '"',
+    sql = "--",
+    yaml = "#",
+    toml = "#",
+    tex = "%",
+    cs = "//",
+    nix = "#",
+    html = "<" .. "!--"
   }
 
-  -- Block comment patterns (for /* */ style comments)
-  local block_comment_patterns = {
-    javascript = { start = "^(%s*)/%*%s?", finish = "%s?%*/$" },
-    typescript = { start = "^(%s*)/%*%s?", finish = "%s?%*/$" },
-    java = { start = "^(%s*)/%*%s?", finish = "%s?%*/$" },
-    c = { start = "^(%s*)/%*%s?", finish = "%s?%*/$" },
-    cpp = { start = "^(%s*)/%*%s?", finish = "%s?%*/$" },
-    rust = { start = "^(%s*)/%*%s?", finish = "%s?%*/$" },
-    go = { start = "^(%s*)/%*%s?", finish = "%s?%*/$" },
-    css = { start = "^(%s*)/%*%s?", finish = "%s?%*/$" },
-    php = { start = "^(%s*)/%*%s?", finish = "%s?%*/$" },
-    html = { start = "^(%s*)<!%-%-%s?", finish = "%s?%-%->$" },
-    xml = { start = "^(%s*)<!%-%-%s?", finish = "%s?%-%->$" },
-    markdown = { start = "^(%s*)<!%-%-%s?", finish = "%s?%-%->$" },
+  local block_delims = {
+    javascript = { s = "/*", e = "*/" },
+    typescript = { s = "/*", e = "*/" },
+    java = { s = "/*", e = "*/" },
+    c = { s = "/*", e = "*/" },
+    cpp = { s = "/*", e = "*/" },
+    rust = { s = "/*", e = "*/" },
+    go = { s = "/*", e = "*/" },
+    css = { s = "/*", e = "*/" },
+    php = { s = "/*", e = "*/" },
+    nix = { s = "/*", e = "*/" },
+    html = { s = "<" .. "!--", e = "--" .. ">" },
+    xml = { s = "<" .. "!--", e = "--" .. ">" },
+    markdown = { s = "<" .. "!--", e = "--" .. ">" },
   }
 
-  -- Get the comment pattern for current filetype
-  local pattern = comment_patterns[ft]
-  local block_pattern = block_comment_patterns[ft]
+  local l_delim = line_delims[ft]
+  local b_delim = block_delims[ft]
 
-  if not pattern and not block_pattern then
+  if not l_delim and not b_delim then
     vim.notify("No comment pattern defined for filetype: " .. ft, vim.log.levels.WARN)
     return
   end
 
-  -- Get the line range from visual selection marks
   local start_line = vim.fn.line("'<")
   local end_line = vim.fn.line("'>")
 
-  -- Process each line
-  for line_num = start_line, end_line do
-    local line = vim.fn.getline(line_num)
-    local new_line = line
+  -- Helper function: Escapes magic characters so lua doesn't break
+  local function escape_magic(str)
+    return str:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
+  end
 
-    -- Try single-line comment pattern first
-    if pattern then
-      new_line = line:gsub(pattern, "%1")
+  if action == "uncomment" then
+    for line_num = start_line, end_line do
+      local line = vim.fn.getline(line_num)
+      local new_line = line
+
+      -- Remove Block Comments
+      if b_delim then
+        new_line = new_line:gsub(escape_magic(b_delim.s) .. "%s?", "")
+        new_line = new_line:gsub("%s?" .. escape_magic(b_delim.e), "")
+      end
+
+      -- Remove Line Comments
+      if l_delim then
+        new_line = new_line:gsub(escape_magic(l_delim) .. "%s?", "")
+      end
+
+      if new_line ~= line then vim.fn.setline(line_num, new_line) end
     end
+  elseif action == "comment" then
+    local num_lines = end_line - start_line + 1
 
-    -- If line didn't change and block pattern exists, try block comment
-    if new_line == line and block_pattern then
-      -- Remove block comment start
-      new_line = new_line:gsub(block_pattern.start, "%1")
-      -- Remove block comment end
-      new_line = new_line:gsub(block_pattern.finish, "")
-    end
-
-    -- Update the line if it changed
-    if new_line ~= line then
-      vim.fn.setline(line_num, new_line)
+    if num_lines > 1 and b_delim then
+      -- Multi-line selection: Wrap the whole block
+      local first_line = vim.fn.getline(start_line)
+      local last_line = vim.fn.getline(end_line)
+      vim.fn.setline(start_line, b_delim.s .. " " .. first_line)
+      vim.fn.setline(end_line, last_line .. " " .. b_delim.e)
+    else
+      -- Single line: Prepend line delimiter after indentation
+      local delim = l_delim or b_delim.s
+      for line_num = start_line, end_line do
+        local line = vim.fn.getline(line_num)
+        if line:match("%S") then -- Skip purely empty lines
+          local indent, rest = line:match("^(%s*)(.*)")
+          vim.fn.setline(line_num, indent .. delim .. " " .. rest)
+        end
+      end
     end
   end
 end
 
--- Keybinding for visual mode (selected lines)
-keymap.set('x', 'gcr', function()
-  uncomment_lines()
-end, { desc = 'Remove comment delimiters from selected lines' })
+-- Keybindings for Visual Mode (Selected lines)
+keymap.set('x', 'gcr', function() smart_comment("uncomment") end, { desc = 'Smart Uncomment' })
+keymap.set('x', 'gcs', function() smart_comment("comment") end, { desc = 'Smart Comment' })
 
--- Keybinding for normal mode (current line)
+-- Keybindings for Normal Mode (Current line)
 keymap.set('n', 'gcr', function()
-  -- Set marks to current line for the function to work
   vim.fn.setpos("'<", { 0, vim.fn.line("."), 1, 0 })
   vim.fn.setpos("'>", { 0, vim.fn.line("."), vim.fn.col("$"), 0 })
-  uncomment_lines()
-end, { desc = 'Remove comment delimiters from current line' })
+  smart_comment("uncomment")
+end, { desc = 'Smart Uncomment' })
+
+keymap.set('n', 'gcs', function()
+  vim.fn.setpos("'<", { 0, vim.fn.line("."), 1, 0 })
+  vim.fn.setpos("'>", { 0, vim.fn.line("."), vim.fn.col("$"), 0 })
+  smart_comment("comment")
+end, { desc = 'Smart Comment' })
