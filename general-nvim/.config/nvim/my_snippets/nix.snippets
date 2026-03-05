@@ -1,0 +1,184 @@
+snippet homepackages "home packages" b
+home.packages = with pkgs; [
+	$0
+];
+endsnippet
+
+
+snippet systempackages "system packages" b
+environment.systemPackages = with pkgs; [
+	$0
+];
+endsnippet
+
+
+snippet excludepackages "exclude packages" b
+environment.${1:systemPackages}.excludePackages = with pkgs; [
+	$0
+];
+endsnippet
+
+
+snippet delibheaderhome "delib header for home-manager" b
+{ delib
+, ...
+}:
+delib.module {
+	name = "${1:module_name}";
+	options = with delib; moduleOptions {
+		enable = boolOption ${2:false};
+	};
+
+	home.ifEnabled =
+		{ cfg
+		, myconfig
+		, ...
+		}:
+		$0
+endsnippet
+
+
+snippet delibheadersystem "delib header for nixos system" b
+{ delib
+, ...
+}:
+delib.module {
+	name = "${1:module_name}";
+	options = with delib; moduleOptions {
+		enable = boolOption ${2:false};
+	};
+
+	nixos.ifEnabled =
+		{ cfg
+		, myconfig
+		, ...
+		}:
+		$0
+endsnippet
+
+
+snippet delibheaderhomealways "delib header for home-manager (always)" b
+{ delib
+, ...
+}:
+delib.module {
+	name = "${1:module_name}";
+
+	home.always =
+		{ cfg
+		, myconfig
+		, ...
+		}:
+		$0
+endsnippet
+
+
+snippet delibheadersystemalways "delib header for nixos system (always)" b
+{ delib
+, ...
+}:
+delib.module {
+	name = "${1:module_name}";
+
+	nixos.always =
+		{ cfg
+		, myconfig
+		, ...
+		}:
+		$0
+endsnippet
+
+
+snippet let "let ... in block" b
+let
+	$1
+in
+	$0
+endsnippet
+
+
+snippet mkshell "mkShell development environment" b
+pkgs.mkShell {
+	buildInputs = with pkgs; [
+		$1
+	];
+
+	shellHook = ''
+		$0
+	'';
+}
+endsnippet
+
+
+snippet mkderiv "stdenv.mkDerivation" b
+pkgs.stdenv.mkDerivation {
+	pname = "${1:name}";
+	version = "${2:0.1.0}";
+
+	src = ${3:./.};
+
+	buildInputs = with pkgs; [
+		$4
+	];
+
+	installPhase = ''
+		$0
+	'';
+}
+endsnippet
+
+
+snippet flake "Basic flake.nix boilerplate" b
+{
+	description = "${1:A very basic flake}";
+
+	inputs = {
+		nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+	};
+
+	outputs = { self, nixpkgs, ... }@inputs:
+	let
+		system = "${2:x86_64-linux}";
+		pkgs = nixpkgs.legacyPackages.\${system};
+	in
+	{
+		$0
+	};
+}
+endsnippet
+
+
+snippet homefile "home.file for generating text files" b
+home.file."${1:.config/myapp/config.conf}" = {
+	text = ''
+		$0
+	'';
+};
+endsnippet
+
+
+snippet fetchgit "fetchFromGitHub boilerplate" b
+src = pkgs.fetchFromGitHub {
+	owner = "${1:owner}";
+	repo = "${2:repo}";
+	rev = "${3:commit_or_tag}";
+	hash = "${4:lib.fakeHash}";
+};
+$0
+endsnippet
+
+
+snippet systemd "systemd service boilerplate" b
+systemd.services.${1:my-service} = {
+	description = "${2:My custom service}";
+	wantedBy = [ "multi-user.target" ];
+	after = [ "network.target" ];
+
+	serviceConfig = {
+		ExecStart = "${3:${pkgs.hello}/bin/hello}";
+		Restart = "${4:always}";
+		User = "${5:root}";
+	};
+};
+$0
+endsnippet
