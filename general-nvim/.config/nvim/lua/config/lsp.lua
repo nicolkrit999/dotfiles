@@ -77,6 +77,16 @@ local servers = {
   },
 
 
+  -- Markdown setup
+  marksman = {
+    cmd = { "marksman", "server" },
+    settings = {
+      marksman = {
+        formatting = { command = { "prettier", "--parser=markdown" } },
+      },
+    },
+  },
+
   -- Nix setup
   nixd = {
     cmd = { "nixd" },
