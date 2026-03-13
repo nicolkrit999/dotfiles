@@ -61,9 +61,9 @@ keymap.set("i", "<c-u>", "<Esc>viwUea")
 -- Turn the current word into title case
 keymap.set("i", "<c-t>", "<Esc>b~lea")
 
-keymap.set("n", "<leader>cc", "<cmd>CopilotChatToggle<cr>", { desc = "Toggle Copilot Chat" })
-keymap.set("v", "<leader>ce", "<cmd>CopilotChatExplain<cr>", { desc = "Explain Code" })
-keymap.set("v", "<leader>co", "<cmd>CopilotChatOptimize<cr>", { desc = "Optimize Code" })
+keymap.set("n", "<leader>cpc", "<cmd>CopilotChatToggle<cr>", { desc = "Toggle Copilot Chat" })
+keymap.set("v", "<leader>cpe", "<cmd>CopilotChatExplain<cr>", { desc = "Copilot Explain Code" })
+keymap.set("v", "<leader>cpo", "<cmd>CopilotChatOptimize<cr>", { desc = "Copilot Optimize Code" })
 
 -- Paste non-linewise text above or below current line, see https://stackoverflow.com/a/1346777/6064933
 keymap.set("n", "<leader>p", "m`o<ESC>p``", { desc = "paste below current line" })
