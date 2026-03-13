@@ -5,7 +5,7 @@ RCS
 
 CVS
 # CVS conflict files / emacs lock files
-\.\#.+       
+\.\#.+
 \.cvsignore
 
 \.svn
@@ -17,16 +17,35 @@ _darcs
 \.gitmodules
 
 # emacs autosave files
-.+~          
+.+~
 # emacs autosave files
-\#.*\#       
+\#.*\#
 
 # DS_Store
 \.DS_Store
 
 # Neovim lazy lock
-lazy-lock.json
+lazy-lock\.json
 
 ^/README.*
 ^/LICENSE.*
 ^/COPYING
+
+# ---------------------------------------------------------
+# Claude Code local state, overrides, and secrets (PCRE)
+# ---------------------------------------------------------
+\.claude/settings\.local\.json
+\.claude\.json
+\.claude\.json\.backup\..*
+\.credentials\.json
+credentials\.json
+security_warnings_.*\.json
+
+# Session data, logs, and caches
+history\.jsonl
+^backups/
+^cache/
+^debug/
+^file-history/
+projects/.*\.jsonl
+projects/.*\.txt
