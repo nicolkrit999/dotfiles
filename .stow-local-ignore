@@ -5,7 +5,7 @@ RCS
 
 CVS
 # CVS conflict files / emacs lock files
-\.\#.+       
+\.\#.+
 \.cvsignore
 
 \.svn
@@ -17,16 +17,46 @@ _darcs
 \.gitmodules
 
 # emacs autosave files
-.+~          
+.+~
 # emacs autosave files
-\#.*\#       
+\#.*\#
 
 # DS_Store
 \.DS_Store
 
 # Neovim lazy lock
-lazy-lock.json
+lazy-lock\.json
 
 ^/README.*
 ^/LICENSE.*
 ^/COPYING
+
+# ---------------------------------------------------------
+# Claude Code dynamic state, memory, and backups
+# ---------------------------------------------------------
+# Ignore dynamic state directories
+^agent-memory
+^debug
+^ide
+^plans
+^plugins
+^projects
+^session-env
+^shell-snapshots
+
+# Ignore automatic setting backups
+^settings\.json\.bak$
+^settings\.json\.orig$
+
+# Ignore session data, logs, and caches
+.*\.jsonl$
+^backups
+^cache
+^file-history
+
+# Ignore credential and local override files
+^\.claude\.json$
+^\.claude\.json\.backup\..*
+^\.credentials\.json$
+^credentials\.json$
+^security_warnings_.*\.json$
