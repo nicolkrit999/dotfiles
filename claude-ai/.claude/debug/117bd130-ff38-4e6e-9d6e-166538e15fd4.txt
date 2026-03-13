@@ -1,0 +1,99 @@
+2026-03-13T14:12:01.416Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-03-13T14:12:01.418Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-03-13T14:12:01.418Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-03-13T14:12:01.418Z [DEBUG] Sending 4 skills via attachment (initial, 4 total sent)
+2026-03-13T14:12:01.419Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-03-13T14:12:01.421Z [DEBUG] FileHistory: Added snapshot for f37678f7-42b9-41da-a581-b1d417f04061, tracking 0 files
+2026-03-13T14:12:01.426Z [DEBUG] Total plugin output styles loaded: 0
+2026-03-13T14:12:01.430Z [DEBUG] [useDeferredValue] Messages deferred by 4 (0→4)
+2026-03-13T14:12:01.434Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:01.435Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:01.440Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:01.440Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:01.442Z [DEBUG] Started caffeinate to prevent sleep
+2026-03-13T14:12:01.442Z [DEBUG] Plugin autoupdate: skipped (auto-updater disabled)
+2026-03-13T14:12:01.442Z [DEBUG] [useDeferredValue] Messages deferred by 4 (0→4)
+2026-03-13T14:12:01.443Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:01.443Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-03-13T14:12:01.444Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:01.444Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Users/krit/github-repos/personal/portainer-templates/.claude/settings.local.json
+2026-03-13T14:12:01.453Z [DEBUG] autocompact: tokens=679 threshold=167000 effectiveWindow=180000
+2026-03-13T14:12:01.455Z [DEBUG] Dynamic tool loading: 0/17 deferred tools included
+2026-03-13T14:12:01.456Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.74.7f2; cc_entrypoint=cli; cch=00000;
+2026-03-13T14:12:01.456Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:01.456Z [DEBUG] [API:request] Creating client, ANTHROPIC_CUSTOM_HEADERS present: false, has Authorization header: false
+2026-03-13T14:12:01.456Z [DEBUG] [API:auth] OAuth token check starting
+2026-03-13T14:12:01.456Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:01.457Z [DEBUG] [API:auth] OAuth token check complete
+2026-03-13T14:12:01.457Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:01.458Z [DEBUG] [useDeferredValue] Messages deferred by 4 (0→4)
+2026-03-13T14:12:02.597Z [DEBUG] StatusLine [npx -y ccstatusline@latest] completed with status 0
+2026-03-13T14:12:02.862Z [DEBUG] Stream started - received first chunk
+2026-03-13T14:12:04.010Z [DEBUG] [useDeferredValue] Messages deferred by 1 (4→5)
+2026-03-13T14:12:04.014Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:04.028Z [DEBUG] [useDeferredValue] Messages deferred by 1 (4→5)
+2026-03-13T14:12:04.335Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:04.335Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:05.415Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:06.177Z [DEBUG] [useDeferredValue] Messages deferred by 1 (5→6)
+2026-03-13T14:12:06.181Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:06.217Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:06.221Z [WARN] [3P telemetry] Event dropped (no event logger initialized): api_request
+2026-03-13T14:12:06.223Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:06.223Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:06.224Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:06.225Z [DEBUG] Stopped caffeinate, allowing sleep
+2026-03-13T14:12:06.234Z [DEBUG] Writing to temp file: /Users/krit/.claude.json.tmp.49925.1773411126234
+2026-03-13T14:12:06.235Z [DEBUG] Preserving file permissions: 100600
+2026-03-13T14:12:06.235Z [DEBUG] Temp file written successfully, size: 11827 bytes
+2026-03-13T14:12:06.235Z [DEBUG] Applied original permissions to temp file
+2026-03-13T14:12:06.235Z [DEBUG] Renaming /Users/krit/.claude.json.tmp.49925.1773411126234 to /Users/krit/.claude.json
+2026-03-13T14:12:06.235Z [DEBUG] File /Users/krit/.claude.json written atomically
+2026-03-13T14:12:06.238Z [DEBUG] High write ratio: blit=0, write=1902 (100.0% writes), screen=30x176
+2026-03-13T14:12:06.524Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:06.525Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:07.262Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:07.265Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:07.265Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:07.267Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:07.268Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:08.073Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:08.080Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:08.082Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:08.419Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:08.426Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:10.341Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:10.347Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:10.349Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:11.312Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:11.317Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:11.318Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:11.697Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:11.897Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:12.047Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:12.188Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:12.314Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:12.323Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:12.460Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:12.602Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:12.739Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:12.869Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:12.998Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:13.138Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:13.267Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:13.403Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:13.536Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:13.687Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:14.593Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:14.777Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:15.510Z [DEBUG] [onSubmit] early return: suggestions showing (count=64)
+2026-03-13T14:12:19.628Z [DEBUG] [useDeferredValue] Messages deferred by 2 (6→8)
+2026-03-13T14:12:19.635Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:19.642Z [DEBUG] High write ratio: blit=0, write=2109 (100.0% writes), screen=33x176
+2026-03-13T14:12:19.646Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:19.647Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:19.649Z [DEBUG] [useDeferredValue] Messages deferred by 2 (6→8)
+2026-03-13T14:12:19.653Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-03-13T14:12:19.663Z [DEBUG] Fast mode unavailable: Fast mode requires extra usage billing · /extra-usage to enable
+2026-03-13T14:12:19.949Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
+2026-03-13T14:12:19.949Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: /Library/Application Support/ClaudeCode/managed-settings.json
