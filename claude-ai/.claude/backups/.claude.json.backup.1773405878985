@@ -1,5 +1,5 @@
 {
-  "numStartups": 7,
+  "numStartups": 9,
   "tipsHistory": {
     "new-user-warmup": 4,
     "plan-mode-for-complex-tasks": 4,
@@ -16,7 +16,13 @@
     "paste-images-mac": 4,
     "double-esc-code-restore": 4,
     "continue": 5,
-    "shift-tab": 5
+    "shift-tab": 5,
+    "image-paste": 8,
+    "custom-agents": 8,
+    "agent-flag": 8,
+    "desktop-app": 8,
+    "desktop-shortcut": 8,
+    "web-app": 8
   },
   "cachedGrowthBookFeatures": {
     "tengu_herring_clock": false,
@@ -110,7 +116,8 @@
     "tengu_kairos_brief": false,
     "tengu_marble_whisper": true,
     "tengu_mcp_elicitation": true,
-    "tengu_plan_mode_interview_phase": false
+    "tengu_plan_mode_interview_phase": false,
+    "tengu_pid_based_version_locking": true
   },
   "firstStartTime": "2026-03-13T11:39:08.697Z",
   "opusProMigrationComplete": true,
@@ -206,7 +213,32 @@
         ".bashrc_custom",
         "lsp.lua"
       ],
-      "exampleFilesGeneratedAt": 1773404251577
+      "exampleFilesGeneratedAt": 1773404251577,
+      "lastCost": 0,
+      "lastAPIDuration": 0,
+      "lastAPIDurationWithoutRetries": 0,
+      "lastToolDuration": 0,
+      "lastDuration": 150396,
+      "lastLinesAdded": 0,
+      "lastLinesRemoved": 0,
+      "lastTotalInputTokens": 0,
+      "lastTotalOutputTokens": 0,
+      "lastTotalCacheCreationInputTokens": 0,
+      "lastTotalCacheReadInputTokens": 0,
+      "lastTotalWebSearchRequests": 0,
+      "lastFpsAverage": 0.08,
+      "lastFpsLow1Pct": 173.12,
+      "lastModelUsage": {},
+      "lastSessionId": "fc60df2f-9e2f-4a31-ac8a-3d53d84c33bf",
+      "lastSessionMetrics": {
+        "frame_duration_ms_count": 12,
+        "frame_duration_ms_min": 0.22899999999981446,
+        "frame_duration_ms_max": 5.776333000000022,
+        "frame_duration_ms_avg": 1.499482416668151,
+        "frame_duration_ms_p50": 0.937145500005613,
+        "frame_duration_ms_p95": 4.480876750001344,
+        "frame_duration_ms_p99": 5.517241750000288
+      }
     },
     "/Users/krit/dotfiles/general-nvim/.config/nvim/.claude/worktrees/cranky-khayyam": {
       "allowedTools": [],
@@ -229,8 +261,8 @@
   },
   "lastReleaseNotesSeen": "2.1.74",
   "clientDataCache": {
-    "data": null,
-    "timestamp": 1773404327029
+    "data": {},
+    "timestamp": 1773405057371
   },
   "groveConfigCache": {
     "6a695a1b-88c7-4594-87de-ecd058f5ba35": {
@@ -245,9 +277,9 @@
   "voiceNoticeSeenCount": 3,
   "skillUsage": {
     "statusline": {
-      "usageCount": 1,
-      "lastUsedAt": 1773403788525
+      "usageCount": 2,
+      "lastUsedAt": 1773405106202
     }
   },
-  "ideHintShownCount": 1
+  "ideHintShownCount": 3
 }
