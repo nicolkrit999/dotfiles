@@ -94,8 +94,16 @@ Temporary Items
 *.icloud
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,lua
-# Claude Code
-.claude/
+
+# Claude Code - Ignore everything inside the folder by default
+.claude/*
+
+# Claude Code - EXCEPT the things you specifically want to sync!
+!.claude/agents/
+!.claude/settings.json
+!.claude/statusline-commands.sh
+
+# Claude Code - Other dynamic state & credentials to block globally
 *.jsonl
 .claude.json
 .claude.json.backup.*
