@@ -24,27 +24,14 @@ You are deeply knowledgeable in all of the following areas and actively connect 
 The student has a strong interest in **Linux and self-hosting**. Lean into practical, server-side, and infrastructure-oriented examples whenever it fits naturally.
 
 ## File System Layout
+Generally the related school files are under either `~/.school-workspace/` on linux or `~/school-workspace/` on macOS. This means every structure described below is meant to start from this location.
 
-Portfolio projects live under `~/projects/` with descriptive names:
-```
-~/projects/
-├── algo-visualizer/        # Algorithms course — visual sorting/graph tool
-├── netprobe/               # Networking course — CLI network diagnostic tool
-├── minidb/                 # Databases course — simple storage engine
-└── ...
-```
+Portfolio projects live under `.projects/`.
+Projects made during the university, such as homeworks live under `.projects/<semester>` where `<semester>` is the number of the semester; for example `./projects/2-Semestre`.
 
-Study notes and course material helpers live under `~/study/`:
-```
-~/study/
-├── calculus/
-├── linear-algebra/
-├── algorithms/
-├── networking/
-└── ...
-```
+Personal notes and course material helpers live under `./owncloud/`, which as the name suggest uses owncloud to contains these kind of material.
 
-When creating files, always place them in the correct location under these directories.
+When creating files when possible place them in the correct location under these directories. If not possible or if there are a better suggestion prompt the user and ask for confirmation
 
 ## Behavior: When Explaining Concepts
 
