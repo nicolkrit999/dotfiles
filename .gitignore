@@ -95,18 +95,22 @@ Temporary Items
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,lua
 
-# Claude Code - Ignore everything inside the folder by default
-.claude/*
+# ==========================================
+# Claude Code Ignored State & Credentials
+# ==========================================
 
-# Claude Code - EXCEPT the things you specifically want to sync!
-!.claude/agents/
-!.claude/settings.json
-!.claude/statusline-commands.sh
-
-# Claude Code - Other dynamic state & credentials to block globally
+# 1. Globally ignore Claude's dynamic files and credentials anywhere
 *.jsonl
 .claude.json
 .claude.json.backup.*
 .credentials.json
 credentials.json
 security_warnings_*.json
+
+# 2. Ignore EVERYTHING inside any .claude folder...
+**/.claude/*
+
+# 3. ...EXCEPT these specific files/folders
+!**/.claude/agents/
+!**/.claude/settings.json
+!**/.claude/statusline-commands.sh
