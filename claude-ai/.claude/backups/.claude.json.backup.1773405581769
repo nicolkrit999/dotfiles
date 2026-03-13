@@ -1,0 +1,260 @@
+{
+  "numStartups": 9,
+  "tipsHistory": {
+    "new-user-warmup": 4,
+    "plan-mode-for-complex-tasks": 4,
+    "terminal-setup": 4,
+    "memory-command": 4,
+    "theme-command": 4,
+    "status-line": 4,
+    "prompt-queue": 4,
+    "enter-to-steer-in-relatime": 4,
+    "todo-list": 4,
+    "install-github-app": 4,
+    "install-slack-app": 4,
+    "drag-and-drop-images": 4,
+    "paste-images-mac": 4,
+    "double-esc-code-restore": 4,
+    "continue": 5,
+    "shift-tab": 5,
+    "image-paste": 8,
+    "custom-agents": 8,
+    "agent-flag": 8,
+    "desktop-app": 8,
+    "desktop-shortcut": 8,
+    "web-app": 8
+  },
+  "cachedGrowthBookFeatures": {
+    "tengu_herring_clock": false,
+    "tengu_event_sampling_config": {},
+    "tengu_frond_boric": {},
+    "tengu_log_segment_events": false,
+    "tengu_log_datadog_events": true,
+    "tengu_cicada_nap_ms": 0,
+    "tengu_miraculo_the_bard": false,
+    "tengu_miraculo_the_bard2": false,
+    "tengu_kairos_cron": true,
+    "tengu_paper_halyard": false,
+    "tengu_quiet_hollow": true,
+    "tengu_marble_anvil": true,
+    "tengu_tool_pear": false,
+    "tengu_scarf_coffee": false,
+    "tengu_chomp_inflection": false,
+    "tengu_penguins_off": null,
+    "tengu_granite_whisper": false,
+    "tengu_desktop_upsell": {
+      "enable_shortcut_tip": true,
+      "enable_startup_dialog": false
+    },
+    "tengu_streaming_text": false,
+    "tengu_hawthorn_steeple": false,
+    "tengu_amber_quartz": true,
+    "tengu-top-of-feed-tip": {
+      "tip": "",
+      "color": ""
+    },
+    "tengu_marble_whisper2": true,
+    "tengu_turtle_carbon": true,
+    "tengu_pr_status_cli": true,
+    "tengu_ccr_bridge": true,
+    "tengu_keybinding_customization_release": true,
+    "tengu_post_compact_survey": false,
+    "tengu_claudeai_mcp_connectors": true,
+    "tengu_scratch": false,
+    "tengu_1p_event_batch_config": {
+      "scheduledDelayMillis": 10000,
+      "maxExportBatchSize": 400,
+      "maxQueueSize": 8192,
+      "path": "/api/event_logging/v2/batch"
+    },
+    "tengu_grey_wool": true,
+    "tengu_auto_mode_config": {
+      "enabled": "disabled",
+      "twoStageClassifier": true
+    },
+    "tengu_disable_bypass_permissions_mode": false,
+    "tengu_orchid_trellis": false,
+    "tengu_kairos_brief_config": {
+      "enable_slash_command": false
+    },
+    "tengu_thinkback": false,
+    "tengu_tangerine_ladder_boost": true,
+    "tengu_immediate_model_command": false,
+    "tengu_pebble_leaf_prune": false,
+    "tengu_marble_lantern_disabled": false,
+    "tengu_glacier_2xr": false,
+    "tengu_basalt_3kr": false,
+    "tengu_swinburne_dune": true,
+    "tengu_coral_fern": false,
+    "tengu_bergotte_lantern": false,
+    "tengu_sotto_voce": true,
+    "tengu_system_prompt_global_cache": true,
+    "tengu_streaming_tool_execution2": true,
+    "tengu_moth_copse": false,
+    "tengu_tool_search_unsupported_models": [
+      "haiku"
+    ],
+    "tengu_defer_all_bn4": false,
+    "tengu_fgts": false,
+    "tengu_chair_sermon": false,
+    "tengu_toolref_defer_j8m": false,
+    "tengu_tst_hint_m7r": false,
+    "tengu_attribution_header": true,
+    "tengu_prompt_cache_1h_config": {
+      "allowlist": [
+        "repl_main_thread*",
+        "sdk",
+        "auto_mode"
+      ]
+    },
+    "enhanced_telemetry_beta": false,
+    "tengu_session_memory": false,
+    "tengu_satin_quoll": {},
+    "tengu_tight_weave": true,
+    "tengu_auto_background_agents": false,
+    "tengu_tool_input_aliasing": false,
+    "tengu_kairos_brief": false,
+    "tengu_marble_whisper": true,
+    "tengu_mcp_elicitation": true,
+    "tengu_plan_mode_interview_phase": false,
+    "tengu_pid_based_version_locking": true
+  },
+  "firstStartTime": "2026-03-13T11:39:08.697Z",
+  "opusProMigrationComplete": true,
+  "sonnet1m45MigrationComplete": true,
+  "userID": "9f58dae2311c7dcc9604f3594276b7276611d57da8bb71952303a16d7b67df24",
+  "changelogLastFetched": 1773403035737,
+  "oauthAccount": {
+    "accountUuid": "6a695a1b-88c7-4594-87de-ecd058f5ba35",
+    "emailAddress": "claude.ai.4do6v@simplelogin.com",
+    "organizationUuid": "1ac3b1eb-6e8d-46fd-a5d6-0630a3cc84db",
+    "hasExtraUsageEnabled": false,
+    "billingType": "stripe_subscription",
+    "accountCreatedAt": "2026-03-13T11:42:23.249534Z",
+    "subscriptionCreatedAt": "2026-03-13T11:50:34.304642Z",
+    "displayName": "Krit Nicol",
+    "organizationRole": "admin",
+    "workspaceRole": null,
+    "organizationName": "claude.ai.4do6v@simplelogin.com's Organization"
+  },
+  "claudeCodeFirstTokenDate": "2026-03-13T11:57:50.552369Z",
+  "hasCompletedOnboarding": true,
+  "lastOnboardingVersion": "2.1.74",
+  "projects": {
+    "/Users/krit/github-repos/personal/nixOS": {
+      "allowedTools": [],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": true,
+      "projectOnboardingSeenCount": 1,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "exampleFiles": [
+        "flake.nix",
+        "configuration.nix",
+        "files-expl.md",
+        "common-configuration.nix",
+        "modules.nix"
+      ],
+      "exampleFilesGeneratedAt": 1773403086734,
+      "lastCost": 0,
+      "lastAPIDuration": 0,
+      "lastAPIDurationWithoutRetries": 0,
+      "lastToolDuration": 0,
+      "lastDuration": 34106,
+      "lastLinesAdded": 0,
+      "lastLinesRemoved": 0,
+      "lastTotalInputTokens": 0,
+      "lastTotalOutputTokens": 0,
+      "lastTotalCacheCreationInputTokens": 0,
+      "lastTotalCacheReadInputTokens": 0,
+      "lastTotalWebSearchRequests": 0,
+      "lastFpsAverage": 1.95,
+      "lastFpsLow1Pct": 88.61,
+      "lastModelUsage": {},
+      "lastSessionId": "fa657cd2-aa53-4de1-bda4-ae221ea647d0",
+      "lastSessionMetrics": {
+        "frame_duration_ms_count": 66,
+        "frame_duration_ms_min": 0.11933300000237068,
+        "frame_duration_ms_max": 11.285499999999956,
+        "frame_duration_ms_avg": 2.176642015151499,
+        "frame_duration_ms_p50": 1.2206039999996392,
+        "frame_duration_ms_p95": 6.877281000000039,
+        "frame_duration_ms_p99": 9.837733550000063
+      }
+    },
+    "/Users/krit/Downloads": {
+      "allowedTools": [],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": true,
+      "projectOnboardingSeenCount": 0,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false
+    },
+    "/Users/krit/dotfiles": {
+      "allowedTools": [],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": true,
+      "projectOnboardingSeenCount": 0,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "exampleFiles": [
+        ".custom.fish",
+        ".zshrc_custom",
+        "plugin_specs.lua",
+        ".bashrc_custom",
+        "lsp.lua"
+      ],
+      "exampleFilesGeneratedAt": 1773404251577
+    },
+    "/Users/krit/dotfiles/general-nvim/.config/nvim/.claude/worktrees/cranky-khayyam": {
+      "allowedTools": [],
+      "mcpContextUris": [],
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": true,
+      "projectOnboardingSeenCount": 0,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false
+    }
+  },
+  "githubRepoPaths": {
+    "nicolkrit999/nixos": [
+      "/Users/krit/github-repos/personal/nixOS"
+    ],
+    "nicolkrit999/dotfiles": [
+      "/Users/krit/dotfiles"
+    ]
+  },
+  "lastReleaseNotesSeen": "2.1.74",
+  "clientDataCache": {
+    "data": {},
+    "timestamp": 1773405057371
+  },
+  "groveConfigCache": {
+    "6a695a1b-88c7-4594-87de-ecd058f5ba35": {
+      "grove_enabled": true,
+      "timestamp": 1773403086746
+    }
+  },
+  "penguinModeOrgEnabled": false,
+  "cachedExtraUsageDisabledReason": "org_level_disabled",
+  "officialMarketplaceAutoInstallAttempted": true,
+  "officialMarketplaceAutoInstalled": true,
+  "voiceNoticeSeenCount": 3,
+  "skillUsage": {
+    "statusline": {
+      "usageCount": 2,
+      "lastUsedAt": 1773405106202
+    }
+  },
+  "ideHintShownCount": 3
+}
