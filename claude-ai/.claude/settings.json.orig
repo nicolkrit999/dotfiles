@@ -1,7 +1,0 @@
-{
-  "effortLevel": "high",
-  "statusLine": {
-    "type": "command",
-    "command": "bash /Users/krit/.claude/statusline-command.sh"
-  }
-}

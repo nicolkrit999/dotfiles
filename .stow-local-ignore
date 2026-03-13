@@ -32,20 +32,31 @@ lazy-lock\.json
 ^/COPYING
 
 # ---------------------------------------------------------
-# Claude Code local state, overrides, and secrets (PCRE)
+# Claude Code dynamic state, memory, and backups
 # ---------------------------------------------------------
-\.claude/settings\.local\.json
-\.claude\.json
-\.claude\.json\.backup\..*
-\.credentials\.json
-credentials\.json
-security_warnings_.*\.json
+# Ignore dynamic state directories
+^agent-memory
+^debug
+^ide
+^plans
+^plugins
+^projects
+^session-env
+^shell-snapshots
 
-# Session data, logs, and caches
-history\.jsonl
-^backups/
-^cache/
-^debug/
-^file-history/
-projects/.*\.jsonl
-projects/.*\.txt
+# Ignore automatic setting backups
+^settings\.json\.bak$
+^settings\.json\.orig$
+
+# Ignore session data, logs, and caches
+.*\.jsonl$
+^backups
+^cache
+^file-history
+
+# Ignore credential and local override files
+^\.claude\.json$
+^\.claude\.json\.backup\..*
+^\.credentials\.json$
+^credentials\.json$
+^security_warnings_.*\.json$
