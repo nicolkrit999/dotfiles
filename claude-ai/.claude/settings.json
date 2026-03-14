@@ -25,6 +25,7 @@
       "Read(**/*password*)",
       "Read(**/*.pem)",
       "Read(**/*sops*)"
+      "Bash(sops:*)",
     ]
   },
   "statusLine": {
