@@ -1,10 +1,11 @@
 {
   "permissions": {
-    "defaultMode": "default",
     "allow": [
       "Bash(cat:*)",
       "Bash(grep:*)",
       "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
       "Bash(npm run *)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
@@ -26,12 +27,13 @@
       "Read(**/*.pem)",
       "Read(**/*sops*)",
       "Bash(sops:*)"
-    ]
+    ],
+    "defaultMode": "default"
   },
+  "model": "opus",
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
     "padding": 0
-  },
-  "effortLevel": "medium"
+  }
 }
