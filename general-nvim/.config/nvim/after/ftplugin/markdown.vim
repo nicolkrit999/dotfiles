@@ -4,7 +4,14 @@ set synmaxcol=3000  " For long Chinese paragraphs
 set wrap
 
 " Fix minor issue with footnote, see https://github.com/vim-pandoc/vim-markdownfootnotes/issues/22
+" Also remove the plugin's default <Leader>f insert-mode mapping which
+" hijacks Space+f when typed quickly (since leader = space).
 if exists(':FootnoteNumber')
+  silent! iunmap <buffer> <Leader>f
+  silent! nunmap <buffer> <Leader>f
+  silent! iunmap <buffer> <Leader>r
+  silent! nunmap <buffer> <Leader>r
+
   nnoremap <buffer><silent> ^^ :<C-U>call markdownfootnotes#VimFootnotes('i')<CR>
   inoremap <buffer><silent> ^^ <C-O>:<C-U>call markdownfootnotes#VimFootnotes('i')<CR>
   imap <buffer> <silent> @@ <Plug>ReturnFromFootnote
