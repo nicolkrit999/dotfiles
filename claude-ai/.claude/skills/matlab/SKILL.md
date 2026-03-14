@@ -30,6 +30,9 @@ brew install octave
 # Ubuntu/Debian
 sudo apt install octave
 
+# NixOS
+nix-shell -p octave
+
 # Windows - download from https://octave.org/download
 ```
 
