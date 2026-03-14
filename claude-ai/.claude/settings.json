@@ -1,6 +1,5 @@
 {
   "permissions": {
-    "defaultMode": "default",
     "allow": [
       "Bash(cat:*)",
       "Bash(grep:*)",
@@ -28,12 +27,14 @@
       "Read(**/*.pem)",
       "Read(**/*sops*)",
       "Bash(sops:*)"
-    ]
+    ],
+    "defaultMode": "default"
   },
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
     "padding": 0
   },
-  "effortLevel": "medium"
+  "effortLevel": "medium",
+  "model": "opus"
 }
