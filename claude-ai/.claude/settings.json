@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "defaultMode": "plan"
+    "defaultMode": "default"
   },
   "statusLine": {
     "type": "command",
