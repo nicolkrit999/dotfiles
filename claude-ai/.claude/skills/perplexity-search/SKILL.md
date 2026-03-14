@@ -51,6 +51,8 @@ Use this skill when:
    ```
 
 3. **Install dependencies**:
+   First of all theck if litellm is available as a package installed using nixpkgs either on a distro with nix as package manager or by being in nixos directly. If available use that litellm. If not available use the steps below
+
    ```bash
    uv pip install litellm
    ```
