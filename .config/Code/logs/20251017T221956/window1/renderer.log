@@ -1,7 +1,0 @@
-2025-10-17 22:19:57.433 [info] ChatSessionStore: Migrating 0 chat sessions from storage service to file system
-2025-10-17 22:19:57.494 [info] Started local extension host with pid 18208.
-2025-10-17 22:19:57.513 [info] Started initializing default profile extensions in extensions installation folder. file:///home/krit/.vscode/extensions
-2025-10-17 22:19:57.591 [info] Completed initializing default profile extensions in extensions installation folder. file:///home/krit/.vscode/extensions
-2025-10-17 22:19:57.693 [info] MCP Registry configured: https://api.mcp.github.com/2025-09-15
-2025-10-17 22:19:57.734 [info] Settings Sync: Account status changed from uninitialized to unavailable
-2025-10-17 22:20:00.264 [info] [perf] Render performance baseline is 12ms
