@@ -47,9 +47,10 @@ This generates/edits an image and saves it as `generated_image.png` in the curre
 
 **CRITICAL**: The script requires an OpenRouter API key. Before running, check if the user has configured their API key:
 
-1. Look for a `.env` file in the project directory or parent directories
-2. Check for `OPENROUTER_API_KEY=<key>` in the `.env` file
-3. If not found, inform the user they need to:
+1. Check for a global OPENROUTER_API_KEY by doing `echo $OPENROUTER_API_KEY`
+2. If echo do not give resuls search for for a `.env` file in the project directory or parent directories
+3. Check for `OPENROUTER_API_KEY=<key>` in the `.env` file
+4. If not found, inform the user they need to:
    - Create a `.env` file with `OPENROUTER_API_KEY=your-api-key-here`
    - Or set the environment variable: `export OPENROUTER_API_KEY=your-api-key-here`
    - Get an API key from: https://openrouter.ai/keys

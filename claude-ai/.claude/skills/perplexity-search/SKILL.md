@@ -51,7 +51,8 @@ Use this skill when:
    ```
 
 3. **Install dependencies**:
-   First of all theck if litellm is available as a package installed using nixpkgs either on a distro with nix as package manager or by being in nixos directly. If available use that litellm. If not available use the steps below
+   First of all check if litellm is available as a package installed using nixpkgs. When installed using nixpkgs `litellm` could be installed with any version of python, for example it could be `pkgs.python313Packages.litellm` but also `python312Packages.litellm` or `python215Packages.litellm`. So check for a more general installation, do not check for a specific version. If available use that litellm. 
+   If not available use the steps below:
 
    ```bash
    uv pip install litellm
