@@ -46,8 +46,8 @@ alias shut="shutdown -h now"
 alias del="sudo rm -r"
 alias cp="cp -i"
 alias mkdir="mkdir -p"
-alias aliasdelete="find . -type l -print -delete"
-zoxide-add-recursive="zoxide add **/"
+alias delete="find . -type l -print -delete"
+alias zoxide-add-recursive="zoxide add **/"
 
 # Navigation
 alias .1="cd .."
