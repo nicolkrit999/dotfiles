@@ -68,7 +68,7 @@ alias shut="shutdown -h now"
 alias del="sudo rm -r"
 alias cp="cp -i"
 alias mkdir="mkdir -p"
-alias aliasdelete="find . -type l -print -delete"
+alias delete="find . -type l -print -delete"
 alias .1="cd .."
 alias .2="cd ../.."
 alias .3="cd ../../.."
@@ -121,8 +121,8 @@ alias nas-ssh="cloudflared access ssh --hostname ssh.nicolkrit.ch"
 alias rebuildmvn="cd ~/developing-projects/java-projects && mvn clean install"
 alias dbx="DBX_CONTAINER_MANAGER=podman distrobox"
 alias drva="direnv allow ."
-alias drvr ="direnv reload ."
-alias nixdev ="nix develop"
+alias drvr="direnv reload ."
+alias nixdev="nix develop"
 
 # Fun commands
 alias pipes1="pipes.sh -t 1"
@@ -201,8 +201,13 @@ gacm() {
 # ----------------------------------------------
 
 # various eval
-eval "$(starship init zsh)"
-eval "$(pay-respects zsh)"
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init zsh)"
+fi
+
+if command -v pay-respects >/dev/null 2>&1; then
+    eval "$(pay-respects zsh)"
+fi
 
 # ----------------------------------------------
 # Startup Splash (Fastfetch + Pokemon)
