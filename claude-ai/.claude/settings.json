@@ -33,12 +33,12 @@
     ],
     "defaultMode": "default"
   },
-  "model": "opus[1m]",
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
     "padding": 0
   },
   "effortLevel": "medium",
-  "autoMemoryEnabled": true
+  "autoMemoryEnabled": true,
+  "model": "opus"
 }
