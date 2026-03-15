@@ -33,7 +33,7 @@
     ],
     "defaultMode": "default"
   },
-  "model": "opus",
+  "model": "opus[1m]",
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
