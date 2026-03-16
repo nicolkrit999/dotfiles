@@ -38,7 +38,14 @@
     "command": "npx -y ccstatusline@latest",
     "padding": 0
   },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  },
   "effortLevel": "medium",
-  "autoMemoryEnabled": true,
-  "model": "opus"
+  "autoMemoryEnabled": true
 }
