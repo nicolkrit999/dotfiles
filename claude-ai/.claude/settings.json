@@ -44,8 +44,17 @@
         "source": "github",
         "repo": "anthropics/claude-plugins-official"
       }
+    },
+    "context-mode": {
+      "source": {
+        "source": "github",
+        "repo": "mksglu/context-mode"
+      }
     }
   },
   "effortLevel": "medium",
-  "autoMemoryEnabled": true
+  "autoMemoryEnabled": true,
+  "enabledPlugins": {
+    "context-mode@context-mode": true
+  }
 }
