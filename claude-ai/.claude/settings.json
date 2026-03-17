@@ -33,6 +33,7 @@
     ],
     "defaultMode": "default"
   },
+  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -72,7 +73,8 @@
     "claude-md-management@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "gitlab@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
@@ -88,6 +90,7 @@
       }
     }
   },
-  "effortLevel": "medium",
-  "autoMemoryEnabled": true
+  "effortLevel": "high",
+  "autoMemoryEnabled": true,
+  "skipDangerousModePermissionPrompt": true
 }
