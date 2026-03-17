@@ -29,11 +29,11 @@
       "Read(**/*password*)",
       "Read(**/*.pem)",
       "Read(**/*sops*)",
+      "Read(/run/secrets/*)",
       "Bash(sops:*)"
     ],
     "defaultMode": "default"
   },
-  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -92,5 +92,6 @@
   },
   "effortLevel": "high",
   "autoMemoryEnabled": true,
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "model": "opus"
 }
