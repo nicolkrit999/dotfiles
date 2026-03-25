@@ -412,22 +412,46 @@ local function smart_comment(action)
   end
 
   if action == "uncomment" then
+    local lines_to_delete = {}
+    local in_block = false
+
     for line_num = start_line, end_line do
       local line = vim.fn.getline(line_num)
-      local new_line = line
+      local is_comment = false
 
-      -- Remove Block Comments
+      -- Block comment detection (tracks multi-line spans)
       if b_delim then
-        new_line = new_line:gsub(escape_magic(b_delim.s) .. "%s?", "")
-        new_line = new_line:gsub("%s?" .. escape_magic(b_delim.e), "")
+        if in_block then
+          is_comment = true
+          if line:find(b_delim.e, 1, true) then
+            in_block = false
+          end
+        elseif line:find(b_delim.s, 1, true) then
+          is_comment = true
+          local pos = line:find(b_delim.s, 1, true)
+          local after = line:sub(pos + #b_delim.s)
+          if not after:find(b_delim.e, 1, true) then
+            in_block = true
+          end
+        end
       end
 
-      -- Remove Line Comments
-      if l_delim then
-        new_line = new_line:gsub(escape_magic(l_delim) .. "%s?", "")
+      -- Line comment detection (must start the non-whitespace content)
+      if not is_comment and l_delim then
+        local trimmed = line:match("^%s*(.*)")
+        if trimmed:sub(1, #l_delim) == l_delim then
+          is_comment = true
+        end
       end
 
-      if new_line ~= line then vim.fn.setline(line_num, new_line) end
+      if is_comment then
+        table.insert(lines_to_delete, 1, line_num) -- prepend for reverse-order deletion
+      end
+    end
+
+    -- Delete in reverse order so earlier line numbers stay valid
+    for _, line_num in ipairs(lines_to_delete) do
+      vim.api.nvim_buf_set_lines(0, line_num - 1, line_num, false, {})
     end
   elseif action == "comment" then
     local num_lines = end_line - start_line + 1
