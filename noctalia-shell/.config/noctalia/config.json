@@ -511,7 +511,7 @@
     "nightLight": {
         "autoSchedule": true,
         "dayTemp": "6003",
-        "enabled": true,
+        "enabled": false,
         "forced": false,
         "manualSunrise": "06:30",
         "manualSunset": "18:30",
@@ -670,7 +670,7 @@
     },
     "wallpaper": {
         "automationEnabled": false,
-        "directory": "/home/krit/Pictures/Wallpapers",
+        "directory": "/home/krit/Pictures/wallpapers",
         "enableMultiMonitorDirectories": true,
         "enabled": true,
         "favorites": [
@@ -704,7 +704,7 @@
         "useOriginalImages": false,
         "useSolidColor": false,
         "useWallhaven": false,
-        "viewMode": "recursive",
+        "viewMode": "browse",
         "wallhavenApiKey": "",
         "wallhavenCategories": "111",
         "wallhavenOrder": "desc",
