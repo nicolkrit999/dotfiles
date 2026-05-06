@@ -32,6 +32,7 @@
     }
   },
   "general": {
+    "logo": "",
     "apps": {
       "terminal": [
         "foot"
@@ -94,13 +95,13 @@
     }
   },
   "background": {
-    "enabled": false,
+    "enabled": true,
     "desktopClock": {
-      "enabled": false
+      "enabled": true
     },
     "visualiser": {
-      "enabled": false,
-      "autoHide": false,
+      "enabled": true,
+      "autoHide": true,
       "blur": false,
       "rounding": 1,
       "spacing": 1
@@ -108,7 +109,7 @@
   },
   "bar": {
     "persistent": true,
-    "showOnHover": false,
+    "showOnHover": true,
     "dragThreshold": 20,
     "scrollActions": {
       "workspaces": true,
@@ -136,7 +137,7 @@
     },
     "tray": {
       "background": true,
-      "recolour": false,
+      "recolour": true,
       "compact": true,
       "iconSubs": []
     },
@@ -145,6 +146,7 @@
       "showMicrophone": true,
       "showKbLayout": true,
       "showNetwork": true,
+      "showWifi": true,
       "showBluetooth": true,
       "showBattery": true,
       "showLockStatus": true
@@ -236,16 +238,16 @@
     "maxWallpapers": 9,
     "specialPrefix": "@",
     "actionPrefix": ">",
-    "enableDangerousActions": false,
+    "enableDangerousActions": true,
     "dragThreshold": 50,
-    "vimKeybinds": false,
+    "vimKeybinds": true,
     "hiddenApps": [],
     "useFuzzy": {
       "apps": true,
       "actions": true,
-      "schemes": false,
-      "variants": false,
-      "wallpapers": false
+      "schemes": true,
+      "variants": true,
+      "wallpapers": true
     },
     "sizes": {
       "itemWidth": 600,
@@ -367,9 +369,7 @@
       },
       {
         "command": [
-          "loginctl",
-          "terminate-user",
-          ""
+        "caelestia-logout"
         ],
         "dangerous": true,
         "description": "Log out of the current session",
@@ -398,6 +398,19 @@
         "enabled": true,
         "icon": "bedtime",
         "name": "Sleep"
+      },
+      {
+        "command": [
+          "caelestia",
+          "shell",
+          "controlCenter",
+          "open"
+        ],
+        "dangerous": false,
+        "description": "Configure the shell",
+        "enabled": true,
+        "icon": "settings",
+        "name": "Settings"
       }
     ]
   },
@@ -430,9 +443,7 @@
     "vimKeybinds": false,
     "commands": {
       "logout": [
-        "loginctl",
-        "terminate-user",
-        ""
+        "caelestia-logout"
       ],
       "shutdown": [
         "systemctl",
@@ -503,7 +514,7 @@
   },
   "services": {
     "weatherLocation": "",
-    "useFahrenheit": false,
+    "useFahrenheit": true,
     "useTwelveHourClock": true,
     "gpuType": "",
     "visualiserBars": 45,
@@ -519,7 +530,7 @@
     ]
   },
   "paths": {
-    "wallpaperDir": "~/Pictures/Wallpapers",
+    "wallpaperDir": "/home/krit/Pictures/Wallpapers",
     "sessionGif": "root:/assets/kurukuru.gif",
     "mediaGif": "root:/assets/bongocat.gif"
   }
