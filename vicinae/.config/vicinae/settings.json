@@ -1,0 +1,186 @@
+// This configuration is merged with the default vicinae configuration file, which you can obtain by running the `vicinae config default` command.
+// Every item defined in this file takes precedence over the values defined in the default config or any other imported file.
+//
+// You can make manual edits to this file, however you should keep in mind that this file may be written to by vicinae when a configuration change is made through the GUI.
+// When that happens, any custom comments or formatting will be lost.
+//
+// If you want to maintain a configuration file with your own comments and formatting, you should create a separate file and add it to the 'imports' array.
+//
+// Learn more about configuration at https://docs.vicinae.com/config
+
+{
+   "$schema": "https://vicinae.com/schemas/config.json",
+   "providers": {
+      "@alan7a/vicinae-extension-case-converter-0": {
+         "preferences": {
+            "CamelCase": true,
+            "CapitalCase": true,
+            "ConstantCase": true,
+            "DotCase": true,
+            "HeaderCase": true,
+            "KebabCase": true,
+            "KebabUpperCase": true,
+            "LowerCase": true,
+            "LowerFirst": true,
+            "NoCase": true,
+            "PascalCase": true,
+            "PascalSnakeCase": true,
+            "PathCase": true,
+            "RandomCase": true,
+            "SentenceCase": true,
+            "SnakeCase": true,
+            "SwapCase": true,
+            "TitleCase": true,
+            "UpperCase": true,
+            "UpperFirst": true,
+            "action": "copy",
+            "exceptions": "Linux",
+            "hideHUD": true,
+            "popToRoot": false,
+            "prefixCharacters": "",
+            "preserveCase": true,
+            "preservePunctuation": false,
+            "source": "selected",
+            "suffixCharacters": ""
+         }
+      },
+      "@c4n4m1/vicinae-extension-zoxide-recent-directories-0": {
+         "preferences": {
+            "application": "yazi"
+         }
+      },
+      "@knoopx/vicinae-extension-github-0": {
+         "preferences": {
+            "defaultIssueFilter": "my",
+            "defaultRepositoryFilter": "my",
+            "numberOfResults": "50"
+         }
+      },
+      "@knoopx/vicinae-extension-supergenpass-0": {
+         "preferences": {
+            "hashMethod": "md5",
+            "length": "10",
+            "removeSubdomains": true
+         }
+      },
+      "@leonkohli/vicinae-extension-process-manager-0": {
+         "preferences": {
+            "clear-search-after-kill": false,
+            "close-window-after-kill": false,
+            "process-limit": "200",
+            "refresh-interval": "2000",
+            "search-in-paths": true,
+            "search-in-pid": true,
+            "show-path": false,
+            "show-pid": true,
+            "show-system-processes": false,
+            "sort-by-memory": false
+         }
+      },
+      "applications": {
+         "entrypoints": {
+            "arch-claude-desktop": {
+               "enabled": false
+            },
+            "foot-server": {
+               "enabled": false
+            },
+            "footclient": {
+               "enabled": false
+            },
+            "nvim": {
+               "enabled": false
+            },
+            "org.freedesktop.IBus.Setup": {
+               "enabled": false
+            },
+            "org.gabmus.hydrapaper": {
+               "enabled": false
+            },
+            "org.kde.kwalletmanager": {
+               "enabled": false
+            },
+            "qt5ct": {
+               "enabled": false
+            },
+            "qt6ct": {
+               "enabled": false
+            },
+            "solaar": {
+               "enabled": false
+            },
+            "user-nvim": {
+               "enabled": false
+            },
+            "uuctl": {
+               "enabled": false
+            }
+         }
+      },
+      "clipboard": {
+         "preferences": {
+            "encryption": true,
+            "eraseOnStartup": false,
+            "ignorePasswords": true,
+            "monitoring": true
+         }
+      },
+      "core": {
+         "entrypoints": {
+            "about": {
+               "enabled": false
+            },
+            "forget-telemetry": {
+               "enabled": true
+            },
+            "keybind-settings": {
+               "enabled": false
+            },
+            "open-config-file": {
+               "enabled": false
+            },
+            "open-default-config": {
+               "enabled": false
+            },
+            "report-bug": {
+               "enabled": false
+            },
+            "sponsor": {
+               "enabled": false
+            }
+         }
+      },
+      "font": {
+         "entrypoints": {
+            "browse": {
+               "enabled": false
+            }
+         }
+      },
+      "power": {
+         "entrypoints": {
+            "hibernate": {
+               "enabled": false
+            },
+            "soft-reboot": {
+               "enabled": false
+            }
+         }
+      },
+      "system": {
+         "entrypoints": {
+            "browse-apps": {
+               "enabled": true
+            }
+         }
+      },
+      "theme": {
+         "enabled": true,
+         "entrypoints": {
+            "set": {
+               "enabled": false
+            }
+         }
+      }
+   }
+}
