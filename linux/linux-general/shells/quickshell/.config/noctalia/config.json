@@ -513,8 +513,8 @@
     "nightLight": {
         "autoSchedule": true,
         "dayTemp": "6003",
-        "enabled": false,
-        "forced": false,
+        "enabled": true,
+        "forced": true,
         "manualSunrise": "06:30",
         "manualSunset": "18:30",
         "nightTemp": "4745"
@@ -706,7 +706,7 @@
         "useOriginalImages": false,
         "useSolidColor": false,
         "useWallhaven": false,
-        "viewMode": "browse",
+        "viewMode": "recursive",
         "wallhavenApiKey": "",
         "wallhavenCategories": "111",
         "wallhavenOrder": "desc",
