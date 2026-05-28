@@ -513,8 +513,8 @@
     "nightLight": {
         "autoSchedule": true,
         "dayTemp": "6003",
-        "enabled": true,
-        "forced": true,
+        "enabled": false,
+        "forced": false,
         "manualSunrise": "06:30",
         "manualSunset": "18:30",
         "nightTemp": "4745"
