@@ -9,11 +9,11 @@
             "family": {
                 "clock": "Rubik",
                 "material": "Material Symbols Rounded",
-                "mono": "CaskaydiaCove NF",
-                "sans": "Rubik"
+                "mono": "JetBrainsMono Nerd Font Mono",
+                "sans": "JetBrainsMonoNL Nerd Font"
             },
             "size": {
-                "scale": 1
+                "scale": 0.9976679372842348
             }
         },
         "padding": {
@@ -33,6 +33,9 @@
     },
     "background": {
         "desktopClock": {
+            "background": {
+                "enabled": false
+            },
             "enabled": true
         },
         "enabled": true,
@@ -42,10 +45,17 @@
             "enabled": true,
             "rounding": 1,
             "spacing": 1
-        }
+        },
+        "wallpaperEnabled": true
     },
     "bar": {
+        "activeWindow": {
+            "compact": false,
+            "inverted": true
+        },
         "clock": {
+            "background": true,
+            "showDate": true,
             "showIcon": true
         },
         "dragThreshold": 20,
