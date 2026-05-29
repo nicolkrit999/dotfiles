@@ -96,6 +96,21 @@ M.colorscheme_conf = {
   end,
 }
 
+--- On Nix-managed systems, read NVIM_BASE16_THEME (set by home-manager from
+--- constants.theme.base16Theme) and apply the exact base16 colorscheme via
+--- nvim-base16. Works with any base16 theme — no hardcoded mapping needed.
+--- Falls back to base16-catppuccin-mocha when the env var is absent or the
+--- theme fails to load (Nix without Stylix, or a broken base16 theme name).
+M.nix_colorscheme = function()
+  local fallback = "base16-catppuccin-mocha"
+  local theme = os.getenv("NVIM_BASE16_THEME")
+  local target = (theme and theme ~= "") and ("base16-" .. theme) or fallback
+  local ok = pcall(use_theme, target)
+  if not ok and target ~= fallback then
+    pcall(use_theme, fallback)
+  end
+end
+
 --- Use a random colorscheme from the pre-defined list of colorschemes.
 M.rand_colorscheme = function()
   local colorscheme = utils.rand_element(vim.tbl_keys(M.colorscheme_conf))

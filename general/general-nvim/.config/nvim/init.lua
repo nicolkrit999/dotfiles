@@ -21,5 +21,9 @@ require("diagnostic-conf")
 -- colorscheme settings
 local color_scheme = require("colorschemes")
 
--- Load a random colorscheme
-color_scheme.rand_colorscheme()
+local is_nix = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
+if is_nix then
+  color_scheme.nix_colorscheme()
+else
+  color_scheme.rand_colorscheme()
+end
