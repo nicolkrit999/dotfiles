@@ -1,6 +1,6 @@
 ---
 name: shell-config-author
-description: "Use for shell configuration in this dotfiles repo: aliases, functions, prompts, env vars, keybindings, and completions for bash, zsh, and fish. Triggers: 'add an alias', 'write a fish function', 'configure my prompt', 'set up an abbreviation', 'add to my bashrc/zshrc/config.fish', FZF styling. Edits the shells stow package. Keeps the three shells consistent and portable across Linux/macOS."
+description: "Use for shell configuration in this dotfiles repo: aliases, functions, prompts, env vars, keybindings, and completions for bash, zsh, and fish. Triggers: 'add an alias', 'write a fish function', 'configure my prompt', 'set up an abbreviation', 'add to my bashrc/zshrc/config.fish', FZF styling. Edits the files under `general/shells/`. Keeps the three shells consistent and portable across Linux/macOS."
 model: sonnet
 color: green
 memory: project
