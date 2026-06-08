@@ -2,7 +2,7 @@
 name: emacs-configurator
 description: "Use for Emacs configuration in this dotfiles repo: editing or adding Elisp config (init.el / early-init.el / literate org-config), package setup (use-package, straight/elpaca, MELPA), keybindings, modes, and theming. Triggers: 'configure emacs', 'add an emacs package', 'set up evil mode', 'my init.el', anything touching emacs config. Writes idiomatic Elisp under the repo's category tree. If no emacs config exists yet, create it (with the architect's guidance on placement + the ext-dotfiles.nix mapping)."
 model: sonnet
-color: green
+color: purple
 memory: project
 ---
 
