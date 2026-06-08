@@ -2,7 +2,7 @@
 name: script-author
 description: "Use for standalone scripts kept in this dotfiles repo (the various-scripts package and similar): writing or improving utility scripts of any language — shell, Python, etc. Triggers: 'write a script that …', 'add a utility', 'improve this script', 'make this a reusable tool', 'a script to automate …'. Focuses on portable, robust, secret-free scripts. For shell *config* (aliases/functions in rc files) use shell-config-author instead."
 model: sonnet
-color: green
+color: orange
 memory: project
 ---
 
