@@ -96,6 +96,23 @@ local servers = {
       },
     },
   },
+
+  -- Typst setup
+  tinymist = {
+    cmd = { "tinymist" },
+    filetypes = { "typst" },
+    root_dir = function(bufnr, on_dir)
+      local fname = vim.api.nvim_buf_get_name(bufnr)
+      local root = vim.fs.dirname(vim.fs.find({ "typst.toml", ".git" }, { path = fname, upward = true })[1])
+        or vim.fs.dirname(fname)
+      on_dir(root)
+    end,
+    settings = {
+      exportPdf = "never",
+      outputPath = "$root/out/$name",
+      formatterMode = "typstyle",
+    },
+  },
 }
 
 for name, config in pairs(servers) do
