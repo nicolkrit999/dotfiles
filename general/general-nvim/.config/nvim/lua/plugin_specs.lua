@@ -822,6 +822,13 @@ local plugin_specs = {
       require("auto-save").setup {
         trigger_events = { "FocusLost", "BufLeave" },
         condition = function(buf)
+          -- Disable for filetypes with external watchers (typst watch, vimtex)
+          -- to avoid re-triggering the watcher process on every auto-save event.
+          local ft = vim.api.nvim_get_option_value("filetype", { buf = buf })
+          if ft == "typst" or ft == "tex" then
+            return false
+          end
+
           -- If the LSP lock is active, ABORT the auto-save
           if vim.b[buf].is_formatting then
             return false
