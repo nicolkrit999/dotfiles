@@ -575,6 +575,31 @@ local plugin_specs = {
       return utils.executable("latex")
     end,
     ft = { "tex" },
+    init = function()
+      vim.g.vimtex_view_method = (utils.executable("zathura") and "zathura") or "general"
+    end,
+  },
+
+  -- Typst syntax highlighting, :TypstWatch, and :make support.
+  -- Requires the `typst` CLI on PATH (add pkgs.typst to your nix env).
+  {
+    "kaarmu/typst.vim",
+    enabled = function()
+      return utils.executable("typst")
+    end,
+    ft = { "typst" },
+    init = function()
+      -- Conceal features are off by default; enable per-user if desired.
+      vim.g.typst_conceal       = 0
+      vim.g.typst_conceal_math  = 0
+      vim.g.typst_conceal_emoji = 0
+      -- Folding is off; enable by setting typst_folding = 1 locally.
+      vim.g.typst_folding       = 0
+      -- Auto-open quickfix window on compile errors.
+      vim.g.typst_auto_open_quickfix = 1
+      -- Use zathura for auto-reloading PDF preview; fall back to env var or system default.
+      vim.g.typst_pdf_viewer = vim.env.TYPST_PDF_VIEWER or (utils.executable("zathura") and "zathura") or ""
+    end,
   },
 
   -- Since tmux is only available on Linux and Mac, we only enable these plugins

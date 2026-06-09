@@ -96,6 +96,15 @@ local servers = {
       },
     },
   },
+
+  -- Typst setup
+  tinymist = {
+    cmd = { "tinymist" },
+    settings = {
+      exportPdf = "never",
+      outputPath = "$root/out/$name",
+    },
+  },
 }
 
 for name, config in pairs(servers) do
