@@ -550,6 +550,47 @@ local plugin_specs = {
     lazy = true,
   },
 
+  -- SQL database client (browse connections/schema, run queries, view results).
+  -- Requires nvim>=0.10. The build step downloads a small Go backend binary via
+  -- install() (auto-detects curl/wget/go on $PATH -- if none are present on the
+  -- host, add one of those to the nix profile and rerun :Lazy build nvim-dbee).
+  {
+    "kndndrj/nvim-dbee",
+    dependencies = {
+      "MunifTanjim/nui.nvim",
+    },
+    enabled = function()
+      return vim.fn.has("nvim-0.10") == 1
+    end,
+    build = function()
+      require("dbee").install()
+    end,
+    cmd = { "Dbee" },
+    config = function()
+      require("config.dbee")
+    end,
+  },
+
+  -- SQL database client (interactive :DB console / run buffer or range as a
+  -- query). Bare vim-dadbod has no UI of its own -- vim-dadbod-ui below adds
+  -- the browsable connection tree / saved queries / results pane. Does not
+  -- conflict with nvim-dbee above (different commands: :DB/:DBUI vs :Dbee),
+  -- both stay installed side by side.
+  {
+    "tpope/vim-dadbod",
+    cmd = { "DB" },
+  },
+  {
+    "kristijanhusak/vim-dadbod-ui",
+    dependencies = {
+      "tpope/vim-dadbod",
+    },
+    cmd = { "DBUI", "DBUIToggle", "DBUIAddConnection", "DBUIFindBuffer" },
+    init = function()
+      require("config.dadbod")
+    end,
+  },
+
 
 
 
