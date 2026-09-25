@@ -1143,12 +1143,18 @@ Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `tex
 
 ## Smart Commenting (Custom)
 
-Supports block comments for multi-line selections in 20+ languages.
+String-aware, multi-line-capable comment add/remove (`lua/smart_comment/`).
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `gcs` | n, x | Smart comment (single line uses `//`, multi-line uses `/* */` where applicable) |
-| `gcr` | n, x | Smart uncomment (removes both line and block comment delimiters) |
+| `gcs` | n, x | Smart comment |
+| `gcr` | n, x | Smart uncomment |
+
+Fully supported languages: asm, bash, c, cpp, cs, css, dockerfile, fish, go,
+haskell, html, java, javascript, julia, kotlin, lisp (Emacs Lisp / Common
+Lisp), lua, make, markdown, nix, perl, php, ps1 (PowerShell), python, r,
+ruby, rust, scala, sh, sql, swift, tex (LaTeX), toml, typescript, typst,
+vim, xml, yaml, zig, zsh.
 
 ---
 
