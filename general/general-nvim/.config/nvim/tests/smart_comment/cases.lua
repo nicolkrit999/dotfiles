@@ -48,7 +48,7 @@ local langs = {
   { "sh", lm = "#", code = "x=1", code2 = "echo \"$x\"" },
   { "bash", lm = "#", code = "x=1", code2 = "echo \"$x\"" },
   { "zsh", lm = "#", code = "x=1", code2 = "echo \"$x\"" },
-  { "vim", lm = '"', code = "let x = 1", code2 = "call Foo(x)" },
+  { "vim", lm = '"', code = "let x = 1", code2 = "call Foo(x)", bol_only = true, bol_heuristic = true },
   { "sql", lm = "--", block = { "/*", "*/" }, code = "SELECT a FROM t;", code2 = "DELETE FROM t;" },
   { "yaml", lm = "#", code = "a: 1", code2 = "b: [1, 2]" },
   { "toml", lm = "#", code = "a = 1", code2 = "b = [1, 2]" },
@@ -60,6 +60,21 @@ local langs = {
   { "css", wrap = { "/*", "*/" }, code = "a { color: red; }", code2 = "b { margin: 0; }" },
   { "xml", wrap = { "<!--", "-->" }, code = "<a>1</a>", code2 = "<b>2</b>" },
   { "markdown", wrap = { "<!--", "-->" }, code = "some text", code2 = "- item" },
+  { "typst", lm = "//", block = { "/*", "*/" }, code = "let x = 1", code2 = "foo(x)" },
+  { "lisp", lm = ";", block = { "#|", "|#" }, code = "(setq x 1)", code2 = "(foo x)" },
+  { "haskell", lm = "--", block = { "{-", "-}" }, code = "x = 1", code2 = "foo x" },
+  { "kotlin", lm = "//", block = { "/*", "*/" }, code = "val x = 1", code2 = "foo(x)" },
+  { "swift", lm = "//", block = { "/*", "*/" }, code = "let x = 1", code2 = "foo(x)" },
+  { "scala", lm = "//", block = { "/*", "*/" }, code = "val x = 1", code2 = "foo(x)" },
+  { "r", lm = "#", code = "x <- 1", code2 = "foo(x)" },
+  { "julia", lm = "#", block = { "#=", "=#" }, code = "x = 1", code2 = "foo(x)" },
+  { "ps1", lm = "#", block = { "<#", "#>" }, code = "$x = 1", code2 = "Foo($x)" },
+  { "perl", lm = "#", code = "my $x = 1;", code2 = "foo($x);" },
+  { "zig", lm = "//", code = "const x = 1;", code2 = "foo(x);" },
+  { "asm", lm = ";", block = { "/*", "*/" }, code = "mov ax, 1", code2 = "call foo" },
+  { "fish", lm = "#", code = "set x 1", code2 = "foo $x" },
+  { "make", lm = "#", code = "x = 1", code2 = "all: x" },
+  { "dockerfile", lm = "#", code = "ENV X=1", code2 = "RUN foo", bol_only = true },
 }
 
 local function prefixed(L, rows)
@@ -102,8 +117,10 @@ for _, L in ipairs(langs) do
   if L.lm then
     local m = L.lm
     add(ft, "2 double marker gcs", B({ m .. " " .. m .. " a" }), "c", B({ m .. " a" }), sel(1))
-    -- vim: `"` inside comment text is usually a quote, so it is never a redundant marker (ruling)
-    local inner_exp = ft == "vim" and (m .. " a " .. m .. " b") or (m .. " a b")
+    -- vim: `"` inside comment text is usually a quote, so it is never a redundant marker (ruling).
+    -- bol_only languages (vim, dockerfile): the marker only means "comment" at column 1, so one
+    -- occurring later in the line is just literal text, never a redundant marker to clean up.
+    local inner_exp = L.bol_only and (m .. " a " .. m .. " b") or (m .. " a b")
     add(ft, "2 inner redundant marker gcs", B({ m .. " a " .. m .. " b" }), "c", B({ inner_exp }), sel(1))
     add(ft, "2 double marker gcr", B({ m .. " " .. m .. " a" }), "u", B({ "a" }), sel(1))
     add(ft, "2 no space after marker gcr", B({ m .. "a" }), "u", B({ "a" }), sel(1))
@@ -119,11 +136,14 @@ for _, L in ipairs(langs) do
   end
 
   -- 3. mixed on one line
-  if L.lm then
+  -- A strict bol_only marker (dockerfile) can never trail on the same row as code, so this generic
+  -- "code + trailing comment" case doesn't apply; see the language's own hand-written cases instead.
+  local trailing_ok = not L.bol_only or L.bol_heuristic
+  if L.lm and trailing_ok then
     local m = L.lm
     both(ft, "3 code + trailing line comment", B({ C .. " " .. m .. " note" }), B({ m .. " " .. C .. " note" }),
       B({ C .. " note" }), sel(1))
-  else
+  elseif not L.lm then
     local o, c = L.wrap[1], L.wrap[2]
     both(ft, "3 code + trailing comment", B({ C .. " " .. o .. " note " .. c }), B({ o .. " " .. C .. " note " .. c }),
       B({ C .. " note" }), sel(1))
@@ -153,7 +173,7 @@ for _, L in ipairs(langs) do
 
   -- 6. mixed multi-line
   both(ft, "6 comment row + code row", B({ com("a"), C }), B({ com("a"), com(C) }), B({ "a", C }), sel(2))
-  if L.lm then
+  if L.lm and trailing_ok then
     local m = L.lm
     both(ft, "6 code with trailing comment + comment + code", B({ C .. " " .. m .. " x", m .. " y", C2 }),
       B({ m .. " " .. C .. " x", m .. " y", m .. " " .. C2 }), B({ C .. " x", "y", C2 }), sel(3))
@@ -369,6 +389,68 @@ add("css", "gcs deletes /* */ rows", { "/*", "a", "*/", "p {}" }, "c", { "/* a *
 -- a selection that is entirely one block comment is a gcs no-op (rule 5 wins over the deletion ruling)
 add("java", "gcs on whole block comment is no-op", { "/*", "a();", "*/" }, "c", { "/*", "a();", "*/" })
 add("c", "gcs on whole block comment is no-op", { "/*", "a();", "*/" }, "c", { "/*", "a();", "*/" })
+
+--------------------------------------------------------------------------------------------------
+-- New-language edge cases (typst, lisp, haskell, kotlin, swift, scala, r, julia, ps1, perl, zig,
+-- asm, fish, make, dockerfile)
+--------------------------------------------------------------------------------------------------
+both("typst", "nested block", { "/* a /* b */ c */ d()" }, { "// a b c d()" }, { "a b c d()" })
+
+add("lisp", "char literal not a comment start", { "(f ?\\; x) ; c" }, "u", { "(f ?\\; x) c" })
+add("lisp", "predicate name with ? untouched", { "(foo? x) ; c" }, "u", { "(foo? x) c" })
+both("lisp", "double semicolon convention", { ";; a" }, { ";; a" }, { "a" })
+
+-- "--" only starts a comment when not immediately followed by another symbol char (else it's an
+-- operator like "-->"); a pragma "{-# ... #-}" is opaque code, not a strippable comment.
+add("haskell", "arrow operator is not a comment", { "f x --> y" }, "c", { "-- f x --> y" })
+add("haskell", "pragma is code", { "{-# LANGUAGE OverloadedStrings #-}" }, "c",
+  { "-- {-# LANGUAGE OverloadedStrings #-}" })
+add("haskell", "nested block comment", { "{- a {- b -} c -} d" }, "c", { "-- a b c d" })
+
+both("kotlin", "nested block comment", { "/* a /* b */ c */ d()" }, { "// a b c d()" }, { "a b c d()" })
+add("kotlin", "triple-quote string not a comment", { 'val s = """// no"""' }, "u", { 'val s = """// no"""' })
+
+add("swift", "extended raw string not a comment", { 'let s = #"// no"#' }, "u", { 'let s = #"// no"#' })
+add("swift", "doc comment marker", { "/// doc" }, "u", { "doc" })
+both("swift", "nested block comment", { "/* a /* b */ c */ d()" }, { "// a b c d()" }, { "a b c d()" })
+
+add("scala", "triple-quote interpolated string not a comment",
+  { 'val s = s"""// no ${1}"""' }, "u", { 'val s = s"""// no ${1}"""' })
+both("scala", "nested block comment", { "/* a /* b */ c */ d()" }, { "// a b c d()" }, { "a b c d()" })
+
+add("r", "raw string not a comment", { 'x <- r"(# no)"' }, "u", { 'x <- r"(# no)"' })
+both("r", "roxygen prefix stays as-is", { "#' a" }, { "#' a" }, { "' a" })
+
+add("julia", "nested block comment", { "#= a #= b =# c =#" }, "c", { "#= a b c =#" }, { s = 1, e = 1 })
+add("julia", "raw string not a comment", { 'x = raw"# no"' }, "u", { 'x = raw"# no"' })
+add("julia", "backtick command literal not a comment", { "x = `echo # no`" }, "u", { "x = `echo # no`" })
+
+-- non-nesting: the FIRST "#>" closes the block, so "c" after it is real code, not comment; the
+-- spurious inner "<#" (unterminated within the comment body) is cleaned up like a redundant marker
+add("ps1", "block comment does not nest", { "<# a <# b #> c" }, "u", { "a b c" })
+add("ps1", "double-quote backtick escape", { 'Write-Host "a `" b" # c' }, "u", { 'Write-Host "a `" b" c' })
+
+add("perl", "delimited q() not a comment", { "my $s = q(# no);" }, "u", { "my $s = q(# no);" })
+add("perl", "regex m// not a comment", { "if ($x =~ m/#/) { }" }, "u", { "if ($x =~ m/#/) { }" })
+add("perl", "substitution s/// not a comment", { "$x =~ s/#/x/;" }, "u", { "$x =~ s/#/x/;" })
+
+add("zig", "doc comment markers", { "/// doc", "//! module doc" }, "u", { "doc", "module doc" })
+
+-- Neovim's single "asm" filetype recognizes both NASM ";" and GAS "#"; gcs prefers ";".
+add("asm", "GAS style comment recognized", { "mov eax, 1 # c" }, "u", { "mov eax, 1 c" })
+both("asm", "code becomes NASM style", { "mov eax, 1" }, { "; mov eax, 1" }, { "mov eax, 1" })
+
+both("fish", "code + trailing comment", { "set -x X 1 # c" }, { "# set -x X 1 c" }, { "set -x X 1 c" })
+
+-- "#" comments almost everywhere in Make, including recipe lines, unless escaped as "\#".
+add("make", "recipe line comment", { "all:", "\techo hi # c" }, "u", { "all:", "\techo hi c" }, { s = 2, e = 2 })
+add("make", "escaped hash is literal", { "x = a \\# b" }, "u", { "x = a \\# b" })
+
+-- "#" is only a Dockerfile comment as the first non-blank char of the line.
+add("dockerfile", "# after instruction is not a comment", { "RUN echo hi # not a comment" }, "u",
+  { "RUN echo hi # not a comment" })
+add("dockerfile", "leading # is a comment", { "# real comment", "FROM alpine" }, "u",
+  { "real comment", "FROM alpine" }, { s = 1, e = 1 })
 
 --------------------------------------------------------------------------------------------------
 -- Partial block selections: boundary repair (close above / reopen below / both), gcr and gcs

@@ -215,6 +215,117 @@ specials.pg_dollar = {
   end,
 }
 
+specials.swift_raw = {
+  trig = "#",
+  match = function(line, j)
+    if is_word(line:sub(j - 1, j - 1)) then
+      return nil
+    end
+    local s, e, hashes = line:find('^(#*)"', j)
+    if s and (e - j + 1) > 0 and line:sub(j, j) == "#" then
+      return { len = e - j + 1, k = "string", close = '"' .. hashes, ml = true }
+    end
+  end,
+}
+
+specials.r_raw = {
+  trig = "r",
+  match = function(line, j)
+    if is_word(line:sub(j - 1, j - 1)) then
+      return nil
+    end
+    local s, e, dashes, open = line:find('^r"(%-*)([%(%[{])', j)
+    if not s then
+      return nil
+    end
+    local close = ({ ["("] = ")", ["["] = "]", ["{"] = "}" })[open] .. dashes .. '"'
+    return { len = e - j + 1, k = "string", close = close, ml = true }
+  end,
+}
+
+specials.julia_raw = {
+  trig = "r",
+  match = function(line, j)
+    if is_word(line:sub(j - 1, j - 1)) then
+      return nil
+    end
+    if line:find('^raw"', j) then
+      return { len = 4, k = "string", close = '"', esc = "\\", ml = true }
+    end
+  end,
+}
+
+-- Emacs Lisp / Common Lisp character literal: `?x`, `?\n`, `?\;` (an escaped char right after `?`,
+-- never a comment/string start). Guarded so it doesn't fire on a `?` ending a predicate name (`foo?`).
+specials.lisp_char = {
+  trig = "?",
+  match = function(line, j)
+    if is_word(line:sub(j - 1, j - 1)) then
+      return nil
+    end
+    if line:sub(j + 1, j + 1) == "\\" then
+      return { len = 3, k = "skip" }
+    elseif line:sub(j + 1, j + 1) ~= "" then
+      return { len = 2, k = "skip" }
+    end
+  end,
+}
+
+-- Perl quote-like operators (q qq qw qr m s tr y) with an arbitrary delimiter, including a bracket
+-- pair or `#` itself. `s`/`tr`/`y` have two delimited parts. Doesn't handle mismatched bracket pairs
+-- across the two parts of s/tr/y (e.g. `s{a}<b>`) or bare `//`/`?...?` regex - a documented gap.
+local perl_close = { ["("] = ")", ["["] = "]", ["{"] = "}", ["<"] = ">" }
+
+local function perl_skip_part(line, k, delim, close)
+  while k <= #line do
+    local ch = line:sub(k, k)
+    if ch == "\\" then
+      k = k + 2
+    elseif ch == close then
+      return k + 1
+    else
+      k = k + 1
+    end
+  end
+  return #line + 1
+end
+
+specials.perl_quotelike = {
+  trig = "qmstry",
+  match = function(line, j)
+    if is_word(line:sub(j - 1, j - 1)) then
+      return nil
+    end
+    local kw = line:match("^q[qwr]?", j) or line:match("^tr", j) or line:match("^[msy]", j)
+    if not kw then
+      return nil
+    end
+    local k = j + #kw
+    local ws = line:match("^%s*", k)
+    k = k + #ws
+    local d = line:sub(k, k)
+    if d == "" or d:find("[%w%s]") then
+      return nil
+    end
+    local close = perl_close[d] or d
+    local twopart = kw == "tr" or kw == "s" or kw == "y"
+    local k2 = perl_skip_part(line, k + 1, d, close)
+    if twopart then
+      if perl_close[d] then
+        local ws2 = line:match("^%s*", k2)
+        k2 = k2 + #ws2
+        local d2 = line:sub(k2, k2)
+        local close2 = perl_close[d2] or d2
+        k2 = perl_skip_part(line, k2 + 1, d2, close2)
+      else
+        k2 = perl_skip_part(line, k2, d, close)
+      end
+    end
+    k2 = k2 + #(line:match("^%a*", k2) or "") -- trailing modifiers (s///gi, m//x, ...)
+    return { len = k2 - j, k = "skip" }
+  end,
+}
+
 local function class_escape(ch)
   return ch:find("[%^%]%-%%]") and "%" .. ch or ch
 end
@@ -302,7 +413,11 @@ local function candidate(line, j, spec, p, ctx, fnb)
       if t.k == "line" then
         local extra = spec.line_extra and line:match("^" .. spec.line_extra, j + n) or ""
         if spec.bol_only and j ~= fnb then
-          if inner then
+          if not spec.bol_string_heuristic then
+            -- strict bol_only (dockerfile): the marker is a comment ONLY at the first non-blank
+            -- column, full stop; elsewhere it's just text, never a trailing comment
+            ok = false
+          elseif inner then
             -- clean_body only drops a marker that opens the (trimmed) text, never one buried
             -- inside it: an off-bol `"` there is comment text, not a redundant marker
             ok = false

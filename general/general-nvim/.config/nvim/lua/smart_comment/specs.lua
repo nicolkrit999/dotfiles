@@ -150,6 +150,7 @@ specs.vim = {
   line = { '"' },
   line_extra = '"*',
   bol_only = true,
+  bol_string_heuristic = true, -- also a comment off-bol when it can't be an unclosed string opener
   strings = { { "'", "'", dbl = true }, { '"', '"', esc = "\\" } },
 }
 
@@ -235,6 +236,137 @@ specs.markdown = {
   regions = { { fence = true } },
 }
 
+specs.typst = {
+  line = { "//" },
+  block = { { "/*", "*/", nest = true } },
+  strings = { { '"', '"', esc = "\\" } },
+}
+
+-- Emacs Lisp AND Common Lisp both map to Neovim's "lisp" filetype and use the same comment syntax.
+specs.lisp = {
+  line = { ";" },
+  line_extra = ";*",
+  block = { { "#|", "|#", nest = true } },
+  strings = { { '"', '"', esc = "\\" } },
+  specials = { "lisp_char" },
+}
+
+specs.haskell = {
+  line = { "--" },
+  -- "--" only starts a comment when NOT followed by another symbol char, otherwise it's part of a
+  -- longer operator token like "-->" or "<--" (Haskell 2010 report, lexical syntax).
+  not_followed = { ["--"] = "^[!#$%%&*+./<=>?@\\^|~:%-]" },
+  block = { { "{-", "-}", nest = true, decor = "|" } },
+  -- {-# LANGUAGE ... #-} / {-# INLINE ... #-} pragmas look like block comments but are meaningful
+  -- code, not a comment to add/remove markers inside of (same idea as SQL's /*! */ hint comments).
+  strings = { { "{-#", "#-}", ml = true }, { '"', '"', esc = "\\", ml = true } },
+}
+
+specs.kotlin = {
+  line = { "//" },
+  block = { { "/*", "*/", nest = true, decor = "*", extra = "%**" } },
+  strings = { { '"""', '"""', ml = true }, { '"', '"', esc = "\\" } },
+  shebang = true,
+}
+
+specs.swift = {
+  line = { "//" },
+  line_extra = "/*",
+  block = { { "/*", "*/", nest = true, decor = "*", extra = "%**" } },
+  strings = { { '"""', '"""', esc = "\\", ml = true }, { '"', '"', esc = "\\" } },
+  specials = { "swift_raw" },
+}
+
+specs.scala = {
+  line = { "//" },
+  block = { { "/*", "*/", nest = true, decor = "*", extra = "%**" } },
+  -- `${...}` inside an interpolated string (s"...${expr}...") is live code, not string content;
+  -- like the existing javascript `` `..${}..` `` template-literal spec, that's treated as opaque
+  -- text (a documented simplification also present there, not new to scala).
+  strings = { { '"""', '"""', ml = true }, { '"', '"', esc = "\\" } },
+}
+
+specs.r = {
+  line = { "#" },
+  strings = { { '"', '"', esc = "\\" }, { "'", "'", esc = "\\" } },
+  specials = { "r_raw" },
+  shebang = true,
+}
+
+specs.julia = {
+  line = { "#" },
+  block = { { "#=", "=#", nest = true } },
+  strings = {
+    { '"""', '"""', esc = "\\", ml = true },
+    { '"', '"', esc = "\\" },
+    { "`", "`", esc = "\\" },
+  },
+  specials = { "julia_raw" },
+  shebang = true,
+}
+
+specs.ps1 = {
+  -- No maintained tree-sitter grammar is wired into nvim-treesitter for PowerShell; lexer-only.
+  backend = "lexer",
+  line = { "#" },
+  block = { { "<#", "#>" } }, -- does not nest: the first #> closes it
+  strings = {
+    { "'", "'", dbl = true },
+    { '"', '"', esc = "`" }, -- PowerShell's escape char is the backtick, not backslash
+    { '@"', '"@', ml = true }, -- here-strings (approximated: not enforcing "@ at column 1 to close)
+    { "@'", "'@", ml = true },
+  },
+  shebang = true,
+}
+
+specs.perl = {
+  -- No maintained tree-sitter grammar is wired into nvim-treesitter for Perl; lexer-only. POD blocks
+  -- (`=pod` ... `=cut`) are not recognized as comments (a documented gap): supporting an arbitrary
+  -- `=word` opener would need a pattern-based block matcher this lexer doesn't have yet.
+  backend = "lexer",
+  line = { "#" },
+  strings = { { '"', '"', esc = "\\", ml = true }, { "'", "'", ml = true }, { "`", "`", esc = "\\", ml = true } },
+  specials = { "perl_quotelike" },
+  shebang = true,
+}
+
+specs.zig = {
+  line = { "//" },
+  line_extra = "[/!]*",
+  strings = { { '"', '"', esc = "\\" } },
+  shebang = true,
+}
+
+specs.asm = {
+  -- Neovim's single "asm" filetype doesn't distinguish NASM (";" comments) from GAS/AT&T ("#" on
+  -- x86, but target-dependent elsewhere). Both markers are recognized; gcs inserts ";" (NASM), the
+  -- more common convention for x86 coursework and what nvim-treesitter's grammar is oriented toward.
+  line = { ";", "#" },
+  block = { { "/*", "*/", decor = "*" } }, -- GAS preprocessor only; NASM has no block comment
+  strings = { { '"', '"', esc = "\\" }, { "'", "'", esc = "\\" } },
+  stray_close = true,
+}
+
+specs.fish = {
+  line = { "#" },
+  strings = { { '"', '"', esc = "\\", ml = true }, { "'", "'", ml = true } },
+  shebang = true,
+}
+
+specs.make = {
+  line = { "#" },
+  -- "#" is a comment almost everywhere in a Makefile, including inside TAB-indented recipe lines
+  -- (Make strips it before the shell ever sees the line) unless escaped as "\#".
+  escape_char = "\\",
+}
+
+specs.dockerfile = {
+  -- "#" is only a comment as the first non-blank character of the line; elsewhere (including after
+  -- an instruction) it's just part of the argument text.
+  line = { "#" },
+  bol_only = true,
+}
+
 -- tree-sitter language name -> spec key
 local ts_alias = {
   c_sharp = "cs",
@@ -242,6 +374,8 @@ local ts_alias = {
   tsx = "typescript",
   php_only = "php",
   markdown_inline = "markdown",
+  elisp = "lisp",
+  powershell = "ps1",
 }
 
 -- markdown fence info string -> spec key
@@ -265,6 +399,20 @@ local fence_alias = {
   vimscript = "vim",
   viml = "vim",
   golang = "go",
+  hs = "haskell",
+  kt = "kotlin",
+  kts = "kotlin",
+  jl = "julia",
+  pl = "perl",
+  el = "lisp",
+  elisp = "lisp",
+  ["emacs-lisp"] = "lisp",
+  ps = "ps1",
+  powershell = "ps1",
+  docker = "dockerfile",
+  makefile = "make",
+  nasm = "asm",
+  typ = "typst",
 }
 
 local resolved = {}
