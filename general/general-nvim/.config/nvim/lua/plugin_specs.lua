@@ -955,3 +955,13 @@ require("lazy").setup {
     hererocks = false,
   },
 }
+
+-- lazy.nvim's `performance.reset_packpath` (on by default) sets &packpath to just $VIMRUNTIME, and
+-- `performance.rtp.reset` rebuilds &rtp from scratch - both skip Nvim's native pack/*/start/* loading
+-- (which never runs anyway: lazy also turns 'loadplugins' off). That's how home-manager wires
+-- Nix-provided plugins/grammars onto ~/.local/share/nvim/site/pack/hm/start/ (neovim.nix's
+-- programs.neovim.plugins), so append any such start packages to &rtp ourselves, after lazy is done
+-- rewriting it.
+for _, dir in ipairs(vim.fn.globpath(vim.fn.stdpath("data") .. "/site/pack/*/start/*", "", false, true)) do
+  vim.opt.rtp:append(dir)
+end
