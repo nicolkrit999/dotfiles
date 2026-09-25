@@ -45,30 +45,64 @@ local function ts_collect(buf, lines, lo, hi, root)
       return
     end
     local scan = lexer.scan(text, spec, { no_shebang = true })
-    local c = scan.comments[1]
-    if #scan.comments ~= 1 or c.sr ~= 1 or c.sc ~= 1 or c.er ~= #text or c.ec ~= #text[#text] then
+    -- Usually the node is exactly one comment. Some grammars (tree-sitter-haskell) merge several
+    -- adjacent single-line comments into one node; accept that too, as long as `scan` fully
+    -- explains the node's text (comments + whitespace only, no real code slipped in).
+    if #scan.comments == 0 then
       return
     end
-    local rows = {}
-    for k, p in pairs(c.rows) do
-      local r = sr + k
-      if k == 1 then
-        p.s, p.e = p.s + sc, p.e + sc
-      end
-      rows[r] = p
-      if res.pieces[r] then
-        table.insert(res.pieces[r], p)
-      end
+    local last = scan.comments[#scan.comments]
+    if scan.comments[1].sr ~= 1 or scan.comments[1].sc ~= 1 or last.er ~= #text or last.ec ~= #text[#text] then
+      return
     end
-    c.rows, c.sr, c.er = rows, sr + 1, er + 1
+    local prev_er = 0
+    for _, cm in ipairs(scan.comments) do
+      if cm.sr ~= prev_er + 1 then
+        return -- a gap between comments means real code between them: bail, don't guess
+      end
+      prev_er = cm.er
+    end
+    for _, c in ipairs(scan.comments) do
+      local rows = {}
+      for k, p in pairs(c.rows) do
+        local r = sr + k
+        if k == 1 then
+          p.s, p.e = p.s + sc, p.e + sc
+        end
+        rows[r] = p
+        if res.pieces[r] then
+          table.insert(res.pieces[r], p)
+        end
+      end
+      c.rows, c.sr, c.er = rows, sr + c.sr, sr + c.er
+    end
   end
 
   -- Node type names that are comments but don't spell "comment" (sql's tree-sitter grammar calls
   -- its /* */ block comment "marginalia").
   local extra_comment_types = { marginalia = true }
 
+  -- Only follow an injected-language subtree (e.g. bash inside a shell heredoc, javascript inside
+  -- html's <script>) when the host spec explicitly opted into it via `regions`. Otherwise a language
+  -- injected purely for syntax highlighting inside what the host spec treats as an opaque STRING
+  -- (e.g. julia's backtick command literals inject bash, but julia's own spec already lists
+  -- backtick-strings as opaque) would incorrectly surface that child language's own comment rules.
+  local ok_host, host_parser = pcall(vim.treesitter.get_parser, buf, nil, { error = false })
+  local host_lang = ok_host and host_parser and host_parser:lang() or nil
+  local host_spec = host_lang and specs.get(host_lang) or root
+  local allowed_injections = { [host_lang] = true }
+  for _, rg in ipairs(host_spec.regions or {}) do
+    if rg.lang then
+      allowed_injections[rg.lang] = true
+    end
+  end
+
   parser:for_each_tree(function(tree, ltree)
-    local spec = specs.get(ltree:lang())
+    local lang = ltree:lang()
+    if not allowed_injections[lang] then
+      return
+    end
+    local spec = specs.get(lang)
     if not spec then
       return
     end

@@ -358,11 +358,21 @@ specs.make = {
   -- "#" is a comment almost everywhere in a Makefile, including inside TAB-indented recipe lines
   -- (Make strips it before the shell ever sees the line) unless escaped as "\#".
   escape_char = "\\",
+  -- tree-sitter-make injects bash into recipe lines; unlike an opaque string, Make has none of its
+  -- own to protect here, and bash's own "#" comment detection there is correct at the Make level
+  -- too (see the note above), so the injection is safe to follow for the ts backend.
+  regions = { { lang = "bash" } },
 }
 
 specs.dockerfile = {
+  -- lexer-only: tree-sitter-dockerfile injects bash into a RUN/CMD/etc. shell-form body, and bash
+  -- correctly treats a whitespace-preceded "#" there as a real comment. That's arguably MORE correct
+  -- than this spec's simple rule below, but it only applies inside shell-form instruction bodies,
+  -- not any other instruction's argument text - modeling that distinction needs a region mechanism
+  -- this lexer doesn't have. Forced to the lexer everywhere instead, so behavior stays predictable:
   -- "#" is only a comment as the first non-blank character of the line; elsewhere (including after
   -- an instruction) it's just part of the argument text.
+  backend = "lexer",
   line = { "#" },
   bol_only = true,
 }
