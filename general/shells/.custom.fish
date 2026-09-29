@@ -182,7 +182,7 @@ if status is-interactive
 
     # Startup Splash
     if command -v fastfetch >/dev/null 2>&1; and command -v pokemon-colorscripts >/dev/null 2>&1
-        fastfetch --data-raw "$(pokemon-colorscripts --no-title -r 1,3,6)"
+        fastfetch --data-raw "$(pokemon-colorscripts --no-title -r)"
     else if command -v pokemon-colorscripts >/dev/null 2>&1
         pokemon-colorscripts --no-title -r 1,3,6
     else if command -v fastfetch >/dev/null 2>&1
