@@ -3015,9 +3015,113 @@ Or use `:cdo earlier 1f` to go back one save-state in each file.
 | `<Ctrl-a>` | Increment the number under cursor |
 | `<Ctrl-x>` | Decrement the number under cursor |
 | `10<Ctrl-a>` | Add 10 to the number |
-| `g<Ctrl-a>` (visual block) | Create a sequence (1, 2, 3, 4...) from selected zeros |
+| `g<Ctrl-a>` (visual block) | Sequential increment: line 1 gets +1, line 2 gets +2, line 3 gets +3... |
+| `g<Ctrl-x>` (visual block) | Sequential decrement (same idea, subtracting) |
 
 **Scenario**: Generate a numbered list. Type `0.` on 5 lines, select them with `<Ctrl-v>`, then `g<Ctrl-a>` turns them into `1. 2. 3. 4. 5.`
+
+**Important**: `g<Ctrl-a>` doesn't "know" what you want incremented -- it purely acts on whatever number the highlighted column(s) overlap on each line, ignoring every other number on the line. Wherever you place the block is what gets incremented.
+
+**Gotcha -- starting value**: because it *adds* `1×n` to each line, starting from `1` gives `1+1=2, 1+2=3, 1+3=4...` (starts at 2, not 1). If you want the sequence to start at 1, your placeholder number must start at `0`.
+
+**Example 1 -- single number on the line (increments normally):**
+
+```
+imgur_japan_0.jpg
+imgur_japan_0.jpg
+imgur_japan_0.jpg
+```
+
+Put the cursor on the `0`, `<Ctrl-v>`, `G` to extend the block down that same column to the last line, then `g<Ctrl-a>`:
+
+```
+imgur_japan_1.jpg
+imgur_japan_2.jpg
+imgur_japan_3.jpg
+```
+
+**Example 2 -- two numbers on the line, only one should change:**
+
+```
+0001-photo-0.jpg
+0001-photo-0.jpg
+0001-photo-0.jpg
+```
+
+Here `0001` is a fixed ID that must stay identical on every line, and only the trailing `0` should become sequential. Place the cursor on the trailing `0` (not on `0001`), `<Ctrl-v>`, `G`, `g<Ctrl-a>`:
+
+```
+0001-photo-1.jpg
+0001-photo-2.jpg
+0001-photo-3.jpg
+```
+
+The `0001` is left untouched because the visual-block column never overlapped it -- only the number your block touches gets incremented, no matter how many other numbers appear elsewhere on the line.
+
+**Common use case**: renaming a batch of files. Open the filenames in a buffer (e.g. via a bulk-rename tool that spawns `$EDITOR` with one filename per line, in file order), reduce every line to the same placeholder with `:%s/.*/newname_0.jpg/`, then apply the block-select + `g<Ctrl-a>` trick above to turn the shared `0` into a sequence.
+
+**Example 3 -- starting the sequence at 0 instead of 1:**
+
+`g<Ctrl-a>` always adds `1×n`, so it naturally starts at 1. To start at 0, do the sequential increment first, then shift the whole result down by one with a **plain** (non-`g`) `<Ctrl-x>` on the same block -- plain block increment/decrement applies the *same* amount to every line instead of a growing amount:
+
+```
+newname_0.jpg          newname_1.jpg          newname_0.jpg
+newname_0.jpg   g<C-a>  newname_2.jpg  <C-x>   newname_1.jpg
+newname_0.jpg   ----->  newname_3.jpg  ----->  newname_2.jpg
+newname_0.jpg           newname_4.jpg          newname_3.jpg
+```
+
+Reselect the exact same column block before pressing `<Ctrl-x>` (block selections don't persist across a `g<Ctrl-a>` -- you need `<Ctrl-v>` + `G` again). This same "sequential increment, then uniform shift" combo also works for shifting a sequence to start at any number.
+
+**Example 4 -- multi-digit, zero-padded numbers:**
+
+Vim preserves the digit width/leading zeros automatically as long as you don't overflow it:
+
+```
+photo_001.jpg
+photo_001.jpg
+photo_001.jpg
+```
+
+Put the cursor anywhere on the `001` (block only needs to touch it, not cover all 3 digits), `<Ctrl-v>`, `G`, `g<Ctrl-a>`:
+
+```
+photo_002.jpg
+photo_003.jpg
+photo_004.jpg
+```
+
+If you want it to start at `001` instead of `002`, apply the same Example 3 shift: reselect the block, plain `<Ctrl-x>` once.
+
+## Letter Sequences (a, b, c...) Instead of Numbers
+
+`<Ctrl-a>`/`<Ctrl-x>` and their `g`-prefixed block variants also work on **letters**, but only once you opt in, since alphabetic increment isn't in Neovim's default `nrformats`:
+
+```
+:set nrformats+=alpha
+```
+
+(Add this to your Neovim config if you want it permanently; otherwise it only applies to the current session.)
+
+With that set, bulk-renaming to `a, b, c, d...` works the same way as numbers:
+
+```
+a
+a          g<C-a>     b
+a   ----->  c
+a           d
+```
+
+Note this starts at `b`, not `a` -- same off-by-one as numbers, fixed the same way (Example 3): reselect the block and press plain `<Ctrl-x>` once to shift down:
+
+```
+b          a
+c   <C-x>  b
+d  ----->  c
+e          d
+```
+
+`<Ctrl-a>`/`<Ctrl-x>` wrap `z`→`a` (or `Z`→`A`) at the alphabet boundary, and respect case (`a` increments to `b`, `Z` increments to `A`).
 
 ## Open the File Under Cursor
 
