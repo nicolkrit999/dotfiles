@@ -13,9 +13,6 @@ pcall(require, "cmp_omni")
 pcall(require, "cmp_nvim_ultisnips")
 pcall(require, "cmp_cmdline")
 
--- Copilot suggestion helper (for the Smart Tab logic)
-local has_copilot, copilot_suggestion = pcall(require, "copilot.suggestion")
-
 -- UltiSnips configuration
 vim.g.UltiSnipsExpandTrigger = "<Tab>"
 vim.g.UltiSnipsJumpForwardTrigger = "<C-j>"
@@ -29,16 +26,11 @@ cmp.setup {
   },
   mapping = cmp.mapping.preset.insert {
     ["<Tab>"] = cmp.mapping(function(fallback)
-      local copilot_suggestion = require("copilot.suggestion")
-
       if cmp.visible() then
         -- 1. If the autocomplete menu is open, Tab scrolls the menu
         cmp.select_next_item()
-      elseif copilot_suggestion.is_visible() then
-        -- 2. If the "Grey Thing" (Ghost text) is visible, Tab accepts it
-        copilot_suggestion.accept()
       else
-        -- 3. Otherwise, do a normal Tab (or indent)
+        -- 2. Otherwise, do a normal Tab (or indent)
         fallback()
       end
     end, { "i", "s" }),

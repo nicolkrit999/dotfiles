@@ -42,7 +42,12 @@ nvim_tree.setup {
   sort_by = "name",
   update_cwd = false,
   view = {
-    width = 30,
+    width = {
+      min = 30,
+      max = "50%",
+      padding = 4,
+    },
+    adaptive_size = true,
     side = "left",
     preserve_window_proportions = false,
     number = false,
