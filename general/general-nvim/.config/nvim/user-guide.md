@@ -101,6 +101,12 @@ All navigation happens in **Normal mode**. Press `<Esc>` first if you are in Ins
 | `k` | Move cursor one line **up** (follows visual/wrapped lines when no count is given) |
 | `5j` | Move 5 lines down (with a count, moves by actual lines, not wrapped lines) |
 | `12k` | Move 12 lines up |
+| `3l` | Move 3 characters right (same as pressing `l` three times) |
+| `4h` | Move 4 characters left (same as pressing `h` four times) |
+
+**General rule**: a number typed before `h`, `j`, `k` or `l` repeats that key that many times. `Nh` moves N characters left, `Nl` N characters right, `Nj` N lines down, `Nk` N lines up.
+- It works the same in Visual mode (`v3l` extends the selection by 3 characters, `V3j` selects the current line plus 3 below) and after an operator (`d3l` deletes 3 characters, `d3j` deletes the current line and the 3 below).
+- With relative line numbers on, the number shown next to a line is exactly the `N` to use with `Nj` / `Nk` to reach it.
 
 ## Moving Within a Line
 
@@ -471,6 +477,178 @@ In markdown files only:
 | `vic` | Select inside a fenced code block |
 | `vac` | Select the code block including the fences |
 
+## Precision Selection: From the Cursor to an Exact Spot
+
+How to select (or delete/copy/change) from the cursor to a specific character, word, or place, including on another line.
+
+**Golden rules**
+- The character **under the cursor is always included** in a visual selection, both at the start and at the end.
+- Everything below works after `v`. Most of it also works after an operator (`d`, `y`, `c`) in place of `v`: for example `vt)` -> `dt)`, `yt)`, `ct)`. Exceptions are noted below.
+- A *selection* can only be one continuous area. You cannot select two separate places at once (see "Non-contiguous lines" below).
+
+### Quick lookup
+
+| I want to select from the cursor to... | Keys |
+| --- | --- |
+| the end of the line | `vL` (or `v$`) |
+| just **before** the next `X` on this line | `vtX` |
+| **including** the next `X` on this line | `vtXl` |
+| just before the 2nd `X` on this line | `v2tX` |
+| the next `X` anywhere (crosses lines) | `v/X<Enter>` (lands on the start of the match) |
+| the **end** of the next word/text `foo` | `v/foo/e<Enter>` |
+| the 2nd `foo` after the cursor, anywhere in the file | `v2/foo/e<Enter>` |
+| something visible on screen, no counting | `v` `f` `xx` `<label>`, then adjust with `l`/`h`/`e` |
+| a target N lines below, count unknown | `Nj`, `L`, `?foo<Enter>`, `viw` |
+
+### End of line: `L`
+
+- `L` is mapped to `g_` (last **non-blank** character of the line) in normal and visual mode; `H` is the first non-blank.
+- `vL` selects from the cursor through the last character of the line (for example a trailing `;`). `v$` does the same (`$` is remapped to `g_` in visual mode only, so the newline is not selected).
+- The mapping covers normal and visual mode only, **not operator-pending**. After an operator, `L` is the built-in "bottom of the screen" motion and works on whole lines. **Do not use `dL` / `yL` / `cL`**: `dL` was tested and deleted whole lines from the current one to the bottom of the window. Use `dg_` / `yg_` / `cg_` (tested: `dg_` deletes from the cursor through the last non-blank character), or `vL` then `d` / `y`.
+- With a count, `2L` goes to the end of the line below.
+
+### `t` and `T`: stop just before a character
+
+- `t<char>` jumps forward to the character **just before** the next `<char>`. `T<char>` does the same backward and stops just **after** it.
+- It only searches the **current line**. If `<char>` is not on the line, nothing happens.
+- It finds the next occurrence, not the last. The character under the cursor is not counted as a match.
+- To **include** the target, add `l` after it: `vt:l` (up to and including the next `:`).
+- `f` cannot be used for this, because `f` is hop.nvim here (it asks for 2 characters and shows labels). `vf:` does not do what you expect. After an operator `f` is still hop, but it is **not limited to the current line**: see the `df,` note below.
+- Works with operators: `dt)` deletes up to before `)`, `yt"` copies up to before `"`, `ct)` changes up to before `)`. To include the target character with an operator, use `v` first: `vt)l` then `d`.
+- **`f` after an operator (`df,`, `cf,`) is hop, not the built-in `f`** (tested): `df,` deleted from the cursor through a comma several lines below (it was the only comma in the visible text), so it is **not limited to the current line** and the target character is **deleted too**. `cf,` deleted the same kind of range (as `c` does, it should also leave you in Insert mode; not checked). With several matches on screen, hop shows labels and you choose the target, so the deleted range depends on the label you press; check what you typed before pressing `d`/`c` on a big range (`u` undoes it).
+
+### Counting: `v2tX` is not `2vtX`
+
+- Put the count **after** `v`, directly before `t`: `v2to` stops just before the 2nd `o` on the line. `v3t,` stops before the 3rd `,`.
+- `2vt` is a **different** thing: a count typed before `v` reselects a region of that size, it does not mean "2nd occurrence".
+- Counts also work with operators: `d2to`, `y2t)`, `c3t,`.
+- `T` counts backward: `v2T"`.
+- If the line has fewer occurrences than the count, nothing is selected or moved.
+
+### `)` and `(` are sentence motions, not parentheses
+
+- `)` jumps to the **start of the next sentence**, and `(` to the start of the current/previous one. They do **not** mean "closing parenthesis". The search is not limited to the current line, so they can cross many lines.
+
+**What counts as the end of a sentence** (standard Vim rules):
+- A `.`, `!` or `?` that is followed by a **space, a tab or the end of the line**. Closing characters `)`, `]`, `"` or `'` may sit between the `.`/`!`/`?` and that space (for example `done.") Next` still ends a sentence).
+- A **blank line** also separates sentences (it is a paragraph boundary).
+- A `.` with **no space after it does not count**: `obj.method()` or `file.txt` do not end a sentence. In code, only a `.`/`!`/`?` followed by a space or at the end of a line counts (for example inside a string or a comment).
+
+**Where the cursor lands**: on the **first non-blank character of the next sentence**, which is the first character after the terminator and the spaces that follow it.
+
+**Where a selection ends**: in Visual mode the character under the cursor is included, so `v)` selects from the cursor **through that first letter of the next sentence** (the spaces before it are selected too). With an operator (`d)`, `y)`) the motion stops just before that letter and does not include it (tested with `d)`: with the cursor on the `t` of `there`, it deleted `there. ` and the cursor ended on the `H` of `How`; `y)` was not tested).
+
+Concrete example. Text on one line, cursor on the `t` of `there`:
+
+```
+Hello there. How are you? Fine!
+```
+
+| Keys | What is selected / where the cursor ends |
+| --- | --- |
+| `v)` | `there. H`: ends on the `H` of `How`, the first letter of the next sentence (the `. ` after `there` is the boundary) |
+| `v))` | `there. How are you? F`: ends on the `F` of `Fine` |
+| `v(` | from the start of `Hello` up to the `t`, because `(` goes back to the start of the current sentence |
+
+Tested once on real code: starting inside a line of code, `v)` ran across several lines and stopped on the first letter after a `. ` that was inside a string literal (`"... text. Next ..."`, it stopped on the `N`), because that `. ` counts as a sentence boundary even in code. All three rows of the table above were tested with the example text and gave exactly the results listed. Also tested: on a line like `see file.txt now. Next one.` with the cursor on `see`, `v)` selected `see file.txt now. N`, so the `.` in `file.txt` (no space after it) did not stop it.
+
+Tip when testing these: type the sequence in one go (`v))`, not `v` and then `)` as separate steps). Pressing `v` again while already in Visual mode leaves Visual mode, and the which-key popup that appears after `v` is only a help list.
+
+- To reach a closing parenthesis: `vt)l` (up to and including it), or `v/)<Enter>`.
+- `%` jumps between a bracket and its match; it will not take you to a closing bracket from a plain character (it first finds the next bracket on the line and jumps to its partner, which can be backward).
+- `va(` / `vi(` select the whole group / its inside, but always starting from the opening `(`, never from the cursor.
+
+### Search as a selection motion (crosses lines)
+
+Searching with `/` (forward) or `?` (backward) works as a motion after `v`:
+
+| Keys | The selection ends at |
+| --- | --- |
+| `v/foo<Enter>` | the **first** character of the next `foo` (included) |
+| `v/foo/e<Enter>` | the **last** character of `foo` (included) |
+| `v/foo/e-1<Enter>` | one character before the end of `foo` |
+| `v/foo/e+1<Enter>` | one character after the end of `foo` |
+| `v2/foo<Enter>` | the start of the 2nd `foo` after the cursor |
+| `v2/foo/e<Enter>` | the end of the 2nd `foo` after the cursor |
+
+- The text after the second `/` (`e`, `e-1`, `e+1`) is a search **offset**; `e` means "end of the match".
+- **The count counts matches, not lines.** `2/foo` means "the 2nd `foo` after the cursor, wherever it is". It does not care on which line a match is. If a line you expected has no `foo`, the count simply moves on to the next match.
+- Because it counts matches, it also works **inside a single line**: if a line contains `foo` twice, `v2/foo/e<Enter>` selects up to the end of the second `foo` on that same line (tested: on a line with `Nome` and `nome`, the selection ended on the last letter of the second match, `nome`). (Unlike `t`, which also works on one line, search lets you target a whole word or phrase, not just one character.)
+- If there are fewer matches than the count, the search **wraps** to the top of the file (`wrapscan` is on by default and this config does not change it) and keeps counting, so you can end up before the cursor. Check the hlslens `[n/total]` overlay.
+- `ignorecase smartcase` is on, so a lowercase pattern (`foo`) also matches `Foo`. Type a capital letter to make it case-sensitive.
+- `/` is not remapped in this config.
+- With operators, `d/foo<Enter>` deletes up to (not including) the match; `d/foo/e<Enter>` includes the last letter of the match (tested: with the cursor on the start of `two words`, `d/words/e<Enter>` deleted everything up to and including the last letter of `words`).
+
+### Hop: select to something you can see (no counting)
+
+1. `v` starts the selection at the cursor.
+2. `f` then type **2 characters**. Every matching place on screen gets a label (case insensitive).
+3. Press the label letter. The cursor jumps there, and the selection now ends **on the first character of that match**, included.
+4. Extend or trim with a normal motion:
+
+| Key | Effect |
+| --- | --- |
+| `l` | extend the selection one character **to the right** (`3l` = three characters) |
+| `h` | move the end one character **to the left**: use it to pull back if you went one too far, or to extend leftward if the target is before the start |
+| `e` | extend to the end of the word (no need to count its letters) |
+| `b` | move back to the start of the word |
+
+Example: to select from the cursor to the end of a 4-letter word you can see: `v`, `f`, the word's first 2 letters, the label, then `lll` (first letter + 3 more) or simply `e`.
+
+- Hop only reaches text that is **visible on screen**.
+- Two-letter patterns match many places (for example `no` in `non`, `nome`, `Nome`), so look at the labels and pick the right one.
+
+### Target on another line, count unknown: use the relative numbers
+
+With relative line numbers the gutter shows how far each line is from the cursor (the current line shows its absolute number).
+
+1. `Nj` moves down `N` lines, where `N` is the number shown next to the target line (with a count, `j` moves real lines, not wrapped ones). Use `Nk` to go up.
+2. `L` goes to the end of that line.
+3. `?foo<Enter>` searches **backward** from the end of the line, which should find the **last** `foo` on that line (**not confirmed**: in one real test of steps 1 to 4 on a line with several matches the user reported that the **first** match was selected, cause not found yet; re-test step by step before relying on it). (Searching forward from the middle of the line could hit an earlier, unwanted match or a capitalised one.)
+4. `viw` selects the word, or `ve` selects from the match start to the word end.
+
+Related: `V3j` selects the current line and 3 below; `d3j` deletes 4 lines; `10G` or `;10` (Enter) jumps to absolute line 10.
+
+### Typing before or after: `i` `a` `I` `A`
+
+| Key | Where the typed text goes |
+| --- | --- |
+| `i` | **before** the character under the cursor |
+| `a` | **after** the character under the cursor |
+| `I` | before the **first non-whitespace** character of the line (not column 0: on an indented line it goes after the indentation; for the true start use `0` then `i`) |
+| `A` | after the **last character** of the line (the real end, even past trailing spaces) |
+
+**Typing at the absolute start of an indented line** (before the indentation):
+
+| Keys | Where you start typing |
+| --- | --- |
+| `I` | after the indentation, before the first non-blank character |
+| `0` then `i` | at column 0, before the indentation (**preferred**) |
+| `gI` | the same as `0` then `i`, in one key (standard Vim; not remapped in this config) |
+
+- `0` is remapped to `g0` (start of the *screen* line), but `set nowrap` is on, so lines never wrap and it is the same as the real column 0.
+- `gI` and the `0` + `i` combination were not tested yet in this config.
+
+- These only insert from **Normal mode**. In Visual mode `i` and `a` do not insert: they start a text object (`iw`, `i(`, `aw`...). Press `<Esc>` first.
+- **Typing after a selection that ends at the end of the line** (for example after `v$` or `vL`): press `<Esc>` (the cursor stays on the last character), then `a`. Using `i` would put the text *before* that last character (for example before a final `;`).
+- **Shortest way to type at the end of the line**: `A`, from anywhere on the line, with no selection needed.
+- `L` and `g_` stop on the last **non-blank** character, so `<Esc>` + `a` after `vL` types right after the last visible character, before any trailing spaces. `A` goes after the trailing spaces.
+
+### Non-contiguous lines (for example line 3 and line 10 together)
+
+Not possible. Vim has no selection of separate pieces, and this config has no multi-cursor plugin (`vim-visual-multi` is commented out in `lua/plugin_specs.lua`). Do it in steps:
+
+- **Repeat with `.`**: do the edit on one line, jump to the other, press `.`. Mind that deleting a line shifts the numbers below it.
+- **Ex commands with line numbers**: `;3d` then `;9d`, or `;3,10d` for the whole range 3 to 10 (tested: `;3,10d` deleted lines 3 to 10 **inclusive**, 8 lines).
+- **Bring them together**: `;3m10` moves line 3 **below** line 10, `;3t10` copies line 3 below line 10. Then select both with `V`. Tested: `;4m11` moved line 4 (an `import` line) to just below line 11, and `;4t11` copied line 4 below line 11 and kept the original in place. The line numbers refer to the file **before** the move, and afterwards the cursor sits on the moved/copied line.
+- **The numbers are absolute file line numbers**, not relative to the cursor, and it does not matter where the cursor is. With relative numbers on, only the cursor line shows its absolute number in the gutter; move onto a line to read it. Line 1 counts even if it is blank (a file that starts with an empty line has its first real line at number 2).
+- **Relative addresses**: `.` is the current line and `+N` / `-N` are N lines after/before it, so they match the relative numbers in the gutter. Tested: `;.t.` duplicated the current line and left the cursor on the new copy. Standard Vim but **not tested yet**: `;.m+2` (moves the current line to below the line 2 lines down) and `;.,+3d` (deletes the current line and the next 3).
+- **Blank lines hide the effect**: moving or copying a blank line next to another blank line changes nothing you can see. Use a line with text to check `m` and `t`.
+- **Same spot on adjacent lines**: `<Ctrl-v>` block mode, but only for adjacent lines (see the Visual Block Editing section).
+- **Matching by content instead of number**: the `:g` command (see its section).
+
+---
+
 ## Line Range Yanking (Command Mode)
 
 | Command | Description |
@@ -767,7 +945,7 @@ This is one of the most important sections in the guide. It covers searching wit
 | `N` | Jump to the **previous** match |
 | `*` | Search **forward** for the exact word under cursor (cursor stays on current match) |
 | `#` | Search **backward** for the exact word under cursor |
-| `<Esc>` or `:noh` | Clear search highlighting |
+| `;noh<Enter>` (`;` is `:` here) | Clear the yellow search highlight (tested). The search itself is kept, so `n` / `N` still work; the highlight comes back on the next search or `*`. |
 
 ### Search Modifiers
 
@@ -837,6 +1015,16 @@ Flags go at the very end, after the last `/`.
 | `:%s/old/new/gi` | Replace every `old` case-insensitively (`Old`, `OLD`, `old` all match) |
 | `:%s/old/new/gn` | **Count** how many `old` exist in the file (no replacement) |
 | `:%s/old/new/gce` | Confirm each, and don't error if not found |
+
+**Quick difference between the three common endings** (same `:%s/old/new` start, only the end changes):
+
+| Ending | Replaces | Asks you? |
+| --- | --- | --- |
+| `/` (no flag) | only the **first** `old` on each line | no |
+| `/gc` | **every** `old` on each line | yes, `y/n` for each one |
+| `/gcc` | **not a listed flag combination**: `g` and `c` are valid, a second `c` adds nothing documented. Its behaviour is **not tested** (try it on a spare buffer and note whether it errors, or behaves like `/gc`) | unknown |
+
+Do not confuse `/gcc` with the normal-mode `gcc` (toggle comment on the current line): inside `:s/…/…/` the letters are flags, outside it `gcc` is a command.
 
 ### Confirmation Mode (`c` Flag) Controls
 
@@ -1410,7 +1598,7 @@ Only available if `latex` is installed.
 
 ## Macros
 
-Recording is remapped: use `Q` instead of `q`.
+`Q` is an extra key for recording: `Qa` and `qa` both start recording into register `a` (tested: plain `q` works too, `Q` is mapped to `q`).
 
 | Keymap | Description |
 | --- | --- |
@@ -2385,7 +2573,7 @@ Practical, step-by-step walkthroughs for common tasks.
 
 Macros record a sequence of keystrokes and replay them. They are one of the most powerful features in Vim for repetitive editing.
 
-**Key remapping**: In this config, `Q` starts recording (instead of the default `q`), because `q` is used for other things.
+**Key mapping**: In this config `Q` is mapped to `q`, so `Q` and `q` both start recording (tested: plain `q` works too). Stopping is always `q`.
 
 ## Recording a Macro
 
@@ -2435,6 +2623,24 @@ Result:
 "banana"
 "cherry"
 ```
+
+## Scenario: Append the Same Text to a Block of Lines (Tested)
+
+Starting with 4 consecutive lines that each end with `;`, add ` // ok` to the end of every one.
+
+1. Put the cursor on the first of the 4 lines, at any column.
+2. `Qa` -- start recording to register `a`
+3. `A // ok<Esc>` -- jump to the end of the line, type the text, back to Normal mode
+4. `j` -- move down one line, ready for the next run
+5. `q` -- stop recording. Only line 1 has changed so far (you did the edit while recording).
+6. `3@a` -- replay 3 more times for the other 3 lines (total lines - 1)
+
+Result: all 4 lines end with `; // ok`.
+
+- **Why it repeats well**: `A` goes to the end of the line wherever the cursor is, so the column does not matter, and the macro ends on `j`, so the next run starts on the next line.
+- **Where the cursor ends**: one line **below** the last processed line (the final `j` of the last run). If that line is blank, the cursor is on the blank line.
+- **Count**: use `number of lines - 1`, because the recording already did the first line. A count that goes past the last line stops early with an error, which is harmless.
+- **Undo**: one `u` undid all the edits from the replay (tested). It was not checked whether the line edited by hand during recording was also undone.
 
 ## Scenario: Convert a List of Variables to Assignments
 
@@ -3189,8 +3395,19 @@ This config sets some command abbreviations (type the short form, press space):
 | Screen looks weird / frozen | You pressed `<Ctrl-s>` (terminal freeze) | Press `<Ctrl-q>` to unfreeze |
 | Can't exit Neovim | | Type `<Space>Q` or `;qa!<Enter>` |
 | Pasted text looks wrong | Paste from outside with `<Ctrl-v>` in terminal mode | Use `"+p` in Normal mode, or the terminal paste key |
-| Search highlight won't go away | | Type `:noh<Enter>` or press `<Esc>` |
+| Search highlight won't go away | Yellow boxes left over from a search or `*` | Type `;noh<Enter>` (tested). `<Esc>` does **not** clear it in this config |
 | Accidentally opened a macro | Pressed `Q` | Press `q` to stop recording |
+| A key like `"` does nothing until you press another key, or an accented letter appears (`ë`, `è`) | Your keyboard layout uses **dead keys** (see below) | Press `<Space>` right after the key |
+
+## Keyboard Layouts With Dead Keys (for example US International)
+
+Some layouts (for example US International, used on the main machine) treat certain keys as **dead keys**: the key does not type anything by itself, it waits for the next key to decide. `"` followed by `e` gives `ë`; `"` followed by `<Space>` gives a plain `"`. Neovim only receives the character after that decision, so commands that need `"` look like they do nothing.
+
+- **Symptom (tested with `"`)**: `vt"l` selected nothing, because `t` kept waiting for its character. `vt"<Space>l` works. In a search, `v/"<Enter>` worked because `<Enter>` also ends the wait.
+- **The rule**: after a dead key, press `<Space>` before continuing (`vt"<Space>l`).
+- **Keys that may be affected** (not confirmed, depends on the layout; `"` is the only one tested): `'` and `` ` `` (marks such as `` `a `` and `'a`), `"` (registers such as `"ay`, text objects such as `ci"`), `~` (toggle case) and `^` (start of line). Without the space, a dead key followed by a letter can become an accented letter (`"a` -> `ä`, `` `a `` -> `à`) and the Vim command never runs.
+- **This is not Neovim**: it happens in any application with that layout. A different PC may have a different layout, so if a key does nothing or types a strange character, check the layout before suspecting the config.
+- **Quick test in Insert mode**: type the key, then a letter (`"e`); if you get an accented letter, it is a dead key on your layout.
 
 ## Learning Path
 
@@ -3612,7 +3829,7 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `C` | Change from cursor to end of line | Deletes rest of line, insert mode |
 | `c$` | Same as `C` | |
 | `ct)` | Change from cursor to before `)` | Useful inside function arguments |
-| `cf,` | Change from cursor through next `,` | Useful in parameter lists |
+| `cf,` | Change from cursor through a `,` picked with hop (may be several lines away; see "Precision Selection") | `f` is hop.nvim here, not the built-in |
 
 ## Deleting Text
 
