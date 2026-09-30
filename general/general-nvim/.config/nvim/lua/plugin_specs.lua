@@ -762,45 +762,6 @@ local plugin_specs = {
     },
   },
   {
-    "zbirenbaum/copilot.lua",
-    cmd = "Copilot",
-    event = "VeryLazy",
-    config = function()
-      require("copilot").setup({
-        suggestion = {
-          enabled = true,
-          auto_trigger = true,
-          keymap = {
-            accept = false,
-            next = "<M-]>",
-            prev = "<M-[>",
-            dismiss = "<C-]>",
-          },
-        },
-        panel = { enabled = false },
-      })
-    end,
-  },
-  {
-    "zbirenbaum/copilot-cmp",
-    event = "VeryLazy",
-    dependencies = { "zbirenbaum/copilot.lua" },
-    config = function()
-      require("copilot_cmp").setup()
-    end,
-  },
-  {
-    "CopilotC-Nvim/CopilotChat.nvim",
-    dependencies = {
-      { "zbirenbaum/copilot.lua" },
-      { "nvim-lua/plenary.nvim" },
-    },
-    opts = {
-      debug = true,
-    },
-    cmd = { "CopilotChat", "CopilotChatOpen", "CopilotChatToggle" },
-  },
-  {
     "smjonas/live-command.nvim",
     -- live-command supports semantic versioning via Git tags
     -- tag = "2.*",
@@ -905,7 +866,7 @@ local plugin_specs = {
       require("claude-code").setup({
         window = {
           split_ratio = 0.3,
-          position = "botright",
+          position = "vsplit",
           enter_insert = true,
           hide_numbers = true,
           hide_signcolumn = true,
