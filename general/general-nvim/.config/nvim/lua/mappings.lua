@@ -256,8 +256,14 @@ end, { desc = "Markdown Preview (markdown only)" })
 -- ============================================================================
 -- MARKDOWN FOOTNOTES (normal mode only; insert mode unmapped in after/ftplugin)
 -- ============================================================================
-keymap.set("n", "<leader>mf", "<Plug>AddVimFootnote", { desc = "Add Footnote" })
-keymap.set("n", "<leader>mr", "<Plug>ReturnFromFootnote", { desc = "Return from Footnote" })
+-- The real maps are buffer-local in after/ftplugin/markdown.lua (vim-markdownfootnotes only
+-- loads for markdown). Elsewhere: ONE warning (like <A-m>).
+keymap.set("n", "<leader>mf", function()
+  vim.notify("Footnotes: only in markdown buffers", vim.log.levels.WARN)
+end, { desc = "Add Footnote (markdown only)" })
+keymap.set("n", "<leader>mr", function()
+  vim.notify("Footnotes: only in markdown buffers", vim.log.levels.WARN)
+end, { desc = "Return from Footnote (markdown only)" })
 
 -- General code runner
 -- Universal run command that detects file type.

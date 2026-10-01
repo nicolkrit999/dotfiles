@@ -2,6 +2,10 @@
 -- markdown buffers); overrides the global "markdown only" warning map in lua/mappings.lua
 vim.keymap.set("n", "<A-m>", "<cmd>MarkdownPreviewToggle<cr>", { buffer = true, silent = true, desc = "Markdown Preview" })
 
+-- footnotes (vim-markdownfootnotes); override the global "markdown only" warning maps
+vim.keymap.set("n", "<leader>mf", "<Plug>AddVimFootnote", { buffer = true, desc = "Add Footnote" })
+vim.keymap.set("n", "<leader>mr", "<Plug>ReturnFromFootnote", { buffer = true, desc = "Return from Footnote" })
+
 -- <Space>fm: format with prettier (marksman has no formatting provider, so the global LSP
 -- <Space>fm map would do nothing here). The buffer contents go through stdin and only the
 -- changed hunks are written back: one undo step, cursor/marks kept, nothing written to disk.
