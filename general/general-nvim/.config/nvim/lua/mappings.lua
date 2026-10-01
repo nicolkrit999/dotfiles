@@ -248,44 +248,73 @@ keymap.set("n", "<leader>mf", "<Plug>AddVimFootnote", { desc = "Add Footnote" })
 keymap.set("n", "<leader>mr", "<Plug>ReturnFromFootnote", { desc = "Return from Footnote" })
 
 -- General code runner
--- Universal run command that detects file type
+-- Universal run command that detects file type.
+-- Each branch names the binary it needs (`need`, any one is enough) and where it usually
+-- comes from (`where`). The binary is checked with executable() when the key is pressed: if it
+-- is missing, show ONE warning instead of opening a terminal that fails.
 vim.keymap.set('n', '<leader>rr', function()
   local filetype = vim.bo.filetype
   local filename = vim.fn.expand('%')
   local filename_no_ext = vim.fn.expand('%:r')
   local cmd = ''
+  local need, where = nil, nil
 
   if filetype == 'python' then
     cmd = 'python3 ' .. filename
   elseif filetype == 'java' then
-    -- Use nvim-java command instead of terminal
-    vim.cmd('JavaRunnerRunMain')
-    return -- Exit early since we're not using terminal
+    -- jdtls attached (nvim-java) -> its runner; else plain `java <file>` (single-file source launch)
+    if #vim.lsp.get_clients({ bufnr = 0, name = 'jdtls' }) > 0 then
+      vim.cmd('JavaRunnerRunMain')
+      return -- Exit early since we're not using terminal
+    end
+    cmd = 'java ' .. filename
+    need, where = { 'java' }, 'the java devShell'
   elseif filetype == 'c' then
     cmd = 'gcc -Wall -Wextra -std=c11 ' .. filename .. ' -o ' .. filename_no_ext .. ' && ./' .. filename_no_ext
+    need, where = { 'gcc' }, 'the c-cpp devShell'
   elseif filetype == 'cpp' then
     cmd = 'g++ -Wall -Wextra -std=c++17 ' .. filename .. ' -o ' .. filename_no_ext .. ' && ./' .. filename_no_ext
+    need, where = { 'g++' }, 'the c-cpp devShell'
   elseif filetype == 'cs' then
     cmd = 'dotnet run'
+    need = { 'dotnet' }
   elseif filetype == 'javascript' then
     cmd = 'node ' .. filename
   elseif filetype == 'typescript' then
     cmd = 'ts-node ' .. filename
+    need = { 'ts-node' }
   elseif filetype == 'go' then
     cmd = 'go run ' .. filename
+    need, where = { 'go' }, 'the go devShell'
   elseif filetype == 'rust' then
     cmd = 'cargo run || rustc ' .. filename .. ' && ./' .. filename_no_ext
+    need, where = { 'cargo', 'rustc' }, 'the rust devShell'
   elseif filetype == 'sh' or filetype == 'bash' then
     cmd = 'bash ' .. filename
   elseif filetype == 'lua' then
     cmd = 'lua ' .. filename
+    need = { 'lua' }
   elseif filetype == 'ruby' then
     cmd = 'ruby ' .. filename
+    need = { 'ruby' }
   elseif filetype == 'php' then
     cmd = 'php ' .. filename
+    need, where = { 'php' }, 'the php devShell'
   else
     print('No run command configured for filetype: ' .. filetype)
     return
+  end
+
+  if need then
+    local found = vim.iter(need):any(function(bin) return vim.fn.executable(bin) == 1 end)
+    if not found then
+      local msg = string.format('<leader>rr: %s not found on PATH', table.concat(need, '/'))
+      if where then
+        msg = msg .. ' (open nvim inside ' .. where .. ')'
+      end
+      vim.notify(msg, vim.log.levels.WARN)
+      return
+    end
   end
 
   vim.cmd('vsplit | terminal ' .. cmd)
