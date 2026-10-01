@@ -7,7 +7,8 @@
 --     with semantic tokens disabled for this buffer,
 --   * vim syntax is only turned on when the longest line is short enough (a megabyte-long
 --     minified line makes the regex engine hit 'redrawtime').
--- Escape hatches: `:lsp stop` (detach everything), `:set ft=<real ft>` (full mode).
+-- Escape hatches: `:lsp stop` (detach everything), `:set ft=<real ft>` (full mode: semantic
+-- tokens, completion and paren matching come back for this buffer).
 local M = {}
 
 -- LSPs that are skipped in big files
@@ -72,19 +73,37 @@ end
 ---@param ctx {buf: integer, ft: string}
 function M.setup(ctx)
   local buf = ctx.buf
-  -- Snacks defaults
-  if vim.fn.exists(":NoMatchParen") ~= 0 then vim.cmd([[NoMatchParen]]) end
+  -- Snacks defaults, but paren matching off for THIS buffer only (the Snacks default
+  -- :NoMatchParen is vim-matchup's global switch and would stay off in every buffer)
+  vim.b[buf].matchup_matchparen_enabled = 0
+  vim.b[buf].matchup_matchparen_fallback = 0
   Snacks.util.wo(0, { foldmethod = "manual", statuscolumn = "", conceallevel = 0 })
-  vim.b.completion = false
-  vim.b.minianimate_disable = true
-  vim.b.minihipatterns_disable = true
+  vim.b[buf].completion = false -- read by the nvim-cmp `enabled` function
+  vim.b[buf].minianimate_disable = true
+  vim.b[buf].minihipatterns_disable = true
 
   vim.b[buf].bigfile_ft = ctx.ft
+  local group = vim.api.nvim_create_augroup("bigfile_lsp_" .. buf, { clear = true })
+
+  -- `:set ft=<lang>` leaves bigfile mode: undo the buffer-local restrictions
+  vim.api.nvim_create_autocmd("FileType", {
+    buffer = buf,
+    group = group,
+    callback = function(ev)
+      if vim.bo[ev.buf].filetype == "bigfile" then return end
+      for _, var in ipairs({ "completion", "minianimate_disable", "minihipatterns_disable",
+        "matchup_matchparen_enabled", "matchup_matchparen_fallback", "bigfile_ft" }) do
+        vim.b[ev.buf][var] = nil
+      end
+      vim.lsp.semantic_tokens.enable(true, { bufnr = ev.buf })
+      pcall(vim.api.nvim_del_augroup_by_id, group)
+    end,
+  })
 
   -- filetype-less LSPs (typos_lsp attaches to every filetype, so also to "bigfile"): detach them
   vim.api.nvim_create_autocmd("LspAttach", {
     buffer = buf,
-    group = vim.api.nvim_create_augroup("bigfile_lsp_" .. buf, { clear = true }),
+    group = group,
     callback = function(ev)
       local client = vim.lsp.get_client_by_id(ev.data.client_id)
       if client and M.skip[client.name] and vim.bo[ev.buf].filetype == "bigfile" then
