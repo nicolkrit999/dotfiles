@@ -1085,6 +1085,27 @@ local plugin_specs = {
           scrolling = true,
         },
       })
+
+      -- <Esc> inside the Claude Code terminal goes to Claude (e.g. to interrupt it) instead of
+      -- the global `t <Esc>` map (leave terminal mode, lua/mappings.lua). Buffer-local, so other
+      -- terminals keep the global map; <C-\><C-n> still leaves terminal mode here.
+      -- claude-code.nvim tracks its terminal buffers in claude_code.instances (git root -> bufnr).
+      local function is_claude_buf(buf)
+        for _, b in pairs(require("claude-code").claude_code.instances or {}) do
+          if b == buf then return true end
+        end
+        return false
+      end
+      vim.api.nvim_create_autocmd("TermEnter", {
+        group = vim.api.nvim_create_augroup("claude_code_esc", { clear = true }),
+        desc = "Claude Code terminal: <Esc> passes through to Claude",
+        callback = function(ev)
+          if vim.b[ev.buf].claude_esc_passthrough or not is_claude_buf(ev.buf) then return end
+          -- noremap <Esc> in terminal mode = send Esc to the terminal job
+          vim.keymap.set("t", "<Esc>", "<Esc>", { buffer = ev.buf, nowait = true, desc = "Esc to Claude Code" })
+          vim.b[ev.buf].claude_esc_passthrough = true
+        end,
+      })
     end,
   },
 }
