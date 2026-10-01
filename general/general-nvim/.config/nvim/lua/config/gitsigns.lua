@@ -41,7 +41,7 @@ gs.setup {
     map("n", "<leader>hp", gs.preview_hunk, { desc = "preview hunk" })
     map("n", "<leader>hb", function()
       gs.blame_line { full = true }
-    end, { desc = "blame hunk" })
+    end, { desc = "blame line (full)" })
   end,
 }
 
