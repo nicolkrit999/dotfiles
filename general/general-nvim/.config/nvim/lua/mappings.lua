@@ -190,11 +190,12 @@ keymap.set({ "x", "o" }, "<leader>as", "<cmd>echo 'around sentence'<cr>", { desc
 
 
 -- Java (nvim-java). The Java* commands only work once jdtls is attached (jdtls needs `java`,
--- e.g. from the Java devShell), so these maps are buffer-local and created on LspAttach of
--- jdtls: no jdtls -> no <leader>j* maps. Groups:
+-- e.g. from the Java devShell), so the real maps are buffer-local and created on LspAttach of
+-- jdtls. Everywhere else the same keys are global FALLBACK maps that show ONE warning (an
+-- unmapped key would fall through to plain Vim keys, e.g. <Space>jrr = l, j, rr). Groups:
 -- <leader>jb build, <leader>jr runner, <leader>jt test, <leader>je extract/refactor
--- (which-key group names in lua/config/which-key.lua; which-key hides a group that has no
--- keymaps, so the "Java" groups only show in buffers where jdtls is attached)
+-- (which-key group names in lua/config/which-key.lua; because of the fallback maps the groups
+-- show in every buffer)
 local java_maps = {
   -- Java Build
   { "<leader>jbb", "JavaBuildBuildWorkspace", "Java: Build Workspace" },
@@ -220,6 +221,14 @@ local java_maps = {
   { "<leader>jd", "JavaDapConfig", "Java: DAP Config" },
   { "<leader>jj", "JavaSettingsChangeRuntime", "Java: Change Runtime" },
 }
+
+-- global fallbacks: one warning, no fall-through; the jdtls buffer-local maps below override them
+local function java_not_attached()
+  vim.notify("Java: jdtls not attached (open nvim inside the Java devShell)", vim.log.levels.WARN)
+end
+for _, m in ipairs(java_maps) do
+  keymap.set("n", m[1], java_not_attached, { desc = m[3] .. " (needs jdtls)" })
+end
 
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("java_keymaps", { clear = true }),
