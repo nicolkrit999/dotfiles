@@ -39,7 +39,7 @@ local set_qflist = function(buf_num, severity)
 end
 
 -- this puts diagnostics from opened files to quickfix
-vim.keymap.set("n", "<space>qw", diagnostic.setqflist, { desc = "put window diagnostics to qf" })
+vim.keymap.set("n", "<space>qw", diagnostic.setqflist, { desc = "put all diagnostics to qf" })
 
 -- this puts diagnostics from current buffer to quickfix
 vim.keymap.set("n", "<space>qb", function()

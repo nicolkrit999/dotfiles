@@ -40,5 +40,5 @@ vim.keymap.set("n", "zr", require("ufo").openFoldsExceptKinds)
 vim.keymap.set("n", "<leader>K", function()
   local _ = require("ufo").peekFoldedLinesUnderCursor()
 end, {
-  desc = "Preview folded maps",
+  desc = "Preview folded lines",
 })
