@@ -1,9 +1,5 @@
 local utils = require("utils")
 
--- 1. Protect against crash if lspconfig is missing
-local status, lspconfig = pcall(require, "lspconfig")
-if not status then return end
-
 -- 2. Configure Global Native LSP behavior
 vim.lsp.config("*", {
   capabilities = require("lsp_utils").get_default_capabilities(),

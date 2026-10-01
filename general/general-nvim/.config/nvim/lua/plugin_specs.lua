@@ -257,7 +257,6 @@ local plugin_specs = {
   },
   {
     "luukvbaal/statuscol.nvim",
-    opts = {},
     config = function()
       require("config.nvim-statuscol")
     end,
@@ -947,7 +946,7 @@ local plugin_specs = {
     "folke/trouble.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     cmd = "Trouble",
-    opts = { use_diagnostics_signs = true },
+    opts = {},
   },
   {
     -- show hint for code actions, the user can also implement code actions themselves,
@@ -996,7 +995,6 @@ local plugin_specs = {
       "nvim-telescope/telescope.nvim",
       "nvim-treesitter/nvim-treesitter",
     },
-    opts = {},
     config = function()
       require("config.devdocs")
     end,

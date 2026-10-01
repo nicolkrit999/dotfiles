@@ -1,5 +1,3 @@
-local api = vim.api
-local keymap = vim.keymap
 local dashboard = require("dashboard")
 local ascii = require("ascii")
 
@@ -197,12 +195,3 @@ dashboard.setup {
   shortcut_type = "number",
   config = conf,
 }
-
-api.nvim_create_autocmd("FileType", {
-  pattern = "dashboard",
-  group = api.nvim_create_augroup("dashboard_enter", { clear = true }),
-  callback = function()
-    keymap.set("n", "q", ":qa<CR>", { buffer = true, silent = true })
-    keymap.set("n", "e", ":enew<CR>", { buffer = true, silent = true })
-  end,
-})
