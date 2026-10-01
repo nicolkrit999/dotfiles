@@ -11,8 +11,10 @@
 -- tokens, completion and paren matching come back for this buffer).
 local M = {}
 
--- LSPs that are skipped in big files
-M.skip = { typos_lsp = true, ltex_plus = true }
+-- LSPs that are skipped in big files. lua_ls: every bigfile is over its
+-- Lua.workspace.preloadFileSize (500 KB); on a 2 MB file it gave no answers (documentSymbol
+-- timed out after 15 s) while still burning CPU, so it is no help there.
+M.skip = { typos_lsp = true, ltex_plus = true, lua_ls = true }
 -- syntax highlighting only if every line is shorter than this
 M.max_syntax_line = 3000
 M.lsp_delay = 500
