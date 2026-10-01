@@ -56,22 +56,34 @@ end, { desc = "Toggle Diagnostics" })
 -- Turn the word under cursor to upper case
 keymap.set("i", "<c-u>", "<Esc>viwUea")
 
--- Turn the current word into title case: the word under the cursor or ending right before it
--- (works at the start, middle and end of a word, on one-letter words and at the line start).
--- Stays in insert mode with the cursor after the word, like <c-u>.
+-- Toggle the case of the first letter of the current word (Foo <-> foo). The word is the one under
+-- the cursor or ending right before it; when only whitespace separates the cursor from the previous
+-- word on the same line ("foo |"), that word. A non-letter first char is left alone.
+-- Stays in insert mode, the cursor keeps its place in the text.
 keymap.set("i", "<c-t>", function()
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))
   local line = vim.api.nvim_get_current_line()
   -- leftmost run of keyword chars that touches the cursor column (byte col + 1)
   local word, s, e = unpack(vim.fn.matchstrpos(line, [[\k*\%]] .. (col + 1) .. [[c\k*]]))
   if word == "" then
+    -- fallback: the word before the cursor, separated from it only by whitespace
+    word, s, e = unpack(vim.fn.matchstrpos(line, [[\k\+\ze\s\+\%]] .. (col + 1) .. "c"))
+  end
+  if word == "" then
     return
   end
   local first = vim.fn.strcharpart(word, 0, 1)
-  local new = vim.fn.toupper(first) .. word:sub(#first + 1)
-  vim.api.nvim_buf_set_text(0, row - 1, s, row - 1, e, { new })
-  vim.api.nvim_win_set_cursor(0, { row, s + #new })
-end, { desc = "title-case the current word" })
+  local upper, lower = vim.fn.toupper(first), vim.fn.tolower(first)
+  local toggled = first ~= upper and upper or (first ~= lower and lower or nil)
+  if not toggled then
+    return
+  end
+  vim.api.nvim_buf_set_text(0, row - 1, s, row - 1, s + #first, { toggled })
+  if col > s then
+    col = col + #toggled - #first
+  end
+  vim.api.nvim_win_set_cursor(0, { row, col })
+end, { desc = "toggle case of the word's first letter" })
 
 -- Paste non-linewise text above or below current line, see https://stackoverflow.com/a/1346777/6064933
 keymap.set("n", "<leader>p", "m`o<ESC>p``", { desc = "paste below current line" })
@@ -289,7 +301,7 @@ vim.keymap.set('n', '<leader>rr', function()
   -- the file name is shell-escaped for every branch (spaces, quotes, $ ; in a name reach the
   -- program as one argument); c/cpp/rust single files build the binary next to the source and
   -- run it by its full, shell-escaped path (works for absolute buffer names, files outside
-  -- the cwd, paths with spaces and paths with % # ! — see the jobstart below)
+  -- the cwd, paths with spaces and paths with % # ! - see the jobstart below)
   local file = vim.fn.shellescape(vim.fn.expand('%'))
   local binary = vim.fn.shellescape(vim.fn.expand('%:p:r'))
   local cmd = ''
