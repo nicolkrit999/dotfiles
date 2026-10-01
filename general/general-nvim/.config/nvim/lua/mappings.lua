@@ -353,20 +353,20 @@ vim.keymap.set('n', '<leader>rr', function()
   vim.fn.jobstart(cmd, { term = true })
 end, { noremap = true, desc = "Run current file" })
 
--- Do not move my cursor when joining lines.
-keymap.set("n", "J", function()
-  vim.cmd([[
-      normal! mzJ`z
-      delmarks z
-    ]])
-end, { desc = "join lines without moving cursor" })
+-- Do not move my cursor when joining lines. Honours a count (3J joins 3 lines, like the
+-- builtin) and keeps the cursor with winsaveview instead of a mark, so mark z is left alone.
+local function join_keep_cursor(cmd)
+  return function()
+    local count = vim.v.count > 1 and vim.v.count or ""
+    local view = vim.fn.winsaveview()
+    vim.cmd("normal! " .. count .. cmd)
+    vim.fn.winrestview(view)
+  end
+end
 
-keymap.set("n", "gJ", function()
-  vim.cmd([[
-      normal! mzgJ`z
-      delmarks z
-    ]])
-end, { desc = "join lines without spaces (keep cursor)" })
+keymap.set("n", "J", join_keep_cursor("J"), { desc = "join lines without moving cursor" })
+
+keymap.set("n", "gJ", join_keep_cursor("gJ"), { desc = "join lines without spaces (keep cursor)" })
 
 -- Break inserted text into smaller undo units when we insert some punctuation chars.
 local undo_ch = { ",", ".", "!", "?", ";", ":" }
