@@ -14,8 +14,9 @@ local activate_hlslens = function(direction)
 
   -- Deal with the case that there is no such pattern in current buffer.
   if not status then
-    local start_idx, _ = string.find(msg, "E486", 1, true)
-    local msg_part = string.sub(msg, start_idx)
+    -- Strip the "Vim(normal):" prefix; covers E486, E35 (no previous pattern)
+    -- and E384/E385 (search hit TOP/BOTTOM with nowrapscan).
+    local msg_part = msg:match("E%d+:.*") or msg
     api.nvim_echo({ { msg_part } }, true, { err = true })
     return
   end
