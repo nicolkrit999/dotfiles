@@ -878,6 +878,9 @@ local plugin_specs = {
       },
       -- more beautiful vim.ui.select
       picker = { enabled = true },
+      -- light mode for big files (> 1.5 MB, or average line length > 5000 = minified bundles):
+      -- filetype `bigfile`, no treesitter/LSP/ftplugin maps; `:set ft=json` (etc.) to get them back
+      bigfile = { enabled = true, line_length = 5000 },
     },
   },
   -- show and trim trailing whitespaces
