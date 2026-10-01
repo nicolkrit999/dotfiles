@@ -416,7 +416,8 @@ local plugin_specs = {
     dependencies = {
       "honza/vim-snippets",
     },
-    event = "InsertEnter",
+    event = "VeryLazy",
+    ft = "snippets",
     init = function()
       vim.cmd([[
         " Trigger configuration. Do not use <tab> if you use YouCompleteMe
