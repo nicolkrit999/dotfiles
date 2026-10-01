@@ -1083,7 +1083,10 @@ local plugin_specs = {
         keymaps = {
           toggle = {
             normal = "<leader>cc",
-            terminal = "<leader>ct",
+            -- no terminal-mode toggle: a global `t <Space>ct` map made every terminal wait on a
+            -- typed space and toggled Claude on text like " ctags". Leave the terminal with
+            -- <C-\><C-n>, then toggle with <Space>cc.
+            terminal = false,
             variants = {
               continue = "<leader>cR",
               verbose = "<leader>cV",
