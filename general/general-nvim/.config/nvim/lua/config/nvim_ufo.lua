@@ -103,13 +103,23 @@ local function step_folds(delta, builtin)
   ufo.closeFoldsWith(level)
 end
 
+-- ufo runs "silent! %foldopen!" / "%foldclose!": silent! still leaves E490 in v:errmsg in a buffer
+-- without folds, so keep v:errmsg as it was
+local function keep_errmsg(fn)
+  local errmsg = vim.v.errmsg
+  fn()
+  vim.v.errmsg = errmsg
+end
+
 vim.keymap.set("n", "zR", function()
   set_level(nil) -- nil = read from the folds next time (all open = deepest)
-  ufo.openAllFolds()
+  keep_errmsg(ufo.openAllFolds)
 end, { desc = "Open all folds" })
 vim.keymap.set("n", "zM", function()
-  set_level(0)
-  ufo.closeAllFolds()
+  -- store 0 only when there are folds to close; otherwise (folds not computed yet, foldless buffer)
+  -- leave it unset so the next zr/zm reads the level from the folds as they are shown then
+  set_level((ufo.hasAttached() and deepest_level() > 0) and 0 or nil)
+  keep_errmsg(ufo.closeAllFolds)
 end, { desc = "Close all folds" })
 vim.keymap.set("n", "zr", function()
   step_folds(1, "zr")
