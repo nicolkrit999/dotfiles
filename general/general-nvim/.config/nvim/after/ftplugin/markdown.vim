@@ -47,7 +47,7 @@ function! AddListSymbol(type, ...) abort
     if l:end == 0
       let new_text = '+ ' . text
     else
-      let new_text = text[0 : l:end-1] . ' + ' . text[l:end :]
+      let new_text = text[0 : l:end-1] . '+ ' . text[l:end :]
     endif
 
     call setline(line, new_text)
