@@ -125,6 +125,7 @@ local plugin_specs = {
   { "machakann/vim-swap",          event = "VeryLazy" },
 {
     "nvim-treesitter/nvim-treesitter",
+    branch = "main",
     build = function()
       if not (vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")) then
         vim.cmd(":TSUpdate")
