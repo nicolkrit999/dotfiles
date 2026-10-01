@@ -592,7 +592,12 @@ local plugin_specs = {
   {
     "chrisbra/unicode.vim",
     -- the plugin loads on the first `ga`; no separate `nmap ga` (it would overwrite lazy's key stub)
-    keys = { { "ga", "<Plug>(UnicodeGA)", remap = true, desc = "unicode info of char under cursor" } },
+    -- <leader>cu: our own lhs for the swap map. Lazy sets the real <leader>cu map before the plugin is
+    -- sourced, so unicode.vim's hasmapto() check skips its default <leader>un (which made <leader>u wait).
+    keys = {
+      { "ga", "<Plug>(UnicodeGA)", remap = true, desc = "unicode info of char under cursor" },
+      { "<leader>cu", "<Plug>(UnicodeSwapCompleteName)", remap = true, desc = "unicode: swap <C-x><C-z> completion (name/char)" },
+    },
     cmd = { "UnicodeSearch" },
   },
 
