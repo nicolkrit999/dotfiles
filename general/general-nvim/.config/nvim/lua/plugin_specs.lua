@@ -338,6 +338,15 @@ local plugin_specs = {
     end,
   },
 
+  -- dim inactive windows
+  {
+    "tadaa/vimade",
+    event = "VeryLazy",
+    config = function()
+      require("config.vimade")
+    end,
+  },
+
   -- Highlight URLs inside vim
   { "itchyny/vim-highlighturl", event = "BufReadPost" },
 
