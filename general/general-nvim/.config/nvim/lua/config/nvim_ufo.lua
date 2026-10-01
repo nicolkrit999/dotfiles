@@ -34,12 +34,12 @@ require("ufo").setup {
   fold_virt_text_handler = handler,
 }
 
--- Fold level counter (per window AND buffer). ufo needs 'foldlevel' to stay high, so its zM closes
--- every fold but leaves 'foldlevel' at 99; with builtin zr/zm the first zr after zM would then open
--- ALL folds. Instead track the level in w:ufo_foldlevels[bufnr] and apply it with closeFoldsWith():
--- zM -> 0, zr -> +count, zm -> -count, zR -> deepest (all open). With no stored level (new window,
--- other buffer) the level is read from the folds as they are shown: one below the shallowest closed
--- fold, or the deepest level when none is closed. Buffers without ufo fall back to the builtin keys.
+-- Fold level stepping. ufo needs 'foldlevel' to stay high, so its zM closes every fold but leaves
+-- 'foldlevel' at 99; with builtin zr/zm the first zr after zM would then open ALL folds. Instead zr/zm
+-- read the level from the folds as they are shown (one below the shallowest closed fold, or the
+-- deepest level when none is closed) and apply level +/- count with closeFoldsWith(). Nothing is
+-- stored, so a reload, another buffer, a new window or a manual zo/zc can never leave a stale level.
+-- Buffers without ufo fall back to the builtin keys.
 local ufo = require("ufo")
 
 local function deepest_level()
@@ -75,13 +75,6 @@ local function visible_level()
   return min and math.max(0, min - 1)
 end
 
-local function set_level(level)
-  local levels = vim.w.ufo_foldlevels or {}
-  -- string keys: a sparse integer-keyed table cannot be stored in a w: variable
-  levels[tostring(vim.api.nvim_get_current_buf())] = level
-  vim.w.ufo_foldlevels = levels
-end
-
 local function step_folds(delta, builtin)
   if not ufo.hasAttached() then
     -- pcall: a buffer without folds must not raise E490 (and not leave it in v:errmsg)
@@ -94,13 +87,8 @@ local function step_folds(delta, builtin)
   if deepest == 0 then
     return -- no folds in this buffer: nothing to do (builtin zr/zm would only raise E490)
   end
-  local level = (vim.w.ufo_foldlevels or {})[tostring(vim.api.nvim_get_current_buf())]
-  if level == nil then
-    level = visible_level() or deepest
-  end
-  level = math.max(0, math.min(deepest, level + delta * vim.v.count1))
-  set_level(level)
-  ufo.closeFoldsWith(level)
+  local level = visible_level() or deepest
+  ufo.closeFoldsWith(math.max(0, math.min(deepest, level + delta * vim.v.count1)))
 end
 
 -- ufo runs "silent! %foldopen!" / "%foldclose!": silent! still leaves E490 in v:errmsg in a buffer
@@ -112,13 +100,9 @@ local function keep_errmsg(fn)
 end
 
 vim.keymap.set("n", "zR", function()
-  set_level(nil) -- nil = read from the folds next time (all open = deepest)
   keep_errmsg(ufo.openAllFolds)
 end, { desc = "Open all folds" })
 vim.keymap.set("n", "zM", function()
-  -- store 0 only when there are folds to close; otherwise (folds not computed yet, foldless buffer)
-  -- leave it unset so the next zr/zm reads the level from the folds as they are shown then
-  set_level((ufo.hasAttached() and deepest_level() > 0) and 0 or nil)
   keep_errmsg(ufo.closeAllFolds)
 end, { desc = "Close all folds" })
 vim.keymap.set("n", "zr", function()
