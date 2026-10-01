@@ -5,7 +5,10 @@
 vim.opt_local.textwidth = 100
 vim.opt_local.wrap      = true
 
--- <leader>tw  — launch typst watch (recompile + open PDF) in background.
--- TypstWatch is provided by kaarmu/typst.vim.
-vim.keymap.set("n", "<leader>tw", "<cmd>TypstWatch<cr>",
-  { buffer = true, desc = "Typst: watch & recompile" })
+-- <leader>tw  - launch typst watch (recompile + open PDF) in background.
+-- TypstWatch is provided by kaarmu/typst.vim, which is only enabled when `typst` is on PATH
+-- (e.g. inside the typst devShell): same check here, so the key does not exist without it.
+if vim.fn.executable("typst") == 1 then
+  vim.keymap.set("n", "<leader>tw", "<cmd>TypstWatch<cr>",
+    { buffer = true, desc = "Typst: watch & recompile" })
+end
