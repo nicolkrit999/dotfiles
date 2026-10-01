@@ -5,6 +5,9 @@ if not status_cmp then return end
 -- 2. Protect against crash if mini.icons isn't loaded yet
 local status_icons, MiniIcons = pcall(require, "mini.icons")
 
+-- 3. colorful-menu: completion labels highlighted like code (optional)
+local status_colorful, colorful_menu = pcall(require, "colorful-menu")
+
 -- Standard source loading (pcall wrapped to be extra safe)
 pcall(require, "cmp_nvim_lsp")
 pcall(require, "cmp_path")
@@ -56,12 +59,19 @@ cmp.setup {
     entries = "custom",
   },
   formatting = {
-    format = function(_, vim_item)
+    format = function(entry, vim_item)
       -- Only use MiniIcons if the plugin was successfully loaded
       if status_icons then
         local icon, hl = MiniIcons.get("lsp", vim_item.kind)
         vim_item.kind = icon .. " " .. vim_item.kind
         vim_item.kind_hl_group = hl
+      end
+      if status_colorful then
+        local highlights_info = colorful_menu.cmp_highlights(entry)
+        if highlights_info ~= nil then
+          vim_item.abbr_hl_group = highlights_info.highlights
+          vim_item.abbr = highlights_info.text
+        end
       end
       return vim_item
     end,

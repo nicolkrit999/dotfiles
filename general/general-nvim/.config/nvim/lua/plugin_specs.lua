@@ -36,6 +36,14 @@ local plugin_specs = {
       require("config.nvim-cmp")
     end,
   },
+  -- treesitter-colored completion labels (used by lua/config/nvim-cmp.lua)
+  {
+    "xzbdmw/colorful-menu.nvim",
+    lazy = true,
+    config = function()
+      require("config.colorful_menu")
+    end,
+  },
   {
     "MaximilianLloyd/ascii.nvim",
     dependencies = {
