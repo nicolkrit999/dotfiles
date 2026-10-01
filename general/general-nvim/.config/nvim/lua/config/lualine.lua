@@ -250,8 +250,8 @@ require("lualine").setup {
   options = {
     icons_enabled = true,
     theme = "auto",
-    component_separators = { left = "⏐", right = "⏐" },
-    section_separators = "",
+    component_separators = { left = "\\", right = "/" },
+    section_separators = { left = "\u{e0b8}", right = "\u{e0ba}" },
     disabled_filetypes = {},
     always_divide_middle = false,
     refresh = {
@@ -263,13 +263,14 @@ require("lualine").setup {
       {
         "filename",
         symbols = {
-          readonly = "[🔒]",
+          readonly = "\u{f0221}",
         },
       },
     },
     lualine_b = {
       {
         "branch",
+        icon = "\u{f47f}",
         fmt = function(name, _)
           -- truncate branch name in case the name is too long
           return string.sub(name, 1, 20)
@@ -283,6 +284,12 @@ require("lualine").setup {
       {
         "diff",
         source = diff,
+      },
+      {
+        "diagnostics",
+        sources = { "nvim_diagnostic" },
+        color = { gui = "bold" },
+        symbols = { error = "🆇 ", warn = "⚠️ ", info = "ℹ️ ", hint = " " },
       },
       {
         virtual_env,
@@ -302,12 +309,7 @@ require("lualine").setup {
     lualine_x = {
       {
         get_active_lsp,
-        icon = "📡",
-      },
-      {
-        "diagnostics",
-        sources = { "nvim_diagnostic" },
-        symbols = { error = "🆇 ", warn = "⚠️ ", info = "ℹ️ ", hint = " " },
+        icon = "\u{f013}",
       },
       {
         trailing_space,
@@ -327,14 +329,12 @@ require("lualine").setup {
         show_fileformat,
         color = "ErrorMsg",
       },
-      "filetype",
       {
         ime_state,
         color = { fg = "black", bg = "#f46868" },
       },
     },
     lualine_z = {
-      "location",
       "progress",
     },
   },
