@@ -38,16 +38,15 @@ nvim_tree.setup {
   hijack_netrw = true,
   hijack_cursor = false,
   hijack_unnamed_buffer_when_opening = false,
-  open_on_tab = false,
-  sort_by = "name",
-  update_cwd = false,
+  tab = { sync = { open = false, close = false } },
+  sort = { sorter = "name" },
+  sync_root_with_cwd = false,
   view = {
     width = {
       min = 30,
       max = "50%",
       padding = 4,
     },
-    adaptive_size = true,
     side = "left",
     preserve_window_proportions = false,
     number = false,
@@ -64,7 +63,7 @@ nvim_tree.setup {
       },
     },
     icons = {
-      webdev_colors = true,
+      web_devicons = { file = { color = true } },
     },
   },
   hijack_directories = {
@@ -73,8 +72,10 @@ nvim_tree.setup {
   },
   update_focused_file = {
     enable = false,
-    update_cwd = false,
-    ignore_list = {},
+    update_root = {
+      enable = false,
+      ignore_list = {},
+    },
   },
   diagnostics = {
     enable = false,
@@ -88,12 +89,12 @@ nvim_tree.setup {
   },
   filters = {
     dotfiles = false,
+    git_ignored = true,
     custom = {},
     exclude = {},
   },
   git = {
     enable = true,
-    ignore = true,
     timeout = 10000,
   },
   actions = {
@@ -118,8 +119,8 @@ nvim_tree.setup {
   },
   trash = {
     cmd = "trash",
-    require_confirm = true,
   },
+  ui = { confirm = { trash = true } },
   log = {
     enable = false,
     truncate = false,
