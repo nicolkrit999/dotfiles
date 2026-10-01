@@ -1,5 +1,4 @@
 -- LanguageTool grammar/spell checking via ltex-ls-plus (installed globally by nix).
--- Replaces vim-grammarous (removed by H8c).
 ---@type vim.lsp.Config
 return {
   filetypes = { "markdown", "tex", "plaintex", "typst", "gitcommit", "text" },

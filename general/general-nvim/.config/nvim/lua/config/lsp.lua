@@ -94,7 +94,7 @@ local servers = {
     },
   },
 
-  -- Grammar/spell checking (LanguageTool) for prose filetypes; replaces vim-grammarous
+  -- Grammar/spell checking (LanguageTool) for prose filetypes
   ltex_plus = { cmd = { "ltex-ls-plus" } },
 
   -- Source-code spell checker (typos); attaches to every filetype
