@@ -1021,7 +1021,7 @@ local plugin_specs = {
 
 
   {
-    -- maintained fork of the archived Pocco81/auto-save.nvim (same behaviour configured below)
+    -- maintained fork of the archived Pocco81/auto-save.nvim
     "okuuva/auto-save.nvim",
     config = function()
       require("auto-save").setup {
