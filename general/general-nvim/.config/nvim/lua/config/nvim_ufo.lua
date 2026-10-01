@@ -34,11 +34,12 @@ require("ufo").setup {
   fold_virt_text_handler = handler,
 }
 
--- Fold level counter (per window). ufo needs 'foldlevel' to stay high, so its zM closes every
--- fold but leaves 'foldlevel' at 99; with builtin zr/zm the first zr after zM would then open
--- ALL folds. Instead track the level in w:ufo_foldlevel and apply it with closeFoldsWith():
--- zM -> 0, zr -> +count, zm -> -count, zR -> deepest (all open). Buffers without ufo fall back
--- to the builtin keys.
+-- Fold level counter (per window AND buffer). ufo needs 'foldlevel' to stay high, so its zM closes
+-- every fold but leaves 'foldlevel' at 99; with builtin zr/zm the first zr after zM would then open
+-- ALL folds. Instead track the level in w:ufo_foldlevels[bufnr] and apply it with closeFoldsWith():
+-- zM -> 0, zr -> +count, zm -> -count, zR -> deepest (all open). With no stored level (new window,
+-- other buffer) the level is read from the folds as they are shown: one below the shallowest closed
+-- fold, or the deepest level when none is closed. Buffers without ufo fall back to the builtin keys.
 local ufo = require("ufo")
 
 local function deepest_level()
@@ -52,27 +53,62 @@ local function deepest_level()
   return max
 end
 
+-- level as currently visible: shallowest closed fold level - 1 (the lowest foldlevel() inside a
+-- closed fold is that fold's own level); nil when no fold is closed
+local function visible_level()
+  local min
+  local lnum, last = 1, vim.api.nvim_buf_line_count(0)
+  while lnum <= last do
+    local fend = vim.fn.foldclosedend(lnum)
+    if fend == -1 then
+      lnum = lnum + 1
+    else
+      for l = lnum, fend do
+        local lv = vim.fn.foldlevel(l)
+        if min == nil or lv < min then
+          min = lv
+        end
+      end
+      lnum = fend + 1
+    end
+  end
+  return min and math.max(0, min - 1)
+end
+
+local function set_level(level)
+  local levels = vim.w.ufo_foldlevels or {}
+  -- string keys: a sparse integer-keyed table cannot be stored in a w: variable
+  levels[tostring(vim.api.nvim_get_current_buf())] = level
+  vim.w.ufo_foldlevels = levels
+end
+
 local function step_folds(delta, builtin)
   if not ufo.hasAttached() then
-    vim.cmd("normal! " .. vim.v.count1 .. builtin)
+    -- pcall: a buffer without folds must not raise E490 (and not leave it in v:errmsg)
+    local errmsg = vim.v.errmsg
+    pcall(vim.cmd, "normal! " .. vim.v.count1 .. builtin)
+    vim.v.errmsg = errmsg
     return
   end
   local deepest = deepest_level()
-  local level = vim.w.ufo_foldlevel
-  if level == nil or level > deepest then
-    level = deepest
+  if deepest == 0 then
+    return -- no folds in this buffer: nothing to do (builtin zr/zm would only raise E490)
+  end
+  local level = (vim.w.ufo_foldlevels or {})[tostring(vim.api.nvim_get_current_buf())]
+  if level == nil then
+    level = visible_level() or deepest
   end
   level = math.max(0, math.min(deepest, level + delta * vim.v.count1))
-  vim.w.ufo_foldlevel = level
+  set_level(level)
   ufo.closeFoldsWith(level)
 end
 
 vim.keymap.set("n", "zR", function()
-  vim.w.ufo_foldlevel = nil -- nil = deepest (all open)
+  set_level(nil) -- nil = read from the folds next time (all open = deepest)
   ufo.openAllFolds()
 end, { desc = "Open all folds" })
 vim.keymap.set("n", "zM", function()
-  vim.w.ufo_foldlevel = 0
+  set_level(0)
   ufo.closeAllFolds()
 end, { desc = "Close all folds" })
 vim.keymap.set("n", "zr", function()
