@@ -210,3 +210,31 @@ api.nvim_create_autocmd({ "VimEnter", "DirChanged" }, {
   end,
 })
 
+
+-- check if current file is formatted (upstream bc2c11e/8e4bf54, adapted: async + silent executable guard)
+local ft_to_command = {
+  python = { "black", "--check", "--quiet" },
+  lua = { "stylua", "--check" },
+}
+
+api.nvim_create_autocmd("BufWritePost", {
+  group = api.nvim_create_augroup("format_check", { clear = true }),
+  pattern = "*",
+  desc = "Check if file needs reformat",
+  callback = function(ev)
+    local ft = api.nvim_get_option_value("filetype", { buf = ev.buf })
+    local base = ft_to_command[ft]
+    if not base or vim.fn.executable(base[1]) == 0 then
+      return
+    end
+    local cmd = vim.deepcopy(base)
+    table.insert(cmd, ev.file)
+    vim.system(cmd, { text = true }, function(result)
+      if result.code ~= 0 then
+        vim.schedule(function()
+          vim.notify(string.format("%s: file is not formatted (%s)", vim.fs.basename(ev.file), base[1]), vim.log.levels.WARN)
+        end)
+      end
+    end)
+  end,
+})
