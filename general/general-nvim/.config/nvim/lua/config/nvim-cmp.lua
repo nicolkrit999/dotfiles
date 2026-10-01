@@ -22,6 +22,13 @@ vim.g.UltiSnipsJumpForwardTrigger = "<C-j>"
 vim.g.UltiSnipsJumpBackwardTrigger = "<C-k>"
 
 cmp.setup {
+  -- nvim-cmp default + `vim.b.completion = false` turns completion off for a buffer
+  -- (set by the Snacks.bigfile setup in lua/config/bigfile.lua)
+  enabled = function()
+    if vim.b.completion == false then return false end
+    if vim.bo.buftype == "prompt" then return false end
+    return vim.fn.reg_recording() == "" and vim.fn.reg_executing() == ""
+  end,
   snippet = {
     expand = function(args)
       vim.fn["UltiSnips#Anon"](args.body)
