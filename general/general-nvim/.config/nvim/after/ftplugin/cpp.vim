@@ -4,7 +4,10 @@ setlocal commentstring=//\ %s
 setlocal formatoptions-=o
 setlocal formatoptions-=r
 
-nnoremap <silent> <buffer> <F9> :call <SID>compile_run_cpp()<CR>
+" <F9> compile & run: only when a C++ compiler is on PATH (e.g. g++ from the c-cpp devShell)
+if executable('clang++') || executable('g++')
+  nnoremap <silent> <buffer> <F9> :call <SID>compile_run_cpp()<CR>
+endif
 
 function! s:compile_run_cpp() abort
   let src_path = expand('%:p:~')
@@ -17,7 +20,10 @@ function! s:compile_run_cpp() abort
   elseif executable('g++')
     let prog = 'g++'
   else
-    echoerr 'No C++ compiler found on the system!'
+    echohl WarningMsg
+    echomsg 'No C++ compiler (clang++/g++) on PATH: open nvim inside the c-cpp devShell'
+    echohl None
+    return
   endif
   call s:create_term_buf('h', 20)
   execute printf('term %s %s %s -o %s && %s', prog, _flag, src_path, src_noext, src_noext)
