@@ -105,7 +105,18 @@ local plugin_specs = {
     end,
     event = "VeryLazy",
   },
-  { "machakann/vim-swap",          event = "VeryLazy" },
+  {
+    "machakann/vim-swap",
+    event = "VeryLazy",
+    init = function()
+      -- no plugin defaults: they also map g< / g>, and g< would shadow the builtin
+      -- "show the last command output again". Only the interactive swap on gs is kept.
+      vim.g.swap_no_default_key_mappings = 1
+    end,
+    config = function()
+      vim.keymap.set({ "n", "x" }, "gs", "<Plug>(swap-interactive)", { desc = "Swap items interactively (vim-swap)" })
+    end,
+  },
 {
     "nvim-treesitter/nvim-treesitter",
     branch = "main",
