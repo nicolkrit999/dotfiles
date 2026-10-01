@@ -60,6 +60,9 @@ local servers = {
   ruff = { cmd = { "ruff", "server" } },
   bashls = { cmd = { "bash-language-server", "start" } },
 
+  -- C/C++ (clang-tools: c-cpp devShell or a global install); filetypes in after/lsp/clangd.lua
+  clangd = { cmd = { "clangd" } },
+
   -- Lua setup
   lua_ls = {
     cmd = { "lua-language-server" },
