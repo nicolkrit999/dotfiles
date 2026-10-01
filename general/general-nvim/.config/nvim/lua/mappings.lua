@@ -93,6 +93,10 @@ keymap.set("n", [[\D]], function()
   end
 end, { desc = "delete other buffers" })
 
+-- Close the current tab / all other tabs
+keymap.set("n", [[\t]], "<cmd>tabclose<cr>", { silent = true, desc = "close current tab" })
+keymap.set("n", [[\T]], "<cmd>tabonly<cr>", { silent = true, desc = "close other tabs" })
+
 -- Move the cursor based on physical lines, not the actual lines.
 keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true })
 keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", { expr = true })
