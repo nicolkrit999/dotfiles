@@ -189,38 +189,52 @@ keymap.set({ "x", "o" }, "<leader>ai", "<cmd>echo 'around inner'<cr>", { desc = 
 keymap.set({ "x", "o" }, "<leader>as", "<cmd>echo 'around sentence'<cr>", { desc = "around sentence" })
 
 
--- Java (nvim-java; the commands exist only inside the Java devShell). Groups:
+-- Java (nvim-java). The Java* commands only work once jdtls is attached (jdtls needs `java`,
+-- e.g. from the Java devShell), so these maps are buffer-local and created on LspAttach of
+-- jdtls: no jdtls -> no <leader>j* maps. Groups:
 -- <leader>jb build, <leader>jr runner, <leader>jt test, <leader>je extract/refactor
--- (which-key group names in lua/config/which-key.lua)
+-- (which-key group names in lua/config/which-key.lua; which-key hides a group that has no
+-- keymaps, so the "Java" groups only show in buffers where jdtls is attached)
+local java_maps = {
+  -- Java Build
+  { "<leader>jbb", "JavaBuildBuildWorkspace", "Java: Build Workspace" },
+  { "<leader>jbc", "JavaBuildCleanWorkspace", "Java: Clean Workspace" },
+  -- Java Runner
+  { "<leader>jrr", "JavaRunnerRunMain", "Java: Run Main" },
+  { "<leader>jrs", "JavaRunnerStopMain", "Java: Stop Main" },
+  { "<leader>jrl", "JavaRunnerToggleLogs", "Java: Toggle Runner Logs" },
+  { "<leader>jrp", "JavaProfile", "Java: Profiles UI" },
+  -- Java Test
+  { "<leader>jtc", "JavaTestRunCurrentClass", "Java: Test Current Class" },
+  { "<leader>jtC", "JavaTestDebugCurrentClass", "Java: Debug Current Class" },
+  { "<leader>jtm", "JavaTestRunCurrentMethod", "Java: Test Current Method" },
+  { "<leader>jtM", "JavaTestDebugCurrentMethod", "Java: Debug Current Method" },
+  { "<leader>jtr", "JavaTestViewLastReport", "Java: View Last Test Report" },
+  -- Java Refactor (extract)
+  { "<leader>jev", "JavaRefactorExtractVariable", "Java: Extract Variable" },
+  { "<leader>jeo", "JavaRefactorExtractVariableAllOccurrence", "Java: Extract Variable (All Occurrences)" },
+  { "<leader>jec", "JavaRefactorExtractConstant", "Java: Extract Constant" },
+  { "<leader>jem", "JavaRefactorExtractMethod", "Java: Extract Method" },
+  { "<leader>jef", "JavaRefactorExtractField", "Java: Extract Field" },
+  -- Java DAP / Settings
+  { "<leader>jd", "JavaDapConfig", "Java: DAP Config" },
+  { "<leader>jj", "JavaSettingsChangeRuntime", "Java: Change Runtime" },
+}
 
--- Java Build
-keymap.set('n', '<leader>jbb', '<cmd>JavaBuildBuildWorkspace<cr>', { desc = 'Java: Build Workspace' })
-keymap.set('n', '<leader>jbc', '<cmd>JavaBuildCleanWorkspace<cr>', { desc = 'Java: Clean Workspace' })
-
--- Java Runner
-keymap.set('n', '<leader>jrr', '<cmd>JavaRunnerRunMain<cr>', { desc = 'Java: Run Main' })
-keymap.set('n', '<leader>jrs', '<cmd>JavaRunnerStopMain<cr>', { desc = 'Java: Stop Main' })
-keymap.set('n', '<leader>jrl', '<cmd>JavaRunnerToggleLogs<cr>', { desc = 'Java: Toggle Runner Logs' })
-keymap.set('n', '<leader>jrp', '<cmd>JavaProfile<cr>', { desc = 'Java: Profiles UI' })
-
--- Java Test
-keymap.set('n', '<leader>jtc', '<cmd>JavaTestRunCurrentClass<cr>', { desc = 'Java: Test Current Class' })
-keymap.set('n', '<leader>jtC', '<cmd>JavaTestDebugCurrentClass<cr>', { desc = 'Java: Debug Current Class' })
-keymap.set('n', '<leader>jtm', '<cmd>JavaTestRunCurrentMethod<cr>', { desc = 'Java: Test Current Method' })
-keymap.set('n', '<leader>jtM', '<cmd>JavaTestDebugCurrentMethod<cr>', { desc = 'Java: Debug Current Method' })
-keymap.set('n', '<leader>jtr', '<cmd>JavaTestViewLastReport<cr>', { desc = 'Java: View Last Test Report' })
-
--- Java Refactor (extract)
-keymap.set('n', '<leader>jev', '<cmd>JavaRefactorExtractVariable<cr>', { desc = 'Java: Extract Variable' })
-keymap.set('n', '<leader>jeo', '<cmd>JavaRefactorExtractVariableAllOccurrence<cr>',
-  { desc = 'Java: Extract Variable (All Occurrences)' })
-keymap.set('n', '<leader>jec', '<cmd>JavaRefactorExtractConstant<cr>', { desc = 'Java: Extract Constant' })
-keymap.set('n', '<leader>jem', '<cmd>JavaRefactorExtractMethod<cr>', { desc = 'Java: Extract Method' })
-keymap.set('n', '<leader>jef', '<cmd>JavaRefactorExtractField<cr>', { desc = 'Java: Extract Field' })
-
--- Java DAP / Settings
-keymap.set('n', '<leader>jd', '<cmd>JavaDapConfig<cr>', { desc = 'Java: DAP Config' })
-keymap.set('n', '<leader>jj', '<cmd>JavaSettingsChangeRuntime<cr>', { desc = 'Java: Change Runtime' })
+vim.api.nvim_create_autocmd("LspAttach", {
+  group = vim.api.nvim_create_augroup("java_keymaps", { clear = true }),
+  desc = "buffer-local Java keymaps when jdtls attaches",
+  callback = function(ev)
+    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+    if not client or client.name ~= "jdtls" then
+      return
+    end
+    local bufnr = ev.buf
+    for _, m in ipairs(java_maps) do
+      keymap.set("n", m[1], "<cmd>" .. m[2] .. "<cr>", { buffer = bufnr, desc = m[3] })
+    end
+  end,
+})
 
 -- Previews
 keymap.set("n", "<A-m>", "<cmd>MarkdownPreviewToggle<cr>", { silent = true, desc = "Markdown Preview" })
