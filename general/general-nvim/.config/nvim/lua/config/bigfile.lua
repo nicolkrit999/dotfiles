@@ -2,9 +2,9 @@
 --
 -- A big file gets filetype `bigfile` (no treesitter, no ftplugin maps). On top of the Snacks
 -- defaults this keeps the LSP for the REAL filetype, but cheaper:
---   * typos_lsp / ltex_plus (spell/grammar over the whole text) are never attached,
+--   * typos_lsp / ltex_plus (spell/grammar over the whole text) and lua_ls are never attached,
 --   * the other enabled LSP configs for the real filetype start ~500 ms after opening,
---     with semantic tokens disabled for this buffer,
+--     with semantic tokens and nvim-cmp completion disabled for this buffer,
 --   * vim syntax is only turned on when the longest line is short enough (a megabyte-long
 --     minified line makes the regex engine hit 'redrawtime').
 -- Escape hatches: `:lsp stop` (detach everything), `:set ft=<real ft>` (full mode: semantic

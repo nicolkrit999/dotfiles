@@ -890,8 +890,8 @@ local plugin_specs = {
       picker = { enabled = true },
       -- light mode for big files (> 1.5 MB, or average line length > 5000 = minified bundles):
       -- filetype `bigfile`, no treesitter/ftplugin maps; LSP of the real filetype starts after a short
-      -- delay without semantic tokens (no typos_lsp/ltex_plus), see lua/config/bigfile.lua.
-      -- `:lsp stop` to drop the LSP; `:set ft=json` (etc.) for full mode.
+      -- delay without semantic tokens or completion (no typos_lsp/ltex_plus/lua_ls), see
+      -- lua/config/bigfile.lua. `:lsp stop` to drop the LSP; `:set ft=json` (etc.) for full mode.
       bigfile = {
         enabled = true,
         line_length = 5000,
