@@ -747,7 +747,7 @@ local plugin_specs = {
   -- Modern matchit implementation
   {
     "andymass/vim-matchup",
-    event = "BufRead",
+    event = { "BufReadPost", "BufNewFile" },
     init = function()
       -- Improve performance
       vim.g.matchup_matchparen_deferred = 1
