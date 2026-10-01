@@ -1,8 +1,8 @@
-set commentstring=//\ %s
+setlocal commentstring=//\ %s
 
 " Disable inserting comment leader after hitting o or O or <Enter>
-set formatoptions-=o
-set formatoptions-=r
+setlocal formatoptions-=o
+setlocal formatoptions-=r
 
 nnoremap <silent> <buffer> <F9> :call <SID>compile_run_cpp()<CR>
 

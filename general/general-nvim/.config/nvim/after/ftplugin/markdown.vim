@@ -1,7 +1,7 @@
-set concealcursor=c
-set synmaxcol=3000  " For long Chinese paragraphs
+setlocal concealcursor=c
+setlocal synmaxcol=3000  " For long Chinese paragraphs
 
-set wrap
+setlocal wrap
 
 " Fix minor issue with footnote, see https://github.com/vim-pandoc/vim-markdownfootnotes/issues/22
 " Also remove the plugin's default <Leader>f insert-mode mapping which
