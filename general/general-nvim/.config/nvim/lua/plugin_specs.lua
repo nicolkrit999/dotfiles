@@ -889,8 +889,16 @@ local plugin_specs = {
       -- more beautiful vim.ui.select
       picker = { enabled = true },
       -- light mode for big files (> 1.5 MB, or average line length > 5000 = minified bundles):
-      -- filetype `bigfile`, no treesitter/LSP/ftplugin maps; `:set ft=json` (etc.) to get them back
-      bigfile = { enabled = true, line_length = 5000 },
+      -- filetype `bigfile`, no treesitter/ftplugin maps; LSP of the real filetype starts after a short
+      -- delay without semantic tokens (no typos_lsp/ltex_plus), see lua/config/bigfile.lua.
+      -- `:lsp stop` to drop the LSP; `:set ft=json` (etc.) for full mode.
+      bigfile = {
+        enabled = true,
+        line_length = 5000,
+        setup = function(ctx)
+          require("config.bigfile").setup(ctx)
+        end,
+      },
     },
   },
   -- show and trim trailing whitespaces
