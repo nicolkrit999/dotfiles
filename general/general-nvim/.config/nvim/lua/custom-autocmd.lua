@@ -68,6 +68,16 @@ api.nvim_create_autocmd({ "FileChangedShellPost" }, {
   end,
 })
 
+api.nvim_create_autocmd({ "FocusGained", "CursorHold" }, {
+  pattern = "*",
+  group = "auto_read",
+  callback = function()
+    if fn.getcmdwintype() == "" then
+      vim.cmd("checktime")
+    end
+  end,
+})
+
 
 -- Resize all windows when we resize the terminal
 api.nvim_create_autocmd("VimResized", {
