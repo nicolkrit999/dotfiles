@@ -320,6 +320,16 @@ local plugin_specs = {
     end,
   },
 
+  -- split/join tables, argument lists, arrays (gS)
+  {
+    "Wansmer/treesj",
+    keys = { { "gS", desc = "Toggle split join" } },
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    config = function()
+      require("config.treesj")
+    end,
+  },
+
   -- Highlight URLs inside vim
   { "itchyny/vim-highlighturl", event = "BufReadPost" },
 
