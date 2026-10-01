@@ -285,7 +285,7 @@ vim.keymap.set('n', '<leader>rr', function()
     cmd = 'gcc -Wall -Wextra -std=c11 ' .. filename .. ' -o ' .. filename_no_ext .. ' && ./' .. filename_no_ext
     need, where = { 'gcc' }, 'the c-cpp devShell'
   elseif filetype == 'cpp' then
-    cmd = 'g++ -Wall -Wextra -std=c++17 ' .. filename .. ' -o ' .. filename_no_ext .. ' && ./' .. filename_no_ext
+    cmd = 'g++ -Wall -Wextra -std=c++20 ' .. filename .. ' -o ' .. filename_no_ext .. ' && ./' .. filename_no_ext
     need, where = { 'g++' }, 'the c-cpp devShell'
   elseif filetype == 'cs' then
     cmd = 'dotnet run'
