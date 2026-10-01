@@ -574,6 +574,12 @@ local plugin_specs = {
       require("dbee").install()
     end,
     cmd = { "Dbee" },
+    -- lazy key triggers: the maps work before :Dbee was ever run
+    keys = {
+      { "<leader>Dt", function() require("dbee").toggle() end, desc = "Dbee: Toggle UI" },
+      { "<leader>Do", function() require("dbee").open() end, desc = "Dbee: Open UI" },
+      { "<leader>Dc", function() require("dbee").close() end, desc = "Dbee: Close UI" },
+    },
     config = function()
       require("config.dbee")
     end,
