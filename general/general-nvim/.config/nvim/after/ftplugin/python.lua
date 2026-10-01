@@ -1,3 +1,4 @@
+local utils = require("utils")
 local opt = vim.opt_local
 
 -- Do not wrap Python source code.
@@ -11,8 +12,16 @@ opt.softtabstop = 4
 opt.shiftwidth = 4
 opt.expandtab = true
 
+-- `:compiler ruff` + `:make`: don't pass `--preview`
+vim.g.ruff_makeprg_params = ""
+
+-- in a uv project (uv.lock at the project root) without an activated venv, run tools through `uv run`
+local py_env = utils.get_py_env()
+
 if vim.fn.exists(":AsyncRun") == 2 then
-  vim.keymap.set("n", "<F9>", [[:<C-U>AsyncRun python -u "%"<CR>]], { buffer = true, silent = true, desc = "run python file" })
+  local py_cmd = (py_env == "uv") and "uv run python" or "python"
+  vim.keymap.set("n", "<F9>", string.format(':<C-U>AsyncRun %s -u "%%"<CR>', py_cmd), { buffer = true, silent = true, desc = "run python file" })
 end
 
-vim.keymap.set("n", "<Space>f", "<cmd>silent !black %<CR>", { buffer = true, silent = true, desc = "format file" })
+local py_fmt_cmd = (py_env == "uv") and "!uv run black" or "!black"
+vim.keymap.set("n", "<Space>f", string.format("<cmd>silent %s %%<CR>", py_fmt_cmd), { buffer = true, silent = true, desc = "format file" })

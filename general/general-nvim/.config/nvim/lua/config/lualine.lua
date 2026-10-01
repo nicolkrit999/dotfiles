@@ -1,4 +1,5 @@
 local fn = vim.fn
+local utils = require("utils")
 
 -- cache for git states
 local git_status_cache = {
@@ -203,19 +204,11 @@ local virtual_env = function()
     return ""
   end
 
-  local conda_env = os.getenv("CONDA_DEFAULT_ENV")
-  local venv_path = os.getenv("VIRTUAL_ENV")
-
-  if venv_path == nil then
-    if conda_env == nil then
-      return ""
-    else
-      return string.format("  %s (conda)", conda_env)
-    end
-  else
-    local venv_name = vim.fn.fnamemodify(venv_path, ":t")
-    return string.format("  %s (venv)", venv_name)
+  local venv_name, kind = utils.get_virtual_env()
+  if kind == nil then
+    return ""
   end
+  return string.format("  %s (%s)", venv_name, kind)
 end
 
 local get_active_lsp = function()
