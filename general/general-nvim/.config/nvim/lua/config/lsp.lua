@@ -140,3 +140,23 @@ vim.api.nvim_create_user_command("LspLog", function(_)
 end, { desc = "Show LSP log" })
 
 vim.api.nvim_create_user_command("LspRestart", "lsp restart", { desc = "Restart LSP" })
+
+-- Runtime toggle for LSP inlay hints (off by default)
+vim.g.lsp_inlay_hint_enabled = false
+
+vim.api.nvim_create_user_command("LspInlayHints", function(context)
+  if context.args == "enable" then
+    vim.g.lsp_inlay_hint_enabled = true
+  elseif context.args == "disable" then
+    vim.g.lsp_inlay_hint_enabled = false
+  end
+  -- some servers also need hints enabled in their own settings (lua_ls: settings.Lua.hint.enable = true)
+  vim.lsp.inlay_hint.enable(vim.g.lsp_inlay_hint_enabled)
+end, {
+  nargs = 1,
+  force = true,
+  desc = "Enable/disable LSP inlay hints globally",
+  complete = function()
+    return { "enable", "disable" }
+  end,
+})
