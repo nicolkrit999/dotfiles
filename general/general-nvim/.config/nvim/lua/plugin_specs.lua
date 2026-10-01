@@ -1097,6 +1097,8 @@ local plugin_specs = {
 ---@diagnostic disable-next-line: missing-fields
 require("lazy").setup {
   spec = plugin_specs,
+  -- limit parallel git jobs to avoid GitHub rate limits
+  concurrency = 5,
   ui = {
     border = "rounded",
     title = "Plugin Manager",
