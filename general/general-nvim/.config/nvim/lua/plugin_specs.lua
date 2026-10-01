@@ -60,13 +60,16 @@ local plugin_specs = {
     },
     config = function()
       local is_nix_managed = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
+      -- java (JDK) only exists inside the Java devShell: outside it, stay silent
+      -- (no spring-boot LS spawn, no jdtls start -> no ENOENT 'java' warnings on .java files)
+      local has_java = vim.fn.executable("java") == 1
 
       require("java").setup({
         -- nix: never download a JDK (no nix-ld); the devShell provides JAVA_HOME (jdk25) and java on PATH
         jdk = { auto_install = not is_nix_managed },
         java_test = { enable = true },
         java_debug_adapter = { enable = true },
-        spring_boot_tools = { enable = true },
+        spring_boot_tools = { enable = has_java },
         -- jdtls.path intentionally unset: nvim-java uses its own jdtls 1.54.0 from
         -- ~/.local/share/nvim/nvim-java/packages (the devShell's `jdtls` is a bin/ wrapper, not a jdtls root)
       })
@@ -78,7 +81,9 @@ local plugin_specs = {
           java = { home = vim.env.JAVA_HOME },
         },
       })
-      vim.lsp.enable("jdtls")
+      if has_java then
+        vim.lsp.enable("jdtls")
+      end
     end,
   },
 
