@@ -970,7 +970,7 @@ local plugin_specs = {
     },
   },
   -- show and trim trailing whitespaces
-  { "jdhao/whitespace.nvim", event = "VeryLazy" },
+  { "nvim-zh/whitespace.nvim", event = "VeryLazy" },
 
   -- file explorer
   {
