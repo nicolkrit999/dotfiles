@@ -101,6 +101,11 @@ local function ime_state()
 end
 
 local function trailing_space()
+  -- do not warn while typing (insert mode, incl. ic/ix completion sub-modes)
+  if vim.api.nvim_get_mode().mode:sub(1, 1) == "i" then
+    return ""
+  end
+
   if not vim.o.modifiable then
     return ""
   end
@@ -154,6 +159,27 @@ local function mixed_indent()
   else
     return "MI:" .. space_indent
   end
+end
+
+-- show encoding only when it is not UTF-8
+local function show_encoding()
+  local fileencoding = vim.api.nvim_get_option_value("fileencoding", { buf = 0 })
+  fileencoding = string.upper(fileencoding)
+  if fileencoding ~= "UTF-8" and fileencoding ~= "" then
+    return fileencoding
+  end
+  return ""
+end
+
+-- show fileformat only when it is not unix
+local function show_fileformat()
+  local fileformat = vim.api.nvim_get_option_value("fileformat", { buf = 0 })
+  -- unix is the common case, do not show it
+  if fileformat == "unix" then
+    return ""
+  end
+  local symbols = { dos = "win", mac = "mac" }
+  return symbols[fileformat] or fileformat
 end
 
 local diff = function()
@@ -227,7 +253,7 @@ require("lualine").setup {
     component_separators = { left = "⏐", right = "⏐" },
     section_separators = "",
     disabled_filetypes = {},
-    always_divide_middle = true,
+    always_divide_middle = false,
     refresh = {
       statusline = 1000,
     },
@@ -294,16 +320,12 @@ require("lualine").setup {
     },
     lualine_y = {
       {
-        "encoding",
-        fmt = string.upper,
+        show_encoding,
+        color = "ErrorMsg",
       },
       {
-        "fileformat",
-        symbols = {
-          unix = "unix",
-          dos = "win",
-          mac = "mac",
-        },
+        show_fileformat,
+        color = "ErrorMsg",
       },
       "filetype",
       {
