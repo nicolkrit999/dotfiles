@@ -186,13 +186,6 @@ keymap.set({ "x", "o" }, "<leader>iB", ":<C-U>call text_obj#Buffer()<cr>", { des
 -- URL (was iu) - leader-based:
 keymap.set({ "x", "o" }, "<leader>iu", "<cmd>call text_obj#URL()<cr>", { desc = "URL text object" })
 
--- Surrounding/inside (was is, ib, ab, ai, as) - leader-based, not to clash with plugin/targets:
-keymap.set({ "x", "o" }, "<leader>is", "<cmd>echo 'inside sentence (custom)'<cr>", { desc = "inner sentence" })
-keymap.set({ "x", "o" }, "<leader>ib", "<cmd>echo 'buffer text object'<cr>", { desc = "buffer text object" })
-keymap.set({ "x", "o" }, "<leader>ab", "<cmd>echo 'around block'<cr>", { desc = "around block" })
-keymap.set({ "x", "o" }, "<leader>ai", "<cmd>echo 'around inner'<cr>", { desc = "around inner" })
-keymap.set({ "x", "o" }, "<leader>as", "<cmd>echo 'around sentence'<cr>", { desc = "around sentence" })
-
 
 -- Java (nvim-java). The Java* commands only work once jdtls is attached (jdtls needs `java`,
 -- e.g. from the Java devShell), so the real maps are buffer-local and created on LspAttach of
