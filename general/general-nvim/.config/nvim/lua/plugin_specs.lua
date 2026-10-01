@@ -934,9 +934,16 @@ local plugin_specs = {
       return vim.g.is_win or vim.g.is_linux
     end,
     build = { "bash install.sh" },
-    lazy = true,
+    cmd = { "GdbStart", "GdbStartLLDB", "GdbStartPDB", "GdbStartBashDB", "GdbStartRR" },
     init = function()
-      vim.cmd([[nnoremap <leader>dp :<C-U>GdbStartPDB python -m pdb %<CR>]])
+      -- do not let nvim-gdb create its global <leader>dd/dl/dp/db/dr start maps
+      -- (they would overwrite the user's <leader>dd / <leader>db / <leader>dp)
+      vim.g.nvimgdb_disable_start_keymaps = true
+      vim.keymap.set("n", "<leader>dp", [[:<C-U>GdbStartPDB python -m pdb %<CR>]], { desc = "start pdb on current file (nvim-gdb)" })
+    end,
+    config = function()
+      -- nvim-gdb's setup() maps cmdline <c-e> globally (cmake executable picker); keep the builtin <C-e>
+      pcall(vim.keymap.del, "c", "<c-e>")
     end,
   },
 
