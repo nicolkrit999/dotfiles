@@ -24,7 +24,7 @@ local handler = function(virtText, lnum, endLnum, width, truncate)
     end
     curWidth = curWidth + chunkWidth
   end
-  local rAlignAppndx = math.max(math.min(vim.opt.textwidth["_value"], width - 1) - curWidth - sufWidth, 0)
+  local rAlignAppndx = math.max(math.min(vim.o.textwidth, width - 1) - curWidth - sufWidth, 0)
   suffix = (" "):rep(rAlignAppndx) .. suffix
   table.insert(newVirtText, { suffix, "MoreMsg" })
   return newVirtText
