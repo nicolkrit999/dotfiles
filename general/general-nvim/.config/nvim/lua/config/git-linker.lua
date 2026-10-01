@@ -26,8 +26,12 @@ gitlinker.setup {
       return url
     end,
   },
+  -- gitlinker has no option to skip its default maps (nil = "<leader>gy" in n + v),
+  -- so they are deleted right below: <leader>gl is the only permalink key
   mappings = nil,
 }
+pcall(keymap.del, "n", "<leader>gy")
+pcall(keymap.del, "v", "<leader>gy")
 
 keymap.set({ "n", "x" }, "<leader>gl", function()
   local mode = string.lower(vim.fn.mode())
