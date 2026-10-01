@@ -51,36 +51,6 @@ local plugin_specs = {
     },
   },
 
-  -- 1. Unified Mason Setup
-  {
-    "williamboman/mason.nvim",
-    config = function()
-      require("mason").setup({
-        registries = {
-          "github:mason-org/mason-registry",
-        },
-      })
-    end,
-  },
-
--- 2. Unified Mason-LSPConfig
-  {
-    "williamboman/mason-lspconfig.nvim",
-    dependencies = { "williamboman/mason.nvim", "neovim/nvim-lspconfig" },
-    config = function()
-      local is_nix_managed = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
-
-      require("mason-lspconfig").setup({
-        ensure_installed = is_nix_managed and {} or {
-          "lua_ls",
-          "pyright",
-          "ruff",
-          "bashls",
-          "spring_boot",
-        },
-      })
-    end,
-  },
   {
     "nvim-java/nvim-java",
     -- nvim-java's own lazy.lua already declares nui.nvim, nvim-dap and JavaHello/spring-boot.nvim
@@ -112,10 +82,10 @@ local plugin_specs = {
     end,
   },
 
-  -- 4. Core LSP Config (Loads your lua/config/lsp.lua)
+  -- Core LSP Config (Loads your lua/config/lsp.lua); LSP binaries come from nix
   {
     "neovim/nvim-lspconfig",
-    dependencies = { "williamboman/mason-lspconfig.nvim", "nvim-java/nvim-java" },
+    dependencies = { "nvim-java/nvim-java" },
     -- No config function here anymore.
     -- We load our own lsp config file separately.
     init = function()
