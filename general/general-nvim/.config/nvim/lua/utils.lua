@@ -111,4 +111,21 @@ function M.get_titlestr()
   return title_str
 end
 
+---Put element to the front of a list if it exists in the list
+---@param items string[]
+---@param ele string|nil
+---@return string[]
+function M.reorder_list_element(items, ele)
+  if ele == nil or not vim.list_contains(items, ele) then
+    return items
+  end
+  local new_items = { ele }
+  for _, v in ipairs(items) do
+    if v ~= ele then
+      table.insert(new_items, v)
+    end
+  end
+  return new_items
+end
+
 return M

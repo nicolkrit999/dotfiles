@@ -194,20 +194,30 @@ end
 
 local get_active_lsp = function()
   local msg = "🚫"
-  local buf_ft = vim.api.nvim_get_option_value("filetype", {})
-  local clients = vim.lsp.get_clients { bufnr = 0 }
-  if next(clients) == nil then
+  local names = require("lsp_utils").get_attached_lsp()
+  if next(names) == nil then
     return msg
   end
 
-  for _, client in ipairs(clients) do
-    ---@diagnostic disable-next-line: undefined-field
-    local filetypes = client.config.filetypes
-    if filetypes and vim.fn.index(filetypes, buf_ft) ~= -1 then
-      return client.name
+  local buf_ft = vim.bo.filetype
+  local main_lsp = require("lsp_utils").main_lsp_by_filetype[buf_ft]
+  if main_lsp == nil or not vim.list_contains(names, main_lsp) then
+    -- fallback (user's original logic): first client whose filetypes include buf_ft
+    for _, client in ipairs(vim.lsp.get_clients { bufnr = 0 }) do
+      ---@diagnostic disable-next-line: undefined-field
+      local fts = client.config.filetypes
+      if fts and vim.list_contains(fts, buf_ft) then
+        main_lsp = client.name
+        break
+      end
     end
   end
-  return msg
+  names = require("utils").reorder_list_element(names, main_lsp)
+
+  if #names == 1 then
+    return names[1]
+  end
+  return string.format("%s (+%d)", names[1], #names - 1)
 end
 
 require("lualine").setup {
