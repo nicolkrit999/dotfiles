@@ -290,19 +290,28 @@ vim.keymap.set('n', '<leader>rr', function()
   elseif filetype == 'javascript' then
     cmd = 'node ' .. filename
   elseif filetype == 'typescript' then
-    cmd = 'ts-node ' .. filename
-    need = { 'ts-node' }
+    -- node runs .ts files directly (type stripping, Node >= 23.6; nodejs_latest from neovim.nix)
+    cmd = 'node ' .. filename
+    need = { 'node' }
   elseif filetype == 'go' then
     cmd = 'go run ' .. filename
     need, where = { 'go' }, 'the go devShell'
   elseif filetype == 'rust' then
-    cmd = 'cargo run || rustc ' .. filename .. ' && ./' .. filename_no_ext
-    need, where = { 'cargo', 'rustc' }, 'the rust devShell'
+    -- inside a cargo project (Cargo.toml above the file): cargo run; else compile the single file
+    local cargo_root = vim.fs.root(0, 'Cargo.toml')
+    if cargo_root then
+      cmd = 'cargo run --manifest-path ' .. vim.fn.shellescape(cargo_root .. '/Cargo.toml')
+      need = { 'cargo' }
+    else
+      cmd = 'rustc ' .. filename .. ' -o ' .. filename_no_ext .. ' && ./' .. filename_no_ext
+      need = { 'rustc' }
+    end
+    where = 'the rust devShell'
   elseif filetype == 'sh' or filetype == 'bash' then
     cmd = 'bash ' .. filename
   elseif filetype == 'lua' then
-    cmd = 'lua ' .. filename
-    need = { 'lua' }
+    -- nvim's own LuaJIT as a script runner (no separate lua interpreter needed)
+    cmd = 'nvim -l ' .. filename
   elseif filetype == 'ruby' then
     cmd = 'ruby ' .. filename
     need = { 'ruby' }
