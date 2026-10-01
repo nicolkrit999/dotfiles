@@ -900,7 +900,9 @@ local plugin_specs = {
         },
       },
       -- more beautiful vim.ui.select
-      picker = { enabled = true },
+      -- db: frecency/history in sqlite. The nix nvim wrapper exports SNACKS_SQLITE3_PATH (full libsqlite3
+      -- path); unset elsewhere -> nil -> snacks falls back to its default loader.
+      picker = { enabled = true, db = { sqlite3_path = vim.env.SNACKS_SQLITE3_PATH } },
       -- light mode for big files (> 1.5 MB, or average line length > 5000 = minified bundles):
       -- filetype `bigfile`, no treesitter/ftplugin maps; LSP of the real filetype starts after a short
       -- delay without semantic tokens or completion (no typos_lsp/ltex_plus/lua_ls), see
