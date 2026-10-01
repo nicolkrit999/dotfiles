@@ -170,7 +170,11 @@ conf.center = {
     {
     icon = "󰈞  ",
     desc = "Open tree view                              ",
-    action = "FzfLua files",
+    -- nvim-tree is lazy-loaded (keys <Space>s): load it, then open the tree
+    action = function()
+      require("lazy").load { plugins = { "nvim-tree.lua" } }
+      require("nvim-tree.api").tree.open()
+    end,
     key = "<Leader>   s",
   },
   {
