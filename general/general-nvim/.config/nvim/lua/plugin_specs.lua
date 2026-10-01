@@ -534,6 +534,27 @@ local plugin_specs = {
     end,
   },
 
+  -- syntax/treesitter highlighting inside fugitive/neogit/gitsigns diff buffers
+  -- (vim.g.diffs is read when the plugin is sourced, so it is set in init)
+  {
+    "https://forge.barrettruth.com/barrettruth/diffs.nvim",
+    init = function()
+      vim.g.diffs = {
+        integrations = {
+          fugitive = true,
+          neogit = true,
+          gitsigns = true,
+        },
+      }
+    end,
+  },
+
+  -- VSCode-style side-by-side diff (:CodeDiff); downloads a native lib on first use
+  {
+    "esmuellert/codediff.nvim",
+    cmd = "CodeDiff",
+  },
+
   {
     "kevinhwang91/nvim-bqf",
     ft = "qf",
