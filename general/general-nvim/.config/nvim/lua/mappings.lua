@@ -272,41 +272,42 @@ end, { desc = "Return from Footnote (markdown only)" })
 -- is missing, show ONE warning instead of opening a terminal that fails.
 vim.keymap.set('n', '<leader>rr', function()
   local filetype = vim.bo.filetype
-  local filename = vim.fn.expand('%')
-  -- c/cpp/rust single files: the source is passed shell-escaped and the binary is built next to
-  -- it and run by its full, shell-escaped path (works for absolute buffer names, files outside
+  -- the file name is shell-escaped for every branch (spaces, quotes, $ ; in a name reach the
+  -- program as one argument); c/cpp/rust single files build the binary next to the source and
+  -- run it by its full, shell-escaped path (works for absolute buffer names, files outside
   -- the cwd, paths with spaces and paths with % # ! — see the jobstart below)
+  local file = vim.fn.shellescape(vim.fn.expand('%'))
   local binary = vim.fn.shellescape(vim.fn.expand('%:p:r'))
   local cmd = ''
   local need, where = nil, nil
 
   if filetype == 'python' then
-    cmd = 'python3 ' .. filename
+    cmd = 'python3 ' .. file
   elseif filetype == 'java' then
     -- jdtls attached (nvim-java) -> its runner; else plain `java <file>` (single-file source launch)
     if #vim.lsp.get_clients({ bufnr = 0, name = 'jdtls' }) > 0 then
       vim.cmd('JavaRunnerRunMain')
       return -- Exit early since we're not using terminal
     end
-    cmd = 'java ' .. filename
+    cmd = 'java ' .. file
     need, where = { 'java' }, 'the java devShell'
   elseif filetype == 'c' then
-    cmd = 'gcc -Wall -Wextra -std=c11 ' .. vim.fn.shellescape(filename) .. ' -o ' .. binary .. ' && ' .. binary
+    cmd = 'gcc -Wall -Wextra -std=c11 ' .. file .. ' -o ' .. binary .. ' && ' .. binary
     need, where = { 'gcc' }, 'the c-cpp devShell'
   elseif filetype == 'cpp' then
-    cmd = 'g++ -Wall -Wextra -std=c++20 ' .. vim.fn.shellescape(filename) .. ' -o ' .. binary .. ' && ' .. binary
+    cmd = 'g++ -Wall -Wextra -std=c++20 ' .. file .. ' -o ' .. binary .. ' && ' .. binary
     need, where = { 'g++' }, 'the c-cpp devShell'
   elseif filetype == 'cs' then
     cmd = 'dotnet run'
     need = { 'dotnet' }
   elseif filetype == 'javascript' then
-    cmd = 'node ' .. filename
+    cmd = 'node ' .. file
   elseif filetype == 'typescript' then
     -- node runs .ts files directly (type stripping, Node >= 23.6; nodejs_latest from neovim.nix)
-    cmd = 'node ' .. filename
+    cmd = 'node ' .. file
     need = { 'node' }
   elseif filetype == 'go' then
-    cmd = 'go run ' .. filename
+    cmd = 'go run ' .. file
     need, where = { 'go' }, 'the go devShell'
   elseif filetype == 'rust' then
     -- inside a cargo project (Cargo.toml above the file): cargo run; else compile the single file
@@ -315,20 +316,20 @@ vim.keymap.set('n', '<leader>rr', function()
       cmd = 'cargo run --manifest-path ' .. vim.fn.shellescape(cargo_root .. '/Cargo.toml')
       need = { 'cargo' }
     else
-      cmd = 'rustc ' .. vim.fn.shellescape(filename) .. ' -o ' .. binary .. ' && ' .. binary
+      cmd = 'rustc ' .. file .. ' -o ' .. binary .. ' && ' .. binary
       need = { 'rustc' }
     end
     where = 'the rust devShell'
   elseif filetype == 'sh' or filetype == 'bash' then
-    cmd = 'bash ' .. filename
+    cmd = 'bash ' .. file
   elseif filetype == 'lua' then
     -- nvim's own LuaJIT as a script runner (no separate lua interpreter needed)
-    cmd = 'nvim -l ' .. filename
+    cmd = 'nvim -l ' .. file
   elseif filetype == 'ruby' then
-    cmd = 'ruby ' .. filename
+    cmd = 'ruby ' .. file
     need = { 'ruby' }
   elseif filetype == 'php' then
-    cmd = 'php ' .. filename
+    cmd = 'php ' .. file
     need, where = { 'php' }, 'the php devShell'
   else
     print('No run command configured for filetype: ' .. filetype)
