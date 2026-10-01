@@ -275,7 +275,7 @@ vim.keymap.set('n', '<leader>rr', function()
   local filename = vim.fn.expand('%')
   -- c/cpp/rust single files: the source is passed shell-escaped and the binary is built next to
   -- it and run by its full, shell-escaped path (works for absolute buffer names, files outside
-  -- the cwd and paths with spaces)
+  -- the cwd, paths with spaces and paths with % # ! — see the jobstart below)
   local binary = vim.fn.shellescape(vim.fn.expand('%:p:r'))
   local cmd = ''
   local need, where = nil, nil
@@ -347,7 +347,10 @@ vim.keymap.set('n', '<leader>rr', function()
     end
   end
 
-  vim.cmd('vsplit | terminal ' .. cmd)
+  -- new empty vsplit + jobstart(term): unlike `:terminal <cmd>`, the command is NOT a cmdline,
+  -- so `%`, `#` and `!` in a path are not expanded by vim (only the shell sees the string)
+  vim.cmd.vnew()
+  vim.fn.jobstart(cmd, { term = true })
 end, { noremap = true, desc = "Run current file" })
 
 -- Do not move my cursor when joining lines.
