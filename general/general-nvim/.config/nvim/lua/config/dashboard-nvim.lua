@@ -140,40 +140,45 @@ conf.header = ascii.get_random_global()
 -- "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠛⠿⣶⣶⠶⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
 -- }
 
+-- Center items. The doom theme turns every `key` into a real buffer map in the dashboard, so the
+-- <Leader> hints are written into `desc` instead (display only): a `key` like "<Leader> f f" used to
+-- create bogus maps (<Space><Space>f<Space>f ...) that made <Space><Space> wait there. Only the
+-- single-letter items (e, q) keep a `key`. The hint is right-aligned so its "]" ends in the same
+-- column as the theme's " [e]" / " [q]" labels (the doom theme pads every line to the longest one).
+local function with_hint(name, hint)
+  local label = "[" .. hint .. "]"
+  return name .. (" "):rep(56 - #name - #label) .. label
+end
+
 conf.center = {
   {
     icon = "󰈞  ",
-    desc = "Find  File                              ",
+    desc = with_hint("Find  File", "<Leader> f f"),
     action = "FzfLua files",
-    key = "<Leader> f f",
   },
   {
     icon = "󰈢  ",
-    desc = "Recently opened files                   ",
+    desc = with_hint("Recently opened files", "<Leader> f r"),
     action = "FzfLua oldfiles",
-    key = "<Leader> f r",
   },
   {
     icon = "󰈬  ",
-    desc = "Project grep                            ",
+    desc = with_hint("Project grep", "<Leader> f g"),
     action = "FzfLua live_grep",
-    key = "<Leader> f g",
   },
   {
     icon = "  ",
-    desc = "Open Nvim config                        ",
+    desc = with_hint("Open Nvim config", "<Leader> e v"),
     action = "tabnew $MYVIMRC | tcd %:p:h",
-    key = "<Leader> e v",
   },
-    {
+  {
     icon = "󰈞  ",
-    desc = "Open tree view                              ",
+    desc = with_hint("Open tree view", "<Leader> s"),
     -- nvim-tree is lazy-loaded (keys <Space>s): load it, then open the tree
     action = function()
       require("lazy").load { plugins = { "nvim-tree.lua" } }
       require("nvim-tree.api").tree.open()
     end,
-    key = "<Leader>   s",
   },
   {
     icon = "  ",
