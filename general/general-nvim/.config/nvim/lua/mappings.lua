@@ -252,8 +252,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
 keymap.set("n", "<A-m>", function()
   vim.notify("Markdown preview: only in markdown buffers", vim.log.levels.WARN)
 end, { desc = "Markdown Preview (markdown only)" })
-keymap.set("n", "]]", "<cmd>lua vim.lsp.buf.definition()<cr>", { desc = "Next Markdown Header" })
-keymap.set("n", "[[", "<cmd>lua vim.lsp.buf.definition()<cr>", { desc = "Previous Markdown Header" })
+-- ]] / [[ are NOT mapped globally: nvim's runtime defaults apply (markdown headers, python
+-- class/def, help sections, plain-buffer section motions). LSP definition = gd.
 
 -- ============================================================================
 -- MARKDOWN FOOTNOTES (normal mode only; insert mode unmapped in after/ftplugin)
