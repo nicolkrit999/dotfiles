@@ -160,3 +160,13 @@ end, {
     return { "enable", "disable" }
   end,
 })
+
+vim.api.nvim_create_user_command("LspAttached", function()
+  local size = { width = 40, height = 10 }
+  local win_width, win_height = vim.api.nvim_win_get_width(0), vim.api.nvim_win_get_height(0)
+  local position = {
+    col = math.max(0, math.floor((win_width - size.width) / 2)),
+    row = math.max(0, math.floor((win_height - size.height) / 2)),
+  }
+  require("lsp_utils").show_lsp_menu(size, position)
+end, { desc = "Show LSP attached to current buffer" })
