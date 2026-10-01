@@ -1,3 +1,7 @@
+-- <A-m> markdown preview (markdown-preview.nvim defines :MarkdownPreviewToggle only for
+-- markdown buffers); overrides the global "markdown only" warning map in lua/mappings.lua
+vim.keymap.set("n", "<A-m>", "<cmd>MarkdownPreviewToggle<cr>", { buffer = true, silent = true, desc = "Markdown Preview" })
+
 local function add_reference_at_end(label, url, title)
   vim.schedule(function()
     local bufnr = vim.api.nvim_get_current_buf()

@@ -246,7 +246,12 @@ vim.api.nvim_create_autocmd("LspAttach", {
 })
 
 -- Previews
-keymap.set("n", "<A-m>", "<cmd>MarkdownPreviewToggle<cr>", { silent = true, desc = "Markdown Preview" })
+-- <A-m> markdown preview: the real map is buffer-local in after/ftplugin/markdown.lua
+-- (:MarkdownPreviewToggle only exists in markdown buffers). Elsewhere: ONE warning instead of
+-- E492 (an unmapped <A-m> would act as <Esc> m, i.e. wait for a mark name).
+keymap.set("n", "<A-m>", function()
+  vim.notify("Markdown preview: only in markdown buffers", vim.log.levels.WARN)
+end, { desc = "Markdown Preview (markdown only)" })
 keymap.set("n", "]]", "<cmd>lua vim.lsp.buf.definition()<cr>", { desc = "Next Markdown Header" })
 keymap.set("n", "[[", "<cmd>lua vim.lsp.buf.definition()<cr>", { desc = "Previous Markdown Header" })
 
