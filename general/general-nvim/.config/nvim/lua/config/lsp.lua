@@ -121,3 +121,12 @@ for name, config in pairs(servers) do
     vim.lsp.enable(name)
   end
 end
+
+-- LSP related commands (nvim-lspconfig no longer defines these on nvim 0.12)
+vim.api.nvim_create_user_command("LspInfo", "checkhealth vim.lsp", { desc = "Show LSP Info" })
+
+vim.api.nvim_create_user_command("LspLog", function(_)
+  vim.cmd(string.format("edit %s", vim.fn.fnameescape(vim.lsp.log.get_filename())))
+end, { desc = "Show LSP log" })
+
+vim.api.nvim_create_user_command("LspRestart", "lsp restart", { desc = "Restart LSP" })
