@@ -54,6 +54,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
   end,
 })
 -- 4. Define and Enable Servers
+---@type table<string, vim.lsp.Config>
 local servers = {
   pyright = { cmd = { "pyright-langserver", "--stdio" } },
   ruff = { cmd = { "ruff", "server" } },
