@@ -16,10 +16,8 @@ pcall(require, "cmp_omni")
 pcall(require, "cmp_nvim_ultisnips")
 pcall(require, "cmp_cmdline")
 
--- UltiSnips configuration
-vim.g.UltiSnipsExpandTrigger = "<Tab>"
-vim.g.UltiSnipsJumpForwardTrigger = "<C-j>"
-vim.g.UltiSnipsJumpBackwardTrigger = "<C-k>"
+-- UltiSnips triggers (<C-j> expand/jump forward, <C-k> jump back) are set only
+-- in the ultisnips spec init (lua/plugin_specs.lua): single source of truth.
 
 cmp.setup {
   -- nvim-cmp default + `vim.b.completion = false` turns completion off for a buffer

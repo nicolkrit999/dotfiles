@@ -354,7 +354,8 @@ local plugin_specs = {
     ft = "snippets",
     init = function()
       vim.cmd([[
-        " Trigger configuration. Do not use <tab> if you use YouCompleteMe
+        " Single source of truth for the UltiSnips triggers (nvim-cmp.lua must not set them):
+        " <C-j> = expand or jump forward, <C-k> = jump back
         let g:UltiSnipsExpandTrigger='<c-j>'
 
         " Do not look for SnipMate snippets
