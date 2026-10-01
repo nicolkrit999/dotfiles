@@ -23,5 +23,10 @@ if vim.fn.exists(":AsyncRun") == 2 then
   vim.keymap.set("n", "<F9>", string.format(':<C-U>AsyncRun %s -u "%%"<CR>', py_cmd), { buffer = true, silent = true, desc = "run python file" })
 end
 
-local py_fmt_cmd = (py_env == "uv") and "!uv run black" or "!black"
-vim.keymap.set("n", "<Space>f", string.format("<cmd>silent %s %%<CR>", py_fmt_cmd), { buffer = true, silent = true, desc = "format file" })
+-- <Space>f black: only when the formatter can run (black e.g. from the python devShell;
+-- in a uv project black comes from the project env through `uv run`)
+local py_fmt_bin = (py_env == "uv") and "uv" or "black"
+if vim.fn.executable(py_fmt_bin) == 1 then
+  local py_fmt_cmd = (py_env == "uv") and "!uv run black" or "!black"
+  vim.keymap.set("n", "<Space>f", string.format("<cmd>silent %s %%<CR>", py_fmt_cmd), { buffer = true, silent = true, desc = "format file" })
+end
