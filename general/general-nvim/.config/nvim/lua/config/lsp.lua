@@ -87,6 +87,9 @@ local servers = {
     },
   },
 
+  -- Grammar/spell checking (LanguageTool) for prose filetypes; replaces vim-grammarous
+  ltex_plus = { cmd = { "ltex-ls-plus" } },
+
   -- Nix setup
   nixd = {
     cmd = { "nixd" },
