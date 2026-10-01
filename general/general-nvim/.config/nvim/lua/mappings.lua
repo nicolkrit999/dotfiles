@@ -17,14 +17,6 @@ end, { desc = "Buffer Diagnostics" })
 -- Workspace: Check WHOLE project
 keymap.set("n", "<leader>dw", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", { desc = "Workspace Diagnostics" })
 
--- Workspace Errors: Check ONLY errors (clean up build)
-keymap.set("n", "<leader>dE", function()
-  require("telescope.builtin").diagnostics({
-    root_dir = true,
-    severity = vim.diagnostic.severity.ERROR
-  })
-end, { desc = "Workspace Errors Only" })
-
 -- 2. Navigation
 
 -- Next/Prev ERROR only (Skip warnings/hints)
@@ -167,6 +159,8 @@ keymap.set("v", "<A-k>", ":m '<-2<CR>gv=gv", { noremap = true, silent = true, de
 
 
 -- Replace visual selection with text in register, but not contaminate the register, see also https://stackoverflow.com/q/10723700/6064933
+-- NOT dead: yanky.nvim (which remaps x p) only loads on :YankyRingHistory, so this is the effective
+-- visual p in every session until then.
 keymap.set("x", "p", '"_c<Esc>p')
 
 -- Go to a certain buffer
