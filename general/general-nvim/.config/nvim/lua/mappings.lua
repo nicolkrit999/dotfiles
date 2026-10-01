@@ -56,8 +56,22 @@ end, { desc = "Toggle Diagnostics" })
 -- Turn the word under cursor to upper case
 keymap.set("i", "<c-u>", "<Esc>viwUea")
 
--- Turn the current word into title case
-keymap.set("i", "<c-t>", "<Esc>b~lea")
+-- Turn the current word into title case: the word under the cursor or ending right before it
+-- (works at the start, middle and end of a word, on one-letter words and at the line start).
+-- Stays in insert mode with the cursor after the word, like <c-u>.
+keymap.set("i", "<c-t>", function()
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  local line = vim.api.nvim_get_current_line()
+  -- leftmost run of keyword chars that touches the cursor column (byte col + 1)
+  local word, s, e = unpack(vim.fn.matchstrpos(line, [[\k*\%]] .. (col + 1) .. [[c\k*]]))
+  if word == "" then
+    return
+  end
+  local first = vim.fn.strcharpart(word, 0, 1)
+  local new = vim.fn.toupper(first) .. word:sub(#first + 1)
+  vim.api.nvim_buf_set_text(0, row - 1, s, row - 1, e, { new })
+  vim.api.nvim_win_set_cursor(0, { row, s + #new })
+end, { desc = "title-case the current word" })
 
 -- Paste non-linewise text above or below current line, see https://stackoverflow.com/a/1346777/6064933
 keymap.set("n", "<leader>p", "m`o<ESC>p``", { desc = "paste below current line" })
