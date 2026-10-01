@@ -80,6 +80,8 @@ local servers = {
   -- YAML setup
   yamlls = {
     cmd = { "yaml-language-server", "--stdio" },
+    -- only plain yaml: nothing here sets yaml.docker-compose/gitlab/helm-values
+    filetypes = { "yaml" },
     settings = { yaml = { format = { enable = true } } }
   },
 
