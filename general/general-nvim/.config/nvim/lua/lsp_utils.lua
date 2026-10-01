@@ -33,6 +33,7 @@ M.main_lsp_by_filetype = {
   typst = "tinymist",
   sh = "bashls",
   yaml = "yamlls",
+  tex = "texlab",
 }
 
 --- Show a nui menu listing LSP clients attached to the current buffer.

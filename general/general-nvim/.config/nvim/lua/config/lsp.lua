@@ -126,6 +126,9 @@ local servers = {
       formatterMode = "typstyle",
     },
   },
+
+  -- LaTeX (texlab comes from the LaTeX devShell; enabled only when executable)
+  texlab = { cmd = { "texlab" } },
 }
 
 for name, config in pairs(servers) do
