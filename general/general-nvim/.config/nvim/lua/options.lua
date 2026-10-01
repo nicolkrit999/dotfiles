@@ -188,6 +188,10 @@ opt.complete:append("kspell")
 opt.complete:remove { "w", "b", "u", "t" }
 
 opt.spelllang = { "en", "it", "de", "fr" } -- Spell languages
+-- one word list per language, in the spelllang order: zg adds to en, 2zg to it, 3zg to de, 4zg to fr
+opt.spellfile = vim.tbl_map(function(lang)
+  return vim.fs.joinpath(vim.fn.stdpath("config"), "spell", lang .. ".utf-8.add")
+end, { "en", "it", "de", "fr" })
 opt.spellsuggest:append("9") -- Show 9 spell suggestions at most
 
 -- Align indent to next multiple value of shiftwidth. For its meaning,
