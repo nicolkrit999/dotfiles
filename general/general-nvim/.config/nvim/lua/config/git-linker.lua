@@ -37,7 +37,7 @@ keymap.set({ "n", "x" }, "<leader>gl", function()
   gitlinker.get_buf_range_url(mode)
 end, {
   silent = true,
-  desc = "Git: get permlink",
+  desc = "Git: get permalink",
 })
 
 keymap.set("n", "<leader>gbr", function()
