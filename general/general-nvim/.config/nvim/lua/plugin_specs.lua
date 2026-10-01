@@ -144,22 +144,6 @@ local plugin_specs = {
     end,
   },
   {
-    "vlime/vlime",
-    enabled = function()
-      return utils.executable("sbcl")
-    end,
-    init = function()
-      vim.cmd([[
-        command! -nargs=0 StartVlime call jobstart(printf("sbcl --load %s/vlime/lisp/start-vlime.lisp", g:package_home))
-      ]])
-    end,
-    config = function(plugin)
-      vim.opt.rtp:append(plugin.dir .. "/vim")
-    end,
-    ft = { "lisp" },
-  },
-
-  {
     "smoka7/hop.nvim",
     keys = { "f" },
     config = function()
