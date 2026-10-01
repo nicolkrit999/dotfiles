@@ -847,7 +847,7 @@ local plugin_specs = {
       -- do not let nvim-gdb create its global <leader>dd/dl/dp/db/dr start maps
       -- (they would overwrite the user's <leader>dd / <leader>db / <leader>dp)
       vim.g.nvimgdb_disable_start_keymaps = true
-      vim.keymap.set("n", "<leader>dp", [[:<C-U>GdbStartPDB python -m pdb %<CR>]], { desc = "start pdb on current file (nvim-gdb)" })
+      -- <leader>dp (pdb on the current file) is python buffer-local: after/ftplugin/python.lua
     end,
     config = function()
       -- nvim-gdb's setup() maps cmdline <c-e> globally (cmake executable picker); keep the builtin <C-e>

@@ -14,6 +14,12 @@ keymap.set("n", "<leader>db", function()
   require("telescope.builtin").diagnostics({ bufnr = 0 })
 end, { desc = "Buffer Diagnostics" })
 
+-- <leader>dp: pdb on the current file, python buffer-local (after/ftplugin/python.lua).
+-- Elsewhere ONE warning (an unmapped <Space>dp would fall through to l + dp = diffput, E99).
+keymap.set("n", "<leader>dp", function()
+  vim.notify("<leader>dp (pdb): only in python buffers", vim.log.levels.WARN)
+end, { desc = "start pdb (python only)" })
+
 -- Workspace: Check WHOLE project
 keymap.set("n", "<leader>dw", "<cmd>Trouble diagnostics toggle<cr>", { desc = "Workspace Diagnostics" })
 

@@ -35,3 +35,13 @@ else
     vim.notify("Python: black not found on PATH (open nvim inside the python devShell)", vim.log.levels.WARN)
   end, { buffer = true, desc = "format file (needs black)" })
 end
+
+-- <leader>dp: start pdb on the current file (nvim-gdb, lazy-loaded on :GdbStart*; pdb is the
+-- python stdlib module). nvim-gdb is disabled on macOS -> one warning instead.
+if vim.fn.exists(":GdbStartPDB") == 2 then
+  vim.keymap.set("n", "<leader>dp", [[:<C-U>GdbStartPDB python -m pdb %<CR>]], { buffer = true, desc = "start pdb on current file (nvim-gdb)" })
+else
+  vim.keymap.set("n", "<leader>dp", function()
+    vim.notify("<leader>dp: nvim-gdb is not available on this platform", vim.log.levels.WARN)
+  end, { buffer = true, desc = "start pdb (needs nvim-gdb)" })
+end
