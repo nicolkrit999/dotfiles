@@ -84,14 +84,6 @@ M.colorscheme_conf = {
   github = function()
     use_theme("github_dark_default")
   end,
-  e_ink = function()
-    local ok, ei = pcall(require, "e-ink")
-    if not ok then
-      return use_theme("default")
-    end
-    ei.setup()
-    use_theme("e-ink")
-  end,
   ashen = function()
     use_theme("ashen")
   end,
