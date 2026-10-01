@@ -8,7 +8,8 @@ vim.keymap.set("n", "<leader>mr", "<Plug>ReturnFromFootnote", { buffer = true, d
 
 -- <Space>fm: format with prettier (marksman has no formatting provider, so the global LSP
 -- <Space>fm map would do nothing here). The buffer contents go through stdin and only the
--- changed hunks are written back: one undo step, cursor/marks kept, nothing written to disk.
+-- changed hunks are written back: one undo step, unchanged lines and their marks kept, nothing
+-- written to disk. (The cursor can move when prettier changes the line count at or above it.)
 -- Without prettier on PATH the key shows ONE warning.
 if vim.fn.executable("prettier") == 1 then
   vim.keymap.set("n", "<Space>fm", function()
