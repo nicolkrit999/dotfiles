@@ -1010,6 +1010,12 @@ local plugin_specs = {
       require("auto-save").setup {
         trigger_events = { "FocusLost", "BufLeave" },
         condition = function(buf)
+          -- Skip buffers that cannot be written (unnamed, readonly, not modifiable);
+          -- otherwise auto-save reports "saved" although :write failed (E32/E45).
+          if vim.api.nvim_buf_get_name(buf) == "" or vim.bo[buf].readonly or not vim.bo[buf].modifiable then
+            return false
+          end
+
           -- Disable for filetypes with external watchers (typst watch, vimtex)
           -- to avoid re-triggering the watcher process on every auto-save event.
           local ft = vim.api.nvim_get_option_value("filetype", { buf = buf })
