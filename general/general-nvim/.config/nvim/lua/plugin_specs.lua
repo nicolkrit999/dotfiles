@@ -867,6 +867,42 @@ local plugin_specs = {
     end,
   },
 
+  -- Auto-save a session per cwd on exit (never auto-restored; restore from the dashboard items
+  -- "Restore session (this folder)" / "Restore last session").
+  {
+    "folke/persistence.nvim",
+    event = "BufReadPre", -- only start saving once a real file was opened
+    opts = {},
+    config = function(_, opts)
+      require("persistence").setup(opts)
+      -- Keep transient/panel windows out of saved sessions: close them just before the save
+      -- (PersistenceSavePre fires on VimLeavePre) and drop terminals/help from sessionoptions.
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "PersistenceSavePre",
+        group = vim.api.nvim_create_augroup("persistence_exclude", { clear = true }),
+        desc = "Exclude claude-code, nvim-tree, aerial, help, quickfix windows from the session",
+        callback = function()
+          vim.opt.sessionoptions:remove { "terminal", "help" }
+          local claude = {}
+          local ok, cc = pcall(require, "claude-code")
+          if ok and cc.claude_code then
+            for _, b in pairs(cc.claude_code.instances or {}) do claude[b] = true end
+          end
+          local skip_ft = { qf = true, help = true, aerial = true, NvimTree = true, dashboard = true }
+          for _, win in ipairs(vim.api.nvim_list_wins()) do
+            local buf = vim.api.nvim_win_get_buf(win)
+            if skip_ft[vim.bo[buf].filetype] or vim.bo[buf].buftype == "terminal" or claude[buf] then
+              if #vim.api.nvim_list_wins() > 1 then pcall(vim.api.nvim_win_close, win, true) end
+            end
+          end
+          for b in pairs(claude) do
+            if vim.api.nvim_buf_is_valid(b) then pcall(vim.api.nvim_buf_delete, b, { force = true }) end
+          end
+        end,
+      })
+    end,
+  },
+
   -- Session management plugin
   { "tpope/vim-obsession",   cmd = "Obsession" },
 

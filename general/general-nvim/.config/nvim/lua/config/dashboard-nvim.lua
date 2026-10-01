@@ -150,7 +150,25 @@ local function with_hint(name, hint)
   return name .. (" "):rep(56 - #name - #label) .. label
 end
 
+local function pad(name) return name .. (" "):rep(56 - #name) end
+
+-- persistence.nvim is lazy (BufReadPre); load it on demand so the items work from a bare dashboard.
+local function persistence()
+  require("lazy").load { plugins = { "persistence.nvim" } }
+  return require("persistence")
+end
+
 conf.center = {
+  {
+    icon = "󰦛  ",
+    desc = pad("Restore session (this folder)"),
+    action = function() persistence().load() end,
+  },
+  {
+    icon = "󰁯  ",
+    desc = pad("Restore last session"),
+    action = function() persistence().load { last = true } end,
+  },
   {
     icon = "󰈞  ",
     desc = with_hint("Find  File", "<Leader> f f"),
@@ -158,18 +176,31 @@ conf.center = {
   },
   {
     icon = "󰈢  ",
+    desc = pad("Recent files here"),
+    -- cwd is read by fzf-lua when the item is pressed (respects :tcd)
+    action = function() require("fzf-lua").oldfiles { cwd_only = true } end,
+  },
+  {
+    icon = "󰈢  ",
     desc = with_hint("Recently opened files", "<Leader> f r"),
     action = "FzfLua oldfiles",
   },
+}
+
+-- zoxide is optional: only offer the item when the binary exists when the menu is built
+if vim.fn.executable("zoxide") == 1 then
+  table.insert(conf.center, {
+    icon = "  ",
+    desc = pad("Recent directories"),
+    action = "FzfLua zoxide",
+  })
+end
+
+vim.list_extend(conf.center, {
   {
     icon = "󰈬  ",
     desc = with_hint("Project grep", "<Leader> f g"),
     action = "FzfLua live_grep",
-  },
-  {
-    icon = "  ",
-    desc = with_hint("Open Nvim config", "<Leader> e v"),
-    action = "tabnew $MYVIMRC | tcd %:p:h",
   },
   {
     icon = "󰈞  ",
@@ -181,7 +212,32 @@ conf.center = {
     end,
   },
   {
-    icon = "  ",
+    icon = "  ",
+    desc = pad("Search keymaps"),
+    action = "FzfLua keymaps",
+  },
+  {
+    icon = "󰋖  ",
+    desc = with_hint("Search help", "<Leader> f h"),
+    action = "FzfLua helptags",
+  },
+  {
+    icon = "󰚩  ",
+    desc = with_hint("Claude Code", "<Leader> c c"),
+    action = "ClaudeCode",
+  },
+  {
+    icon = "  ",
+    desc = pad("Open user guide"),
+    action = function() vim.cmd("tabnew " .. vim.fn.fnameescape(vim.fn.stdpath("config") .. "/user-guide.md")) end,
+  },
+  {
+    icon = "  ",
+    desc = with_hint("Open Nvim config", "<Leader> e v"),
+    action = "tabnew $MYVIMRC | tcd %:p:h",
+  },
+  {
+    icon = "  ",
     desc = "New file                                ",
     action = "enew",
     key = "e",
@@ -189,11 +245,10 @@ conf.center = {
   {
     icon = "󰗼  ",
     desc = "Quit Nvim                               ",
-    -- desc = "Quit Nvim                               ",
     action = "qa",
     key = "q",
   },
-}
+})
 
 dashboard.setup {
   theme = "doom",
