@@ -195,37 +195,37 @@ keymap.set({ "x", "o" }, "<leader>ai", "<cmd>echo 'around inner'<cr>", { desc = 
 keymap.set({ "x", "o" }, "<leader>as", "<cmd>echo 'around sentence'<cr>", { desc = "around sentence" })
 
 
+-- Java (nvim-java; the commands exist only inside the Java devShell). Groups:
+-- <leader>jb build, <leader>jr runner, <leader>jt test, <leader>je extract/refactor
+-- (which-key group names in lua/config/which-key.lua)
+
 -- Java Build
-keymap.set('n', '<leader>jb', '<cmd>JavaBuildBuildWorkspace<cr>', { desc = 'Java: Build Workspace' })
-keymap.set('n', '<leader>jc', '<cmd>JavaBuildCleanWorkspace<cr>', { desc = 'Java: Clean Workspace' })
+keymap.set('n', '<leader>jbb', '<cmd>JavaBuildBuildWorkspace<cr>', { desc = 'Java: Build Workspace' })
+keymap.set('n', '<leader>jbc', '<cmd>JavaBuildCleanWorkspace<cr>', { desc = 'Java: Clean Workspace' })
 
 -- Java Runner
-keymap.set('n', '<leader>jr', '<cmd>JavaRunnerRunMain<cr>', { desc = 'Java: Run Main' })
-keymap.set('n', '<leader>js', '<cmd>JavaRunnerStopMain<cr>', { desc = 'Java: Stop Main' })
-keymap.set('n', '<leader>jl', '<cmd>JavaRunnerToggleLogs<cr>', { desc = 'Java: Toggle Runner Logs' })
-
--- Java DAP
-keymap.set('n', '<leader>jd', '<cmd>JavaDapConfig<cr>', { desc = 'Java: DAP Config' })
+keymap.set('n', '<leader>jrr', '<cmd>JavaRunnerRunMain<cr>', { desc = 'Java: Run Main' })
+keymap.set('n', '<leader>jrs', '<cmd>JavaRunnerStopMain<cr>', { desc = 'Java: Stop Main' })
+keymap.set('n', '<leader>jrl', '<cmd>JavaRunnerToggleLogs<cr>', { desc = 'Java: Toggle Runner Logs' })
+keymap.set('n', '<leader>jrp', '<cmd>JavaProfile<cr>', { desc = 'Java: Profiles UI' })
 
 -- Java Test
-keymap.set('n', '<leader>jt', '<cmd>JavaTestRunCurrentClass<cr>', { desc = 'Java: Test Current Class' })
-keymap.set('n', '<leader>jT', '<cmd>JavaTestDebugCurrentClass<cr>', { desc = 'Java: Debug Current Class' })
-keymap.set('n', '<leader>jm', '<cmd>JavaTestRunCurrentMethod<cr>', { desc = 'Java: Test Current Method' })
-keymap.set('n', '<leader>jM', '<cmd>JavaTestDebugCurrentMethod<cr>', { desc = 'Java: Debug Current Method' })
-keymap.set('n', '<leader>jp', '<cmd>JavaTestViewLastReport<cr>', { desc = 'Java: View Last Test Report' })
+keymap.set('n', '<leader>jtc', '<cmd>JavaTestRunCurrentClass<cr>', { desc = 'Java: Test Current Class' })
+keymap.set('n', '<leader>jtC', '<cmd>JavaTestDebugCurrentClass<cr>', { desc = 'Java: Debug Current Class' })
+keymap.set('n', '<leader>jtm', '<cmd>JavaTestRunCurrentMethod<cr>', { desc = 'Java: Test Current Method' })
+keymap.set('n', '<leader>jtM', '<cmd>JavaTestDebugCurrentMethod<cr>', { desc = 'Java: Debug Current Method' })
+keymap.set('n', '<leader>jtr', '<cmd>JavaTestViewLastReport<cr>', { desc = 'Java: View Last Test Report' })
 
--- Java Profiles
-keymap.set('n', '<leader>jf', '<cmd>JavaProfile<cr>', { desc = 'Java: Profiles UI' })
-
--- Java Refactor
-keymap.set('n', '<leader>jv', '<cmd>JavaRefactorExtractVariable<cr>', { desc = 'Java: Extract Variable' })
-keymap.set('n', '<leader>jo', '<cmd>JavaRefactorExtractVariableAllOccurrence<cr>',
+-- Java Refactor (extract)
+keymap.set('n', '<leader>jev', '<cmd>JavaRefactorExtractVariable<cr>', { desc = 'Java: Extract Variable' })
+keymap.set('n', '<leader>jeo', '<cmd>JavaRefactorExtractVariableAllOccurrence<cr>',
   { desc = 'Java: Extract Variable (All Occurrences)' })
-keymap.set('n', '<leader>jc', '<cmd>JavaRefactorExtractConstant<cr>', { desc = 'Java: Extract Constant' })
-keymap.set('n', '<leader>jm', '<cmd>JavaRefactorExtractMethod<cr>', { desc = 'Java: Extract Method' })
-keymap.set('n', '<leader>jf', '<cmd>JavaRefactorExtractField<cr>', { desc = 'Java: Extract Field' })
+keymap.set('n', '<leader>jec', '<cmd>JavaRefactorExtractConstant<cr>', { desc = 'Java: Extract Constant' })
+keymap.set('n', '<leader>jem', '<cmd>JavaRefactorExtractMethod<cr>', { desc = 'Java: Extract Method' })
+keymap.set('n', '<leader>jef', '<cmd>JavaRefactorExtractField<cr>', { desc = 'Java: Extract Field' })
 
--- Java Settings
+-- Java DAP / Settings
+keymap.set('n', '<leader>jd', '<cmd>JavaDapConfig<cr>', { desc = 'Java: DAP Config' })
 keymap.set('n', '<leader>jj', '<cmd>JavaSettingsChangeRuntime<cr>', { desc = 'Java: Change Runtime' })
 
 -- Previews
