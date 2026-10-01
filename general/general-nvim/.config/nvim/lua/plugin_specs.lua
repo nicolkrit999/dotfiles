@@ -987,7 +987,13 @@ local plugin_specs = {
   {
     "catgoose/nvim-colorizer.lua",
     event = "VeryLazy",
-    opts = { -- set to setup table
+    opts = {
+      options = {
+        parsers = {
+          -- do not color plain color words such as "red" or "Black"
+          names = { enable = false },
+        },
+      },
     },
   },
   {
