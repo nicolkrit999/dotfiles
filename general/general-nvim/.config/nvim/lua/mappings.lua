@@ -58,7 +58,7 @@ keymap.set("i", "<c-u>", "<Esc>viwUea")
 
 -- Toggle the case of the first letter of the current word (Foo <-> foo). The word is the one under
 -- the cursor or ending right before it; when only whitespace separates the cursor from the previous
--- word on the same line ("foo |"), that word. A non-letter first char is left alone.
+-- word on the same line ("foo |"), that word. A non-letter first char, or a letter whose case change does not round-trip, is left alone.
 -- Stays in insert mode, the cursor keeps its place in the text.
 keymap.set("i", "<c-t>", function()
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))
@@ -75,7 +75,8 @@ keymap.set("i", "<c-t>", function()
   local first = vim.fn.strcharpart(word, 0, 1)
   local upper, lower = vim.fn.toupper(first), vim.fn.tolower(first)
   local toggled = first ~= upper and upper or (first ~= lower and lower or nil)
-  if not toggled then
+  -- only toggle when the change round-trips, so a second <C-t> restores the word (not for i-dotless, long s, ...)
+  if not toggled or (toggled == upper and vim.fn.tolower(toggled) or vim.fn.toupper(toggled)) ~= first then
     return
   end
   vim.api.nvim_buf_set_text(0, row - 1, s, row - 1, s + #first, { toggled })
