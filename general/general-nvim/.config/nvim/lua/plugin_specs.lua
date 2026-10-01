@@ -588,9 +588,6 @@ local plugin_specs = {
     dependencies = {
       "MunifTanjim/nui.nvim",
     },
-    enabled = function()
-      return vim.fn.has("nvim-0.10") == 1
-    end,
     build = function()
       require("dbee").install()
     end,
