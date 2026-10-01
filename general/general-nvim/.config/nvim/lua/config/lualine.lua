@@ -1,6 +1,11 @@
 local fn = vim.fn
 
-local git_status_cache = {}
+-- cache for git states
+local git_status_cache = {
+  fetch_success = false,
+  behind_count = 0,
+  ahead_count = 0,
+}
 
 local on_exit_fetch = function(result)
   if result.code == 0 then
@@ -12,6 +17,10 @@ local function handle_numeric_result(cache_key)
   return function(result)
     if result.code == 0 then
       git_status_cache[cache_key] = tonumber(result.stdout:match("(%d+)")) or 0
+    else
+      -- git rev-list fails e.g. when the current branch has no upstream;
+      -- reset the count so the previous branch's numbers do not linger
+      git_status_cache[cache_key] = 0
     end
   end
 end
