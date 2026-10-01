@@ -1018,10 +1018,17 @@ local plugin_specs = {
 
 
   {
-    "Pocco81/auto-save.nvim",
+    -- maintained fork of the archived Pocco81/auto-save.nvim (same behaviour configured below)
+    "okuuva/auto-save.nvim",
     config = function()
       require("auto-save").setup {
-        trigger_events = { "FocusLost", "BufLeave" },
+        -- save when leaving a buffer or when nvim loses focus; no saves while typing
+        -- (the fork's defaults also save on QuitPre/VimSuspend and after InsertLeave/TextChanged)
+        trigger_events = {
+          immediate_save = { "BufLeave", "FocusLost" },
+          defer_save = {},
+          cancel_deferred_save = {},
+        },
         condition = function(buf)
           -- Skip buffers that cannot be written (unnamed, readonly, not modifiable);
           -- otherwise auto-save reports "saved" although :write failed (E32/E45).
@@ -1049,6 +1056,20 @@ local plugin_specs = {
           return true
         end,
       }
+
+      -- the fork dropped the built-in "saved" message; show it once (the old plugin echoed it twice)
+      -- and clear the message area again after 1.25 s, as before
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "AutoSaveWritePost",
+        group = vim.api.nvim_create_augroup("auto_save_message", { clear = true }),
+        desc = "AutoSave: show 'saved at' message",
+        callback = function()
+          vim.api.nvim_echo({ { "AutoSave: saved at " .. vim.fn.strftime("%H:%M:%S"), "MsgArea" } }, true, {})
+          vim.defer_fn(function()
+            vim.cmd("echon ''")
+          end, 1250)
+        end,
+      })
     end,
   },
   {
