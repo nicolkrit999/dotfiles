@@ -15,7 +15,7 @@ keymap.set("n", "<leader>db", function()
 end, { desc = "Buffer Diagnostics" })
 
 -- Workspace: Check WHOLE project
-keymap.set("n", "<leader>dw", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", { desc = "Workspace Diagnostics" })
+keymap.set("n", "<leader>dw", "<cmd>Trouble diagnostics toggle<cr>", { desc = "Workspace Diagnostics" })
 
 -- 2. Navigation
 
