@@ -273,7 +273,10 @@ end, { desc = "Return from Footnote (markdown only)" })
 vim.keymap.set('n', '<leader>rr', function()
   local filetype = vim.bo.filetype
   local filename = vim.fn.expand('%')
-  local filename_no_ext = vim.fn.expand('%:r')
+  -- c/cpp/rust single files: the source is passed shell-escaped and the binary is built next to
+  -- it and run by its full, shell-escaped path (works for absolute buffer names, files outside
+  -- the cwd and paths with spaces)
+  local binary = vim.fn.shellescape(vim.fn.expand('%:p:r'))
   local cmd = ''
   local need, where = nil, nil
 
@@ -288,10 +291,10 @@ vim.keymap.set('n', '<leader>rr', function()
     cmd = 'java ' .. filename
     need, where = { 'java' }, 'the java devShell'
   elseif filetype == 'c' then
-    cmd = 'gcc -Wall -Wextra -std=c11 ' .. filename .. ' -o ' .. filename_no_ext .. ' && ./' .. filename_no_ext
+    cmd = 'gcc -Wall -Wextra -std=c11 ' .. vim.fn.shellescape(filename) .. ' -o ' .. binary .. ' && ' .. binary
     need, where = { 'gcc' }, 'the c-cpp devShell'
   elseif filetype == 'cpp' then
-    cmd = 'g++ -Wall -Wextra -std=c++20 ' .. filename .. ' -o ' .. filename_no_ext .. ' && ./' .. filename_no_ext
+    cmd = 'g++ -Wall -Wextra -std=c++20 ' .. vim.fn.shellescape(filename) .. ' -o ' .. binary .. ' && ' .. binary
     need, where = { 'g++' }, 'the c-cpp devShell'
   elseif filetype == 'cs' then
     cmd = 'dotnet run'
@@ -312,7 +315,7 @@ vim.keymap.set('n', '<leader>rr', function()
       cmd = 'cargo run --manifest-path ' .. vim.fn.shellescape(cargo_root .. '/Cargo.toml')
       need = { 'cargo' }
     else
-      cmd = 'rustc ' .. filename .. ' -o ' .. filename_no_ext .. ' && ./' .. filename_no_ext
+      cmd = 'rustc ' .. vim.fn.shellescape(filename) .. ' -o ' .. binary .. ' && ' .. binary
       need = { 'rustc' }
     end
     where = 'the rust devShell'
