@@ -8,6 +8,10 @@ require("fzf-lua").setup {
   },
   files = {
     previewer = false,
+    git_icons = true,
+    -- .gitignore is respected; create a `.ignore` (read by both fd and rg) or `.fdignore`
+    -- to un-ignore files such as `.env`
+    no_ignore = false, -- documentation only: already the default (fzf-lua uses no_ignore only as a toggle flag)
   },
 }
 
