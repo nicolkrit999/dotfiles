@@ -1,0 +1,25 @@
+require("illuminate").configure {
+  providers = {
+    "lsp",
+    "treesitter",
+  },
+  filetypes_denylist = {},
+  filetypes_allowlist = {
+    "bash",
+    "cpp",
+    "go",
+    "java",
+    "javascript",
+    "json",
+    "lua",
+    "markdown",
+    "nix",
+    "python",
+    "sh",
+    "toml",
+    "typescript",
+    "typst",
+    "yaml",
+  },
+  min_count_to_highlight = 2,
+}

@@ -311,6 +311,15 @@ local plugin_specs = {
       require("config.nvim_ufo")
     end,
   },
+  -- highlight other occurrences of the word under the cursor (LSP references)
+  {
+    "RRethy/vim-illuminate",
+    event = "VeryLazy",
+    config = function()
+      require("config.vim-illuminate")
+    end,
+  },
+
   -- Highlight URLs inside vim
   { "itchyny/vim-highlighturl", event = "BufReadPost" },
 

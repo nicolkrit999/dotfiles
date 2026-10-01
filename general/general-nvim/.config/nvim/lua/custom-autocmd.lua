@@ -177,6 +177,11 @@ api.nvim_create_autocmd("ColorScheme", {
 
     -- highlight for matching parentheses
     vim.api.nvim_set_hl(0, "MatchParen", { bold = true, underline = true, update = true })
+
+    -- vim-illuminate (F2)
+    vim.api.nvim_set_hl(0, "IlluminatedWordWrite", { reverse = true, update = true })
+    vim.api.nvim_set_hl(0, "IlluminatedWordRead", { reverse = true, update = true })
+    vim.api.nvim_set_hl(0, "IlluminatedWordText", { reverse = true, update = true })
   end,
 })
 
