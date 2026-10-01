@@ -2,6 +2,49 @@
 -- markdown buffers); overrides the global "markdown only" warning map in lua/mappings.lua
 vim.keymap.set("n", "<A-m>", "<cmd>MarkdownPreviewToggle<cr>", { buffer = true, silent = true, desc = "Markdown Preview" })
 
+-- <Space>fm: format with prettier (marksman has no formatting provider, so the global LSP
+-- <Space>fm map would do nothing here). The buffer contents go through stdin and only the
+-- changed hunks are written back: one undo step, cursor/marks kept, nothing written to disk.
+-- Without prettier on PATH the key shows ONE warning.
+if vim.fn.executable("prettier") == 1 then
+  vim.keymap.set("n", "<Space>fm", function()
+    local buf = vim.api.nvim_get_current_buf()
+    local tick = vim.b[buf].changedtick
+    local old = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local cmd = { "prettier", "--parser", "markdown" }
+    local name = vim.api.nvim_buf_get_name(buf)
+    if name ~= "" then
+      -- lets prettier find the project's .prettierrc / .prettierignore
+      vim.list_extend(cmd, { "--stdin-filepath", name })
+    end
+    vim.system(cmd, { stdin = table.concat(old, "\n") .. "\n", text = true }, function(res)
+      vim.schedule(function()
+        if res.code ~= 0 then
+          vim.notify("prettier failed: " .. vim.trim(res.stderr or ""), vim.log.levels.ERROR)
+          return
+        end
+        if not vim.api.nvim_buf_is_valid(buf) or vim.b[buf].changedtick ~= tick then
+          vim.notify("prettier: buffer changed while formatting, result discarded", vim.log.levels.WARN)
+          return
+        end
+        local new = vim.split(res.stdout:gsub("\n$", ""), "\n", { plain = true })
+        local diff = (vim.text and vim.text.diff) or vim.diff
+        local hunks = diff(table.concat(old, "\n") .. "\n", table.concat(new, "\n") .. "\n", { result_type = "indices" })
+        -- apply bottom-up so the earlier line numbers stay valid
+        for i = #hunks, 1, -1 do
+          local a_start, a_count, b_start, b_count = unpack(hunks[i])
+          local first = a_count == 0 and a_start or a_start - 1
+          vim.api.nvim_buf_set_lines(buf, first, first + a_count, false, vim.list_slice(new, b_start, b_start + b_count - 1))
+        end
+      end)
+    end)
+  end, { buffer = true, desc = "Format file (prettier)" })
+else
+  vim.keymap.set("n", "<Space>fm", function()
+    vim.notify("Markdown: prettier not found on PATH", vim.log.levels.WARN)
+  end, { buffer = true, desc = "Format file (needs prettier)" })
+end
+
 local function add_reference_at_end(label, url, title)
   vim.schedule(function()
     local bufnr = vim.api.nvim_get_current_buf()

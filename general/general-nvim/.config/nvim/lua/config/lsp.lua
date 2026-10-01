@@ -91,11 +91,8 @@ local servers = {
     -- only plain markdown: nothing here sets markdown.mdx (lspconfig's default list has it, and
     -- :checkhealth vim.lsp warns "Unknown filetype 'markdown.mdx'")
     filetypes = { "markdown" },
-    settings = {
-      marksman = {
-        formatting = { command = { "prettier", "--parser=markdown" } },
-      },
-    },
+    -- no formatting here: marksman has no formatting provider; <Space>fm in markdown runs
+    -- prettier (after/ftplugin/markdown.lua)
   },
 
   -- Grammar/spell checking (LanguageTool) for prose filetypes
