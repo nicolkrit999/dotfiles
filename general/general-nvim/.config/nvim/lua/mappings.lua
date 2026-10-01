@@ -339,10 +339,12 @@ keymap.set("n", "<leader>cb", function()
 end, { desc = "show cursor" })
 
 
--- builtin undo tree (nvim 0.12 optional package nvim.undotree). `:Undotree` toggles the panel.
+-- builtin undo tree (nvim 0.12 optional package nvim.undotree). open() toggles the panel.
+-- Opened on the far LEFT (layout convention: short single-task panels left, persistent
+-- interactive panels such as claude-code right); `:Undotree` alone would follow splitright.
 keymap.set("n", "<space>u", function()
   vim.cmd.packadd("nvim.undotree") -- no-op after the first call
-  vim.cmd.Undotree()
+  require("undotree").open({ command = "topleft 30vnew" })
 end, { silent = true, desc = "toggle undo tree" })
 
 -- ============================================================================
