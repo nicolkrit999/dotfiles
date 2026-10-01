@@ -339,25 +339,14 @@ local plugin_specs = {
     submodules = false, -- not needed, submodules are required only for tests
   },
 
+  -- symbol outline sidebar (treesitter/LSP, no ctags needed)
   {
-    "liuchengxu/vista.vim",
-    enabled = function()
-      return utils.executable("ctags")
-    end,
-    cmd = "Vista",
-    init = function()
-      vim.cmd([[
-        let g:vista#renderer#icons = {
-              \ 'member': '',
-              \ }
-
-        " Do not echo message on command line
-        let g:vista_echo_cursor = 0
-        " Stay in current window when vista window is opened
-        let g:vista_stay_on_open = 0
-
-        nnoremap <silent> <Space>t :<C-U>Vista!!<CR>
-      ]])
+    "stevearc/aerial.nvim",
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    keys = { { "<space>t", "<cmd>AerialToggle!<CR>", desc = "Toggle symbol outline (aerial)" } },
+    cmd = { "AerialToggle", "AerialOpen", "AerialNavToggle" },
+    config = function()
+      require("config.aerial")
     end,
   },
 
