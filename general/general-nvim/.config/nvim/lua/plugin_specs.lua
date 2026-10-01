@@ -709,6 +709,13 @@ local plugin_specs = {
         omap s <Nop>
       ]])
     end,
+    config = function()
+      -- let targets.vim own ab/ib (`:checkhealth targets` conflict)
+      for _, mode in ipairs({ "x", "o" }) do
+        pcall(vim.keymap.del, mode, "ab")
+        pcall(vim.keymap.del, mode, "ib")
+      end
+    end,
   },
 
   -- Only use these plugin on Windows and Mac and when LaTeX is installed
