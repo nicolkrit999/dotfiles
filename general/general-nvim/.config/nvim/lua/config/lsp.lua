@@ -97,6 +97,9 @@ local servers = {
   -- Grammar/spell checking (LanguageTool) for prose filetypes; replaces vim-grammarous
   ltex_plus = { cmd = { "ltex-ls-plus" } },
 
+  -- Source-code spell checker (typos); attaches to every filetype
+  typos_lsp = { cmd = { "typos-lsp" } },
+
   -- Nix setup
   nixd = {
     cmd = { "nixd" },
