@@ -503,7 +503,10 @@ local plugin_specs = {
 
   {
     "sindrets/diffview.nvim",
-    cmd = { "DiffviewOpen" },
+    cmd = { "DiffviewOpen", "DiffviewFileHistory" },
+    config = function()
+      require("config.diffview")
+    end,
   },
 
   {
