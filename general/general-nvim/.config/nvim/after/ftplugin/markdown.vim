@@ -54,9 +54,10 @@ function! AddListSymbol(type, ...) abort
   endfor
 endfunction
 
-" Add hard line breaks for Markdown
-nnoremap <buffer><silent> <leader>mb :set operatorfunc=AddLineBreak<CR>g@
-xnoremap <buffer><silent> \ :<C-U> call AddLineBreak(visualmode(), 1)<CR>
+" Add hard line breaks for Markdown (<leader>mb + motion, or <leader>mb on a visual selection);
+" set from Lua so which-key gets a desc
+lua vim.keymap.set("n", "<leader>mb", ":set operatorfunc=AddLineBreak<CR>g@", { buffer = true, silent = true, desc = "markdown: hard line break" })
+lua vim.keymap.set("x", "<leader>mb", ":<C-U> call AddLineBreak(visualmode(), 1)<CR>", { buffer = true, silent = true, desc = "markdown: hard line break" })
 
 function! AddLineBreak(type, ...) abort
   if a:0
