@@ -7,7 +7,7 @@ hop.setup {
   match_mappings = { "zh_sc" },
 }
 
-keymap.set({ "n", "v", "o" }, "f", "", {
+keymap.set({ "n", "x", "o" }, "f", "", {
   silent = true,
   noremap = true,
   callback = function()

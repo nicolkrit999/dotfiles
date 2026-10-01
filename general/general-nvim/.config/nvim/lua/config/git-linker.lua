@@ -29,7 +29,7 @@ gitlinker.setup {
   mappings = nil,
 }
 
-keymap.set({ "n", "v" }, "<leader>gl", function()
+keymap.set({ "n", "x" }, "<leader>gl", function()
   local mode = string.lower(vim.fn.mode())
   gitlinker.get_buf_range_url(mode)
 end, {
