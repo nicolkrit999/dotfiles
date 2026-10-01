@@ -120,7 +120,7 @@ local plugin_specs = {
   },
   {
     "smoka7/hop.nvim",
-    keys = { "f" },
+    keys = { { "f", mode = { "n", "x", "o" } } },
     config = function()
       require("config.nvim_hop")
     end,
@@ -383,7 +383,7 @@ local plugin_specs = {
     "tpope/vim-commentary",
     keys = {
       { "gc", mode = "n" },
-      { "gc", mode = "v" },
+      { "gc", mode = "x" },
     },
   },
 

@@ -142,7 +142,6 @@ keymap.set("n", "<leader>cz", "<cmd>set spell!<cr>", { desc = "toggle spell" })
 -- Change text without putting it into the vim register, see https://stackoverflow.com/q/54255/6064933
 keymap.set("n", "c", '"_c')
 keymap.set("n", "C", '"_C')
-keymap.set("n", "cc", '"_cc')
 keymap.set("x", "c", '"_c')
 
 -- Remove trailing whitespace characters
@@ -159,8 +158,8 @@ keymap.set("n", "<A-j>", ":m .+1<CR>==", { noremap = true, silent = true, desc =
 keymap.set("n", "<A-k>", ":m .-2<CR>==", { noremap = true, silent = true, desc = "move line up" })
 
 -- Move lines in visual mode with Option+j/k (keep selection)
-keymap.set("v", "<A-j>", ":m '>+1<CR>gv=gv", { noremap = true, silent = true, desc = "move selection down" })
-keymap.set("v", "<A-k>", ":m '<-2<CR>gv=gv", { noremap = true, silent = true, desc = "move selection up" })
+keymap.set("x", "<A-j>", ":m '>+1<CR>gv=gv", { noremap = true, silent = true, desc = "move selection down" })
+keymap.set("x", "<A-k>", ":m '<-2<CR>gv=gv", { noremap = true, silent = true, desc = "move selection up" })
 
 
 
