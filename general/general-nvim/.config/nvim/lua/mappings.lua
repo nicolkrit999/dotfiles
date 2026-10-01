@@ -339,6 +339,12 @@ keymap.set("n", "<leader>cb", function()
 end, { desc = "show cursor" })
 
 
+-- builtin undo tree (nvim 0.12 optional package nvim.undotree). `:Undotree` toggles the panel.
+keymap.set("n", "<space>u", function()
+  vim.cmd.packadd("nvim.undotree") -- no-op after the first call
+  vim.cmd.Undotree()
+end, { silent = true, desc = "toggle undo tree" })
+
 -- ============================================================================
 -- MACRO & ESCAPE FIXES
 -- ============================================================================
