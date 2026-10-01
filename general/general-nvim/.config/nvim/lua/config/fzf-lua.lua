@@ -13,6 +13,10 @@ require("fzf-lua").setup {
     -- to un-ignore files such as `.env`
     no_ignore = false, -- documentation only: already the default (fzf-lua uses no_ignore only as a toggle flag)
   },
+  grep = {
+    -- respect user's ripgrep config file (if env var RIPGREP_CONFIG_PATH is set)
+    RIPGREP_CONFIG_PATH = vim.env.RIPGREP_CONFIG_PATH,
+  },
 }
 
 vim.keymap.set("n", "<leader>ff", "<cmd>FzfLua files<cr>", { desc = "Fuzzy find files" })
