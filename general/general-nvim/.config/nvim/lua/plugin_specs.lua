@@ -998,7 +998,12 @@ local plugin_specs = {
     config = function()
       require("config.devdocs")
     end,
-    event = "VeryLazy", -- or choose a loading event you prefer
+    -- only used through its commands; loading at VeryLazy also pulled in telescope on every startup
+    cmd = {
+      "DevdocsFetch", "DevdocsInstall", "DevdocsUninstall", "DevdocsOpen", "DevdocsOpenFloat",
+      "DevdocsOpenCurrent", "DevdocsOpenCurrentFloat", "DevdocsKeywordprg", "DevdocsUpdate",
+      "DevdocsUpdateAll", "DevdocsToggle",
+    },
   },
 
 
