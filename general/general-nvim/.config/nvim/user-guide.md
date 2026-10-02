@@ -13,10 +13,10 @@ Neovim is a modal editor. You are always in one of these modes:
 | Mode | How to enter | What it does |
 | --- | --- | --- |
 | **Normal** | `<Esc>` from any mode | Navigate, delete, copy, paste, run commands. This is your "home base". |
-| **Insert** | `i`, `a`, `o`, `O`, `c`, `s` from Normal | Type text into the file. |
+| **Insert** | `i`, `a`, `o`, `O`, `c` from Normal (`s` is disabled here: it is the vim-sandwich prefix) | Type text into the file. |
 | **Visual** | `v`, `V`, `<Ctrl-v>` from Normal | Select text (character, line, or block). |
 | **Command** | `;` or `:` from Normal | Type commands at the bottom of the screen (e.g., `:w` to save). |
-| **Terminal** | When inside a terminal buffer | Interact with a shell. Press `<Esc>` to go to Normal mode. |
+| **Terminal** | When inside a terminal buffer | Interact with a shell. Press `<Esc>` to go to Normal mode (in the Claude Code panel `<Esc>` goes to Claude: use `<Ctrl-\><Ctrl-n>` there). |
 
 ### Entering Insert Mode
 
@@ -56,32 +56,32 @@ Most-used keybinds at a glance. Every keymap here is explained in detail later.
 | `j` / `k` | Move down / up |
 | `h` / `l` | Move left / right |
 | `w` / `b` | Move forward / backward by word |
-| `H` | Go to start of line |
-| `L` | Go to end of line |
+| `H` | Go to the first non-blank character of the line |
+| `L` | Go to the last non-blank character of the line |
 | `gg` / `G` | Go to start / end of file |
 | `f` | Hop: jump to any 2-char match on screen |
 | `<Space>w` | Save buffer |
-| `<Space>q` | Quit current window |
-| `<Space>Q` | Quit all / close Neovim |
+| `<Space>q` | Save the buffer if modified and close the window (`:x`) |
+| `<Space>Q` | Quit Neovim and DISCARD all unsaved changes (`:qa!`) |
 | `<Space>s` | Toggle file explorer (nvim-tree) |
 | `<Space>ff` | Fuzzy find files |
 | `<Space>fg` | Project-wide text search (live grep) |
 | `<Space>fr` | Recently opened files |
 | `<Space>bp` | Pick buffer from list |
 | `gb` / `gB` | Next / previous buffer |
-| `gd` | Go to definition |
-| `K` | Hover documentation |
-| `<Space>rn` | Rename symbol |
-| `<Space>ca` | Code actions |
-| `<Space>fm` | Format file |
+| `gd` | Go to definition (LSP; without a capable server it is Vim's own `gd`) |
+| `K` | Hover documentation (LSP; without a capable server it is Vim's own `K`) |
+| `<Space>rn` | Rename symbol (LSP) |
+| `<Space>ca` | Code actions (LSP) |
+| `<Space>fm` | Format file (LSP formatter; stylua in Lua, prettier in Markdown) |
 | `gcc` | Toggle comment on current line |
 | `gc` | Toggle comment on selection |
-| `<Alt-j>` / `<Alt-k>` | Move line(s) down / up |
+| `<Alt-j>` / `<Alt-k>` | Move line(s) down / up (a count moves N lines) |
 | `<Space>rr` | Run current file |
-| `<Space>gs` | Git status |
+| `<Space>gs` | Git status (only inside a git repository) |
 | `<Space>cc` | Toggle Claude Code |
 | `u` / `<Ctrl-r>` | Undo / redo |
-| `n` / `N` | Next / previous search match (with count) |
+| `n` / `N` | Next / previous search match (count works; the match is centred and folds opened) |
 
 ---
 
@@ -169,6 +169,8 @@ The `matchpairs` option also includes: `<>`, and several CJK bracket pairs.
 | `t<char>` | Jump forward **to just before** the next occurrence of `<char>` on the current line |
 | `T<char>` | Jump backward **to just after** the previous occurrence of `<char>` |
 
+`;` is the command key in this config, so it does **not** repeat `t`/`T`. `,` still repeats the last `t`/`T` in the opposite direction.
+
 ## Jump Navigation with hop.nvim (Plugin)
 
 | Keymap | Mode | Description |
@@ -248,18 +250,21 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 | `5yy` | n | Yank 5 lines |
 | `<Space>y` | n | Yank the entire buffer (custom) |
 
-**Note**: The clipboard is set to `unnamedplus`, so yanking automatically copies to the system clipboard.
+**Note**: The clipboard is set to `unnamedplus` whenever a clipboard tool (wl-clipboard, xclip, ...) is installed, so yanking also copies to the system clipboard.
 
 ## Pasting Text
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `p` | n, x | Paste after cursor (with 300ms highlight, via yanky.nvim) |
-| `P` | n, x | Paste before cursor (with 300ms highlight, via yanky.nvim) |
+| `p` | n | Paste after the cursor |
+| `P` | n | Paste before the cursor |
+| `p` | x | Replace the selection with the register WITHOUT overwriting the register (so the next `p` pastes the same text again) |
 | `<Space>p` | n | Paste on a new line below (custom) |
 | `<Space>P` | n | Paste on a new line above (custom) |
-| `[y` | n | After pasting, cycle to previous yank history entry |
-| `]y` | n | After pasting, cycle to next yank history entry |
+| `[y` | n | After pasting, cycle to previous yank history entry (only once yanky.nvim is loaded, see below) |
+| `]y` | n | After pasting, cycle to next yank history entry (only once yanky.nvim is loaded) |
+
+yanky.nvim loads the first time you run `:YankyRingHistory` in a session. From then on `p`/`P` (Normal and Visual) are yanky's paste with a 300 ms highlight of the pasted text, and `[y`/`]y` exist. Before that, `p`/`P` are Vim's own paste. <!-- CHECK-USER: yanky (p/P highlight, [y/]y) only works after :YankyRingHistory was run once; intended, or should yanky load on p/P? -->
 
 ## Changing (Delete + Enter Insert)
 
@@ -288,7 +293,7 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 | --- | --- |
 | `u` | Undo the last change |
 | `<Ctrl-r>` | Redo (undo the undo) |
-| `<Space>u` | Open the undo tree (vim-mundo plugin) for visual undo history |
+| `<Space>u` | Toggle Neovim's builtin undo tree in a 30-column panel on the left |
 
 **Undo breakpoints**: Typing `,` `.` `!` `?` `;` `:` in insert mode creates undo checkpoints. This means pressing `u` after a long insert session will undo in smaller chunks instead of reverting everything at once.
 
@@ -302,10 +307,10 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `<Alt-j>` | n | Move current line down one position |
-| `<Alt-k>` | n | Move current line up one position |
-| `<Alt-j>` | v | Move selected lines down |
-| `<Alt-k>` | v | Move selected lines up |
+| `<Alt-j>` | n | Move current line down one position (`3<Alt-j>` moves it 3 lines; re-indented; nothing happens at the last line) |
+| `<Alt-k>` | n | Move current line up one position (count works the same) |
+| `<Alt-j>` | x | Move selected lines down (count works; re-indented; the selection stays) |
+| `<Alt-k>` | x | Move selected lines up |
 | `J` | n | Join the current line with the next line (cursor stays in place) |
 | `gJ` | n | Join lines without inserting a space (cursor stays in place) |
 
@@ -324,11 +329,11 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 
 | Keymap | Description |
 | --- | --- |
-| `<Ctrl-u>` | Convert the current word to UPPERCASE |
-| `<Ctrl-t>` | Convert the current word to Title Case |
+| `<Ctrl-u>` | Convert the current word to UPPERCASE (the word under or right before the cursor; if only spaces separate the cursor from the previous word, that word). You stay in Insert mode. |
+| `<Ctrl-t>` | TOGGLE the case of the FIRST letter of that same word (`foo` -> `Foo`, press again -> `foo`); letters whose case does not round-trip (`ß`, `ı`) and non-letters are left alone; the cursor keeps its place |
 | `<Alt-;>` | Insert a semicolon at the end of the line (without moving cursor) |
 | `<Ctrl-a>` | Jump to the beginning of the line |
-| `<Ctrl-e>` | Jump to the end of the line |
+| `<Ctrl-e>` | Jump to the end of the line (while the completion menu is open it closes the menu instead) |
 | `<Ctrl-d>` | Delete the character to the right of the cursor |
 | `<Ctrl-w>` | Delete the word before the cursor |
 | `<Ctrl-h>` | Delete the character before the cursor (like backspace) |
@@ -337,7 +342,7 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `<Space><Space>` | n | Remove all trailing whitespace from the file |
+| `<Space><Space>` | n | Remove all trailing whitespace from the file (not in Markdown: there it only shows the warning "markdown: trailing spaces are hard line breaks, not stripped") |
 | `<Space>v` | n | Reselect the text that was just pasted |
 | `<Space>cl` | n | Toggle a vertical cursor column highlight |
 | `<Space>cb` | n | Blink the cursor (helps find it on screen) |
@@ -394,8 +399,9 @@ These are the most powerful selection commands. They work with `v` (select), `d`
 
 | Keymap | Description |
 | --- | --- |
-| `vi(` or `vib` | Select everything **inside** `(...)` |
-| `va(` or `vab` | Select everything **including** `(...)` (the parentheses themselves) |
+| `vi(` | Select everything **inside** `(...)` |
+| `va(` | Select everything **including** `(...)` (the parentheses themselves) |
+| `vib` / `vab` | Select inside / around the nearest enclosing pair of **any** of `()`, `[]`, `{}` (targets.vim; on `{ [ x ] }` with the cursor on `x`, `vib` selects ` x `) |
 | `vi[` | Select everything inside `[...]` |
 | `va[` | Select everything including `[...]` |
 | `vi{` or `viB` | Select everything inside `{...}` |
@@ -422,8 +428,7 @@ These are the most powerful selection commands. They work with `v` (select), `d`
 | `vaw` | Select the word + surrounding whitespace |
 | `viW` | Select the WORD under cursor (delimited by whitespace only) |
 | `vaW` | Select the WORD + surrounding whitespace |
-| `vis` | Select the sentence under cursor |
-| `vas` | Select the sentence + surrounding whitespace |
+| `vis` / `vas` | NOT the sentence here: `is` / `as` are the vim-sandwich "query" objects (inside / around the nearest surrounding pair). The sentence motions `(` / `)` still work. <!-- CHECK-USER: confirm you want the builtin sentence objects is/as shadowed by vim-sandwich --> |
 | `vip` | Select the paragraph (block of non-empty lines) |
 | `vap` | Select the paragraph + surrounding blank lines |
 
@@ -498,7 +503,7 @@ How to select (or delete/copy/change) from the cursor to a specific character, w
 - To **include** the target, add `l` after it: `vt:l` (up to and including the next `:`).
 - `f` cannot be used for this, because `f` is hop.nvim here (it asks for 2 characters and shows labels). `vf:` does not do what you expect. After an operator `f` is still hop, but it is **not limited to the current line**: see the `df,` note below.
 - Works with operators: `dt)` deletes up to before `)`, `yt"` copies up to before `"`, `ct)` changes up to before `)`. To include the target character with an operator, use `v` first: `vt)l` then `d`.
-- **`f` after an operator (`df,`, `cf,`) is hop, not the built-in `f`** (tested): `df,` deleted from the cursor through a comma several lines below (it was the only comma in the visible text), so it is **not limited to the current line** and the target character is **deleted too**. `cf,` deleted the same kind of range (as `c` does, it should also leave you in Insert mode; not checked). With several matches on screen, hop shows labels and you choose the target, so the deleted range depends on the label you press; check what you typed before pressing `d`/`c` on a big range (`u` undoes it).
+- **`f` after an operator (`df,`, `cf,`) is hop, not the built-in `f`** (tested): `df,` deleted from the cursor through a comma several lines below (it was the only comma in the visible text), so it is **not limited to the current line** and the target character is **deleted too**. `cf,` deleted the same kind of range (as `c` does, it should also leave you in Insert mode; not checked). <!-- CHECK-USER: does cf, enter Insert mode after the hop label is picked? --> With several matches on screen, hop shows labels and you choose the target, so the deleted range depends on the label you press; check what you typed before pressing `d`/`c` on a big range (`u` undoes it).
 
 ### Counting: `v2tX` is not `2vtX`
 
@@ -539,7 +544,7 @@ Tip when testing these: type the sequence in one go (`v))`, not `v` and then `)`
 
 - To reach a closing parenthesis: `vt)l` (up to and including it), or `v/)<Enter>`.
 - `%` jumps between a bracket and its match; it will not take you to a closing bracket from a plain character (it first finds the next bracket on the line and jumps to its partner, which can be backward).
-- `va(` / `vi(` select the whole group / its inside, but always starting from the opening `(`, never from the cursor.
+- `va(` / `vi(` select the whole group / its inside, but always starting from the opening `(`, never from the cursor. Thanks to targets.vim the cursor may also be in front of the pair on the same line (tested: `vi(` on `foo (bar) baz` with the cursor on `f` selects `bar`).
 
 ### Search as a selection motion (crosses lines)
 
@@ -558,7 +563,7 @@ Searching with `/` (forward) or `?` (backward) works as a motion after `v`:
 - **The count counts matches, not lines.** `2/foo` means "the 2nd `foo` after the cursor, wherever it is". It does not care on which line a match is. If a line you expected has no `foo`, the count simply moves on to the next match.
 - Because it counts matches, it also works **inside a single line**: if a line contains `foo` twice, `v2/foo/e<Enter>` selects up to the end of the second `foo` on that same line (tested: on a line with `Nome` and `nome`, the selection ended on the last letter of the second match, `nome`). (Unlike `t`, which also works on one line, search lets you target a whole word or phrase, not just one character.)
 - If there are fewer matches than the count, the search **wraps** to the top of the file (`wrapscan` is on by default and this config does not change it) and keeps counting, so you can end up before the cursor. Check the hlslens `[n/total]` overlay.
-- `ignorecase smartcase` is on, so a lowercase pattern (`foo`) also matches `Foo`. Type a capital letter to make it case-sensitive.
+- `ignorecase smartcase` is on, so a lowercase pattern (`foo`) also matches `Foo`. Type a capital letter to make it case-sensitive. (This is for `/` and `?`; `:s` and `:g` always ignore case here, see the Substitution section.)
 - `/` is not remapped in this config.
 - With operators, `d/foo<Enter>` deletes up to (not including) the match; `d/foo/e<Enter>` includes the last letter of the match (tested: with the cursor on the start of `two words`, `d/words/e<Enter>` deleted everything up to and including the last letter of `words`).
 
@@ -587,7 +592,7 @@ With relative line numbers the gutter shows how far each line is from the cursor
 
 1. `Nj` moves down `N` lines, where `N` is the number shown next to the target line (with a count, `j` moves real lines, not wrapped ones). Use `Nk` to go up.
 2. `L` goes to the end of that line.
-3. `?foo<Enter>` searches **backward** from the end of the line, which should find the **last** `foo` on that line (**not confirmed**: in one real test of steps 1 to 4 on a line with several matches the user reported that the **first** match was selected, cause not found yet; re-test step by step before relying on it). (Searching forward from the middle of the line could hit an earlier, unwanted match or a capitalised one.)
+3. `?foo<Enter>` searches **backward** from the end of the line, which should find the **last** `foo` on that line (**not confirmed**: in one real test of steps 1 to 4 on a line with several matches the user reported that the **first** match was selected, cause not found yet; re-test step by step before relying on it). <!-- CHECK-USER: ?foo after L: does it select the last or the first match on the line? --> (Searching forward from the middle of the line could hit an earlier, unwanted match or a capitalised one.)
 4. `viw` selects the word, or `ve` selects from the match start to the word end.
 
 Related: `V3j` selects the current line and 3 below; `d3j` deletes 4 lines; `10G` or `;10` (Enter) jumps to absolute line 10.
@@ -610,7 +615,7 @@ Related: `V3j` selects the current line and 3 below; `d3j` deletes 4 lines; `10G
 | `gI` | the same as `0` then `i`, in one key (standard Vim; not remapped in this config) |
 
 - `0` is remapped to `g0` (start of the *screen* line), but `set nowrap` is on, so lines never wrap and it is the same as the real column 0.
-- `gI` and the `0` + `i` combination were not tested yet in this config.
+- Tested: `gI` and `0` then `i` both start typing at column 0, before the indentation.
 
 - These only insert from **Normal mode**. In Visual mode `i` and `a` do not insert: they start a text object (`iw`, `i(`, `aw`...). Press `<Esc>` first.
 - **Typing after a selection that ends at the end of the line** (for example after `v$` or `vL`): press `<Esc>` (the cursor stays on the last character), then `a`. Using `i` would put the text *before* that last character (for example before a final `;`).
@@ -625,7 +630,7 @@ Not possible. Vim has no selection of separate pieces, and this config has no mu
 - **Ex commands with line numbers**: `;3d` then `;9d`, or `;3,10d` for the whole range 3 to 10 (tested: `;3,10d` deleted lines 3 to 10 **inclusive**, 8 lines).
 - **Bring them together**: `;3m10` moves line 3 **below** line 10, `;3t10` copies line 3 below line 10. Then select both with `V`. Tested: `;4m11` moved line 4 (an `import` line) to just below line 11, and `;4t11` copied line 4 below line 11 and kept the original in place. The line numbers refer to the file **before** the move, and afterwards the cursor sits on the moved/copied line.
 - **The numbers are absolute file line numbers**, not relative to the cursor, and it does not matter where the cursor is. With relative numbers on, only the cursor line shows its absolute number in the gutter; move onto a line to read it. Line 1 counts even if it is blank (a file that starts with an empty line has its first real line at number 2).
-- **Relative addresses**: `.` is the current line and `+N` / `-N` are N lines after/before it, so they match the relative numbers in the gutter. Tested: `;.t.` duplicated the current line and left the cursor on the new copy. Standard Vim but **not tested yet**: `;.m+2` (moves the current line to below the line 2 lines down) and `;.,+3d` (deletes the current line and the next 3).
+- **Relative addresses**: `.` is the current line and `+N` / `-N` are N lines after/before it, so they match the relative numbers in the gutter. Tested: `;.t.` duplicated the current line and left the cursor on the new copy. Also tested: `;.m+2` moves the current line to below the line 2 lines further down, and `;.,+3d` deletes the current line and the next 3 (4 lines in total).
 - **Blank lines hide the effect**: moving or copying a blank line next to another blank line changes nothing you can see. Use a line with text to check `m` and `t`.
 - **Same spot on adjacent lines**: `<Ctrl-v>` block mode, but only for adjacent lines (see the Visual Block Editing section).
 - **Matching by content instead of number**: the `:g` command (see its section).
@@ -657,7 +662,7 @@ See the full table in the Selection section above. Quick summary:
 
 | Pattern | Inside | Around (including delimiters) |
 | --- | --- | --- |
-| Parentheses `()` | `vi(` or `vib` | `va(` or `vab` |
+| Parentheses `()` | `vi(` | `va(` |
 | Braces `{}` | `vi{` or `viB` | `va{` or `vaB` |
 | Brackets `[]` | `vi[` | `va[` |
 | Angle brackets `<>` | `vi<` | `va<` |
@@ -665,6 +670,7 @@ See the full table in the Selection section above. Quick summary:
 | Single quotes `''` | `vi'` | `va'` |
 | Backticks ` `` ` | `` vi` `` | `` va` `` |
 | HTML/XML tags | `vit` | `vat` |
+| Nearest of `()` `[]` `{}` (targets.vim) | `vib` | `vab` |
 
 ## Changing Text Inside Pairs
 
@@ -707,8 +713,9 @@ The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl
 | --- | --- | --- |
 | `sd"` | Delete surrounding double quotes | `"hello"` becomes `hello` |
 | `sd'` | Delete surrounding single quotes | `'hello'` becomes `hello` |
-| `sd(` or `sdb` | Delete surrounding parentheses | `(hello)` becomes `hello` |
-| `sd{` or `sdB` | Delete surrounding curly braces | `{hello}` becomes `hello` |
+| `sd(` | Delete surrounding parentheses | `(hello)` becomes `hello` |
+| `sd{` | Delete surrounding curly braces | `{hello}` becomes `hello` |
+| `sdb` | Delete the nearest surrounding pair, whatever it is (`()`, `[]`, `{}` or quotes) | `[hello]` becomes `hello` |
 | `sd[` | Delete surrounding square brackets | `[hello]` becomes `hello` |
 
 ## Replacing Surrounding Pairs (vim-sandwich Plugin)
@@ -779,7 +786,7 @@ This section explains how to open, navigate, resize, and close split windows ent
 | `:resize 20` | Set window height to 20 lines |
 | `:vertical resize 80` | Set window width to 80 columns |
 
-**Auto-resize**: When you resize your terminal, all windows automatically resize equally.
+**Auto-resize**: When you resize your terminal, all windows resize equally, except the Claude Code panel, which goes back to 30% of the screen width.
 
 ## Moving Windows Around
 
@@ -798,22 +805,22 @@ This section explains how to open, navigate, resize, and close split windows ent
 
 | Keymap / Command | Description |
 | --- | --- |
-| `<Space>q` | Close the current window (saves if modified) |
-| `<Space>Q` | Close ALL windows (quit Neovim, no confirmation) |
+| `<Space>q` | Close the current window (saves if modified, `:x`). It fires after a short pause because `<Space>qb` / `<Space>qw` also exist |
+| `<Space>Q` | Quit Neovim at once, **discarding unsaved changes** (`:qa!`, no confirmation) |
 | `:q` | Close current window |
 | `:q!` | Close current window discarding unsaved changes |
 | `:only` or `<Ctrl-w>o` | Close ALL other windows, keep only the current one |
-| `\x` | Close the quickfix and location list windows |
+| `\x` | Close the quickfix window and all location lists of the tab (the cursor stays in the current window) |
 
 ## Buffer Management
 
 | Keymap / Command | Description |
 | --- | --- |
-| `gb` | Go to the **next** buffer |
-| `gB` | Go to the **previous** buffer |
+| `gb` | Go to the **next** buffer; `{N}gb` (e.g. `3gb`) goes to buffer number N (an invalid number warns "Invalid bufnr") |
+| `gB` | Go to the **previous** buffer (a count is ignored; use `{N}gb`) |
 | `<Space>bp` | **Pick** a buffer: each open buffer shows a letter, press it to switch |
-| `\d` | Close/delete the current buffer (window stays open, shows previous buffer) |
-| `\D` | Close all buffers **except** the current one |
+| `\d` | Close/delete the current buffer (window stays open, shows previous buffer). On the last buffer an empty buffer is left; a buffer with unsaved changes is refused (E89) |
+| `\D` | Close all other buffers, but **keep** buffers with unsaved changes and terminals that are still running (one message "kept N buffer(s) (unsaved or running terminal)") |
 | `:ls` or `:buffers` | List all open buffers |
 | `:b <name>` | Switch to a buffer by (partial) name |
 | `:b 3` | Switch to buffer number 3 |
@@ -848,28 +855,28 @@ Some plugins open floating windows (diagnostics, hover docs, etc.):
 | `:term` or `:terminal` | Open terminal in the current window |
 | `:sp \| term` | Open terminal in a horizontal split below |
 | `:vs \| term` | Open terminal in a vertical split to the right |
-| `<Space>rr` | Run code (opens terminal in vertical split automatically) |
+| `<Space>rr` | Run code (opens a terminal in a vertical split on the **left** of the code window) |
 
-The terminal automatically starts in insert mode (you can type immediately) and hides line numbers.
+The terminal automatically starts in insert mode (you can type immediately) and hides line numbers. <!-- CHECK-USER: confirm :term and <Space>rr start in insert mode (not observable headless) -->
 
 ## Navigating In and Out of Terminal
 
 | Keymap | Context | Description |
 | --- | --- | --- |
-| `<Esc>` | In terminal | **Exit terminal mode** and enter Normal mode. Now you can navigate away from the terminal window using `<Ctrl-w>h/j/k/l` or arrow keys. |
+| `<Esc>` | In terminal | **Exit terminal mode** and enter Normal mode. Now you can navigate away from the terminal window using `<Ctrl-w>h/j/k/l` or arrow keys. Exception: in the Claude Code panel `<Esc>` goes to Claude; use `<Ctrl-\><Ctrl-n>` there (see section 9). |
 | `i` or `a` | In terminal (Normal mode) | Re-enter terminal mode (start typing commands again) |
 | `<Ctrl-w>h/j/k/l` | In terminal (Normal mode) | Move to another window |
 | `<Left>/<Right>/<Up>/<Down>` | In terminal (Normal mode) | Move to another window (arrow key shortcuts) |
 
-**Workflow example**: You run code with `<Space>rr`. A terminal opens showing output. To go back to your code: press `<Esc>` to exit terminal mode, then `<Ctrl-w>h` (or `<Left>`) to move to the code window. To close the terminal: `<Space>q` while in the terminal window.
+**Workflow example**: You run code with `<Space>rr`. A terminal opens showing output. To go back to your code: press `<Esc>` to exit terminal mode, then `<Ctrl-w>l` (or `<Right>`) to move to the code window (the output is on the left). To close the terminal: `<Space>q` while in the terminal window.
 
 ## Closing a Terminal
 
 | Method | Description |
 | --- | --- |
-| `<Space>q` | While the terminal window is focused, quit it |
-| Type `exit` | In the terminal, type `exit` to end the shell process, then the window closes |
-| `\d` | Delete the terminal buffer |
+| `<Space>q` | While the terminal window is focused (press `<Esc>` first), close the window. A program that is still running keeps running in a hidden buffer (`\D` keeps such buffers) |
+| Type `exit` | In the terminal, type `exit` to end the shell process, then the window closes <!-- CHECK-USER: after `exit` the window closed in a test; after a failing <Space>rr program, does the window stay with "[Process exited N]"? --> |
+| `\d` | Delete the terminal buffer <!-- CHECK-USER: does \d on a terminal whose program is still running ask "Close ...?" first? (two headless checks disagreed) --> |
 
 ---
 
@@ -880,14 +887,14 @@ The terminal automatically starts in insert mode (you can type immediately) and 
 | Keymap | Mode | Description |
 | --- | --- | --- |
 | `<Space>cc` | n | **Toggle** Claude Code terminal (opens/closes it) |
-| `<Space>cR` | n | Resume/continue the last Claude conversation |
+| `<Space>cR` | n | Resume/continue the last Claude conversation (`claude --continue`) |
 | `<Space>cV` | n | Start Claude in verbose mode |
 
-Claude Code opens as a **bottom-right split** at 30% height. It is a terminal buffer. To navigate:
+Claude Code opens as a **vertical split on the right**, 30% of the screen width. It is a terminal buffer. There is no toggle key in terminal mode. To navigate:
 
-1. **Move to Claude window**: `<Ctrl-w>j` or `<Down>` (since it opens below)
-2. **Move back to code**: `<Esc>` to exit terminal mode, then `<Ctrl-w>k` or `<Up>`
-3. **Close Claude**: `<Space>cc` to toggle it closed, or `<Space>q` while focused on it
+1. **Move to the Claude window**: `<Ctrl-w>l` or `<Right>` (it opens on the right). Focusing it puts you in terminal (insert) mode by itself.
+2. **Move back to code**: `<Ctrl-h>` (works directly in the Claude terminal), or `<Ctrl-\><Ctrl-n>` and then `<Ctrl-w>h` / `<Left>`. `<Esc>` is sent to Claude (for example to interrupt it) and does **not** leave terminal mode.
+3. **Close Claude**: from the code window `<Space>cc` toggles it closed. Inside the Claude terminal press `<Ctrl-\><Ctrl-n>` first, then `<Space>cc` or `<Space>q`.
 4. **Type in Claude**: If in Normal mode inside the Claude terminal, press `i` to re-enter terminal mode
 
 ---
@@ -904,7 +911,7 @@ This is one of the most important sections in the guide. It covers searching wit
 | `?pattern` | Search **backward** for `pattern` |
 | `n` | Jump to the **next** match (with hlslens showing `[x/y]` count) |
 | `N` | Jump to the **previous** match |
-| `*` | Search **forward** for the exact word under cursor (cursor stays on current match) |
+| `*` | Search **forward** for the exact word under cursor (whole word, literal; the cursor stays on the word, `3*` jumps to the 3rd match) |
 | `#` | Search **backward** for the exact word under cursor |
 | `;noh<Enter>` (`;` is `:` here) | Clear the yellow search highlight (tested). The search itself is kept, so `n` / `N` still work; the highlight comes back on the next search or `*`. |
 
@@ -917,7 +924,7 @@ This is one of the most important sections in the guide. It covers searching wit
 | `\v` | At start of pattern | **Very magic**: regex works like Perl/Python (no need to escape `()`, `|`, `+`, etc.) | `/\vfunction\(.*\)` |
 | `\<` and `\>` | Around pattern | **Whole word** match only | `/\<count\>` finds `count` but not `counter` |
 
-By default, search is case-insensitive but becomes case-sensitive if you type any uppercase letter (smart case).
+By default, search is case-insensitive but becomes case-sensitive if you type any uppercase letter (smart case). This is for `/` and `?` only: while you type a `:` command, smart case is off, so `:s` and `:g` ignore case completely (use `\C` or the `I` flag of `:s` for an exact match).
 
 ### Search Examples
 
@@ -962,7 +969,7 @@ Flags go at the very end, after the last `/`.
 | `g` | **Global**: replace **all occurrences** on each line (not just the first) |
 | `c` | **Confirm**: ask `y/n` for **each** replacement. You see the match highlighted and choose. |
 | `i` | Case-**insensitive** matching |
-| `I` | Case-**sensitive** matching (overrides smart case) |
+| `I` | Case-**sensitive** matching. Needed here: `:s` ignores case completely, even with capitals in the pattern (tested: `:%s/Old/X/g` on `old Old OLD` gave `X X X`, with `gI` only `Old` changed) |
 | `n` | **Count only**: show how many matches there are without replacing anything |
 | `e` | Suppress "pattern not found" error |
 
@@ -983,7 +990,7 @@ Flags go at the very end, after the last `/`.
 | --- | --- | --- |
 | `/` (no flag) | only the **first** `old` on each line | no |
 | `/gc` | **every** `old` on each line | yes, `y/n` for each one |
-| `/gcc` | **not a listed flag combination**: `g` and `c` are valid, a second `c` adds nothing documented. Its behaviour is **not tested** (try it on a spare buffer and note whether it errors, or behaves like `/gc`) | unknown |
+| `/gcc` | **every** `old` on each line (tested: the second `c` switches confirmation off again, so `/gcc` behaves like `/g`; `/gccc` asks again) | no |
 
 Do not confuse `/gcc` with the normal-mode `gcc` (toggle comment on the current line): inside `:s/…/…/` the letters are flags, outside it `gcc` is a command.
 
@@ -1048,7 +1055,7 @@ These are the fastest ways to search for a word:
 1. Place cursor on any word
 2. Press `*` -- all occurrences highlight, the hlslens overlay shows `[1/N]`
 3. Press `n` to jump forward, `N` to jump backward
-4. The cursor stays on the current match (custom behavior in this config)
+4. With no count the cursor stays on the word you pressed `*` on (custom behavior in this config: a whole-word, literal search; `3*` jumps to the 3rd match instead)
 
 This is often combined with `ciw` + `.` for selective replacement (see below).
 
@@ -1077,9 +1084,9 @@ Plugin: nvim-tree.lua. A sidebar file tree.
 | Keymap | Context | Description |
 | --- | --- | --- |
 | `<Space>s` | global | Toggle the file explorer on/off |
-| `<Enter>` | in tree | Open file (cursor moves to file) / expand directory |
+| `<Enter>` | in tree | Open file (cursor moves to file) / expand directory <!-- CHECK-USER: with 2+ editor windows open, does <Enter> in the tree ask for a window letter (window picker)? --> |
 | `<Tab>` | in tree | Open file but **keep cursor in the tree** (great for opening multiple files) |
-| `<BS>` | in tree | Collapse / close the parent directory |
+| `<BS>` | in tree | Close (collapse) the directory under the cursor; on a file it closes its parent directory |
 | `a` | in tree | Create a new file. Type the name and press Enter. Add `/` at the end for a directory. |
 | `d` | in tree | Delete file/directory (asks for confirmation) |
 | `r` | in tree | Rename file/directory |
@@ -1115,7 +1122,7 @@ Plugin: **fzf-lua**. A powerful popup interface that connects to FZF (a command-
 | `<Enter>` | Open the selected result |
 | `<Esc>` | Cancel and close the popup |
 | `<Ctrl-j>` / `<Ctrl-k>` | Move down / up in the results list |
-| `<Ctrl-n>` / `<Ctrl-p>` | Move down / up (alternative keys) |
+| `<Ctrl-n>` / `<Ctrl-p>` | Move down / up (alternative keys) <!-- CHECK-USER: in the fzf popup do <Ctrl-j>/<Ctrl-k> and <Ctrl-n>/<Ctrl-p> both move the selection? --> |
 
 ## `<Space>fg` -- Live Grep (Project-Wide Text Search) In Depth
 
@@ -1168,7 +1175,7 @@ Searches **file names** (not content). Useful when you know the file you want bu
 
 - Type `userserv` to find `UserService.java` (fuzzy matching)
 - Type `config.py` to find configuration files
-- Type `.env` to find environment files
+- Type `.env` to find environment files (only if they are not git-ignored: `.gitignore` is respected; a `.ignore` file containing `!.env` makes them visible)
 - Type `test` to see all test files
 
 ## The Difference Between Search Methods
@@ -1187,7 +1194,7 @@ Searches **file names** (not content). Useful when you know the file you want bu
 
 # 13. LSP: Language Server Protocol
 
-Plugin: nvim-lspconfig. Provides IDE features. Keymaps are active when an LSP server is attached.
+Plugin: nvim-lspconfig (default server definitions; Neovim's builtin `vim.lsp` does the rest). Provides IDE features. The keys below work per buffer according to what the attached servers support: if no attached server supports it, `K` and `gd` fall back to Vim's builtin versions and `<Space>rn` / `<Space>ca` show one warning.
 
 ### Configured Language Servers
 
@@ -1206,11 +1213,11 @@ Plugin: nvim-lspconfig. Provides IDE features. Keymaps are active when an LSP se
 
 | Keymap | Description |
 | --- | --- |
-| `gd` | **Go to definition**: jump to where the symbol is defined |
+| `gd` | **Go to definition**: jump to where the symbol is defined (several different places open the location list) |
 | `K` | **Hover**: show documentation in a floating window |
 | `<Space>rn` | **Rename**: rename the symbol everywhere it's used |
 | `<Space>ca` | **Code action**: show available fixes/refactors |
-| `<Space>fm` | **Format**: auto-format the file |
+| `<Space>fm` | **Format** the file on demand (LSP formatter, async). Lua: stylua. Markdown: prettier. Python and JSON have `<Space>f` (black / `:JSONFormat`) |
 
 ### Glance: Peek Without Jumping
 
@@ -1224,17 +1231,17 @@ Plugin: glance.nvim. Preview definitions/references in a popup, without leaving 
 
 ### Diagnostics (Errors, Warnings)
 
-Emoji signs in the gutter: 🆇 (error), ⚠️ (warning), ℹ️ (info). Diagnostics auto-show in a floating window when the cursor rests on a line.
+Nerd Font signs in the gutter: 󰅚 (error), 󰀪 (warning), 󰋽 (info), 󰌶 (hint). No underline and no inline text: the message appears in a floating window when the cursor rests on the line (it closes when you move, leave the window or enter Insert mode).
 
 | Keymap | Description |
 | --- | --- |
-| `<Space>db` | Show buffer diagnostics (current file) |
-| `<Space>dw` | Show workspace diagnostics (all files) |
+| `<Space>db` | Telescope picker with the diagnostics of the current file |
+| `<Space>dw` | Toggle the Trouble diagnostics list (all open buffers) |
 | `<Space>de` | Jump to next error |
-| `<Space>dE` | Jump to previous error / show workspace errors only |
+| `<Space>dE` | Jump to previous error |
 | `<Space>dd` | Show diagnostic detail in floating window |
 | `<Space>dt` | Toggle diagnostics on/off |
-| `<Space>qw` | Send workspace diagnostics to quickfix list |
+| `<Space>qw` | Send the diagnostics of all open buffers to the quickfix list |
 | `<Space>qb` | Send buffer diagnostics to quickfix list |
 
 ---
@@ -1246,11 +1253,11 @@ Plugin: nvim-cmp. Sources: LSP, UltiSnips snippets, file paths, buffer words.
 | Keymap | Description |
 | --- | --- |
 | `<Tab>` | If menu is open: select next item. Otherwise: normal tab. |
-| `<CR>` (Enter) | Confirm the selected completion |
+| `<CR>` (Enter) | Confirm an item you picked with `<Tab>` / `<Ctrl-n>`; if nothing is selected it is a plain newline |
 | `<Ctrl-e>` | Dismiss / close the completion menu |
 | `<Esc>` | Close the completion menu |
-| `<Ctrl-d>` | Scroll documentation popup down |
-| `<Ctrl-f>` | Scroll documentation popup up |
+| `<Ctrl-d>` | Scroll documentation popup up |
+| `<Ctrl-f>` | Scroll documentation popup down |
 
 ---
 
@@ -1263,19 +1270,19 @@ Plugin: UltiSnips + vim-snippets. Custom snippets in `my_snippets/` directory.
 | `<Ctrl-j>` | Expand snippet / jump to next placeholder |
 | `<Ctrl-k>` | Jump to previous placeholder |
 
-Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `tex`, `vim`
+Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `snippets`, `tex`, `vim`
 
 ### Java Snippets
 
 | Trigger | Expansion |
 | --- | --- |
-| `startscanner` | Java Scanner input template |
+| `fdijscanner` | Java Scanner input template |
 | `jarr` / `jarrlit` | Array / array with literal values |
 | `jdict` / `jdictfull` | HashMap / HashMap with import |
 | `jfor` / `jforeach` | For loop / enhanced for loop |
 | `jwhile` / `jdowhile` | While / do-while loop |
 | `jif` / `jifelse` / `jifelif` | If / if-else / if-else if-else |
-| `jswitchtraditional` / `jswitcharrow` / `jswitchyield` | Switch variants |
+| `jswitchtraditional` / `jswitchmulti` / `jswitcharrow` / `jswitcharrowmulti` / `jswitchyield` / `jswitchyieldblock` | Switch variants |
 | `jtrycatch` / `jtryfinally` | Try-catch / try-catch-finally |
 
 ---
@@ -1341,7 +1348,7 @@ Quick reference:
 
 # 18. Code Folding (`nvim-ufo`)
 
-Plugin: nvim-ufo. Folds code blocks using LSP/Treesitter.
+Plugin: nvim-ufo. Folds code blocks using the LSP folding ranges, falling back to indentation.
 
 | Keymap | Description |
 | --- | --- |
@@ -1351,7 +1358,8 @@ Plugin: nvim-ufo. Folds code blocks using LSP/Treesitter.
 | `zC` / `zO` | Close / open all folds recursively |
 | `zR` | Open **all** folds in the file |
 | `zM` | Close **all** folds in the file |
-| `zr` | Reduce folding by one level |
+| `zr` | Open one more fold level (`2zr` = two levels; counted from the folds you see, so it works right after `zM`) |
+| `zm` | Close one more fold level (accepts a count) |
 | `<Space>K` | Preview folded lines in a popup |
 | `zi` | Toggle folding feature on/off |
 
@@ -1359,7 +1367,7 @@ Plugin: nvim-ufo. Folds code blocks using LSP/Treesitter.
 
 # 19. Code Running
 
-Custom function in `lua/mappings.lua`. Opens output in a vertical split terminal.
+Custom function in `lua/mappings.lua`. Opens the output in a vertical split terminal on the left. If the file is unsaved or unnamed, the filetype has no runner, or the needed program is not on PATH, you get one warning (naming the devShell to start nvim in) instead of a terminal.
 
 | Keymap | Description |
 | --- | --- |
@@ -1373,8 +1381,8 @@ After running, the terminal output appears in a split. See [Terminal Integration
 
 | Keymap | Filetype | Description |
 | --- | --- | --- |
-| `<F9>` | Python | Run with `python -u` |
-| `<F9>` | C++ | Compile and run |
+| `<F9>` | Python | Run with `python -u` via AsyncRun (`uv run python -u` inside a uv project) |
+| `<F9>` | C++ | Compile (clang++, else g++, C++20) and run in a split below; only mapped when a compiler is on PATH |
 | `<F9>` | LaTeX | Compile with vimtex |
 
 ---
@@ -1382,6 +1390,8 @@ After running, the terminal output appears in a split. See [Terminal Integration
 # 20. Git Integration
 
 ## vim-fugitive (Plugin)
+
+The fugitive keys (and the gitlinker keys below) exist only inside a git repository: nvim started in one, or a file of one opened. Outside a repository `<Space>gs` and friends do nothing.
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -1392,8 +1402,8 @@ After running, the terminal output appears in a split. See [Terminal Integration
 | `<Space>gpu` | n | Git push (opens terminal split) |
 | `<Space>gb` | v | Git blame selected lines |
 | `<Space>gbn` | n | Create new branch (prompts for name) |
-| `<Space>gbd` | n | Delete a branch |
-| `<Space>gf` | n | Git fetch |
+| `<Space>gbd` | n | Puts `:Git branch -D ` on the command line: type the branch name and press Enter (force delete) |
+| `<Space>gf` | n | Puts `:Git fetch ` on the command line (add arguments, then Enter) |
 
 ## gitsigns.nvim (Plugin)
 
@@ -1417,7 +1427,7 @@ Shows `+` `~` `_` signs in the gutter for added/changed/deleted lines.
 
 | Plugin | Command / Trigger | Description |
 | --- | --- | --- |
-| neogit | `:Neogit` | Full git UI (magit-like) |
+| neogit | `:Neogit` | Full git UI (magit-like; available inside a git repository) |
 | diffview.nvim | `:DiffviewOpen` | Side-by-side diff viewer |
 | vim-flog | `:Flog` | Visual git log graph |
 
@@ -1427,11 +1437,11 @@ Shows `+` `~` `_` signs in the gutter for added/changed/deleted lines.
 
 ## Treesitter (Plugin)
 
-Provides improved syntax highlighting and code understanding. Auto-installs parsers for Python, C++, Lua, Vim, JSON, TOML, HTML.
+Provides tree-sitter syntax highlighting (started automatically per filetype when a parser exists). On Nix systems the parsers come from the nix store and nothing is installed by Neovim; on other systems these parsers are installed automatically: cpp, diff, dockerfile, git_config, git_rebase, gitcommit, html, json, lua, python, toml, vim.
 
 ## targets.vim (Plugin)
 
-Adds many additional text objects for quotes, brackets, arguments, separators. Works automatically with `d`, `c`, `y`, `v`.
+Adds many additional text objects for quotes, brackets, arguments, separators. Works automatically with `d`, `c`, `y`, `v`. If the cursor is not inside the pair, `i(`, `i"` and friends look forward on the line.
 
 ## vim-matchup (Plugin)
 
@@ -1443,9 +1453,9 @@ Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, et
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `f` | n, v, o | Type `f` then 2 characters: all matches highlight with jump labels. Press the label letter to jump. Case insensitive. `<Esc>` to cancel. |
+| `f` | n, x, o | Type `f` then 2 characters: all matches highlight with jump labels. Press the label letter to jump. Case insensitive. `<Esc>` to cancel. |
 
-**Note**: Replaces Vim's built-in `f` motion. Use `t`/`T` for jumping to before/after a character on the current line.
+**Note**: Replaces Vim's built-in `f` motion (`F` is unchanged). `t{char}` jumps forward to just before a character on the current line, `T{char}` backward to just after it. `;` is mapped to `:`, so it does not repeat these motions; use `,` (opposite direction).
 
 ---
 
@@ -1455,8 +1465,8 @@ Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, et
 | --- | --- |
 | `n` | Next match with `[x/y]` count overlay |
 | `N` | Previous match with count overlay |
-| `*` | Search word under cursor forward (cursor stays) |
-| `#` | Search word under cursor backward (cursor stays) |
+| `*` | Search the word under the cursor forward as a whole word (the cursor stays on the word; with a count, e.g. `3*`, it jumps to that match) |
+| `#` | Same, backward |
 
 ---
 
@@ -1468,7 +1478,7 @@ Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, et
 | `[y` | n | After pasting, cycle to previous yank entry |
 | `]y` | n | After pasting, cycle to next yank entry |
 
-Command: `:YankyRingHistory` to browse all yank history.
+Command: `:YankyRingHistory` to browse all yank history. yanky.nvim is loaded by that command: the three rows above only work after `:YankyRingHistory` was run once in the session. Before that `p`/`P` are Vim's own paste, and in Visual mode `p` replaces the selection without overwriting the register.
 
 ---
 
@@ -1476,7 +1486,9 @@ Command: `:YankyRingHistory` to browse all yank history.
 
 | Keymap | Description |
 | --- | --- |
-| `<Space>u` | Toggle undo tree panel |
+| `<Space>u` | Toggle Neovim's builtin undo tree (`nvim.undotree`) in a 30-column panel on the far left |
+
+Inside the panel there are no extra keys: moving the cursor onto an entry switches the buffer to that undo state. Close it with `<Space>u` again or `:q`. <!-- CHECK-USER: confirm that moving the cursor in the undo tree panel changes the buffer (not testable headless) -->
 
 ---
 
@@ -1510,14 +1522,14 @@ Command: `:YankyRingHistory` to browse all yank history.
 
 | Keymap | Description |
 | --- | --- |
-| `<Alt-m>` | Toggle markdown preview in browser |
+| `<Alt-m>` | Toggle markdown preview in browser (markdown buffers only) |
 
 ## Footnotes
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `<Space>mf` | n | Add footnote |
-| `<Space>mr` | n | Return from footnote |
+| `<Space>mf` | n | Add footnote (markdown buffers only; elsewhere one warning) |
+| `<Space>mr` | n | Return from footnote (markdown buffers only) |
 | `^^` | n, i | Insert footnote number (markdown files only) |
 | `@@` | n, i | Return from footnote (markdown files only) |
 
@@ -1527,7 +1539,7 @@ Command: `:YankyRingHistory` to browse all yank history.
 | --- | --- |
 | `vic` / `vac` | Select inside / around code block |
 | `+` | Convert lines to unordered list (operator: `+ip` for paragraph) |
-| `\` | Add hard line break to lines |
+| `<Space>mb{motion}` (or `<Space>mb` on a Visual selection) | Add a hard line break (a trailing `\`) to each line, e.g. `<Space>mbip`; blank lines and lines already ending in `\` are skipped |
 | `:AddRef <label> <url>` | Add reference link at end of buffer |
 
 ## Other Markdown Plugins
@@ -1539,13 +1551,13 @@ Command: `:YankyRingHistory` to browse all yank history.
 
 # 28. LaTeX Support (`vimtex`)
 
-Only available if `latex` is installed.
+Only available if `latex` is installed (vimtex also needs `latexmk` to compile).
 
 | Keymap | Description |
 | --- | --- |
-| `<F9>` | Compile |
-| `\\ll` | Compile/build |
-| `\\lv` | View PDF |
+| `<F9>` | Start / stop continuous compilation |
+| `\ll` | Start / stop continuous compilation (same as `<F9>`) |
+| `\lv` | View PDF |
 
 ---
 
@@ -1560,7 +1572,7 @@ Only available if `latex` is installed.
 | `"*y` / `"+y` | Yank to system clipboard |
 | `:reg` | View all registers |
 
-**Note**: Clipboard is set to `unnamedplus`, so `y`/`p` already use the system clipboard by default.
+**Note**: When a clipboard tool (wl-clipboard, xclip, ...) is installed, `clipboard` is `unnamedplus`, so `y`/`p` already use the system clipboard by default.
 
 ## Macros
 
@@ -1606,8 +1618,9 @@ Languages: English, Italian, German, French.
 | `<Space>cz` | Toggle spell checking on/off |
 | `]s` / `[s` | Next / previous misspelled word |
 | `z=` | Show spelling suggestions (up to 9) |
-| `zg` | Add word to spell dictionary |
-| `zw` | Mark word as wrong |
+| `zg` | Add the word to the English word list (`spell/en.utf-8.add`) |
+| `2zg` / `3zg` / `4zg` | Add the word to the Italian / German / French list |
+| `zw` | Mark word as wrong (same counts) |
 
 ---
 
@@ -1615,12 +1628,12 @@ Languages: English, Italian, German, French.
 
 | Section | Position | Contents |
 | --- | --- | --- |
-| A | Leftmost | Filename + readonly indicator (🔒) |
-| B | Left | Git branch, ahead/behind (↑/↓), diff stats (+~-), Python venv |
-| C | Center-left | Command input, spell indicator (`[SPELL]`) |
-| X | Center-right | Active LSP (📡), diagnostics (🆇 ⚠️ ℹ️), trailing whitespace, mixed indent |
-| Y | Right | Encoding, file format, filetype |
-| Z | Rightmost | Cursor position (line:col), progress (%) |
+| A | Leftmost | Filename + a lock icon (Nerd Font) when the file is read-only |
+| B | Left | Git branch (click: pick a branch and check it out), `↑[n]` / `↓[n]` commits ahead / behind the upstream, diff stats (+~-), diagnostic counts (same icons as the sign column), Python virtualenv (Python buffers only) |
+| C | Center-left | Pending command (e.g. `2d`), spell indicator (`[SPELL]`) |
+| X | Center-right | Active LSP (gear icon; ` (+N)` = other attached clients; click: popup with the attached clients), `[N]trailing` (first line with trailing whitespace), `MI:N` (mixed tabs and spaces) |
+| Y | Right | Encoding (only when not UTF-8) and file format (only when not unix), both in red; `[CN]` input-method badge on macOS |
+| Z | Rightmost | Progress through the file (%). The line:column position is shown only in inactive windows |
 
 ---
 
@@ -1629,10 +1642,10 @@ Languages: English, Italian, German, French.
 | Feature | Description |
 | --- | --- |
 | **which-key.nvim** | Press `<Space>` and wait: a popup shows all available leader keybindings |
-| **Dashboard** | Start screen with shortcuts: Find File, Recent Files, Grep, Config, Explorer |
+| **Dashboard** | Start screen for a bare `nvim` (no file, directory or stdin); menu and keys in "Dashboard (Start Screen)" below |
 | **Dashboard: reopen / replace the current buffer** | `\h` opens the start screen in the current window (the previous buffer stays open in the background; inside the dashboard it only says "already in the dashboard"). `\H` closes the dashboard and returns to the previous buffer (the dashboard buffer is deleted so it does not pile up); outside the dashboard it only warns "not in the dashboard", and with no previous buffer it warns "no previous buffer to resume". Without the keys: `:Dashboard` does the same as `\h`. To close the current buffer and get the dashboard instead: `:Dashboard | bdelete #` (a buffer with unsaved changes refuses with E89). `\d` deletes the buffer but shows the previous one, not the dashboard |
 | **nvim-notify** | Animated notification popups (fade + slide, 1500ms) |
-| **Colorschemes** | 20+ themes, randomly selected on startup |
+| **Colorschemes** | On Nix systems the base16 theme named by `NVIM_BASE16_THEME` (fallback Catppuccin Mocha); on other systems one of 19 themes chosen at random at each start. UI colours (yank flash, hop keys, notifications, float borders) follow the active theme |
 | **dropbar.nvim** | Breadcrumb bar at top showing file > class > function |
 | **nvim-colorizer** | Color codes (hex, rgb) are highlighted with their actual color |
 | **mini.indentscope** | Visual `▏` guide for current indent scope |
@@ -1646,17 +1659,17 @@ Languages: English, Italian, German, French.
 | Command | Description |
 | --- | --- |
 | `:CopyPath nameonly` | Copy filename to clipboard |
-| `:CopyPath relative` | Copy path relative to project root |
+| `:CopyPath relative` | Copy `<project-root>/path/to/file` (root = nearest `.git` or `pyproject.toml`; a warning when there is none) |
 | `:CopyPath absolute` | Copy absolute path |
 | `:JSONFormat` | Format JSON (whole file or visual range) |
-| `:Redir <cmd>` | Capture command output to register `@m` (paste with `"mp`) |
-| `:Edit <files>` | Open multiple files |
+| `:Redir <cmd>` | Run the command and show its output in a new tab (scratch buffer, wiped when closed) |
+| `:Edit <pattern>...` | Open every file matching the glob patterns (`:Edit src/*.lua`); `:edit` typed as the first word expands to `:Edit` |
 | `:Datetime` | Show date and time |
 | `:ToPDF` | Convert markdown to PDF (requires pandoc) |
 
 ### Plugin Manager Shortcuts
 
-Type these in command mode, then press space to expand:
+Type these in command mode, then press space (or Enter) to expand:
 
 | Shortcut | Expands to |
 | --- | --- |
@@ -1669,35 +1682,40 @@ Type these in command mode, then press space to expand:
 
 # 35. Java Development (`nvim-java`)
 
+The Java keys work only in a Java buffer with the Java language server (jdtls) attached: open nvim inside the Java devShell (`java` on PATH). Everywhere else the same keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell)". which-key groups: `<Space>j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
+
 ### Build & Run
 
 | Keymap | Description |
 | --- | --- |
-| `<Space>jb` | Build workspace |
-| `<Space>jc` | Clean workspace |
-| `<Space>jr` | Run main class |
-| `<Space>js` | Stop running main |
-| `<Space>jl` | Toggle runner log window |
+| `<Space>jbb` | Build workspace |
+| `<Space>jbc` | Clean workspace |
+| `<Space>jrr` | Run main class |
+| `<Space>jrs` | Stop running main |
+| `<Space>jrl` | Toggle runner log window |
+| `<Space>jrp` | Profiles UI |
 
 ### Testing
 
 | Keymap | Description |
 | --- | --- |
-| `<Space>jt` | Run all tests in current class |
-| `<Space>jT` | Debug all tests in current class |
-| `<Space>jm` | Run test method under cursor |
-| `<Space>jM` | Debug test method under cursor |
-| `<Space>jp` | View last test report |
+| `<Space>jtc` | Run all tests in current class |
+| `<Space>jtC` | Debug all tests in current class |
+| `<Space>jtm` | Run test method under cursor |
+| `<Space>jtM` | Debug test method under cursor |
+| `<Space>jtr` | View last test report |
 
 ### Refactoring
 
 | Keymap | Description |
 | --- | --- |
-| `<Space>jv` | Extract variable |
-| `<Space>jo` | Extract variable (all occurrences) |
+| `<Space>jev` | Extract variable |
+| `<Space>jeo` | Extract variable (all occurrences) |
+| `<Space>jec` | Extract constant |
+| `<Space>jem` | Extract method |
+| `<Space>jef` | Extract field |
 | `<Space>jj` | Change JDK runtime |
 | `<Space>jd` | Configure debugger (DAP) |
-| `<Space>jf` | Profiles UI |
 
 ---
 
@@ -1706,17 +1724,20 @@ Type these in command mode, then press space to expand:
 | Plugin | Keymap / Command | Description |
 | --- | --- | --- |
 | nvim-dap | (lazy-loaded) | Debug Adapter Protocol client. Java debugging auto-configured via nvim-java. |
-| nvim-gdb | `<Space>dp` | Start PDB debugger for Python file (Linux/Windows only) |
+| nvim-gdb | `<Space>dp` | Python buffers only: start pdb on the current file (Linux/Windows only; elsewhere one warning). `:GdbStart` (gdb) works inside the c-cpp / rust devShells |
 
 ---
 
-# 37. Tags Navigation (`vista.vim`)
+# 37. Symbol Outline (`aerial.nvim`)
 
-Only available if `ctags` is installed.
+The outline comes from Treesitter or the LSP server (no ctags needed).
 
 | Keymap | Description |
 | --- | --- |
-| `<Space>t` | Toggle tag outline sidebar (shows functions, classes, methods) |
+| `<Space>t` | Toggle the symbol outline sidebar (functions, classes, methods; the cursor stays in your code) |
+| `[t` / `]t` | Previous / next symbol (only in buffers where aerial is active; there they replace Vim's `:tprevious` / `:tnext` keys) |
+
+Commands: `:AerialToggle`, `:AerialOpen`, `:AerialNavToggle`.
 
 ---
 
@@ -1724,7 +1745,7 @@ Only available if `ctags` is installed.
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `gx` | n, x | Open URL or file under cursor in browser |
+| `gx` | n, x | Open the URL or file under the cursor (gx.nvim) |
 | `ga` | n | Show Unicode info for character under cursor |
 
 URLs in buffers are automatically highlighted (vim-highlighturl plugin).
@@ -1735,13 +1756,13 @@ URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 
 | Plugin | Trigger | Description |
 | --- | --- | --- |
-| `auto-save.nvim` | Automatic | Saves on `FocusLost` / `BufLeave` |
+| `auto-save.nvim` | Automatic | Saves on `FocusLost` / `BufLeave` (message "AutoSave: saved at HH:MM:SS"); never saves unnamed, read-only or special buffers, nor Typst and LaTeX files |
 | `better-escape.vim` | `jk` (insert) | Fast escape from insert mode (200ms window) |
 | `vim-repeat` | `.` | Makes plugin actions repeatable with `.` |
-| `vim-swap` | Automatic | Swap function arguments |
+| `vim-swap` | `gs` (n, x) | Interactively swap function arguments / list items |
 | `vim-eunuch` | `:Rename`, `:Delete` | Unix file operations |
 | `vim-obsession` | `:Obsession` | Session save/restore |
-| `instant.nvim` | Automatic | Collaborative editing (localhost:8081) |
+| `instant.nvim` | `:InstantStartServer`, `:InstantStartSession {host} {port}`, `:InstantJoinSession {host} {port}` | Collaborative editing (loads on its first `:Instant...` command) |
 | `firenvim` | Browser | Neovim in browser text areas |
 
 ---
@@ -1751,7 +1772,7 @@ URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 | Keymap / Command | Description |
 | --- | --- |
 | `<Space>ev` | Open `init.lua` in a new tab |
-| `<Space>sv` | Save and reload Neovim config |
+| `<Space>sv` | Write all buffers and restart Neovim (windows, tabs and files are restored; terminals such as Claude Code are not restarted). Builtin `ZR` restarts without writing |
 | `:Lazy` | Open plugin manager UI |
 | `:Lazy update` | Update all plugins |
 
@@ -1761,9 +1782,9 @@ URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 
 | Filetype | Settings |
 | --- | --- |
-| Python | 4-space indent, `<F9>` to run, `<Space>f` to format with Black |
-| Lua | `<F9>` to execute, `<Space>f` to format with Stylua |
-| C++ | `<F9>` to compile and run |
+| Python | 4-space indent, `<F9>` to run, `<Space>f` to format with Black (needs `black`, python devShell; one warning otherwise; in a uv project both use `uv run`) |
+| Lua | `<F9>` to execute (`:luafile %`), `<Space>f` and `<Space>fm` format with Stylua |
+| C++ | `<F9>` to compile and run (only when a C++ compiler is on PATH, e.g. the c-cpp devShell) |
 | Markdown | Word wrap enabled, extended syntax highlight column |
 
 ---
@@ -1775,16 +1796,16 @@ These happen without any keypress:
 | Behavior | Description |
 | --- | --- |
 | Auto-create directories | Missing parent directories are created on save |
-| Auto-resize windows | Windows resize equally when terminal is resized |
-| Relative line numbers | Relative in normal mode, absolute in insert mode |
+| Auto-resize windows | Windows resize equally when terminal is resized (the Claude Code panel goes back to 30% width) |
+| Relative line numbers | Relative in the focused window in normal mode; absolute in insert mode and in other windows; none in terminals |
 | Non-UTF-8 warning | Warns if file encoding is not UTF-8 |
 | Yank highlight | Yanked text highlighted for 300ms |
 | Cursor restore | Cursor returns to original position after yank |
-| Auto-quit | Neovim exits if only utility windows remain (quickfix, Vista, nvim-tree) |
+| Auto-quit | When only utility windows remain in a tab (quickfix, aerial outline, nvim-tree), the tab closes; on the last tab Neovim quits |
 | Diagnostic float | Diagnostics auto-show when cursor rests on a line |
-| Smart case | Case-insensitive search unless uppercase is used |
-| Random colorscheme | Different theme on each startup |
-| Auto-save | Files save automatically on focus lost / buffer leave |
+| Smart case | Case-insensitive search unless uppercase is used (only `/` and `?`; `:s` and `:g` always ignore case) |
+| Colorscheme | Fixed base16 theme on Nix systems (`NVIM_BASE16_THEME`, fallback Catppuccin Mocha); random on other systems |
+| Auto-save | Files save automatically on focus lost / buffer leave (not unnamed, read-only or special buffers, not Typst/LaTeX) |
 
 ---
 ---
@@ -1803,7 +1824,7 @@ When you open a code file in Neovim, several systems activate automatically behi
 You open a file
   |
   v
-Treesitter parses the syntax tree --> accurate highlighting, indentation, text objects (af, if, ac, ic)
+Treesitter parses the syntax tree --> accurate highlighting (plus symbols for the aerial outline)
   |
   v
 LSP server starts (e.g., pyright for Python) --> diagnostics, go-to-definition, hover, rename, code actions
@@ -1818,7 +1839,7 @@ Gitsigns reads git status --> change markers in gutter
 Lightbulb watches LSP --> shows icon when code actions are available
   |
   v
-Diagnostics config --> errors/warnings appear as emoji signs, float on CursorHold
+Diagnostics config --> errors/warnings appear as Nerd Font signs, a float opens on CursorHold
 ```
 
 You don't need to start any of this manually. It all happens on file open.
@@ -1841,9 +1862,7 @@ LSP is a protocol that lets Neovim communicate with language-specific servers (p
 
 ## How LSP Is Managed
 
-| Plugin | What it does |
-| --- | --- |
-| **nvim-lspconfig** | Configures how Neovim talks to each LSP server. |
+Each server is configured in `lua/config/lsp.lua` (plus `after/lsp/<name>.lua`) with Neovim's builtin `vim.lsp.config` / `vim.lsp.enable`. **nvim-lspconfig** only supplies the default server definitions. A server is enabled only when its program is on PATH: the programs come from the Nix system (`neovim.nix`) or from the language's devShell, nothing is downloaded by Neovim. Java (jdtls) is managed by nvim-java.
 
 ## Configured Servers and What They Provide
 
@@ -1851,25 +1870,25 @@ LSP is a protocol that lets Neovim communicate with language-specific servers (p
 | --- | --- | --- |
 | **pyright** | Python | Type checking, import resolution, diagnostics. Disables import sorting (ruff handles that). |
 | **ruff** | Python | Fast linting and formatting. Complementary to pyright. |
-| **lua_ls** | Lua | Full Lua analysis with `vim` global recognized. Format with `:lua_ls`. |
+| **lua_ls** | Lua | Full Lua analysis with `vim` global recognized. Its formatting is switched off: Lua is formatted by stylua (`<Space>f` / `<Space>fm`). |
 | **bashls** | Bash/Shell | Shell script analysis and diagnostics. |
 | **yamlls** | YAML | Schema validation and formatting for YAML files. |
-| **marksman** | Markdown | Link validation, heading completion. Formatter: Prettier. |
+| **marksman** | Markdown | Link validation, heading completion. Formatting is done by `<Space>fm` with Prettier (not by marksman). |
 | **nixd** | Nix | Nix language analysis. Formatter: nixpkgs-fmt. |
 | **jdtls** | Java | Full Java IDE features via nvim-java (see Java section). Auto-configured. |
 | **clangd** | C/C++ | Compilation, diagnostics, code completion for C/C++. |
 
 ## LSP Keymaps (All Languages)
 
-These keymaps become active whenever an LSP server attaches to the current buffer:
+These keys work per buffer according to what the attached servers support: `K` and `gd` fall back to Vim's builtin versions when no attached server supports hover / definition; `<Space>rn` and `<Space>ca` show one warning instead ("rename: no attached language server supports it", or "... no language server attached to this buffer").
 
 | Keymap | What it does | When to use |
 | --- | --- | --- |
 | `gd` | **Go to definition**. If there's only one definition, jumps directly. If multiple, opens a location list so you can pick. Deduplicates results. | When you want to see where a function/class/variable is defined. |
-| `K` | **Hover documentation**. Shows docs in a floating window with a border. | When you need to check what a function does, its parameters, return type, etc. |
+| `K` | **Hover documentation**. Shows docs in a floating window with a border (at most 100 x 40). | When you need to check what a function does, its parameters, return type, etc. |
 | `<Space>rn` | **Rename symbol**. Renames the symbol under cursor everywhere it appears in the project. | When refactoring: changing a function name, variable name, etc. |
 | `<Space>ca` | **Code action**. Shows a menu of available fixes and refactorings. | When the lightbulb icon appears, or when you want to auto-import, extract a variable, fix a lint warning, etc. |
-| `<Space>fm` | **Format file**. Runs the LSP formatter asynchronously. | Before committing, or whenever you want clean formatting. |
+| `<Space>fm` | **Format file**. Runs the LSP formatter asynchronously (ruff, nixd, ...); in Markdown buffers Prettier, in Lua buffers stylua. | Before committing, or whenever you want clean formatting. |
 
 ## Peeking Without Jumping (Glance)
 
@@ -1888,9 +1907,9 @@ Plugin: **glance.nvim**. Instead of jumping away to a definition (which changes 
 Diagnostics are the errors, warnings, and hints that the LSP server reports about your code.
 
 **How they appear**:
-- Emoji signs in the gutter: 🆇 (error), ⚠️ (warning), ℹ️ (info)
-- A floating window automatically appears after ~500ms when your cursor rests on a line with diagnostics
-- The statusline shows diagnostic counts: `🆇 1 ⚠️ 3`
+- Nerd Font signs in the gutter: 󰅚 (error), 󰀪 (warning), 󰋽 (info), 󰌶 (hint)
+- A floating window automatically appears after ~500ms when your cursor rests on a line with diagnostics; it closes when you move the cursor or enter insert mode
+- The statusline (left side) shows the diagnostic counts with the same icons, e.g. `󰅚 1 󰀪 3`
 
 **Navigation**:
 
@@ -1901,14 +1920,14 @@ Diagnostics are the errors, warnings, and hints that the LSP server reports abou
 | `<Space>dd` | Manually open the diagnostic float for the current line |
 | `<Space>db` | Open a Telescope picker showing all diagnostics in the current file |
 | `<Space>dw` | Open Trouble showing all diagnostics across the workspace |
-| `<Space>dt` | Toggle diagnostics on/off (useful when they're distracting during prototyping) |
+| `<Space>dt` | Toggle diagnostics on/off globally (a message says which; the automatic float stays off while disabled) |
 
 **Sending diagnostics to quickfix**:
 
 | Keymap | What it does |
 | --- | --- |
-| `<Space>qw` | Put all workspace diagnostics into the quickfix list |
-| `<Space>qb` | Put current buffer diagnostics into the quickfix list |
+| `<Space>qw` | Put the diagnostics of all open buffers into the quickfix list |
+| `<Space>qb` | Put current buffer diagnostics into the quickfix list (with none you only get "No diagnostics in this buffer") |
 
 Then use `:cnext`/`:cprev` to jump through them one by one.
 
@@ -1931,7 +1950,7 @@ When you type in insert mode, **nvim-cmp** queries multiple sources and shows a 
 3. **Path**: File paths when you start typing a path
 4. **Buffer** (lowest priority, min 2 chars): Words already in the current buffer
 
-For LaTeX files, there's also an **omni** source for BibTeX and citation completion.
+For LaTeX files the sources are **omni** (BibTeX/citations), the texlab LSP (only when `texlab` is on PATH, LaTeX devShell), UltiSnips, buffer and path.
 
 ## The Smart Tab Behavior
 
@@ -1945,11 +1964,11 @@ For LaTeX files, there's also an **omni** source for BibTeX and citation complet
 | Keymap | In completion menu | Outside menu |
 | --- | --- | --- |
 | `<Tab>` | Select next item | Insert tab |
-| `<CR>` (Enter) | Confirm selection | Insert newline |
-| `<Ctrl-e>` | Close menu | (nothing) |
+| `<CR>` (Enter) | Confirm the item you picked (with nothing picked: newline) | Insert newline |
+| `<Ctrl-e>` | Close menu | Go to end of line |
 | `<Esc>` | Close menu | Exit insert mode |
-| `<Ctrl-d>` | Scroll docs down | (nothing) |
-| `<Ctrl-f>` | Scroll docs up | (nothing) |
+| `<Ctrl-d>` | Scroll docs up | Delete the character right of the cursor |
+| `<Ctrl-f>` | Scroll docs down | (nothing) |
 
 ## Visual Indicators
 
@@ -1966,11 +1985,11 @@ For LaTeX files, there's also an **omni** source for BibTeX and citation complet
 Plugin: **nvim-treesitter**. It parses your code into a syntax tree (like an AST) and uses that for:
 
 - **Syntax highlighting**: More accurate than regex-based highlighting. Understands the actual structure of the code.
-- **Folding**: nvim-ufo uses Treesitter to know where to fold code.
+- **Symbols**: the aerial outline (`<Space>t`) can read the symbols from the tree.
 
 ## Installed Parsers
 
-Auto-installed: Python, C++, Lua, Vim, JSON, TOML, HTML. Additional parsers install automatically when you open a file of that type (on non-NixOS systems).
+On NixOS the parsers come from the nix store (home-manager); Neovim installs nothing. On other systems Neovim installs this fixed set at startup: cpp, diff, dockerfile, git_config, git_rebase, gitcommit, html, json, lua, python, toml, vim. Other languages get no tree-sitter highlighting there until you run `:TSInstall <lang>`. <!-- CHECK-USER: the non-nix install behaviour cannot be tested on this machine -->
 
 ---
 
@@ -1982,7 +2001,7 @@ Plugin: **nvim-ufo** + **promise-async**. Code folding collapses blocks of code 
 
 ## How It Works
 
-nvim-ufo uses the LSP server's folding ranges (or Treesitter as fallback) to determine what can be folded. This means folds match actual code structure, not just indentation.
+nvim-ufo uses the LSP server's folding ranges to determine what can be folded, and falls back to indentation when no server provides folds.
 
 Folded lines show a preview: the first line of the fold + a count like `󰁂 42` showing how many lines are hidden.
 
@@ -1993,7 +2012,8 @@ Folded lines show a preview: the first line of the fold + a count like `󰁂 42`
 | `za` | Toggle the fold under cursor | Quick open/close of a single fold |
 | `zR` | Open ALL folds in the file | When you want to see everything |
 | `zM` | Close ALL folds in the file | When you want the bird's-eye view |
-| `zr` | Open folds one level at a time | Gradually reveal more detail |
+| `zr` | Open one more fold level (`{N}zr` = N levels; in a buffer without ufo folds: one warning) | Gradually reveal more detail |
+| `zm` | Close one more fold level (`{N}zm` = N levels) | Step back to less detail |
 | `zo` / `zc` | Open / close fold at cursor | Precise control |
 | `zO` / `zC` | Open / close all nested folds at cursor | Deep open/close |
 | `<Space>K` | Preview folded lines in popup | See what's inside without unfolding |
@@ -2007,7 +2027,7 @@ Folded lines show a preview: the first line of the fold + a count like `󰁂 42`
 
 ## The Git Plugin Ecosystem
 
-This config includes 7 git-related plugins that each handle a different aspect:
+This config includes several git-related plugins that each handle a different aspect:
 
 | Plugin | What it does | How to use |
 | --- | --- | --- |
@@ -2055,16 +2075,16 @@ Claude Code is an AI coding assistant that runs in a terminal inside Neovim.
 
 | Keymap | Mode | What it does |
 | --- | --- | --- |
-| `<Space>cc` | n | Toggle Claude Code terminal. Opens at the bottom (30% height). |
-| `<Space>cR` | n | Resume/continue the last Claude conversation |
+| `<Space>cc` | n | Toggle the Claude Code terminal. Opens as a vertical split on the right (30% of the width). |
+| `<Space>cR` | n | Resume/continue the last Claude conversation (`claude --continue`) |
 | `<Space>cV` | n | Start Claude in verbose mode |
 
 **Using Claude Code**:
 1. Press `<Space>cc` to open
-2. It opens as a terminal buffer at the bottom of the screen
+2. It opens as a terminal buffer in a vertical split on the right
 3. Type your request and press Enter
 4. Claude can read and edit your files directly
-5. Press `<Space>cc` again to close, or `<Esc>` then `<Space>q`
+5. Leave terminal mode with `<Ctrl-\><Ctrl-n>` (a plain `<Esc>` goes to Claude, e.g. to interrupt it), then press `<Space>cc` to close the panel
 
 Claude Code uses your project's git root as the working directory.
 
@@ -2083,7 +2103,7 @@ This section covers how developers typically navigate code in this setup.
 | File explorer | `<Space>s` | Browsing project structure visually |
 | Buffer search | `<Space>fb` | Switching between already-open files |
 | Buffer pick | `<Space>bp` | Quick switch when you can see the buffer tab |
-| Buffer cycle | `gb` / `gB` | Cycling through open files linearly |
+| Buffer cycle | `gb` / `gB` | Cycling through open files linearly (`{N}gb` = buffer number N) |
 
 ## Finding Code
 
@@ -2094,8 +2114,8 @@ This section covers how developers typically navigate code in this setup.
 | Go to definition | `gd` | Jumping to where something is defined |
 | Peek definition | `<Space>gd` | Checking a definition without leaving context |
 | Peek references | `<Space>gr` | Seeing everywhere something is used |
-| Buffer tags | `<Space>ft` | Jumping to a function/class in the current file |
-| Vista outline | `<Space>t` | Sidebar with all symbols in the file |
+| Buffer tags | `<Space>ft` | Jumping to a function/class in the current file (uses ctags) |
+| Symbol outline | `<Space>t` | Sidebar (aerial) with all symbols in the file; focus stays in the code |
 
 ## Understanding Code
 
@@ -2114,7 +2134,7 @@ This section covers how developers typically navigate code in this setup.
 | --- | --- | --- |
 | Rename | `<Space>rn` | Rename a symbol across the entire project |
 | Code action | `<Space>ca` | Auto-import, extract variable, fix lint issue, etc. |
-| Format | `<Space>fm` | Auto-format the file |
+| Format | `<Space>fm` | Auto-format the file (LSP formatting; stylua in Lua buffers, prettier in Markdown buffers) |
 | Comment/uncomment | `gcc` / `gc` | Toggle comments |
 | Surround | `sa` / `sd` / `sr` | Add/delete/replace quotes, brackets, etc. |
 | Change inside | `ci(` / `ci"` / `ci{` | Change text inside delimiters |
@@ -2131,7 +2151,7 @@ The quickfix list is a central tool for developers. It's a list of locations (fi
 | Source | How to populate | Description |
 | --- | --- | --- |
 | Project-wide search | `:vimgrep /pattern/ **/*` | Search results across all files |
-| LSP diagnostics | `<Space>qw` | All errors/warnings from the language server |
+| LSP diagnostics | `<Space>qw` | Diagnostics of all open buffers |
 | Buffer diagnostics | `<Space>qb` | Errors/warnings in current file only |
 | Build errors | `:make` | Compiler output |
 | Grep | `:grep pattern` | Uses ripgrep (configured in this setup) |
@@ -2141,7 +2161,7 @@ The quickfix list is a central tool for developers. It's a list of locations (fi
 | Command / Keymap | What it does |
 | --- | --- |
 | `:copen` | Open the quickfix window at the bottom |
-| `:cclose` or `\x` | Close the quickfix window |
+| `:cclose` or `\x` | Close the quickfix window (`\x` also closes all location lists) |
 | `:cnext` | Jump to the next item |
 | `:cprev` | Jump to the previous item |
 | `:cfirst` / `:clast` | Jump to the first / last item |
@@ -2152,13 +2172,12 @@ The quickfix list is a central tool for developers. It's a list of locations (fi
 
 | Command | What it does |
 | --- | --- |
-| `:cdo s/old/new/g` | Run a substitution on every file in the quickfix list |
-| `:cdo update` | Save all modified files after a batch operation |
+| `:cfdo %s/old/new/g \| update` | Run a substitution once in every file of the quickfix list, then save it |
+| `:cdo s/old/new/ge \| update` | The same per quickfix entry (the `e` flag is needed, see the Multi-File Search and Replace section) |
 
 **Example workflow**: Rename a string across the project:
 1. `:grep "oldName"` to populate quickfix with all occurrences
-2. `:cdo s/oldName/newName/g` to replace in all files
-3. `:cdo update` to save all files
+2. `:cfdo %s/oldName/newName/g | update` to replace in all files and save them
 
 ## Trouble (Better Quickfix UI)
 
@@ -2229,7 +2248,7 @@ Plugin: **nvim-devdocs**. Browse programming documentation without leaving Neovi
 
 | Command | What it does |
 | --- | --- |
-| `:DevdocsOpen` | Open documentation browser in a floating window |
+| `:DevdocsOpen` | Open the documentation in a normal buffer (current window) |
 | `:DevdocsOpenFloat` | Open in floating window (25 lines tall, 100 chars wide) |
 | `:DevdocsInstall` | Install documentation for a language (e.g., `:DevdocsInstall python`) |
 | `:DevdocsUninstall` | Remove installed docs |
@@ -2245,7 +2264,7 @@ Press `K` on any symbol to see its documentation in a floating window. This pull
 
 # 54. Java Development In Depth
 
-Plugin: **nvim-java** (with nvim-java-core, nvim-java-test, nvim-java-dap).
+Plugin: **nvim-java**.
 
 This is the most feature-rich language setup in this config. It provides a full Java IDE experience.
 
@@ -2258,27 +2277,30 @@ nvim-java wraps the Eclipse JDT Language Server (jdtls) and adds:
 - Refactoring commands
 - DAP (Debug Adapter Protocol) for step-through debugging
 
+All of this only starts inside the Java devShell (`java` on PATH). Elsewhere `.java` files open without Java tooling, and the `<Space>j` keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell)".
+
 On NixOS, JDK is managed by the system. On other systems, nvim-java auto-installs it.
 
 ## Build & Run
 
 | Keymap | Command | What it does |
 | --- | --- | --- |
-| `<Space>jb` | `:JavaBuildBuildWorkspace` | Compile the entire workspace |
-| `<Space>jc` | `:JavaBuildCleanWorkspace` | Clean build artifacts (restart Neovim after) |
-| `<Space>jr` | `:JavaRunnerRunMain` | Run the main class |
-| `<Space>js` | `:JavaRunnerStopMain` | Stop the running program |
-| `<Space>jl` | `:JavaRunnerToggleLogs` | Show/hide the runner log window at the bottom |
+| `<Space>jbb` | `:JavaBuildBuildWorkspace` | Compile the entire workspace |
+| `<Space>jbc` | `:JavaBuildCleanWorkspace` | Clear the jdtls workspace cache (close and reopen Neovim afterwards) |
+| `<Space>jrr` | `:JavaRunnerRunMain` | Run the main class |
+| `<Space>jrs` | `:JavaRunnerStopMain` | Stop the running program |
+| `<Space>jrl` | `:JavaRunnerToggleLogs` | Show/hide the runner log window <!-- CHECK-USER: where does the runner log window open (bottom?) --> |
+| `<Space>jrp` | `:JavaProfile` | Profiles UI |
 
 ## Testing
 
 | Keymap | Command | What it does |
 | --- | --- | --- |
-| `<Space>jt` | `:JavaTestRunCurrentClass` | Run all `@Test` methods in the current class |
-| `<Space>jT` | `:JavaTestDebugCurrentClass` | Debug all tests (with breakpoints) |
-| `<Space>jm` | `:JavaTestRunCurrentMethod` | Run only the test method under cursor |
-| `<Space>jM` | `:JavaTestDebugCurrentMethod` | Debug only the test under cursor |
-| `<Space>jp` | `:JavaTestViewLastReport` | Show pass/fail results from the last test run |
+| `<Space>jtc` | `:JavaTestRunCurrentClass` | Run all `@Test` methods in the current class |
+| `<Space>jtC` | `:JavaTestDebugCurrentClass` | Debug all tests (with breakpoints) |
+| `<Space>jtm` | `:JavaTestRunCurrentMethod` | Run only the test method under cursor |
+| `<Space>jtM` | `:JavaTestDebugCurrentMethod` | Debug only the test under cursor |
+| `<Space>jtr` | `:JavaTestViewLastReport` | Show pass/fail results from the last test run |
 
 ## Debugging
 
@@ -2286,16 +2308,18 @@ On NixOS, JDK is managed by the system. On other systems, nvim-java auto-install
 | --- | --- | --- |
 | `<Space>jd` | `:JavaDapConfig` | Configure the debug adapter (auto-runs on Java file open, but can be re-triggered) |
 
-DAP is auto-configured when you open a Java file (with a 1-second delay). It enables breakpoint debugging with step-in, step-over, step-out, continue, etc.
+DAP is configured automatically when jdtls starts. Debugging uses the nvim-dap commands (`:DapToggleBreakpoint`, `:DapContinue`, `:DapStepOver`, `:DapStepInto`, `:DapStepOut`, `:DapTerminate`); this config has no keys for them. <!-- CHECK-USER: confirm there is no keymap for breakpoints/stepping that you use -->
 
 ## Refactoring
 
-| Keymap | Command | What it does | Before | After |
-| --- | --- | --- | --- | --- |
-| `<Space>jv` | `ExtractVariable` | Extract expression to a local variable | `int area = 3.14 * r * r;` | `double temp = 3.14 * r * r; int area = temp;` |
-| `<Space>jo` | `ExtractVariableAllOccurrence` | Extract and replace ALL occurrences | Multiple `data * 100` | Single `int factor = data * 100;` |
-| `<Space>jj` | `ChangeRuntime` | Switch JDK version | | |
-| `<Space>jf` | `JavaProfile` | Profiles UI | | |
+| Keymap | Command | What it does |
+| --- | --- | --- |
+| `<Space>jev` | `:JavaRefactorExtractVariable` | Extract the expression under the cursor (or selection) to a local variable |
+| `<Space>jeo` | `:JavaRefactorExtractVariableAllOccurrence` | Extract and replace ALL occurrences of the expression |
+| `<Space>jec` | `:JavaRefactorExtractConstant` | Extract a constant |
+| `<Space>jem` | `:JavaRefactorExtractMethod` | Extract a method |
+| `<Space>jef` | `:JavaRefactorExtractField` | Extract a field |
+| `<Space>jj` | `:JavaSettingsChangeRuntime` | Switch the JDK version |
 
 ---
 
@@ -2303,20 +2327,20 @@ DAP is auto-configured when you open a Java file (with a 1-second delay). It ena
 
 ## The Universal Runner
 
-The `<Space>rr` keymap detects the current filetype and runs the appropriate command in a **vertical split terminal**.
+The `<Space>rr` keymap detects the current filetype and runs the appropriate command in a **vertical split terminal** on the left. If the file is unsaved, the filetype has no runner, or the compiler/interpreter is not on PATH, you get ONE warning and no terminal opens (the message names the devShell to start nvim in).
 
 **How it works**:
 1. Detects the filetype of the current buffer
-2. Builds the correct command (e.g., `python3 file.py`, `go run file.go`)
+2. Builds the correct command (e.g., `python3 file.py`, `go run .`)
 3. Opens a vertical split
 4. Starts a terminal in that split running the command
 5. Output appears in real-time
 
 **After running**:
-- The terminal window shows on the right side
+- The terminal window opens on the LEFT of your code
 - Press `<Esc>` in the terminal to enter Normal mode
-- Navigate back to your code with `<Ctrl-w>h` or `<Left>`
-- Close the terminal with `<Space>q` or `\d`
+- Navigate back to your code with `<Ctrl-w>l` or `<Right>`
+- Close the terminal window with `<Space>q`, or delete its buffer with `\d`
 - Run again with `<Space>rr` (it opens a new terminal each time)
 
 ## Language-Specific Details
@@ -2324,16 +2348,16 @@ The `<Space>rr` keymap detects the current filetype and runs the appropriate com
 | Language | Command used | Notes |
 | --- | --- | --- |
 | Python | `python3 <file>` | |
-| Java | `:JavaRunnerRunMain` | Uses nvim-java, not terminal |
-| C | `gcc -Wall -Wextra -std=c11 <file> -o <output> && ./<output>` | Compiles and runs |
-| C++ | `g++ -Wall -Wextra -std=c++17 <file> -o <output> && ./<output>` | Compiles and runs |
-| C# | `dotnet run` | |
+| Java | `:JavaRunnerRunMain` when jdtls (nvim-java) is attached; otherwise `java <file>` | With jdtls no terminal is used |
+| C | `gcc -Wall -Wextra -std=c11 <file> -o <binary> && <binary>` | Compiles and runs; the binary sits next to the source; needs gcc (c-cpp devShell) |
+| C++ | `g++ -Wall -Wextra -std=c++20 <file> -o <binary> && <binary>` | Compiles and runs; needs g++ (c-cpp devShell) |
+| C# | `dotnet run --project <nearest .csproj>` | Without a project file: `dotnet run <file>` |
 | JavaScript | `node <file>` | |
-| TypeScript | `ts-node <file>` | |
-| Go | `go run <file>` | |
-| Rust | `cargo run` (falls back to `rustc <file>`) | |
+| TypeScript | `node <file>` | Node runs `.ts` directly |
+| Go | `go run .` in the file's directory | Runs the whole package |
+| Rust | `cargo run` when a `Cargo.toml` is above the file | Otherwise `rustc <file>` and runs the binary |
 | Bash | `bash <file>` | |
-| Lua | `lua <file>` | |
+| Lua | `nvim -l <file>` | Neovim's own LuaJIT |
 | Ruby | `ruby <file>` | |
 | PHP | `php <file>` | |
 
@@ -2343,9 +2367,9 @@ Some filetypes have an additional `<F9>` runner:
 
 | Filetype | What `<F9>` does |
 | --- | --- |
-| Python | Runs with `python -u <file>` via AsyncRun (unbuffered output) |
-| C++ | Compiles with `clang++` or `g++` with warnings, opens in horizontal split |
-| LaTeX | Compiles with vimtex |
+| Python | Runs with `python -u <file>` via AsyncRun (unbuffered output; `uv run python -u` in a uv project) |
+| C++ | Compiles with `clang++` (else `g++`) `-Wall -Wextra -std=c++20 -O2` and runs it in a horizontal split; only mapped when a compiler is on PATH |
+| LaTeX | vimtex compile; only when `latex` is on PATH |
 
 ---
 
@@ -2355,9 +2379,9 @@ Some filetypes have an additional `<F9>` runner:
 
 Plugin: **nvim-dap**. DAP is a standardized protocol (created by Microsoft) for communication between an editor and a debugger. It's the same protocol used by VS Code.
 
-**Java**: Debugging is fully auto-configured via nvim-java. Just open a Java file, set breakpoints, and use `<Space>jT` or `<Space>jM` to debug tests.
+**Java**: Debugging is auto-configured via nvim-java (only inside the Java devShell, where `java` is on PATH). Open a Java file, set breakpoints, and use `<Space>jtC` (debug the current test class) or `<Space>jtM` (debug the current test method).
 
-**Python**: Use `<Space>dp` to start PDB (Python Debugger) for the current file. Only available on Linux/Windows.
+**Python**: In Python buffers `<Space>dp` starts `python -m pdb` on the current file through nvim-gdb. Only available on Linux/Windows.
 
 ## GDB Integration
 
@@ -2372,7 +2396,7 @@ Plugin: **nvim-gdb**. For C/C++ debugging with GDB. Available on Linux and Windo
 | Plugin / Feature | What it does |
 | --- | --- |
 | **nvim-tree** (`<Space>s`) | Visual file browser. Create (`a`), delete (`d`), rename (`r`), copy (`c`), cut (`x`), paste (`p`). |
-| **vim-eunuch** | Unix file commands: `:Rename <newname>`, `:Delete` (deletes current file and buffer), `:Move`, `:Mkdir`. |
+| **vim-eunuch** | Unix file commands: `:Rename <newname>`, `:Delete` (deletes current file and buffer); once eunuch is loaded (by the first `:Rename` or `:Delete`) also `:Move`, `:Mkdir`. <!-- CHECK-USER: :Move and :Mkdir only exist after vim-eunuch is loaded; add them to its lazy cmd list, or keep documenting it like this? --> |
 | **gx.nvim** (`gx`) | Open the URL or file path under cursor in a browser. |
 | `:CopyPath absolute` | Copy the full file path to clipboard. |
 | `:CopyPath relative` | Copy path relative to project root. |
@@ -2385,8 +2409,8 @@ Plugin: **nvim-gdb**. For C/C++ debugging with GDB. Available on Linux and Windo
 | `<Space>s` | Toggle file tree sidebar |
 | `<Space>ff` | Fuzzy-find any file in the project |
 | `<Space>fg` | Search for text across all project files |
-| `<Space>cd` | Change working directory to current file's location |
-| `<Space>t` | Open symbol outline (Vista) for current file |
+| `<Space>cd` | Change the working directory of THIS window only (`:lcd`) to the current file's folder and print it |
+| `<Space>t` | Toggle the symbol outline (aerial) for the current file |
 
 ---
 
@@ -2398,7 +2422,7 @@ Plugin: **auto-save.nvim**. Files are automatically saved when you:
 - Switch to another application (`FocusLost`)
 - Leave the current buffer (`BufLeave`)
 
-It respects LSP formatting locks (won't save while the formatter is running).
+It never saves unnamed, read-only or special buffers (terminals, help, ...) and never saves Typst and LaTeX files (their watchers would recompile on every save). After each save the message "AutoSave: saved at HH:MM:SS" appears.
 
 ## Session Management
 
@@ -2414,7 +2438,7 @@ Plugin: **vim-obsession**. Save and restore your entire Neovim session (open fil
 
 Plugin: **instant.nvim**. Real-time collaborative editing.
 
-- Default server: `localhost:8081`
+- The plugin loads on its first `:Instant...` command. Host and port are arguments of `:InstantStartServer` / `:InstantStartSession` / `:InstantJoinSession` (e.g. `:InstantStartSession 127.0.0.1 8081`); the built-in server defaults to port 8080.
 - Uses your system username automatically
 
 ---
@@ -2423,7 +2447,7 @@ Plugin: **instant.nvim**. Real-time collaborative editing.
 
 | Command | What it does |
 | --- | --- |
-| `:LspInfo` | Show which LSP servers are attached to the current buffer |
+| `:LspInfo` | LSP status (runs `:checkhealth vim.lsp`) |
 | `:Lazy` | Open plugin manager |
 | `:Lazy update` | Update all plugins |
 | `:JSONFormat` | Format JSON (works on visual selection too) |
@@ -2455,7 +2479,7 @@ Macros record a sequence of keystrokes and replay them. They are one of the most
 ## Recording a Macro
 
 1. Press `Q` followed by a register letter (e.g., `Qa` to record into register `a`)
-2. The statusline shows `recording @a` -- everything you do now is being recorded
+2. The statusline shows `recording @a` -- everything you do now is being recorded <!-- CHECK-USER: with showmode off and no lualine recording component, is "recording @a" visible while recording? -->
 3. Perform the editing actions you want to repeat
 4. Press `q` to stop recording
 
@@ -2552,7 +2576,7 @@ Starting with `John,30,john@email.com`:
 
 ## Tips for Writing Macros
 
-- **Start from a consistent position**: Begin each macro from the start of a line (`0` or `H`) or from a search result. This makes the macro repeatable.
+- **Start from a consistent position**: Begin each macro from a fixed position in the line (`0` start of the line, `H` first non-blank) or from a search result. This makes the macro repeatable.
 - **Use word motions, not character motions**: `w`, `e`, `b` work regardless of word length. `3l` only works for a specific column.
 - **End on the next line**: If processing line-by-line, end the macro with `j` (move down) so replaying it processes subsequent lines.
 - **Test with `@a` once**: Play the macro once to verify before running `100@a`.
@@ -2721,16 +2745,15 @@ Since clipboard is `unnamedplus`, yanked text is shared across all buffers and e
 Use the quickfix list:
 
 1. `:grep "TODO"` -- find all files with "TODO"
-2. `:cdo s/TODO/DONE/g` -- replace in every match
-3. `:cdo update` -- save all modified files
+2. `:cfdo %s/TODO/DONE/g | update` -- replace in every file of the list and save it
 
 ## Closing Files You're Done With
 
 | Keymap | What it does |
 | --- | --- |
 | `\d` | Close current buffer, keep window |
-| `\D` | Close ALL other buffers (keep only current) |
-| `<Space>q` | Close current window |
+| `\D` | Close all other buffers EXCEPT those with unsaved changes or a still-running terminal (one message says how many were kept) |
+| `<Space>q` | Save the buffer if modified, then close the window (last window: quits nvim) |
 
 ---
 
@@ -2746,7 +2769,7 @@ Or use `<Alt-j>` / `<Alt-k>` to move lines up/down without cutting.
 
 ## Swap Two Words
 
-Plugin: **vim-swap**. Place cursor on a function argument and use `g<` / `g>` to swap it with the previous/next argument. Works with comma-separated items.
+Plugin: **vim-swap**. Place the cursor on a function argument and press `gs`: labels appear on the items, pick the one to swap with. Works with comma-separated items.
 
 For manual word swap:
 1. On the first word: `diw` (delete inner word)
@@ -2758,7 +2781,7 @@ For manual word swap:
 1. `yy` -- yank the line
 2. `p` -- paste below
 
-Or: `Yyp` (same thing).
+Or: `yyp` (same thing).
 
 ## Duplicate a Block of Code
 
@@ -2808,6 +2831,8 @@ Place your cursor on one of the arguments inside parentheses:
 | --- | --- |
 | `gs` | Enter interactive swap mode (shows labels, press to pick target) |
 
+**Example**: Given `func(a, b, c)` with the cursor on `b`, press `gs`, then pick the target item by its label. <!-- CHECK-USER: the exact label/pick keys of vim-swap gs were not testable headless -->
+
 Works with any comma-separated list: function arguments, array literals, dictionary entries, etc.
 
 ---
@@ -2831,7 +2856,7 @@ Works with any comma-separated list: function arguments, array literals, diction
 | `:read !ls` | Insert directory listing into the buffer |
 | `:read !curl -s <url>` | Insert the contents of a URL |
 | `:%!sort` | Replace the entire buffer with its sorted version |
-| `:%!python -m json.tool` | Format the entire buffer as JSON (same as `:JSONFormat`) |
+| `:%!python -m json.tool` | Format the entire buffer as JSON with 4-space indent (`:JSONFormat` does the same with 2 spaces and leaves invalid JSON untouched) |
 
 ## Filtering a Selection Through a Command
 
@@ -2861,10 +2886,10 @@ This is the section you need when you want to find or replace text across your e
 | Scenario | Best method |
 | --- | --- |
 | Rename a function/variable/class (code-aware) | **LSP Rename** (`<Space>rn`) |
-| Replace a plain string in many files | **`:grep` + `:cdo`** |
-| Replace only in certain file types (e.g., only `.py`) | **`:vimgrep` + `:cdo`** |
+| Replace a plain string in many files | **`:grep` + `:cfdo`** |
+| Replace only in certain file types (e.g., only `.py`) | **`:grep --type` or `:vimgrep`, then `:cfdo`** |
 | Just find where something is used (no replace) | **`<Space>fg`** (live grep) |
-| Replace with confirmation for each occurrence | **`:cdo` with `gc` flag** |
+| Replace with confirmation for each occurrence | **`:cfdo` with the `gc` flag** |
 
 ---
 
@@ -2883,30 +2908,30 @@ If you're renaming a function, variable, class, or any code symbol, this is the 
 
 ---
 
-## Method 2: `:grep` + `:cdo` (Best for Plain Text)
+## Method 2: `:grep` + `:cfdo` (Best for Plain Text)
 
-This is the most versatile method. It uses ripgrep (very fast) to search the entire project, puts results in the quickfix list, then runs a command on each result.
+This is the most versatile method. It uses ripgrep (very fast) to search the entire project, puts results in the quickfix list, then runs a command on each file of the list.
+
+**Why `:cfdo` and not `:cdo`**: `:grep` here creates ONE quickfix entry per match. `:cdo s/x/y/g` visits a line once per match; after the first visit replaced every `x` on the line, the next visit finds nothing and stops with `E486: Pattern not found` (tested), so the rest is NOT replaced. `:cfdo %s/x/y/g` runs once per file and avoids this. If you prefer `:cdo`, add the `e` flag: `:cdo s/x/y/ge | update`.
 
 ### Step-by-Step: Replace All Without Confirmation
 
 ```
 :grep "oldFunction"                       -- search entire project
-:cdo s/oldFunction/newFunction/g          -- replace in every matching file
-:cdo update                               -- save all modified files
+:cfdo %s/oldFunction/newFunction/g | update   -- replace in every matching file and save it
 ```
 
-### Step-by-Step: Replace with Confirmation for Each File
+### Step-by-Step: Replace with Confirmation for Each Occurrence
 
 ```
 :grep "oldFunction"                       -- search entire project
-:cdo s/oldFunction/newFunction/gc         -- 'c' flag asks y/n for EACH occurrence
-:cdo update                               -- save all modified files
+:cfdo %s/oldFunction/newFunction/gc | update  -- 'c' flag asks y/n for EACH occurrence
 ```
 
 When the `c` flag is active, for each match you see it highlighted and can press:
 - `y` to replace this one
 - `n` to skip this one
-- `a` to replace all remaining in this file (then moves to next file)
+- `a` to replace all remaining in this file (then moves to next file) <!-- CHECK-USER: does 'a' under :cfdo apply to the current file only? not tested interactively -->
 - `q` to stop entirely
 
 ### Step-by-Step: Review Results Before Replacing
@@ -2919,13 +2944,12 @@ When the `c` flag is active, for each match you see it highlighted and can press
 Now you can see every file and line that matches. Use `:cnext`/`:cprev` (or `j`/`k` in the quickfix window then `<Enter>`) to jump through them. Once satisfied:
 
 ```
-:cdo s/oldFunction/newFunction/g          -- replace
-:cdo update                               -- save
+:cfdo %s/oldFunction/newFunction/g | update   -- replace and save
 ```
 
 ### Using Regex with `:grep`
 
-`:grep` passes the pattern directly to ripgrep, so you can use ripgrep regex:
+`:grep` passes the pattern directly to ripgrep, so you can use ripgrep regex. It is smart-case: an all-lowercase pattern ignores case, a pattern with a capital is exact (add `-s` to force exact case):
 
 | Command | What it finds |
 | --- | --- |
@@ -2949,7 +2973,7 @@ Ripgrep supports file type filters:
 
 ---
 
-## Method 3: `:vimgrep` + `:cdo` (Built-in, Slower but Portable)
+## Method 3: `:vimgrep` + `:cfdo` (Built-in, Slower but Portable)
 
 `:vimgrep` is Vim's built-in search (doesn't require ripgrep). It's slower but lets you use Vim regex and file glob patterns:
 
@@ -2960,12 +2984,11 @@ Ripgrep supports file type filters:
 | `:vimgrep /pattern/ **/*.{js,ts}` | Search JS and TS files |
 | `:vimgrep /pattern/ src/**/*` | Search only in `src/` directory |
 
-Then use `:cdo` as before:
+Then use `:cfdo` as before:
 
 ```
 :vimgrep /oldName/ **/*.java
-:cdo s/oldName/newName/g
-:cdo update
+:cfdo %s/oldName/newName/g | update
 ```
 
 ---
@@ -2978,7 +3001,7 @@ Then use `:cdo` as before:
 - Investigating: "Which files reference this config key?"
 - Planning: "How many places use this pattern?" before deciding on a replace strategy
 
-After reviewing results in fzf, you can then use `:grep` + `:cdo` for the actual replacement.
+After reviewing results in fzf, you can then use `:grep` + `:cfdo` for the actual replacement.
 
 ---
 
@@ -2991,48 +3014,43 @@ You renamed `/api/users` to `/api/v2/users`:
 ```
 :grep "/api/users"                        -- find all references
 :copen                                    -- review: make sure you're not catching wrong things
-:cdo s|/api/users|/api/v2/users|g         -- replace (using | as delimiter since / is in the text)
-:cdo update                               -- save all files
+:cfdo %s#/api/users#/api/v2/users#g | update   -- replace (using # as delimiter since / is in the text) and save
 ```
 
 ### Example 2: Replace a Deprecated Function Name (with Confirmation)
 
 ```
 :grep "getUser"
-:cdo s/getUser/fetchUser/gc               -- confirm each one ('y' to replace, 'n' to skip)
-:cdo update
+:cfdo %s/getUser/fetchUser/gc | update   -- confirm each one ('y' to replace, 'n' to skip)
 ```
 
 ### Example 3: Delete All Console.log Statements in JavaScript Files
 
 ```
 :grep "console\.log" --type js            -- find them
-:cdo g/console\.log/d                     -- delete the entire line containing the match
-:cdo update
+:cfdo g/console\.log/d                    -- delete every line containing the match
+:cfdo update                              -- save the files
 ```
 
 ### Example 4: Add a Comment Before Every TODO
 
 ```
 :grep "TODO"
-:cdo s/TODO/NOTE: was TODO/g
-:cdo update
+:cfdo %s/TODO/NOTE: was TODO/g | update
 ```
 
 ### Example 5: Replace Only in Python Files in the src/ Directory
 
 ```
 :grep "old_function" --type py src/
-:cdo s/old_function/new_function/g
-:cdo update
+:cfdo %s/old_function/new_function/g | update
 ```
 
 ### Example 6: Case-Insensitive Project-Wide Replace
 
 ```
 :grep -i "oldname"                        -- ripgrep's -i flag for case-insensitive
-:cdo s/\coldname/newname/gi               -- \c forces case-insensitive in the substitute too
-:cdo update
+:cfdo %s/oldname/newname/g | update       -- :s already ignores case in this config
 ```
 
 ---
@@ -3045,7 +3063,7 @@ You renamed `/api/users` to `/api/v2/users`:
 | `:cfdo {cmd}` | Run `{cmd}` once per **file** in the quickfix list (visits each file only once) |
 | `:bufdo {cmd}` | Run `{cmd}` on every **open buffer** (not just quickfix results) |
 
-For search-and-replace, `:cdo` is usually what you want. Use `:cfdo` if your command operates on the whole file (e.g., formatting).
+For search-and-replace use `:cfdo %s/old/new/g` (see Method 2 for why a plain `:cdo s/old/new/g` can stop early). `:cdo` is fine for commands that act on the entry's line once, or with the `e` flag.
 
 ---
 
@@ -3053,10 +3071,10 @@ For search-and-replace, `:cdo` is usually what you want. Use `:cfdo` if your com
 
 If the replace went wrong, each file has its own undo history:
 
-1. `:cdo undo` -- undo the last change in every affected file
-2. `:cdo update` -- save the reverted files
+1. `:cfdo undo` -- undo the last change in every affected file
+2. `:cfdo update` -- save the reverted files
 
-Or use `:cdo earlier 1f` to go back one save-state in each file.
+Or use `:cfdo earlier 1f` to go back one save-state in each file. <!-- CHECK-USER: the multi-file undo recipes were not tested -->
 
 ---
 
@@ -3187,7 +3205,7 @@ d  ----->  c
 e          d
 ```
 
-`<Ctrl-a>`/`<Ctrl-x>` wrap `z`→`a` (or `Z`→`A`) at the alphabet boundary, and respect case (`a` increments to `b`, `Z` increments to `A`).
+`<Ctrl-a>`/`<Ctrl-x>` do NOT wrap at the alphabet boundary: `<Ctrl-a>` on `z` (or `Z`) leaves it unchanged (tested). Case is kept (`a` -> `b`, `A` -> `B`).
 
 ## Open the File Under Cursor
 
@@ -3195,7 +3213,7 @@ e          d
 | --- | --- |
 | `gf` | Open the file path under cursor (if it exists) |
 | `<Ctrl-w>f` | Open file under cursor in a split |
-| `gx` | Open URL under cursor in a browser |
+| `gx` | Open the URL **or file** under the cursor (gx.nvim; also on a Visual selection) |
 
 ## Change Case
 
@@ -3206,12 +3224,12 @@ e          d
 | `guiw` | Lowercase the entire word |
 | `gUU` | Uppercase the entire line |
 | `guu` | Lowercase the entire line |
-| (in insert mode) `<Ctrl-u>` | Uppercase the current word (custom) |
-| (in insert mode) `<Ctrl-t>` | Title case the current word (custom) |
+| (in insert mode) `<Ctrl-u>` | Uppercase the current word (custom; the word touching the cursor, or the previous word if only spaces are before the cursor) |
+| (in insert mode) `<Ctrl-t>` | Toggle the case of the first letter of the current word (custom; `foo` <-> `Foo`) |
 
 ## Align Text
 
-Plugin: **tabular**. Aligns text around a character.
+Plugin: **tabular**. Aligns text around a character. It loads with the first Markdown file of the session; in other filetypes run `:Lazy load tabular` first. <!-- CHECK-USER: should tabular get cmd = {"Tabularize"} so it works in every filetype? (config change, not guide) -->
 
 | Command | What it does |
 | --- | --- |
@@ -3221,11 +3239,11 @@ Plugin: **tabular**. Aligns text around a character.
 
 ## Command Abbreviations
 
-This config sets some command abbreviations (type the short form, press space):
+This config sets some command abbreviations (type the short form as the first word of the command line, then press space or Enter):
 
 | Short | Expands to |
 | --- | --- |
-| `git` | `Git` (fugitive) |
+| `git` | `Git` (fugitive; only inside a git repository) |
 | `man` | `Man` (manual pages) |
 | `edit` | `Edit` (multi-file edit) |
 | `pi` | `Lazy install` |
@@ -3252,7 +3270,7 @@ This config sets some command abbreviations (type the short form, press space):
 | --- | --- | --- |
 | Typing random commands instead of text | You're in Normal mode | Press `i` to enter Insert mode first |
 | Text won't stop appearing | You're in Insert mode | Press `<Esc>` to go back to Normal |
-| Screen looks weird / frozen | You pressed `<Ctrl-s>` (terminal freeze) | Press `<Ctrl-q>` to unfreeze |
+| Screen looks weird / frozen | You pressed `<Ctrl-s>` (terminal freeze) | Press `<Ctrl-q>` to unfreeze <!-- CHECK-USER: does Ctrl-s still freeze the screen in your terminal/tmux while nvim runs? In Insert/Select mode Ctrl-s is LSP signature help --> |
 | Can't exit Neovim | | Type `<Space>Q` or `;qa!<Enter>` |
 | Pasted text looks wrong | Paste from outside with `<Ctrl-v>` in terminal mode | Use `"+p` in Normal mode, or the terminal paste key |
 | Search highlight won't go away | Yellow boxes left over from a search or `*` | Type `;noh<Enter>` (tested). `<Esc>` does **not** clear it in this config |
@@ -3330,7 +3348,7 @@ This is the single most important mental model for understanding Vim. Almost eve
 | --- | --- |
 | `iw` / `aw` | Inner word / a word (with whitespace) |
 | `iW` / `aW` | Inner WORD / a WORD |
-| `is` / `as` | Inner sentence / a sentence |
+| `is` / `as` | vim-sandwich "query" object: inside / around the nearest surrounding pair (the builtin sentence objects are shadowed here) |
 | `ip` / `ap` | Inner paragraph / a paragraph |
 | `i(` / `a(` | Inside / around parentheses |
 | `i{` / `a{` | Inside / around braces |
@@ -3486,7 +3504,7 @@ Auto-save is also active: files save on `FocusLost` (switching to another app) a
 | Keymap | What it does |
 | --- | --- |
 | `\d` | Close current buffer, keep the window (shows previous buffer) |
-| `\D` | Close all other buffers (keep only current one) |
+| `\D` | Close all other buffers; buffers with unsaved changes and running terminals (Claude panel, `:terminal`) are kept, with one warning |
 
 ---
 
@@ -3500,13 +3518,15 @@ Auto-save is also active: files save on `FocusLost` (switching to another app) a
 | `<Ctrl-r>` | Redo (undo the undo) |
 | `U` | Undo all changes on the current line (rarely used) |
 
-## Undo Tree (vim-mundo)
+## Undo Tree (builtin)
 
-Vim's undo history is a tree, not a linear stack. If you undo several times and then make a new edit, the old states aren't lost -- they become branches. vim-mundo lets you visualize and navigate this tree.
+Vim's undo history is a tree, not a linear stack. If you undo several times and then make a new edit, the old states aren't lost -- they become branches. Neovim's builtin undo tree (`nvim.undotree`) shows this tree.
 
 | Keymap | What it does |
 | --- | --- |
-| `<Space>u` | Open the undo tree panel |
+| `<Space>u` | Toggle a 30-column undo tree panel on the far left |
+
+Inside the panel just move the cursor (`j`/`k`): the buffer switches to that undo state. Close it with `<Space>u` again or `:q`.
 
 ## Time-Based Undo
 
@@ -3522,7 +3542,7 @@ This works because Neovim stores persistent undo history (the `undofile` option 
 
 ## If You Accidentally Deleted a File
 
-The `auto-save.nvim` plugin saves frequently, and Neovim creates backups in `~/.local/share/nvim/backup/`. You may be able to recover from there.
+The `auto-save.nvim` plugin saves when you leave a buffer or Neovim loses focus, and Neovim creates backups in `~/.local/share/nvim/backup/`. You may be able to recover from there.
 
 ---
 
@@ -3530,7 +3550,7 @@ The `auto-save.nvim` plugin saves frequently, and Neovim creates backups in `~/.
 
 ## Which-Key: See Available Keybindings
 
-Press **`<Space>`** (the leader key) and **wait about 500ms**. A popup appears showing every available `<Space>+...` keybinding organized by category.
+Press **`<Space>`** (the leader key) and **wait about 200ms**. A popup appears showing every available `<Space>+...` keybinding organized by category.
 
 You can also press any partial key sequence and wait:
 - `g` then wait -- shows all `g...` keybindings
@@ -3564,7 +3584,7 @@ You can also press any partial key sequence and wait:
 | Command | What it does |
 | --- | --- |
 | `:checkhealth` | Diagnose installation issues (LSP servers, providers, etc.) |
-| `:LspInfo` | Show which LSP servers are attached to the current buffer |
+| `:LspInfo` | LSP status: opens `:checkhealth vim.lsp` (clients and configuration) |
 | `:Lazy` | Open the plugin manager |
 | `:messages` | Show recent notification messages |
 
@@ -3610,8 +3630,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 1. `<Space>fg` -- search for it first, verify all the places it appears
 2. `:grep "oldText"` -- populate the quickfix list
 3. `:copen` -- review the matches
-4. `:cdo s/oldText/newText/gc` -- replace with confirmation (`y`/`n` each)
-5. `:cdo update` -- save all files
+4. `:cfdo %s/oldText/newText/gc | update` -- replace with confirmation (`y`/`n` each) and save all files
 
 ## Workflow: Adding a Feature in a New Branch
 
@@ -3630,7 +3649,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 1. `<Space>ff` -- fuzzy find the config file by name
 2. Make your changes
 3. `<Space>w` -- save
-4. If it's the Neovim config: `<Space>sv` to reload it immediately
+4. If it's the Neovim config: `<Space>sv` to restart Neovim (writes all buffers, restores windows/tabs/files; terminals such as Claude Code are not restarted)
 
 ## Workflow: Working with JSON
 
@@ -3658,7 +3677,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 
 1. `:vs <file>` -- open another file side-by-side
 2. `<Ctrl-w>l` / `<Ctrl-w>h` -- switch between the two files
-3. `yaf` in file A -- copy a function
+3. `van` in file A -- select the surrounding syntax node; repeat `an` to grow the selection (for example to the whole function), `in` shrinks it again; then `y` to copy
 4. `<Ctrl-w>l` -- switch to file B
 5. `p` -- paste the function
 6. `<Ctrl-w>=` -- equalize window sizes if they got uneven
@@ -3683,7 +3702,7 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `C` | Change from cursor to end of line | Deletes rest of line, insert mode |
 | `c$` | Same as `C` | |
 | `ct)` | Change from cursor to before `)` | Useful inside function arguments |
-| `cf,` | Change from cursor through a `,` picked with hop (may be several lines away; see "Precision Selection") | `f` is hop.nvim here, not the built-in |
+| `cf,` + char + label | Change from the cursor through a `,` picked with hop: `f` is hop's 2-character jump, so type `,` and the character after it, then the label (may be several lines away; see "Precision Selection") | `f` is hop.nvim here, not the built-in |
 
 ## Deleting Text
 
@@ -3748,7 +3767,7 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `Qa` ... `q` then `@a` | Record and replay any sequence of actions |
 | `V` select then `:norm @a` | Run a macro on selected lines |
 | `:g/pattern/command` | Run a command on every matching line |
-| `:grep "text"` then `:cdo s/old/new/g` then `:cdo update` | Project-wide search and replace |
+| `:grep "text"` then `:cfdo %s/old/new/g \| update` | Project-wide search and replace |
 | `<Space>rn` | Intelligent rename across project |
 | `qf` list + `:cnext`/`:cprev` | Jump through search results or errors |
 | `.` | Repeat last change (combine with `n` for find-and-repeat) |
