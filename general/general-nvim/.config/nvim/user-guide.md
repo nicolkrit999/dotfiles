@@ -4450,7 +4450,7 @@ The settings live in the Neovide block of `ginit.vim` in the nvim config (they a
 
 | Setting | Value | Effect |
 | --- | --- | --- |
-| `guifont` | Hack NF, size 10 | The font of the window |
+| `guifont` | JetBrainsMono Nerd Font, size 10 | The font of the window (the same font as the kitty terminal; change the name or `:h10` in the Neovide block of `ginit.vim`) |
 | `neovide_transparency` | 1.0 | Opaque window (no see-through background) |
 | `neovide_cursor_animation_length` | 0.1 | The cursor glides to its new place in 0.1 seconds |
 | `neovide_cursor_trail_size` | 0.3 | A short trail behind the moving cursor |
