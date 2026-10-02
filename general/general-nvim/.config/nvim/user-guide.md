@@ -1335,8 +1335,20 @@ String-aware, multi-line-capable comment add/remove (`lua/smart_comment/`).
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `gcs` | n, x | Smart comment |
-| `gcr` | n, x | Smart uncomment |
+| `gcs` + motion | n | Comment the rows a motion covers (`gcsip`, `gcs3j`, `gcsG`); `.` repeats |
+| `{count}gcs` | n | Comment count rows from the cursor down (`200gcs`) |
+| `gcss` | n | Comment current line(s) (`3gcss` = 3 rows); `.` repeats |
+| `gcs` | x | Comment the selected rows |
+| `gcr` + motion | n | Uncomment the rows a motion covers (`gcrip`, `gcr200j`); `.` repeats |
+| `{count}gcr` | n | Uncomment count rows from the cursor down (`200gcr`) |
+| `gcrr` | n | Uncomment current line(s) (`3gcrr` = 3 rows); `.` repeats |
+| `gcr` | x | Uncomment the selected rows |
+
+With a motion, put the count AFTER `gcs` / `gcr` (`gcs3j`, `gcr200j`): a count
+before them always means rows, so `3gcsip` comments 3 rows and then `ip` runs as
+normal keys. If you pause after `gcs` longer than 'timeoutlen', a following `s`
+no longer makes `gcss` (gcs is then waiting for a motion and `s` cancels it);
+`gcsip` typed in one go is not affected.
 
 Fully supported languages: asm, bash, c, cpp, cs, css, dockerfile, fish, go,
 haskell, html, java, javascript, julia, kotlin, lisp (Emacs Lisp / Common
