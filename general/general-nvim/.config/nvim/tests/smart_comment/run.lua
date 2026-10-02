@@ -49,12 +49,15 @@ local function ts_available(ft)
 end
 
 -- Fresh buffer in the current window with `lines` and filetype `ft`, and an empty undo history.
-local function mkbuf(ft, lines)
+local function mkbuf(ft, lines, cs)
   local buf = vim.api.nvim_create_buf(true, true)
   vim.api.nvim_set_current_buf(buf)
   vim.bo[buf].undolevels = -1
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].filetype = ft
+  if cs then
+    vim.bo[buf].commentstring = cs
+  end
   vim.bo[buf].undolevels = 1000
   return buf
 end
@@ -63,8 +66,8 @@ local function lines_of(buf)
   return vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 end
 
-local function run(ft, lines, s, e, act, backend)
-  local buf = mkbuf(ft, lines)
+local function run(ft, lines, s, e, act, backend, cs)
+  local buf = mkbuf(ft, lines, cs)
   local ok, err = pcall(sc.apply, buf, s, e, act == "c" and "comment" or "uncomment", { backend = backend })
   if not ok then
     return nil, buf, "ERROR: " .. tostring(err)
@@ -85,7 +88,7 @@ for _, c in ipairs(cases) do
       table.insert(backends, 1, "ts")
     end
     for bi, be in ipairs(backends) do
-      local got, buf, err = run(c.ft, c.lines, c.s, c.e, c.act, be)
+      local got, buf, err = run(c.ft, c.lines, c.s, c.e, c.act, be, c.cs)
       local ok = got and vim.deep_equal(got, c.exp)
       record(ok, c.name, c, be, "result", c.lines, c.s, c.e, c.act, c.exp, got or err)
 
@@ -102,7 +105,7 @@ for _, c in ipairs(cases) do
       if not c.noidem then
         local e2 = c.e + (#c.exp - #c.lines)
         if e2 >= c.s then
-          local g2, b2, err2 = run(c.ft, c.exp, c.s, e2, c.act, be)
+          local g2, b2, err2 = run(c.ft, c.exp, c.s, e2, c.act, be, c.cs)
           record(g2 and vim.deep_equal(g2, c.exp), c.name, c, be, "idempotent", c.exp, c.s, e2, c.act, c.exp, g2 or err2)
           cleanup(b2)
         end
@@ -111,7 +114,7 @@ for _, c in ipairs(cases) do
       -- gcr(gcs(x)) == x for marker-free code
       if c.rt and c.act == "c" then
         local e2 = c.e + (#c.exp - #c.lines)
-        local g3, b3, err3 = run(c.ft, c.exp, c.s, e2, "u", be)
+        local g3, b3, err3 = run(c.ft, c.exp, c.s, e2, "u", be, c.cs)
         record(g3 and vim.deep_equal(g3, c.lines), c.name, c, be, "gcr(gcs(x)) == x", c.exp, c.s, e2, "u", c.lines,
           g3 or err3)
         cleanup(b3)

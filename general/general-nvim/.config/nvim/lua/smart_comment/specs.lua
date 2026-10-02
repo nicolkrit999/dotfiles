@@ -9,7 +9,9 @@
 --   strings       string literals { open, close, esc?, dbl?, ml?, nix?, not_after_word? }
 --   specials      extra tokenizers, see lexer.lua (lua_long, rust_raw, rust_char, cpp_raw, heredoc_sh, ...)
 --   line_boundary char class that must precede a line marker (sh: `a#b` is not a comment)
---   bol_only      line marker only counts as the first non-blank char; on the outer buffer scan (not the
+--   no_clean      never strip redundant markers inside comment text ('commentstring' fallback)
+--   bol_only      line marker only counts as the first non-blank char (strict form, without
+--                 bol_string_heuristic: block openers too); on the outer buffer scan (not the
 --                 inner scan clean_body uses to drop redundant markers) it also counts elsewhere on the line
 --                 when preceded by whitespace with no later occurrence to close it as a string (vimscript
 --                 fallback: a bare `"` mid-line is a trailing comment, but one buried in comment text isn't
@@ -377,8 +379,88 @@ specs.dockerfile = {
   bol_only = true,
 }
 
+-- Config-file filetypes. Each entry follows the program's own parser (sources in the comments), so
+-- `#` in colours (`#1e1e2e`), URLs and strings is never taken for a comment.
+
+-- kitty.conf: only a row whose first non-blank char is `#` is a comment (kitty's parser; vim's
+-- syntax/kitty.vim `^#.*$`). `background #1e1e2e # x` has no trailing comment.
+specs.kitty = {
+  line = { "#" },
+  line_extra = "#*",
+  bol_only = true,
+}
+
+-- i3 / sway: "comments ... can only be used at the beginning of a line" (i3 user guide, 4.2).
+specs.i3config = { inherits = "kitty" }
+
+-- tmux.conf (man tmux, PARSING SYNTAX): an unquoted `#` at the start of a token is a comment, so
+-- it must follow whitespace (`bg=#1e1e2e` is a value). `#{` there is a format (`%if #{...}`), not
+-- a comment. '...' and "..." strings; a trailing `\` continues a comment on the next row.
+specs.tmux = {
+  line = { "#" },
+  line_extra = "#*",
+  line_boundary = "%s",
+  not_followed = { ["#"] = "^{" },
+  strings = { { "'", "'" }, { '"', '"', esc = "\\" } },
+  line_splice = true,
+}
+
+-- Generic "conf" filetype (vim's syntax/conf.vim): `#` at the row start or after whitespace;
+-- '...' and "..." are strings only when they close on the same row.
+specs.conf = {
+  line = { "#" },
+  line_extra = "#*",
+  line_boundary = "%s",
+  strings = { { '"', '"', esc = "\\", oneline = true }, { "'", "'", esc = "\\", oneline = true } },
+}
+
+-- git config (git-config(1) "Syntax"): `#` and `;` start a comment anywhere outside a "..." value
+-- (so an unquoted `#ff0000` colour IS a comment for git; quote it). gcs inserts `#`, the marker
+-- this config's 'commentstring' uses for gitconfig.
+specs.gitconfig = {
+  line = { "#", ";" },
+  line_extra = "[#;]*",
+  strings = { { '"', '"', esc = "\\" } },
+}
+
+-- CMake (cmake-language(7)): `#` outside a quoted / bracket argument starts a comment unless
+-- escaped as `\#`; bracket comments `#[[ ]]` / `#[=[ ]=]`; quoted "..." and bracket `[[ ]]`
+-- arguments are strings.
+specs.cmake = {
+  line = { "#" },
+  escape_char = "\\",
+  strings = { { '"', '"', esc = "\\", ml = true } },
+  specials = { "cmake_bracket" },
+}
+
+-- Terraform / HCL native syntax: `#` and `//` line comments (`#` is the style guide's default,
+-- inserted by gcs), `/* */` block comments, "..." templates whose `${ }` / `%{ }` may hold nested
+-- strings, heredocs `<<EOF` / `<<-EOF`.
+specs.terraform = {
+  line = { "#", "//" },
+  block = { { "/*", "*/", decor = "*" } },
+  strings = { { '"', '"', esc = "\\" } },
+  specials = { "hcl_string", "heredoc_hcl" },
+}
+
+-- Elixir: `#` comments; "..." / '...' (multi-line, `#{}` interpolation may hold nested strings),
+-- """ / ''' heredocs, sigils (~r/../, ~s(..) ...), character literals (`?#` is the code of `#`).
+specs.elixir = {
+  line = { "#" },
+  line_extra = "#*",
+  strings = {
+    { '"""', '"""', esc = "\\", ml = true },
+    { "'''", "'''", esc = "\\", ml = true },
+    { '"', '"', esc = "\\", ml = true },
+    { "'", "'", esc = "\\", ml = true },
+  },
+  specials = { "elixir_interp", "elixir_sigil", "lisp_char" },
+  shebang = true,
+}
+
 -- tree-sitter language name -> spec key
 local ts_alias = {
+  git_config = "gitconfig",
   c_sharp = "cs",
   latex = "tex",
   tsx = "typescript",
@@ -470,7 +552,10 @@ function M.fence(info)
   return M.get(ft) or { name = "text" }
 end
 
---- Spec built from 'commentstring' for filetypes without an entry.
+--- Spec built from 'commentstring' for filetypes without an entry. Nothing is known about strings
+--- or where else a marker may appear, so (like builtin gc) a marker only counts as the first
+--- non-blank char of a row (bol_only), and markers inside the comment text are never stripped
+--- (no_clean): gcr removes that one leading marker, gcs adds one and touches nothing further along.
 function M.from_commentstring(cs)
   if not cs or not cs:find("%%s") then
     return nil
@@ -480,9 +565,9 @@ function M.from_commentstring(cs)
     return nil
   end
   if right == "" then
-    return { name = "commentstring", line = { left } }
+    return { name = "commentstring", line = { left }, bol_only = true, no_clean = true }
   end
-  return { name = "commentstring", block = { { left, right } } }
+  return { name = "commentstring", block = { { left, right } }, bol_only = true, no_clean = true }
 end
 
 --- Spec for a buffer: filetype table, then tree-sitter language, then 'commentstring'.

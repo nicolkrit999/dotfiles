@@ -90,7 +90,7 @@ end
 -- Remove redundant markers inside comment text (`a // b` -> `a b`), string-aware.
 function clean_body(text, spec, depth)
   depth = depth or 0
-  if depth > 8 or not text:find("%S") then
+  if depth > 8 or spec.no_clean or not text:find("%S") then
     return text
   end
   local lead = text:match("^%s*")

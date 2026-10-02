@@ -1,6 +1,7 @@
 -- Table-driven cases for smart_comment (gcs = "comment", gcr = "uncomment").
 --
--- A case: { ft, lines = {...}, s, e, act = "c"|"u", exp = {...}, name, rt? }
+-- A case: { ft, lines = {...}, s, e, act = "c"|"u", exp = {...}, name, rt?, cs? }
+--   cs: 'commentstring' set after the filetype (filetypes without a spec: the commentstring fallback).
 --   lines/exp are the WHOLE buffer; s/e the selected rows (default: all rows).
 --   rt = true: code-only gcs case, also checks gcr(gcs(x)) == x.
 -- Expectations follow the written specification, not the implementation.
@@ -19,13 +20,14 @@ local function add(ft, name, lines, act, exp, opts)
     e = opts.e or #lines,
     rt = opts.rt,
     noidem = opts.noidem,
+    cs = opts.cs,
   })
 end
 
 -- Both actions on the same input.
 local function both(ft, name, lines, exp_c, exp_u, opts)
   add(ft, name, lines, "c", exp_c, opts)
-  add(ft, name, lines, "u", exp_u, opts and { s = opts.s, e = opts.e, noidem = opts.noidem } or nil)
+  add(ft, name, lines, "u", exp_u, opts and { s = opts.s, e = opts.e, noidem = opts.noidem, cs = opts.cs } or nil)
 end
 
 --------------------------------------------------------------------------------------------------
@@ -75,6 +77,15 @@ local langs = {
   { "fish", lm = "#", code = "set x 1", code2 = "foo $x" },
   { "make", lm = "#", code = "x = 1", code2 = "all: x" },
   { "dockerfile", lm = "#", code = "ENV X=1", code2 = "RUN foo", bol_only = true },
+  -- config filetypes with their own entry (Q44)
+  { "kitty", lm = "#", code = "font_size 12", code2 = "map ctrl+a new_tab", bol_only = true },
+  { "i3config", lm = "#", code = "workspace 1 output DP-1", code2 = "bindsym $mod+q kill", bol_only = true },
+  { "tmux", lm = "#", code = "set -g mouse on", code2 = "bind r source-file x" },
+  { "conf", lm = "#", code = "a = 1", code2 = "b = 2" },
+  { "gitconfig", lm = "#", code = "editor = vim", code2 = "pager = less" },
+  { "cmake", lm = "#", block = { "#[[", "]]" }, code = "set(X 1)", code2 = "message(X)" },
+  { "terraform", lm = "#", block = { "/*", "*/" }, code = "x = 1", code2 = "y = f(x)" },
+  { "elixir", lm = "#", code = "x = 1", code2 = "foo(x)" },
 }
 
 local function prefixed(L, rows)
@@ -451,6 +462,98 @@ add("dockerfile", "# after instruction is not a comment", { "RUN echo hi # not a
   { "RUN echo hi # not a comment" })
 add("dockerfile", "leading # is a comment", { "# real comment", "FROM alpine" }, "u",
   { "real comment", "FROM alpine" }, { s = 1, e = 1 })
+
+--------------------------------------------------------------------------------------------------
+-- Q44: filetypes without an entry ('commentstring' fallback) and the config filetypes with one
+--------------------------------------------------------------------------------------------------
+-- Fallback: a marker is a comment only as the first non-blank char; gcr removes that one marker,
+-- gcs adds one and never strips markers further along the row.
+local FB = { cs = "# %s" }
+local function fb(o)
+  return vim.tbl_extend("force", { cs = "# %s" }, o or {})
+end
+both("scfallback", "hex colours kept", { "client.focused #89b4fa #1e1e2e" },
+  { "# client.focused #89b4fa #1e1e2e" }, { "client.focused #89b4fa #1e1e2e" }, fb({ rt = true }))
+both("scfallback", "# in string kept", { 'url = "http://a/#frag"' }, { '# url = "http://a/#frag"' },
+  { 'url = "http://a/#frag"' }, fb({ rt = true }))
+both("scfallback", "trailing # is not a comment", { "x = 1 # c" }, { "# x = 1 # c" }, { "x = 1 # c" }, fb({ rt = true }))
+both("scfallback", "interpolation kept", { 'IO.puts "#{x}"' }, { '# IO.puts "#{x}"' }, { 'IO.puts "#{x}"' }, fb({ rt = true }))
+add("scfallback", "gcr removes one leading marker", { "# # a" }, "u", { "# a" }, fb({ noidem = true }))
+add("scfallback", "gcs leaves inner markers", { "# a # b", "# # c" }, "c", { "# a # b", "# # c" }, FB)
+add("scfallback", "gcr indented comment", { "  # background #1e1e2e" }, "u", { "  background #1e1e2e" }, FB)
+add("scfallback", "gcs code + comment rows", { "# note", "color #fff" }, "c", { "# note", "# color #fff" }, FB)
+add("scfallback", "gcr on code + comment rows", { "# note", "color #fff # x" }, "u", { "note", "color #fff # x" }, fb({ noidem = true }))
+add("scfallback", "multi-row gcs at min indent", { "  a #1", "    b #2" }, "c", { "  # a #1", "  #   b #2" }, fb({ rt = true }))
+local FBB = { cs = "/* %s */" }
+both("scfallbackblk", "block fallback: code", { "x = 1" }, { "/* x = 1 */" }, { "x = 1" }, { cs = "/* %s */", rt = true })
+add("scfallbackblk", "block fallback: gcr leading block", { "/* x = 1 */" }, "u", { "x = 1" }, FBB)
+add("scfallbackblk", "block fallback: mid-row opener is code", { "x /* y */" }, "u", { "x /* y */" }, FBB)
+
+-- kitty / i3: only a row starting with `#` is a comment
+both("kitty", "hex colour", { "background #1e1e2e" }, { "# background #1e1e2e" }, { "background #1e1e2e" }, { rt = true })
+add("kitty", "no trailing comments", { "color0 #000000 # black" }, "u", { "color0 #000000 # black" })
+add("kitty", "commented colour gcr", { "# background #1e1e2e" }, "u", { "background #1e1e2e" })
+both("i3config", "hex colours", { "client.focused #89b4fa #1e1e2e #cdd6f4" }, { "# client.focused #89b4fa #1e1e2e #cdd6f4" },
+  { "client.focused #89b4fa #1e1e2e #cdd6f4" }, { rt = true })
+add("i3config", "no trailing comments", { "bindsym $mod+1 workspace 1 # one" }, "u", { "bindsym $mod+1 workspace 1 # one" })
+
+-- tmux: `#` at a token start (after whitespace) outside quotes
+both("tmux", "quoted colour", { 'set -g status-style "bg=#1e1e2e"' }, { '# set -g status-style "bg=#1e1e2e"' },
+  { 'set -g status-style "bg=#1e1e2e"' }, { rt = true })
+both("tmux", "unquoted colour in a token", { "set -g status-style bg=#1e1e2e" }, { "# set -g status-style bg=#1e1e2e" },
+  { "set -g status-style bg=#1e1e2e" }, { rt = true })
+both("tmux", "single-quoted format", { "set -g status-left '#S #{pane_title}'" },
+  { "# set -g status-left '#S #{pane_title}'" }, { "set -g status-left '#S #{pane_title}'" }, { rt = true })
+add("tmux", "%if format is not a comment", { "%if #{==:#{host},x}" }, "u", { "%if #{==:#{host},x}" })
+both("tmux", "trailing comment", { "bind r source-file ~/.tmux.conf # reload" }, { "# bind r source-file ~/.tmux.conf reload" },
+  { "bind r source-file ~/.tmux.conf reload" })
+
+-- conf: `#` at the row start or after whitespace; strings only when they close on the row
+both("conf", "# in string", { 'url = "http://a/#frag"' }, { '# url = "http://a/#frag"' }, { 'url = "http://a/#frag"' }, { rt = true })
+both("conf", "a#b is not a comment", { "color = a#b" }, { "# color = a#b" }, { "color = a#b" }, { rt = true })
+both("conf", "trailing comment", { "a = b # c" }, { "# a = b c" }, { "a = b c" })
+add("conf", "unclosed quote is not a string", { "it's here # c" }, "u", { "it's here c" })
+
+-- git config: `#` / `;` anywhere outside "..."
+both("gitconfig", "quoted colour", { '[color "diff"]', '\tmeta = "#ff0000"' }, { '[color "diff"]', '\t# meta = "#ff0000"' },
+  { '[color "diff"]', '\tmeta = "#ff0000"' }, { s = 2, e = 2, rt = true })
+both("gitconfig", "trailing # comment", { "[core]", "\teditor = vim # c" }, { "[core]", "\t# editor = vim c" },
+  { "[core]", "\teditor = vim c" }, { s = 2, e = 2 })
+add("gitconfig", "trailing ; comment gcr", { "[core]", "\teditor = vim ; c" }, "u", { "[core]", "\teditor = vim c" },
+  { s = 2, e = 2 })
+add("gitconfig", "; comment row gcr", { "[core]", "\t; editor = vim" }, "u", { "[core]", "\teditor = vim" }, { s = 2, e = 2 })
+both("gitconfig", "url with # in quotes", { '[remote "o"]', '\turl = "http://a/#x"' }, { '[remote "o"]', '\t# url = "http://a/#x"' },
+  { '[remote "o"]', '\turl = "http://a/#x"' }, { s = 2, e = 2, rt = true })
+
+-- CMake
+both("cmake", "quoted colour", { 'set(C "#fff")' }, { '# set(C "#fff")' }, { 'set(C "#fff")' }, { rt = true })
+both("cmake", "trailing comment", { "set(X 1) # c" }, { "# set(X 1) c" }, { "set(X 1) c" })
+both("cmake", "bracket argument", { "set(S [[ # no ]])" }, { "# set(S [[ # no ]])" }, { "set(S [[ # no ]])" }, { rt = true })
+both("cmake", "escaped hash", { "set(X a\\#b)" }, { "# set(X a\\#b)" }, { "set(X a\\#b)" }, { rt = true })
+add("cmake", "level-2 bracket comment gcr", { "#[==[ a ]] b ]==]" }, "u", { "a ]] b" })
+add("cmake", "multi-row bracket comment gcr", { "#[[", "a", "]]", "set(X 1)" }, "u", { "a", "set(X 1)" })
+
+-- Terraform / HCL
+both("terraform", "# in string", { 'name = "a#b"' }, { '# name = "a#b"' }, { 'name = "a#b"' }, { rt = true })
+both("terraform", "nested string in interpolation", { 'x = "${lookup(m, "#")}"' }, { '# x = "${lookup(m, "#")}"' },
+  { 'x = "${lookup(m, "#")}"' }, { rt = true })
+add("terraform", "trailing // comment gcr", { "x = 1 // c" }, "u", { "x = 1 c" })
+add("terraform", "trailing # comment gcr", { "x = 1 # c" }, "u", { "x = 1 c" })
+add("terraform", "heredoc body not a comment", { "x = <<EOF", "# not", "EOF" }, "u", { "x = <<EOF", "# not", "EOF" },
+  { s = 2, e = 2 })
+add("terraform", "indented heredoc body not a comment", { "x = <<-EOT", "  # not", "  EOT", "# y = 1" }, "u",
+  { "x = <<-EOT", "  # not", "  EOT", "y = 1" }, { s = 2, e = 4 })
+
+-- Elixir
+both("elixir", "interpolation", { 'IO.puts "#{x}"' }, { '# IO.puts "#{x}"' }, { 'IO.puts "#{x}"' }, { rt = true })
+both("elixir", "nested string in interpolation", { 's = "#{m["#"]}"' }, { '# s = "#{m["#"]}"' }, { 's = "#{m["#"]}"' },
+  { rt = true })
+both("elixir", "charlist interpolation", { "IO.puts '#{x}'" }, { "# IO.puts '#{x}'" }, { "IO.puts '#{x}'" }, { rt = true })
+both("elixir", "char literal ?#", { "c = ?#" }, { "# c = ?#" }, { "c = ?#" }, { rt = true })
+both("elixir", "regex sigil", { "r = ~r/#\\d+/" }, { "# r = ~r/#\\d+/" }, { "r = ~r/#\\d+/" }, { rt = true })
+both("elixir", "trailing comment", { "x = 1 # c" }, { "# x = 1 c" }, { "x = 1 c" })
+add("elixir", "heredoc body not a comment", { '@doc """', "# not", '"""' }, "u", { '@doc """', "# not", '"""' },
+  { s = 2, e = 2 })
 
 --------------------------------------------------------------------------------------------------
 -- Partial block selections: boundary repair (close above / reopen below / both), gcr and gcs
