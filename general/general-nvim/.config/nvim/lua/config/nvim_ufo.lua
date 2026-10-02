@@ -44,7 +44,7 @@ require("ufo").setup {
 -- read the level from the folds as they are shown (one below the shallowest closed fold, or the
 -- deepest level when none is closed) and apply level +/- count with closeFoldsWith(). Nothing is
 -- stored, so a reload, another buffer, a new window or a manual zo/zc can never leave a stale level.
--- Buffers without ufo fall back to the builtin keys.
+-- Buffers without ufo get one short warning instead (no fall-through to the builtin zr/zm).
 local ufo = require("ufo")
 
 local function deepest_level()
@@ -80,12 +80,9 @@ local function visible_level()
   return min and math.max(0, min - 1)
 end
 
-local function step_folds(delta, builtin)
+local function step_folds(delta, key)
   if not ufo.hasAttached() then
-    -- pcall: a buffer without folds must not raise E490 (and not leave it in v:errmsg)
-    local errmsg = vim.v.errmsg
-    pcall(vim.cmd, "normal! " .. vim.v.count1 .. builtin)
-    vim.v.errmsg = errmsg
+    vim.notify(key .. ": ufo folds are not available in this buffer", vim.log.levels.WARN)
     return
   end
   local deepest = deepest_level()
