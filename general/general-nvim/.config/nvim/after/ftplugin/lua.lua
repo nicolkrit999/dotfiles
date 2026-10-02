@@ -77,3 +77,5 @@ local function stylua_format()
 end
 
 vim.keymap.set("n", "<Space>f", stylua_format, { buffer = true, silent = true, desc = "format file (stylua)" })
+-- one Lua formatter: <Space>fm (global: LSP format) runs stylua too; lua_ls formatting is off
+vim.keymap.set("n", "<Space>fm", stylua_format, { buffer = true, silent = true, desc = "Format file (stylua)" })

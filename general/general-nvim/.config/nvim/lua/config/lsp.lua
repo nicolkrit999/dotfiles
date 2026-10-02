@@ -150,9 +150,16 @@ local servers = {
   -- Lua setup
   lua_ls = {
     cmd = { "lua-language-server" },
+    -- lua_ls still advertises formatting with format.enable = false: hide it, so nothing (LSP
+    -- format, 'formatexpr' for gq) uses lua_ls's formatter next to stylua
+    on_init = function(client)
+      client.server_capabilities.documentFormattingProvider = false
+      client.server_capabilities.documentRangeFormattingProvider = false
+    end,
     settings = {
       Lua = {
-        format = { enable = true },
+        -- one Lua formatter: stylua (<Space>f / <Space>fm in after/ftplugin/lua.lua)
+        format = { enable = false },
         diagnostics = {
           disable = { "duplicate-set-field" },
           globals = { "vim" },
