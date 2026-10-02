@@ -22,8 +22,9 @@ keymap.set("n", "<leader>gbn", function()
       vim.notify("Invalid branch name (no spaces, |, \" or \\)", vim.log.levels.WARN)
       return
     end
-    -- structured call: the name is passed as an argument, not as Ex command text
-    vim.cmd { cmd = "Git", args = { "checkout -b " .. user_input } }
+    -- :Git expands %, # and <cword>-style tokens in its arguments: escape them so the name is literal
+    local name = user_input:gsub("[%%#<]", "\\%0")
+    vim.cmd { cmd = "Git", args = { "checkout -b " .. name } }
   end)
 end, {
   desc = "Git: create new branch",
