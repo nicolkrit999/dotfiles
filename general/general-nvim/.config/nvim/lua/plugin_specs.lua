@@ -631,7 +631,10 @@ local plugin_specs = {
     init = function()
       -- Map s to nop since s in used by vim-sandwich. Use cl instead of s.
       -- (vim.keymap.set, not `nmap`/`omap`, so the maps carry a desc; remap = true like nmap)
-      vim.keymap.set({ "n", "o" }, "s", "<Nop>", { remap = true, desc = "Disabled (s is the vim-sandwich prefix, use cl)" })
+      vim.keymap.set("n", "s", "<Nop>", { remap = true, desc = "Disabled (s is the vim-sandwich prefix, use cl)" })
+      -- operator-pending: `gcs`, pause, `s` must not leave the operator pending (the next motion
+      -- would run it): cancel it. vim-sandwich's longer o-mode maps (`sa`...) still win.
+      vim.keymap.set("o", "s", "<Esc>", { remap = true, desc = "Cancel the pending operator (s is the vim-sandwich prefix)" })
     end,
     config = function()
       -- let targets.vim own ab/ib (`:checkhealth targets` conflict)
