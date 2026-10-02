@@ -1344,6 +1344,11 @@ String-aware, multi-line-capable comment add/remove (`lua/smart_comment/`).
 | `gcrr` | n | Uncomment current line(s) (`3gcrr` = 3 rows); `.` repeats |
 | `gcr` | x | Uncomment the selected rows |
 
+Rule: `gcs` adds one marker per row and never nests (redundant markers already
+in the rows are removed); `gcr` removes every marker level (`# # a` -> `a`).
+Only real comment markers of the file type count (a `#` in a colour, URL or
+one-line string is not a comment).
+
 With a motion, put the count AFTER `gcs` / `gcr` (`gcs3j`, `gcr200j`): a count
 before them always means rows, so `3gcsip` comments 3 rows and then `ip` runs as
 normal keys. If you pause after `gcs` longer than 'timeoutlen', a following `s`
