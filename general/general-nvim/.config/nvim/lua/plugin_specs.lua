@@ -542,12 +542,6 @@ local plugin_specs = {
     end,
   },
 
-  -- Debugger adapter protocol client
-  {
-    "mfussenegger/nvim-dap",
-    lazy = true,
-  },
-
   -- SQL database client (browse connections/schema, run queries, view results).
   -- Requires nvim>=0.10. The build step downloads a small Go backend binary via
   -- install() (auto-detects curl/wget/go on $PATH -- if none are present on the
@@ -784,9 +778,6 @@ local plugin_specs = {
   -- Edit text area in browser using nvim
   {
     "glacambre/firenvim",
-    enabled = function()
-      return vim.g.is_win or vim.g.is_mac or vim.g.is_linux
-    end,
     -- it seems that we can only call the firenvim function directly.
     -- Using vim.fn or vim.cmd to call this function will fail.
     build = function()
