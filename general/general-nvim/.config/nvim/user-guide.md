@@ -1664,6 +1664,7 @@ Languages: English, Italian, German, French.
 | --- | --- |
 | **which-key.nvim** | Press `<Space>` and wait: a popup shows all available leader keybindings |
 | **Dashboard** | Start screen with shortcuts: Find File, Recent Files, Grep, Config, Explorer |
+| **Dashboard: reopen / replace the current buffer** | `\h` opens the start screen in the current window (the previous buffer stays open in the background; inside the dashboard it only says "already in the dashboard"). `\H` closes the dashboard and returns to the previous buffer (the dashboard buffer is deleted so it does not pile up); outside the dashboard it only warns "not in the dashboard", and with no previous buffer it warns "no previous buffer to resume". Without the keys: `:Dashboard` does the same as `\h`. To close the current buffer and get the dashboard instead: `:Dashboard | bdelete #` (a buffer with unsaved changes refuses with E89). `\d` deletes the buffer but shows the previous one, not the dashboard |
 | **nvim-notify** | Animated notification popups (fade + slide, 1500ms) |
 | **Colorschemes** | 20+ themes, randomly selected on startup |
 | **dropbar.nvim** | Breadcrumb bar at top showing file > class > function |

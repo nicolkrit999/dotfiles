@@ -167,6 +167,47 @@ keymap.set("n", [[\D]], function()
   end
 end, { desc = "delete other buffers (keeps unsaved and running terminals)" })
 
+-- Dashboard "home": \h opens the start screen in the current window (the buffer you were in
+-- stays open in the background), \H leaves it and goes back. Both always give feedback: they
+-- never fall through to a plain Vim key. Keys: free `\` pair next to \d / \D ("h" = home;
+-- <Space>h* is taken by the gitsigns hunk keys).
+keymap.set("n", [[\h]], function()
+  if vim.bo.filetype == "dashboard" then
+    vim.notify("already in the dashboard", vim.log.levels.INFO)
+    return
+  end
+  local ok, err = pcall(vim.cmd, "Dashboard") -- lazy-loads dashboard-nvim via its command
+  if not ok then
+    vim.notify("dashboard unavailable: " .. (tostring(err):gsub("^.-Vim%(%a+%):", "")), vim.log.levels.WARN)
+  end
+end, { silent = true, desc = "Dashboard: open (keep current buffer)" })
+
+keymap.set("n", [[\H]], function()
+  local dash = vim.api.nvim_get_current_buf()
+  if vim.bo[dash].filetype ~= "dashboard" then
+    vim.notify("not in the dashboard", vim.log.levels.WARN)
+    return
+  end
+  -- target: the alternate buffer, else the most recently used other listed buffer
+  local target = vim.fn.bufnr("#")
+  if target < 1 or target == dash or not vim.api.nvim_buf_is_valid(target) or not vim.bo[target].buflisted then
+    target = nil
+    local best = -1
+    for _, b in ipairs(vim.fn.getbufinfo({ buflisted = 1 })) do
+      if b.bufnr ~= dash and b.lastused > best then
+        target, best = b.bufnr, b.lastused
+      end
+    end
+  end
+  if not target then
+    vim.notify("no previous buffer to resume", vim.log.levels.WARN)
+    return
+  end
+  vim.api.nvim_win_set_buf(0, target)
+  -- the dashboard buffer is bufhidden=wipe on some versions: ignore "already gone"
+  pcall(vim.api.nvim_buf_delete, dash, { force = true })
+end, { silent = true, desc = "Dashboard: close and resume previous buffer" })
+
 -- Close the current tab / all other tabs
 keymap.set("n", [[\t]], "<cmd>tabclose<cr>", { silent = true, desc = "close current tab" })
 keymap.set("n", [[\T]], "<cmd>tabonly<cr>", { silent = true, desc = "close other tabs" })
