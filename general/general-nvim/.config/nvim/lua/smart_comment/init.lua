@@ -13,6 +13,10 @@ local transform = require("smart_comment.transform")
 
 local M = {}
 
+-- apply(): above (edited rows x tree-sitter trees) the range is written in one go (~2 us per
+-- pair: 50000 ~ 0.1 s). Tests set it to -1 to exercise that path.
+M.bulk_budget = 50000
+
 -- Comments via tree-sitter: nodes locate the comments, the lexer re-reads each node's text to find
 -- its delimiters (and validates that the node really is a comment of that language).
 local function ts_collect(buf, lines, lo, hi, root)
@@ -23,7 +27,7 @@ local function ts_collect(buf, lines, lo, hi, root)
   if not pcall(parser.parse, parser, { lo - 1, hi }) then
     return nil
   end
-  local res = { pieces = {}, row_spec = {} }
+  local res = { pieces = {}, row_spec = {}, parser = parser }
   for r = lo, hi do
     res.pieces[r] = {}
   end
@@ -242,7 +246,44 @@ function M.apply(buf, s, e, action, opts)
   local function cont(b)
     return b and b >= 0x80 and b < 0xC0
   end
-  for r = last, first, -1 do
+  -- Every buffer edit makes the attached tree-sitter parser edit each of its injected trees (one
+  -- per comment in many languages). With many edits AND many such trees that is slow (3000 rows x
+  -- 3000 comments: ~20 s), so above a budget write the range in one go instead, keeping regular
+  -- marks with 'lockmarks' (exactly what builtin gc always does; extmarks there move to column 0).
+  local n_edits = 0
+  for r = first, last do
+    if out.new[r] ~= nil or out.before[r] or out.after[r] then
+      n_edits = n_edits + 1
+    end
+  end
+  local n_trees = 0
+  local hl = vim.treesitter.highlighter.active[buf]
+  local tsp = info.parser or (hl and hl.tree) -- only a parser that exists already (never create one)
+  if tsp then
+    tsp:for_each_tree(function()
+      n_trees = n_trees + 1
+    end)
+  end
+  local bulk = n_edits > 1 and n_edits * n_trees > M.bulk_budget
+  if bulk then
+    local repl = {}
+    for r = first, last do
+      vim.list_extend(repl, out.before[r] or {})
+      local t = out.new[r]
+      if t == nil then
+        table.insert(repl, lines[r])
+      elseif t then
+        table.insert(repl, t)
+      end
+      vim.list_extend(repl, out.after[r] or {})
+    end
+    -- 'lockmarks' only when the row count stays the same: otherwise marks below must move
+    vim._with({ lockmarks = #repl == last - first + 1 }, function()
+      vim.api.nvim_buf_set_lines(buf, first - 1, last, false, repl)
+    end)
+  end
+  local loop_first = bulk and last + 1 or first -- bulk: nothing left for the per-row loop
+  for r = last, loop_first, -1 do
     if out.after[r] then
       vim.api.nvim_buf_set_lines(buf, r, r, false, out.after[r])
     end
