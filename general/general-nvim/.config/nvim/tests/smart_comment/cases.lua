@@ -550,6 +550,8 @@ both("elixir", "nested string in interpolation", { 's = "#{m["#"]}"' }, { '# s =
   { rt = true })
 both("elixir", "charlist interpolation", { "IO.puts '#{x}'" }, { "# IO.puts '#{x}'" }, { "IO.puts '#{x}'" }, { rt = true })
 both("elixir", "char literal ?#", { "c = ?#" }, { "# c = ?#" }, { "c = ?#" }, { rt = true })
+both("elixir", "sigil interpolation holding the delimiter", { "m = ~s(a #{f(x)} # b)" },
+  { "# m = ~s(a #{f(x)} # b)" }, { "m = ~s(a #{f(x)} # b)" }, { rt = true })
 both("elixir", "regex sigil", { "r = ~r/#\\d+/" }, { "# r = ~r/#\\d+/" }, { "r = ~r/#\\d+/" }, { rt = true })
 both("elixir", "trailing comment", { "x = 1 # c" }, { "# x = 1 c" }, { "x = 1 c" })
 add("elixir", "heredoc body not a comment", { '@doc """', "# not", '"""' }, "u", { '@doc """', "# not", '"""' },

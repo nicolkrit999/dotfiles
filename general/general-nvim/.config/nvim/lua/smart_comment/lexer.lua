@@ -410,6 +410,11 @@ local function interp_string(quotes, opens, lits)
     end
   end
   return {
+    -- scan(line, k, close): end column + 1 of a string body starting at k and closed by `close`
+    -- (interpolations skipped), or nil when it does not close on this row
+    scan = function(line, k, close)
+      return scan_str(line, k, close)
+    end,
     trig = quotes,
     match = function(line, j)
       local q = line:sub(j, j)
@@ -444,7 +449,13 @@ specials.elixir_sigil = {
     if (d == '"' or d == "'") and line:sub(k, k + 2) == d:rep(3) then
       return { len = k + 3 - j, k = "string", close = d:rep(3), esc = "\\", ml = true }
     end
-    return { len = k + 1 - j, k = "string", close = brackets[d] or d, esc = "\\", ml = true }
+    local close = brackets[d] or d
+    -- lowercase sigils interpolate: `#{...}` may hold the closing delimiter (`~s(#{f(x)} # y)`)
+    local e = name:find("^%l") and specials.elixir_interp.scan(line, k + 1, close)
+    if e then
+      return { len = e - j, k = "skip" }
+    end
+    return { len = k + 1 - j, k = "string", close = close, esc = "\\", ml = true }
   end,
 }
 
