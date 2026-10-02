@@ -161,7 +161,7 @@ More: sections 29 and 60.
 | Rename or move one file | `:Rename <name>` / `:Move <path>`, or `r` in the file tree |
 | Undo a multi-file replace | See section 67 |
 
-There is no mass file-renaming tool installed (a file is renamed one at a time). More: sections 10 and 67.
+Files are renamed one at a time with the commands above. More: sections 10 and 67.
 
 ### Undo, redo and repeat
 
@@ -280,7 +280,7 @@ More: sections 20 and 48.
 | `<Space>rr` | Run the current file in a terminal on the left |
 | `<F9>` | Run or compile the file (Python, C++, Lua, Vim script, LaTeX) |
 | `:term` | Open a terminal in this window |
-| `<Esc>` / `i` | Leave terminal mode / go back into it |
+| `<Esc>` / `i` | Leave terminal mode / go back into it (`<Esc>` works differently in the Claude panel, see section 8) |
 
 More: sections 8 and 19.
 
