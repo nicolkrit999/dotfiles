@@ -493,7 +493,9 @@ local plugin_specs = {
       -- Only one of these is needed.
       "ibhagwan/fzf-lua",       -- optional
     },
-    event = "User InGitRepo",
+    -- only used through its commands (no map or autocmd needs it earlier); diffview, fzf-lua
+    -- and plenary are loaded as its dependencies on the first use
+    cmd = { "Neogit", "NeogitCommit", "NeogitLogCurrent", "NeogitResetState" },
   },
 
   -- Better git log display

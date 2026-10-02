@@ -1577,7 +1577,7 @@ Shows `+` `~` `_` signs in the gutter for added/changed/deleted lines.
 
 | Plugin | Command / Trigger | Description |
 | --- | --- | --- |
-| neogit | `:Neogit` | Full git UI (magit-like; available inside a git repository) |
+| neogit | `:Neogit` | Full git UI (magit-like; loads on the first `:Neogit*` command, in any directory; also `:NeogitCommit`, `:NeogitLogCurrent`, `:NeogitResetState`) |
 | diffview.nvim | `:DiffviewOpen`, `:DiffviewFileHistory`, `:DiffviewClose` | Side-by-side diff viewer and 3-way merge tool; file history panel |
 | vim-flog | `:Flog` | Visual git log graph |
 | diffs.nvim | `:Diff` (and automatic) | Unified diff of the current file against git; also colours the diffs shown by fugitive, neogit and gitsigns, and conflict markers |
@@ -2083,7 +2083,7 @@ These happen without any keypress:
 | File changed on disk | Checked when Neovim gets focus and when idle. An unmodified buffer is reloaded ("File changed on disk. Buffer reloaded!"); if the buffer was changed too it is kept ("File changed on disk and in the buffer (buffer kept)"); a deleted file keeps its buffer (one warning) |
 | Format check after save | After saving a Python or Lua file, `black --check` / `stylua --check` run in the background; an unformatted file gives the warning `<file>: file is not formatted (black)` (`(stylua)` for Lua); a file the tool cannot check (syntax error) gives `<file>: <tool> could not check the file (syntax error?)` plus the first error line. Nothing is changed |
 | `nvim <directory>` | The directory becomes the working directory and the file tree opens there |
-| Git plugins | fugitive, neogit and gitlinker load when the working directory or an opened file is inside a git repository |
+| Git plugins | fugitive and gitlinker load when the working directory or an opened file is inside a git repository; neogit loads on its first `:Neogit*` command (with diffview and fzf-lua) |
 | Big files | Files over about 1.5 MB (or with very long lines) open in a light mode: no Treesitter, no completion, the language server starts a little later. `:set ft=<language>` gives the full mode back |
 | Help window | On a screen of at least 200 columns `:help` opens as a full-height split on the far left |
 
@@ -2329,7 +2329,7 @@ This config includes several git-related plugins that each handle a different as
 | **vim-fugitive** | Run git commands from inside Neovim. The core git plugin. | `<Space>gs` for status, `<Space>gc` for commit, etc. |
 | **gitsigns.nvim** | Shows which lines changed in the gutter. Navigate between changes. | `]c` / `[c` to jump between hunks, `<Space>hp` to preview. |
 | **gitlinker.nvim** | Generate shareable URLs to specific lines of code. | `<Space>gl` to copy a permalink. |
-| **neogit** | A full git UI inside Neovim (like Magit for Emacs). | `:Neogit` to open. |
+| **neogit** | A full git UI inside Neovim (like Magit for Emacs). | `:Neogit` to open (loads on that command; also `:NeogitCommit`, `:NeogitLogCurrent`, `:NeogitResetState`). |
 | **diffview.nvim** | Side-by-side diff viewer for comparing branches, commits, etc. | `:DiffviewOpen` to open. |
 | **vim-flog** | Visual git log/graph showing branch history. | `:Flog` to open. |
 | **diffs.nvim** | Syntax highlighting inside the diffs of fugitive, neogit and gitsigns; conflict markers. `:Diff` shows the file against git. | Automatic, `:Diff`. |
