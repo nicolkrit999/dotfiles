@@ -375,6 +375,7 @@ vim.keymap.set('n', '<leader>rr', function()
     uses_file = false
   elseif filetype == 'javascript' then
     cmd = 'node ' .. file
+    need = { 'node' }
   elseif filetype == 'typescript' then
     -- node runs .ts files directly (type stripping, Node >= 23.6; nodejs_latest from neovim.nix)
     cmd = 'node ' .. file
@@ -394,7 +395,7 @@ vim.keymap.set('n', '<leader>rr', function()
       need = { 'rustc' }
     end
     where = 'the rust devShell'
-  elseif filetype == 'sh' or filetype == 'bash' then
+  elseif filetype == 'sh' then
     cmd = 'bash ' .. file
   elseif filetype == 'lua' then
     -- nvim's own LuaJIT as a script runner (no separate lua interpreter needed)
@@ -406,7 +407,7 @@ vim.keymap.set('n', '<leader>rr', function()
     cmd = 'php ' .. file
     need, where = { 'php' }, 'the php devShell'
   else
-    print('No run command configured for filetype: ' .. filetype)
+    vim.notify('<leader>rr: no run command for filetype "' .. filetype .. '"', vim.log.levels.WARN)
     return
   end
 
