@@ -188,13 +188,47 @@ keymap.set("n", "<leader>y", "<cmd>%yank<cr>", { desc = "yank entire buffer" })
 -- Toggle cursor column
 keymap.set("n", "<leader>cl", "<cmd>call utils#ToggleCursorCol()<cr>", { desc = "toggle cursor column" })
 
--- Move lines in normal mode with Option+j/k
-keymap.set("n", "<A-j>", ":m .+1<CR>==", { noremap = true, silent = true, desc = "move line down" })
-keymap.set("n", "<A-k>", ":m .-2<CR>==", { noremap = true, silent = true, desc = "move line up" })
+-- Move lines with Option+j/k ({count} lines at a time, re-indented). At the first/last line the
+-- move is clamped silently (no E16); in visual mode the selection is kept, also at the edges.
+-- dir = 1 (down) or -1 (up); s..e = the line range to move; n = how many lines; returns true if moved
+local function move_lines(s, e, dir, n)
+  local target
+  if dir > 0 then
+    target = math.min(e + n, vim.fn.line("$"))
+    if target == e then
+      return false
+    end
+  else
+    target = math.max(s - n - 1, 0)
+    if target == s - 1 then
+      return false
+    end
+  end
+  vim.cmd(string.format("silent %d,%dmove %d", s, e, target))
+  return true
+end
 
--- Move lines in visual mode with Option+j/k (keep selection)
-keymap.set("x", "<A-j>", ":m '>+1<CR>gv=gv", { noremap = true, silent = true, desc = "move selection down" })
-keymap.set("x", "<A-k>", ":m '<-2<CR>gv=gv", { noremap = true, silent = true, desc = "move selection up" })
+for _, m in ipairs({ { "<A-j>", 1, "down" }, { "<A-k>", -1, "up" } }) do
+  local lhs, dir, word = m[1], m[2], m[3]
+  keymap.set("n", lhs, function()
+    local l = vim.fn.line(".")
+    if move_lines(l, l, dir, vim.v.count1) then
+      vim.cmd("normal! ==")
+    end
+  end, { silent = true, desc = "move line " .. word })
+  keymap.set("x", lhs, function()
+    local s, e = vim.fn.line("v"), vim.fn.line(".")
+    if s > e then
+      s, e = e, s
+    end
+    local n = vim.v.count1 -- read before leaving visual mode
+    vim.cmd("normal! \27") -- leave visual mode: sets '< '> (adjusted by :move, so gv follows)
+    if move_lines(s, e, dir, n) then
+      vim.cmd("normal! gv=")
+    end
+    vim.cmd("normal! gv")
+  end, { silent = true, desc = "move selection " .. word })
+end
 
 
 
