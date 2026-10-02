@@ -290,6 +290,30 @@ local get_active_lsp = function()
   return string.format("%s (+%d)", names[1], #names - 1)
 end
 
+--- "#rrggbb" of a highlight attribute ("fg"/"bg") of the ACTIVE colorscheme, nil when the theme leaves it unset
+local function theme_hex(group, attr)
+  local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = group, link = false })
+  local v = ok and hl[attr]
+  return v and string.format("#%06x", v) or nil
+end
+
+-- component colours are FUNCTIONS: lualine re-evaluates them, so they follow :colorscheme (no fixed hex)
+local colors = {
+  -- text in the theme's warning colour
+  warn_text = function()
+    return { fg = theme_hex("DiagnosticWarn", "fg") }
+  end,
+  -- "badge": editor background colour as text on a theme accent
+  badge = function(accent_group)
+    return function()
+      return { fg = theme_hex("Normal", "bg"), bg = theme_hex(accent_group, "fg") }
+    end
+  end,
+  special_bold = function()
+    return { fg = theme_hex("Special", "fg") or theme_hex("DiagnosticInfo", "fg"), gui = "bold" }
+  end,
+}
+
 -- statusline click handlers (upstream 7b30596, adapted: vim.ui.select / snacks picker for branches)
 --- run git synchronously in `root`; returns the output lines, or nil + error text
 local function git_lines(root, args)
@@ -412,7 +436,7 @@ require("lualine").setup {
       },
       {
         get_git_ahead_behind_info,
-        color = { fg = "#E0C479" },
+        color = colors.warn_text,
       },
       {
         "diff",
@@ -426,17 +450,17 @@ require("lualine").setup {
       },
       {
         virtual_env,
-        color = { fg = "black", bg = "#F1CA81" },
+        color = colors.badge("DiagnosticWarn"),
       },
     },
     lualine_c = {
       {
         "%S",
-        color = { gui = "bold", fg = "cyan" },
+        color = colors.special_bold,
       },
       {
         spell,
-        color = { fg = "black", bg = "#a7c080" },
+        color = colors.badge("String"),
       },
     },
     lualine_x = {
@@ -465,7 +489,7 @@ require("lualine").setup {
       },
       {
         ime_state,
-        color = { fg = "black", bg = "#f46868" },
+        color = colors.badge("DiagnosticError"),
       },
     },
     lualine_z = {
