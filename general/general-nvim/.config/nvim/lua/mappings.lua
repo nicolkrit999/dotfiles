@@ -350,6 +350,8 @@ vim.keymap.set('n', '<leader>rr', function()
   local binary = vim.fn.shellescape(vim.fn.expand('%:p:r'))
   local cmd = ''
   local need, where = nil, nil
+  -- false for the project branches (cargo, dotnet) that do not pass the file name
+  local uses_file = true
 
   if filetype == 'python' then
     cmd = 'python3 ' .. file
@@ -370,6 +372,7 @@ vim.keymap.set('n', '<leader>rr', function()
   elseif filetype == 'cs' then
     cmd = 'dotnet run'
     need = { 'dotnet' }
+    uses_file = false
   elseif filetype == 'javascript' then
     cmd = 'node ' .. file
   elseif filetype == 'typescript' then
@@ -385,6 +388,7 @@ vim.keymap.set('n', '<leader>rr', function()
     if cargo_root then
       cmd = 'cargo run --manifest-path ' .. vim.fn.shellescape(cargo_root .. '/Cargo.toml')
       need = { 'cargo' }
+      uses_file = false
     else
       cmd = 'rustc ' .. file .. ' -o ' .. binary .. ' && ' .. binary
       need = { 'rustc' }
@@ -403,6 +407,11 @@ vim.keymap.set('n', '<leader>rr', function()
     need, where = { 'php' }, 'the php devShell'
   else
     print('No run command configured for filetype: ' .. filetype)
+    return
+  end
+
+  if uses_file and vim.fn.expand('%') == '' then
+    vim.notify('<leader>rr: save the file first', vim.log.levels.WARN)
     return
   end
 
