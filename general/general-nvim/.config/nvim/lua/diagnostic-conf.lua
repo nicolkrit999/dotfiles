@@ -7,11 +7,12 @@ diagnostic.config {
   virtual_text = false,
   virtual_lines = false,
   signs = {
+    -- nerd-font glyphs (Material Design set, nf-md), all four the same width
     text = {
-      [diagnostic.severity.ERROR] = "🆇",
-      [diagnostic.severity.WARN] = "⚠️",
-      [diagnostic.severity.INFO] = "ℹ️",
-      [diagnostic.severity.HINT] = "",
+      [diagnostic.severity.ERROR] = "\u{F015A}", -- nf-md-close_circle_outline
+      [diagnostic.severity.WARN] = "\u{F002A}", -- nf-md-alert_outline
+      [diagnostic.severity.INFO] = "\u{F02FD}", -- nf-md-information_outline
+      [diagnostic.severity.HINT] = "\u{F0336}", -- nf-md-lightbulb_outline
     },
   },
   severity_sort = true,
