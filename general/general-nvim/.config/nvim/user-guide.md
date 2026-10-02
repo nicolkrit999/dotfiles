@@ -77,10 +77,16 @@ Most-used keybinds at a glance. Every keymap here is explained in detail later.
 | `gcc` | Toggle comment on current line |
 | `gc` | Toggle comment on selection |
 | `<Alt-j>` / `<Alt-k>` | Move line(s) down / up (a count moves N lines) |
+| `]<Space>` / `[<Space>` | Insert a blank line below / above (cursor stays; `3]<Space>` inserts 3) |
 | `<Space>rr` | Run current file |
 | `<Space>gs` | Git status (only inside a git repository) |
 | `<Space>cc` | Toggle Claude Code |
 | `u` / `<Ctrl-r>` | Undo / redo |
+| `<Space>u` | Toggle the undo tree |
+| `<Space>t` | Toggle the symbol outline (aerial) |
+| `gS` | Split / join the list, arguments or block under the cursor (treesj) |
+| `\h` / `\H` | Open the dashboard / leave it and return to the previous buffer |
+| `<Space>sv` | Restart Neovim (writes all files first) |
 | `n` / `N` | Next / previous search match (count works; the match is centred and folds opened) |
 
 ---
@@ -185,6 +191,18 @@ The `matchpairs` option also includes: `<>`, and several CJK bracket pairs.
 | `<Ctrl-i>` | Jump **forward** to the next location in the jump list |
 
 Every time you use a jump command (like `gg`, `G`, `/search`, `gd`, etc.), your position is saved. You can then go back and forth through your history with these keys.
+
+## Word References (vim-illuminate)
+
+Other uses of the word under the cursor are highlighted when there are at least 2 (from the LSP server, else from Treesitter).
+
+| Keymap | Mode | Description |
+| --- | --- | --- |
+| `<Alt-n>` | n | Jump to the next reference of the word under the cursor |
+| `<Alt-p>` | n | Jump to the previous reference |
+| `<Alt-i>` | x, o | Text object: the reference under the cursor (e.g. `d<Alt-i>`) |
+
+Commands: `:IlluminateToggle`, `:IlluminatePause`, `:IlluminateResume`.
 
 ## Marks (Bookmarks)
 
@@ -311,8 +329,11 @@ yanky.nvim loads the first time you run `:YankyRingHistory` in a session. From t
 | `<Alt-k>` | n | Move current line up one position (count works the same) |
 | `<Alt-j>` | x | Move selected lines down (count works; re-indented; the selection stays) |
 | `<Alt-k>` | x | Move selected lines up |
-| `J` | n | Join the current line with the next line (cursor stays in place) |
+| `]<Space>` | n | Insert a blank line below (cursor stays in place; `3]<Space>` inserts 3) |
+| `[<Space>` | n | Insert a blank line above (cursor stays in place) |
+| `J` | n | Join the current line with the next line (cursor stays in place; `3J` joins 3 lines) |
 | `gJ` | n | Join lines without inserting a space (cursor stays in place) |
+| `gS` | n | Toggle split / join of the list, argument list, table, dict or block under the cursor (treesj, Treesitter based) |
 
 ## Indentation
 
@@ -337,6 +358,7 @@ yanky.nvim loads the first time you run `:YankyRingHistory` in a session. From t
 | `<Ctrl-d>` | Delete the character to the right of the cursor |
 | `<Ctrl-w>` | Delete the word before the cursor |
 | `<Ctrl-h>` | Delete the character before the cursor (like backspace) |
+| `<Ctrl-s>` | Show the LSP signature help of the function call you are typing |
 
 ## Miscellaneous Editing
 
@@ -455,6 +477,30 @@ All the `vi` and `va` patterns above work with any operator, not just `v`:
 | `dit` | Delete everything inside HTML tags |
 | `ci'` | Change text inside single quotes |
 | `dip` | Delete the entire paragraph |
+
+### Treesitter Node Selection (builtin)
+
+Neovim 0.12 can grow and shrink a selection along the syntax tree (needs a Treesitter parser; otherwise it uses the LSP selection range):
+
+| Keymap | Mode | Description |
+| --- | --- | --- |
+| `an` | x | Select the parent (outer) node: press `v`, then `an` repeatedly to grow the selection |
+| `in` | x | Select the child (inner) node: shrinks the selection again |
+| `]n` / `[n` | x | Select the next / previous node |
+| `]N` / `[N` | x | Select the next / previous sibling node |
+
+### More Text Objects
+
+| Keymap | Mode | Description |
+| --- | --- | --- |
+| `ii` / `ai` | x, o | The current indent scope (mini.indentscope); `ai` includes its border lines. `[i` / `]i` jump to the top / bottom of the scope |
+| `i%` / `a%` | x, o | Inside / around a matching pair, also keywords like `if` ... `end` (vim-matchup) |
+| `ia` / `aa` | x, o | Inside / around a function argument (targets.vim: on `b` in `f(a, b, c)`, `daa` gives `f(a, c)`) |
+| `iq` / `aq` | x, o | Inside / around the nearest quotes of any kind (targets.vim) |
+| `i,` / `a,` | x, o | Between separators such as `,` `;` `:` `+` `-` `=` `/` `\|` `&` (targets.vim) |
+| `<Space>iB` | x, o | The whole buffer (`y<Space>iB` copies everything) |
+| `<Space>iu` | x, o | The URL under the cursor (`d<Space>iu`) |
+| `<Alt-i>` | x, o | The LSP/Treesitter reference under the cursor (vim-illuminate) |
 
 ### Markdown Code Block Text Objects
 
@@ -726,6 +772,7 @@ The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl
 | `sr({` | Replace `()` with `{}` | `(hello)` becomes `{hello}` |
 | `sr{[` | Replace `{}` with `[]` | `{hello}` becomes `[hello]` |
 | `sr'(` | Replace `'` with `()` | `'hello'` becomes `(hello)` |
+| `srb'` | Replace the nearest surrounding pair, whatever it is | `"hello"` becomes `'hello'` |
 
 ## Auto-Pairing (nvim-autopairs Plugin)
 
@@ -746,6 +793,8 @@ This section explains how to open, navigate, resize, and close split windows ent
 - **Buffer**: A file loaded into memory. You can have many buffers open but only see some of them.
 - **Window**: A visible area showing a buffer. You can split your screen into multiple windows.
 - **Tab**: A collection of windows. Think of it as a different workspace layout.
+
+**Panel layout**: short single-task panels open on the LEFT (undo tree `<Space>u`, `<Space>rr` output, `:help` on a screen of at least 200 columns, which then opens as a full-height split on the far left), persistent panels on the RIGHT (Claude Code). Inactive windows are dimmed (vimade); the current window is always full colour.
 
 ## Creating Splits
 
@@ -833,8 +882,8 @@ This section explains how to open, navigate, resize, and close split windows ent
 | `:tabe <file>` | Open `<file>` in a new tab |
 | `gt` | Go to the next tab |
 | `gT` | Go to the previous tab |
-| `:tabclose` | Close the current tab |
-| `:tabonly` | Close all other tabs |
+| `:tabclose` or `\t` | Close the current tab |
+| `:tabonly` or `\T` | Close all other tabs |
 
 ## Closing Floating Windows
 
@@ -889,6 +938,9 @@ The terminal automatically starts in insert mode (you can type immediately) and 
 | `<Space>cc` | n | **Toggle** Claude Code terminal (opens/closes it) |
 | `<Space>cR` | n | Resume/continue the last Claude conversation (`claude --continue`) |
 | `<Space>cV` | n | Start Claude in verbose mode |
+| `:ClaudeCodeResume` | | Start `claude --resume` (pick an older conversation; command only, no key) |
+| `<Ctrl-h/j/k/l>` | t, n (Claude panel) | Move to the window left / below / above / right |
+| `<Ctrl-f>` / `<Ctrl-b>` | t (Claude panel) | Scroll a page down / up |
 
 Claude Code opens as a **vertical split on the right**, 30% of the screen width. It is a terminal buffer. There is no toggle key in terminal mode. To navigate:
 
@@ -896,6 +948,8 @@ Claude Code opens as a **vertical split on the right**, 30% of the screen width.
 2. **Move back to code**: `<Ctrl-h>` (works directly in the Claude terminal), or `<Ctrl-\><Ctrl-n>` and then `<Ctrl-w>h` / `<Left>`. `<Esc>` is sent to Claude (for example to interrupt it) and does **not** leave terminal mode.
 3. **Close Claude**: from the code window `<Space>cc` toggles it closed. Inside the Claude terminal press `<Ctrl-\><Ctrl-n>` first, then `<Space>cc` or `<Space>q`.
 4. **Type in Claude**: If in Normal mode inside the Claude terminal, press `i` to re-enter terminal mode
+
+Claude runs in the git root of the current file. Files Claude changes are reloaded in their buffers (checked every second while the panel is open). The panel is left out of saved sessions, and `\D` never deletes it while it runs.
 
 ---
 
@@ -1094,6 +1148,18 @@ Plugin: nvim-tree.lua. A sidebar file tree.
 | `x` | in tree | Cut file to clipboard |
 | `p` | in tree | Paste from clipboard |
 | `q` | in tree | Close the file explorer |
+| `D` | in tree | Move file/directory to the trash (asks for confirmation; needs `trash`) |
+| `g?` | in tree | Show the help with every key |
+| `<Ctrl-v>` / `<Ctrl-x>` / `<Ctrl-t>` | in tree | Open in a vertical split / horizontal split / new tab |
+| `-` / `<Ctrl-]>` | in tree | Make the parent / the folder under the cursor the root |
+| `H` / `I` | in tree | Toggle dotfiles / git-ignored files |
+| `f` / `F` | in tree | Live filter: start / clear |
+| `R` | in tree | Refresh |
+| `y` / `Y` / `gy` | in tree | Copy the name / relative path / absolute path |
+| `]c` / `[c`, `]e` / `[e` | in tree | Next / previous git item, diagnostic item |
+| `E` / `W` | in tree | Expand all / collapse all |
+
+`nvim <dir>` opens the tree on that directory and makes it the working directory.
 
 **Moving between tree and code**: Use `<Ctrl-w>h` / `<Ctrl-w>l` or `<Left>` / `<Right>` arrow keys.
 
@@ -1113,6 +1179,9 @@ Plugin: **fzf-lua**. A powerful popup interface that connects to FZF (a command-
 | `<Space>ft` | Search tags (functions, classes) in the current buffer |
 | `<Space>fb` | Search currently open buffers |
 | `<Space>fr` | Search recently opened files |
+| `<Space>gbl` | Fuzzy-search git branches (`<Enter>` checks the branch out) |
+
+`<Space>ff` has no preview window and shows git status icons next to modified/untracked files; `.gitignore` is respected.
 
 ## Inside the FZF Popup
 
@@ -1198,16 +1267,29 @@ Plugin: nvim-lspconfig (default server definitions; Neovim's builtin `vim.lsp` d
 
 ### Configured Language Servers
 
-| Server | Language |
-| --- | --- |
-| `pyright` + `ruff` | Python |
-| `lua_ls` | Lua |
-| `bashls` | Bash |
-| `yamlls` | YAML |
-| `marksman` | Markdown |
-| `nixd` | Nix |
-| `jdtls` | Java (via nvim-java) |
-| `clangd` | C/C++ |
+| Server | Language | Program(s) that must be on PATH |
+| --- | --- | --- |
+| `pyright` + `ruff` | Python | `pyright-langserver`, `ruff` |
+| `lua_ls` | Lua | `lua-language-server` |
+| `bashls` | Bash | `bash-language-server` |
+| `yamlls` | YAML | `yaml-language-server` |
+| `marksman` | Markdown | `marksman` |
+| `nixd` | Nix | `nixd` |
+| `jdtls` | Java (via nvim-java) | `java` (Java devShell) |
+| `clangd` | C/C++ | `clangd` (c-cpp devShell) |
+| `ltex_plus` | Grammar and spelling (LanguageTool) for markdown, tex, typst, gitcommit, text | `ltex-ls-plus` |
+| `typos_lsp` | Typos in identifiers and comments, every real file | `typos-lsp` |
+| `tinymist` | Typst | `tinymist` |
+| `texlab` | LaTeX | `texlab` (LaTeX devShell) |
+| `rust_analyzer` | Rust | `rust-analyzer` AND `cargo` |
+| `gopls` | Go | `gopls` AND `go` |
+| `hls` | Haskell | `haskell-language-server-wrapper` |
+| `sourcekit` | Swift, Objective-C | `sourcekit-lsp` |
+| `ts_ls` | JavaScript / TypeScript | `typescript-language-server` (the project's `node_modules/.bin` copy is preferred) |
+| `phpactor` | PHP | `phpactor` (php devShell) |
+| `r_language_server` | R, Rmd, quarto | `R` plus the R package `languageserver`: the first R file runs one silent background check; restart nvim after installing the package |
+
+A server is enabled only when ALL its programs are on PATH; otherwise it is skipped silently (no warning when you open a file of that language outside its devShell). The programs come from the Nix system or the language's devShell; nothing is downloaded by Neovim. `:LspStart <name>` tells you which program is missing.
 
 ### LSP Keymaps
 
@@ -1218,6 +1300,36 @@ Plugin: nvim-lspconfig (default server definitions; Neovim's builtin `vim.lsp` d
 | `<Space>rn` | **Rename**: rename the symbol everywhere it's used |
 | `<Space>ca` | **Code action**: show available fixes/refactors |
 | `<Space>fm` | **Format** the file on demand (LSP formatter, async). Lua: stylua. Markdown: prettier. Python and JSON have `<Space>f` (black / `:JSONFormat`) |
+
+### Built-in Neovim LSP and Diagnostic Keys
+
+Neovim's own LSP keys also work next to the custom ones (in every buffer with a server that supports them):
+
+| Keymap | Mode | Description |
+| --- | --- | --- |
+| `grn` | n | Rename (same as `<Space>rn`) |
+| `gra` | n, x | Code action (same as `<Space>ca`) |
+| `grr` | n | References (location list) |
+| `gri` | n | Implementation |
+| `grt` | n | Type definition |
+| `grx` | n | Run the code lens of the line |
+| `gO` | n | Document symbols (outline in the location list) |
+| `<Ctrl-s>` | i, s | Signature help |
+| `]d` / `[d` | n | Next / previous diagnostic of any severity (`<Space>de` / `<Space>dE` jump to errors only) |
+| `]D` / `[D` | n | Last / first diagnostic in the buffer |
+| `<Ctrl-w>d` | n | Show the diagnostics under the cursor |
+
+### LSP Commands
+
+| Command | What it does |
+| --- | --- |
+| `:LspInfo` | LSP status (same as `:checkhealth vim.lsp`) |
+| `:LspAttached` | Small popup with the servers attached to this buffer (`q` / `<Esc>` closes; also opens when you click the LSP name in the statusline) |
+| `:LspLog` | Open the LSP log file |
+| `:LspRestart [name...]` | Restart the servers of this buffer, or the named ones |
+| `:LspStop [name...]` | Stop them |
+| `:LspStart [name...]` | Start the enabled servers of this buffer that are not running, or the named ones |
+| `:LspInlayHints enable` / `disable` | Switch inlay hints on / off globally (off by default) |
 
 ### Glance: Peek Without Jumping
 
@@ -1258,6 +1370,12 @@ Plugin: nvim-cmp. Sources: LSP, UltiSnips snippets, file paths, buffer words.
 | `<Esc>` | Close the completion menu |
 | `<Ctrl-d>` | Scroll documentation popup up |
 | `<Ctrl-f>` | Scroll documentation popup down |
+| `<Ctrl-n>` / `<Ctrl-p>` | Open the menu / select the next / previous item (inserts it) |
+| `<Ctrl-y>` | Confirm the selected item |
+| `<Down>` / `<Up>` | Select the next / previous item without inserting it |
+| `<Tab>` / `<S-Tab>` | In the `:` and `/` command line: open / move through the completion menu |
+
+Completion labels are coloured like code (colorful-menu.nvim); match and kind colours follow the active colorscheme.
 
 ---
 
@@ -1284,6 +1402,20 @@ Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `sni
 | `jif` / `jifelse` / `jifelif` | If / if-else / if-else if-else |
 | `jswitchtraditional` / `jswitchmulti` / `jswitcharrow` / `jswitcharrowmulti` / `jswitchyield` / `jswitchyieldblock` | Switch variants |
 | `jtrycatch` / `jtryfinally` | Try-catch / try-catch-finally |
+| `jwhilescannerbreak` | While loop with Scanner and break condition |
+
+### Other Snippets
+
+| File | Triggers |
+| --- | --- |
+| all | `arw` (right arrow), `ltx` (LaTeX symbol) |
+| cpp | `bare` (barebone template), `icd` (`#include`), `incvec` `incmap` `incset` `incqueue` `incstr` `incstack` (include that header), `vec` `map` `umap` `set` `uset` `queue` `stack` (std containers), `cout`, `plist` (print vector), `pmat` (print list of lists), `pqueue` (print queue), `random` (random list), `sol` (solution), `for`, `if`, `ifelse` |
+| markdown | `meta` (YAML front matter), `h1` ... `h6` (header), `link`, `rlink` (reference link), `img`, `font`, `more`, `detail` (clickable details), `k1` / `kbd`, `k2`, `k3` (keyboard keys), `info` `warn` `error` `success` (boxes), `td` (too long, did not read), `yh` (corner quotes) |
+| nix | `homepackages`, `systempackages`, `excludepackages`, `delibheaderhome`, `delibheadersystem`, `delibheaderhomealways`, `delibheadersystemalways`, `let`, `mkshell`, `mkderiv`, `flake`, `homefile`, `fetchgit`, `systemd` |
+| python | `print`, `impa` (import as), `main` (main boilerplate), `sol` (solution) |
+| snippets | `snip` (UltiSnips snippet definition) |
+| tex | `use` (`\usepackage{}`), `eqa` (equation environment) |
+| vim | `fun` (function), `aug` (augroup) |
 
 ---
 
@@ -1323,11 +1455,22 @@ normal keys. If you pause after `gcs` longer than 'timeoutlen', a following `s`
 no longer makes `gcss` (gcs is then waiting for a motion and `s` cancels it);
 `gcsip` typed in one go is not affected.
 
-Fully supported languages: asm, bash, c, cpp, cs, css, dockerfile, fish, go,
-haskell, html, java, javascript, julia, kotlin, lisp (Emacs Lisp / Common
-Lisp), lua, make, markdown, nix, perl, php, ps1 (PowerShell), python, r,
-ruby, rust, scala, sh, sql, swift, tex (LaTeX), toml, typescript, typst,
-vim, xml, yaml, zig, zsh.
+`gcs` / `gcr` always change WHOLE rows (a charwise motion such as `gcse` changes
+every row it touches); the cursor stays on its text row; `.` repeats with the
+same motion, count or number of Visual rows. In a non-modifiable buffer they
+show one warning. Avoid `gcsgcs` (the second `gc` is Neovim's comment text
+object).
+
+Fully supported languages: asm, bash, c, cmake, conf, cpp, cs, css,
+dockerfile, elixir, fish, gitconfig, go, haskell, hcl, html, i3config, java,
+javascript, julia, kitty, kotlin, lisp (Emacs Lisp / Common Lisp), lua, make,
+markdown, nix, perl, php, ps1 (PowerShell), python, r, ruby, rust, scala, sh,
+sql, swift, terraform, tex (LaTeX), tmux, toml, typescript, typst, vim, xml,
+yaml, zig, zsh. In gitconfig an UNQUOTED `#ff0000` is a comment for git
+itself, so `gcr` removes it: quote colours there.
+
+Other filetypes use their 'commentstring': a marker counts only as the first
+non-blank character of the row.
 
 ---
 
@@ -1384,6 +1527,8 @@ After running, the terminal output appears in a split. See [Terminal Integration
 | `<F9>` | Python | Run with `python -u` via AsyncRun (`uv run python -u` inside a uv project) |
 | `<F9>` | C++ | Compile (clang++, else g++, C++20) and run in a split below; only mapped when a compiler is on PATH |
 | `<F9>` | LaTeX | Compile with vimtex |
+| `<F9>` | Lua | Run the file inside Neovim (`:luafile %`) |
+| `<F9>` | Vim script | Source the file (`:source %`) |
 
 ---
 
@@ -1404,6 +1549,9 @@ The fugitive keys (and the gitlinker keys below) exist only inside a git reposit
 | `<Space>gbn` | n | Create new branch (prompts for name) |
 | `<Space>gbd` | n | Puts `:Git branch -D ` on the command line: type the branch name and press Enter (force delete) |
 | `<Space>gf` | n | Puts `:Git fetch ` on the command line (add arguments, then Enter) |
+| `<Space>gbl` | n | Fuzzy-search git branches and check one out (fzf-lua) |
+
+Clicking the branch name in the statusline also opens a branch picker (`git checkout` of the chosen local or remote branch).
 
 ## gitsigns.nvim (Plugin)
 
@@ -1428,8 +1576,22 @@ Shows `+` `~` `_` signs in the gutter for added/changed/deleted lines.
 | Plugin | Command / Trigger | Description |
 | --- | --- | --- |
 | neogit | `:Neogit` | Full git UI (magit-like; available inside a git repository) |
-| diffview.nvim | `:DiffviewOpen` | Side-by-side diff viewer |
+| diffview.nvim | `:DiffviewOpen`, `:DiffviewFileHistory`, `:DiffviewClose` | Side-by-side diff viewer and 3-way merge tool; file history panel |
 | vim-flog | `:Flog` | Visual git log graph |
+| diffs.nvim | `:Diff` (and automatic) | Unified diff of the current file against git; also colours the diffs shown by fugitive, neogit and gitsigns, and conflict markers |
+| codediff.nvim | `:CodeDiff` | VSCode-style side-by-side diff (downloads a small native library on first use) |
+
+## Resolving Merge Conflicts (diffview.nvim)
+
+During a merge, `:DiffviewOpen` opens the 3-way merge tool. Inside a diffview view:
+
+| Keymap | Description |
+| --- | --- |
+| `<Space>gCo` / `<Space>gCt` | Choose OURS / THEIRS for the conflict |
+| `<Space>gCb` / `<Space>gCa` | Choose BASE / BOTH |
+| `]C` / `[C` | Next / previous conflict (capital C; `]c` / `[c` stay the gitsigns hunk keys) |
+
+`<Space>cb` and `<Space>ca` keep their normal meaning inside diffview. fugitive's `:Gvdiffsplit!` is the other way to resolve a conflict.
 
 ---
 
@@ -1445,7 +1607,7 @@ Adds many additional text objects for quotes, brackets, arguments, separators. W
 
 ## vim-matchup (Plugin)
 
-Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, etc.). Shows offscreen match in popup.
+Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, etc.). Shows offscreen match in popup. Also: `g%` (backwards `%`), `[%` / `]%` (start / end of the enclosing pair), `z%` (into the next pair), text objects `i%` / `a%`. <!-- CHECK-USER: exact behaviour of g% and z% is taken from the vim-matchup docs, not tested -->
 
 ---
 
@@ -1507,6 +1669,23 @@ Inside the panel there are no extra keys: moving the cursor onto an entry switch
 | `:lopen` / `:lclose` | Location list (per-window) |
 | `\x` | Close quickfix and location list windows |
 
+## Inside the Quickfix Window (nvim-bqf, quicker.nvim)
+
+quicker.nvim formats the list (grouped by file, file-name column at most 40 characters or half the screen); the list cannot be edited as a buffer. nvim-bqf adds these keys inside the quickfix window (the preview does not start by itself):
+
+| Key | Description |
+| --- | --- |
+| `p` / `P` | Toggle the preview of the item / toggle auto-preview while moving |
+| `zp` | Toggle the preview between normal and maximum size |
+| `<Ctrl-f>` / `<Ctrl-b>` | Scroll the preview down / up |
+| `<Tab>` / `<S-Tab>` | Mark the item and move down / up; `z<Tab>` clears the marks |
+| `zn` / `zN` | New list from the marked / unmarked items |
+| `zf` | Fuzzy filter the list (fzf) |
+| `<` / `>` | Go to the older / newer quickfix list |
+| `o` / `O` | Open the item and close the quickfix window |
+| `t` / `T` | Open in a new tab (`T` stays in the quickfix window) |
+| `<Ctrl-x>` / `<Ctrl-v>` / `<Ctrl-t>` | Open in a horizontal split / vertical split / new tab |
+
 ## Trouble (Plugin)
 
 | Keymap / Command | Description |
@@ -1546,10 +1725,14 @@ Inside the panel there are no extra keys: moving the cursor onto an entry switch
 
 - **render-markdown.nvim**: In-editor rendering (pauses in insert mode). Max file: 1.5MB.
 - **tabular**: Table alignment. Command: `:Tabularize`
+- **ltex-ls-plus (LSP)**: grammar and spell checking (LanguageTool) for markdown, tex, typst, gitcommit and text files, when `ltex-ls-plus` is installed. Problems are diagnostics: `]d` / `[d`, `<Space>dd`; fixes via `<Space>ca`.
+- **marksman (LSP)**: link and heading navigation, completion, symbols.
 
 ---
 
-# 28. LaTeX Support (`vimtex`)
+# 28. LaTeX and Typst Support
+
+## LaTeX (`vimtex`)
 
 Only available if `latex` is installed (vimtex also needs `latexmk` to compile).
 
@@ -1558,6 +1741,16 @@ Only available if `latex` is installed (vimtex also needs `latexmk` to compile).
 | `<F9>` | Start / stop continuous compilation |
 | `\ll` | Start / stop continuous compilation (same as `<F9>`) |
 | `\lv` | View PDF |
+
+The texlab language server adds diagnostics, hover, symbols and rename when `texlab` is on PATH (LaTeX devShell). Auto-save never saves LaTeX files.
+
+## Typst
+
+| Keymap | Description |
+| --- | --- |
+| `<Space>tw` | Typst buffers: `:TypstWatch`, recompile on save and open the PDF |
+
+Needs the `typst` program (typst devShell): without it `<Space>tw` shows one warning and the Typst plugin does not load. Errors go to the quickfix list. The PDF viewer is `zathura` if installed, else `$TYPST_PDF_VIEWER`. LSP: `tinymist`. Typst buffers use `textwidth=100` and wrap. Auto-save never saves Typst files.
 
 ---
 
@@ -1597,6 +1790,7 @@ Only available if `latex` is installed (vimtex also needs `latexmk` to compile).
 | `:lcd <path>` | Change directory for current window only |
 | `:tcd <path>` | Change directory for current tab |
 | `:pwd` | Print current working directory |
+| `:Z {keywords}` (or `:z {keywords}`) | `cd` to the best zoxide match (e.g. `:z nix nixos`) and print `cd <dir>`; without arguments it opens the fuzzy zoxide directory picker; without zoxide installed one warning |
 
 ### Path Modifiers (for use in commands)
 
@@ -1622,6 +1816,10 @@ Languages: English, Italian, German, French.
 | `2zg` / `3zg` / `4zg` | Add the word to the Italian / German / French list |
 | `zw` | Mark word as wrong (same counts) |
 
+`spellfile` has one word list per language, in the order of `spelllang` (en, it, de, fr): `zg` adds to the first, a count picks another. The lists are `spell/*.utf-8.add` inside the config, which is tracked in a PUBLIC repository: `spell/README.md` says these words are public, so review new words before committing. At startup Neovim silently recompiles any list whose compiled `.add.spl` file is missing or older, so the words of the tracked lists are accepted on a fresh checkout.
+
+Besides the builtin spell checker two language servers report problems as diagnostics: `ltex_plus` (grammar and spelling in prose files) and `typos_lsp` (typos in identifiers and comments of source files). The statusline shows `[SPELL]` while spell checking is on.
+
 ---
 
 # 32. Statusline (`lualine.nvim`)
@@ -1643,7 +1841,6 @@ Languages: English, Italian, German, French.
 | --- | --- |
 | **which-key.nvim** | Press `<Space>` and wait: a popup shows all available leader keybindings |
 | **Dashboard** | Start screen for a bare `nvim` (no file, directory or stdin); menu and keys in "Dashboard (Start Screen)" below |
-| **Dashboard: reopen / replace the current buffer** | `\h` opens the start screen in the current window (the previous buffer stays open in the background; inside the dashboard it only says "already in the dashboard"). `\H` closes the dashboard and returns to the previous buffer (the dashboard buffer is deleted so it does not pile up); outside the dashboard it only warns "not in the dashboard", and with no previous buffer it warns "no previous buffer to resume". Without the keys: `:Dashboard` does the same as `\h`. To close the current buffer and get the dashboard instead: `:Dashboard | bdelete #` (a buffer with unsaved changes refuses with E89). `\d` deletes the buffer but shows the previous one, not the dashboard |
 | **nvim-notify** | Animated notification popups (fade + slide, 1500ms) |
 | **Colorschemes** | On Nix systems the base16 theme named by `NVIM_BASE16_THEME` (fallback Catppuccin Mocha); on other systems one of 19 themes chosen at random at each start. UI colours (yank flash, hop keys, notifications, float borders) follow the active theme |
 | **dropbar.nvim** | Breadcrumb bar at top showing file > class > function |
@@ -1651,6 +1848,33 @@ Languages: English, Italian, German, French.
 | **mini.indentscope** | Visual `▏` guide for current indent scope |
 | **fidget.nvim** | LSP progress messages in bottom-right corner |
 | **nvim-lightbulb** | Lightbulb icon when code actions are available |
+| **vim-illuminate** | Highlights the other uses of the word under the cursor (`<Alt-n>` / `<Alt-p>` jump between them) |
+| **vimade** | Dims inactive windows |
+| **Borders** | Every floating window and the completion menu have a single-line border |
+
+## Dashboard (Start Screen)
+
+The dashboard opens for a bare `nvim` (no file, no directory, no stdin) or with `:Dashboard`. `<Enter>` runs the item under the cursor. These single-letter keys work only inside the dashboard:
+
+| Key | Item |
+| --- | --- |
+| `r` | Restore session (this folder) |
+| `L` | Restore last session |
+| `o` | Recent files here (only files under the current directory) |
+| `d` | Recent directories (zoxide picker; the item is shown only when `zoxide` is installed) |
+| `m` | Search keymaps |
+| `u` | Open this user guide in a new tab |
+| `e` | New file |
+| `q` | Quit Neovim |
+
+The other items show their normal key: Find File `<Space>ff`, Recently opened files `<Space>fr`, Project grep `<Space>fg`, Open tree view `<Space>s`, Search help `<Space>fh`, Claude Code `<Space>cc`, Open Nvim config `<Space>ev`. With nothing saved, `r` / `L` show one warning ("no saved session for this folder" / "no saved session"). Sessions are never restored automatically.
+
+| Keymap | Description |
+| --- | --- |
+| `\h` | Open the dashboard in the current window (the previous buffer stays open in the background; inside the dashboard it only says "already in the dashboard") |
+| `\H` | Close the dashboard and return to the previous buffer (the dashboard buffer is deleted so it does not pile up); outside the dashboard it only warns "not in the dashboard", with no previous buffer "no previous buffer to resume" |
+
+`:Dashboard` does the same as `\h`. To close the current buffer and get the dashboard instead: `:Dashboard | bdelete #` (a buffer with unsaved changes refuses with E89). `\d` deletes the buffer but shows the previous one, not the dashboard.
 
 ---
 
@@ -1666,6 +1890,12 @@ Languages: English, Italian, German, French.
 | `:Edit <pattern>...` | Open every file matching the glob patterns (`:Edit src/*.lua`); `:edit` typed as the first word expands to `:Edit` |
 | `:Datetime` | Show date and time |
 | `:ToPDF` | Convert markdown to PDF (requires pandoc) |
+| `:Z {keywords}` | zoxide jump (see Working with Directories) |
+| `:TermHL` | Show the current buffer (e.g. a log with ANSI colour codes) rendered with its colours in a read-only terminal buffer |
+| `:LogAutocmds` | Toggle logging of all autocommand events to `~/.local/state/nvim/log-autocmds.log` (the file is emptied each time logging starts) |
+| `:StripTrailingWhitespace` | Remove trailing whitespace (same as `<Space><Space>`) |
+| `:Notifications` | Show the notification history (nvim-notify) |
+| `:Inspect` / `:InspectTree` | Show the highlight groups / the Treesitter tree at the cursor |
 
 ### Plugin Manager Shortcuts
 
@@ -1747,6 +1977,12 @@ Commands: `:AerialToggle`, `:AerialOpen`, `:AerialNavToggle`.
 | --- | --- | --- |
 | `gx` | n, x | Open the URL or file under the cursor (gx.nvim) |
 | `ga` | n | Show Unicode info for character under cursor |
+| `<Ctrl-x><Ctrl-z>` | i | Complete a Unicode character by name or `U+code` |
+| `<Ctrl-x><Ctrl-g>` | i | Complete a digraph |
+| `<Space>cu` | n | Swap `<Ctrl-x><Ctrl-z>` between completing the character and completing its name |
+| `<F4>` + motion | n, x | Turn 2-character digraph pairs in the text into their characters |
+
+Commands: `:UnicodeSearch {name or U+hex}`, `:UnicodeName`, `:UnicodeTable`. <!-- CHECK-USER: the unicode.vim key meanings come from its docs; only their existence was tested -->
 
 URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 
@@ -1764,6 +2000,39 @@ URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 | `vim-obsession` | `:Obsession` | Session save/restore |
 | `instant.nvim` | `:InstantStartServer`, `:InstantStartSession {host} {port}`, `:InstantJoinSession {host} {port}` | Collaborative editing (loads on its first `:Instant...` command) |
 | `firenvim` | Browser | Neovim in browser text areas |
+| `aerial.nvim` | `<Space>t` | Symbol outline (section 37) |
+| `treesj` | `gS` | Split / join code blocks |
+| `vim-illuminate` | `<Alt-n>`, `<Alt-p>`, `<Alt-i>` | Word references |
+| `vimade` | Automatic | Dims inactive windows |
+| `persistence.nvim` | Dashboard `r` / `L` | Saves a session per folder when you quit (see Session Management) |
+| `snacks.nvim` | Automatic | Nicer input / select popups; light mode for big files |
+| `colorful-menu.nvim` | Automatic | Completion labels coloured like code |
+| `live-command.nvim` | `:norm` | Live preview of `:norm` while you type |
+| `lazydev.nvim` | Lua files | Neovim API completion when editing the config |
+| `vim-oscyank` | `:OSCYank` | Copy to the system clipboard through the terminal (works over SSH; Linux) |
+| `vim-scriptease` | `:Messages`, `:Scriptnames` | Vim-script debugging helpers |
+| `nvim-dbee`, `vim-dadbod-ui` | `<Space>D...` | SQL clients (see below) |
+
+## SQL Databases (nvim-dbee, vim-dadbod-ui)
+
+Two independent SQL clients. Neither has connections by default: this repo is public, so connections are never stored in the config.
+
+| Keymap | Mode | Description |
+| --- | --- | --- |
+| `<Space>Dt` | n | Dbee: toggle the UI |
+| `<Space>Do` | n | Dbee: open the UI |
+| `<Space>Dc` | n | Dbee: close the UI |
+| `<Space>Du` | n | Dadbod: toggle the UI (connections, saved queries, results) |
+| `<Space>Da` | n | Dadbod: add a connection |
+| `<Space>Df` | n | Dadbod: find the DB buffer |
+
+Commands: `:Dbee`, `:DB <url> <query>` (`:%DB <url>` runs the whole buffer as a query), `:DBUI`, `:DBUIToggle`, `:DBUIAddConnection`, `:DBUIFindBuffer`.
+
+Connections come from the environment (set them in an untracked shell file, direnv or sops, never in the repo):
+- nvim-dbee: `$DBEE_CONNECTIONS`, a JSON array such as `[{"name":"local","type":"postgres","url":"postgres://user:pw@localhost:5432/db"}]`. Connections added inside the UI are not saved.
+- vim-dadbod-ui: `$DADBOD_CONNECTIONS`, a JSON object `{"name":"url"}`. Saved queries go to `~/.local/share/nvim/db_ui`.
+
+`:checkhealth` shows a known, accepted `vim.validate{}` deprecation warning from nvim-dbee. <!-- CHECK-USER: the keys inside the dbee / dadbod panels were not tested (needs a database) -->
 
 ---
 
@@ -1785,7 +2054,10 @@ URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 | Python | 4-space indent, `<F9>` to run, `<Space>f` to format with Black (needs `black`, python devShell; one warning otherwise; in a uv project both use `uv run`) |
 | Lua | `<F9>` to execute (`:luafile %`), `<Space>f` and `<Space>fm` format with Stylua |
 | C++ | `<F9>` to compile and run (only when a C++ compiler is on PATH, e.g. the c-cpp devShell) |
-| Markdown | Word wrap enabled, extended syntax highlight column |
+| Markdown | Word wrap enabled, extended syntax highlight column; `<Space>fm` formats with Prettier (one warning if `prettier` is missing); `<Space><Space>` does not strip trailing spaces |
+| JSON | `<Space>f` runs `:JSONFormat` on the buffer (in Visual mode on the selection) |
+| Typst | `<Space>tw` TypstWatch, `textwidth=100`, wrap |
+| Vim script | `<F9>` sources the file |
 
 ---
 
@@ -1806,6 +2078,12 @@ These happen without any keypress:
 | Smart case | Case-insensitive search unless uppercase is used (only `/` and `?`; `:s` and `:g` always ignore case) |
 | Colorscheme | Fixed base16 theme on Nix systems (`NVIM_BASE16_THEME`, fallback Catppuccin Mocha); random on other systems |
 | Auto-save | Files save automatically on focus lost / buffer leave (not unnamed, read-only or special buffers, not Typst/LaTeX) |
+| File changed on disk | Checked when Neovim gets focus and when idle. An unmodified buffer is reloaded ("File changed on disk. Buffer reloaded!"); if the buffer was changed too it is kept ("File changed on disk and in the buffer (buffer kept)"); a deleted file keeps its buffer (one warning) |
+| Format check after save | After saving a Python or Lua file, `black --check` / `stylua --check` run in the background; an unformatted file gives the warning "<file>: file is not formatted (black or stylua)". Nothing is changed |
+| `nvim <directory>` | The directory becomes the working directory and the file tree opens there |
+| Git plugins | fugitive, neogit and gitlinker load when the working directory or an opened file is inside a git repository |
+| Big files | Files over about 1.5 MB (or with very long lines) open in a light mode: no Treesitter, no completion, the language server starts a little later. `:set ft=<language>` gives the full mode back |
+| Help window | On a screen of at least 200 columns `:help` opens as a full-height split on the far left |
 
 ---
 ---
@@ -1877,6 +2155,19 @@ Each server is configured in `lua/config/lsp.lua` (plus `after/lsp/<name>.lua`) 
 | **nixd** | Nix | Nix language analysis. Formatter: nixpkgs-fmt. |
 | **jdtls** | Java | Full Java IDE features via nvim-java (see Java section). Auto-configured. |
 | **clangd** | C/C++ | Compilation, diagnostics, code completion for C/C++. |
+| **ltex_plus** | Prose (markdown, tex, typst, gitcommit, text) | Grammar and spell checking with LanguageTool; problems are diagnostics. |
+| **typos_lsp** | Every real file | Finds typos in identifiers and comments; offers fixes as code actions. |
+| **tinymist** | Typst | Diagnostics, completion (PDF export is left to `:TypstWatch`). |
+| **texlab** | LaTeX | Diagnostics, hover, symbols, rename. |
+| **rust_analyzer** | Rust | Full Rust analysis (needs `cargo` too). |
+| **gopls** | Go | Full Go analysis (needs `go` too). |
+| **hls** | Haskell | Haskell language server. |
+| **sourcekit** | Swift, Objective-C | Swift analysis (C/C++ stay with clangd). |
+| **ts_ls** | JavaScript / TypeScript | TypeScript language server. |
+| **phpactor** | PHP | PHP analysis and refactoring. |
+| **r_language_server** | R | R analysis, after a one-time check that the R package `languageserver` is installed. |
+
+Each server starts only when its program is installed (see the table in section 13); `:LspAttached` (or a click on the LSP name in the statusline) shows what is attached.
 
 ## LSP Keymaps (All Languages)
 
@@ -1899,6 +2190,8 @@ Plugin: **glance.nvim**. Instead of jumping away to a definition (which changes 
 | `<Space>gd` | Peek at definitions in a popup. You see the code without leaving your current file. Press `<Esc>` to close. |
 | `<Space>gr` | Peek at all references. See every place in the project that uses this symbol. |
 | `<Space>gi` | Peek at implementations. See how interfaces/abstract methods are implemented. |
+
+Neovim's builtin `grn`, `gra`, `grr`, `gri`, `grt` and `gO` also work (see section 13).
 
 **When to use Glance vs `gd`**: Use Glance when you want to quickly check something and come back. Use `gd` when you want to actually navigate to the definition and work there.
 
@@ -2037,6 +2330,10 @@ This config includes several git-related plugins that each handle a different as
 | **neogit** | A full git UI inside Neovim (like Magit for Emacs). | `:Neogit` to open. |
 | **diffview.nvim** | Side-by-side diff viewer for comparing branches, commits, etc. | `:DiffviewOpen` to open. |
 | **vim-flog** | Visual git log/graph showing branch history. | `:Flog` to open. |
+| **diffs.nvim** | Syntax highlighting inside the diffs of fugitive, neogit and gitsigns; conflict markers. `:Diff` shows the file against git. | Automatic, `:Diff`. |
+| **codediff.nvim** | VSCode-style side-by-side diff. | `:CodeDiff`. |
+
+Merge conflicts: `:DiffviewOpen` is the merge tool (keys in section 20, "Resolving Merge Conflicts").
 
 ## Daily Git Workflow
 
@@ -2086,7 +2383,7 @@ Claude Code is an AI coding assistant that runs in a terminal inside Neovim.
 4. Claude can read and edit your files directly
 5. Leave terminal mode with `<Ctrl-\><Ctrl-n>` (a plain `<Esc>` goes to Claude, e.g. to interrupt it), then press `<Space>cc` to close the panel
 
-Claude Code uses your project's git root as the working directory.
+Claude Code uses your project's git root as the working directory. `:ClaudeCodeResume` starts `claude --resume`. Inside the panel `<Ctrl-h/j/k/l>` move to the neighbour windows and `<Ctrl-f>` / `<Ctrl-b>` scroll.
 
 ---
 
@@ -2135,7 +2432,7 @@ This section covers how developers typically navigate code in this setup.
 | Rename | `<Space>rn` | Rename a symbol across the entire project |
 | Code action | `<Space>ca` | Auto-import, extract variable, fix lint issue, etc. |
 | Format | `<Space>fm` | Auto-format the file (LSP formatting; stylua in Lua buffers, prettier in Markdown buffers) |
-| Comment/uncomment | `gcc` / `gc` | Toggle comments |
+| Comment/uncomment | `gcc` / `gc` (toggle), `gcs` / `gcr` (comment / uncomment explicitly; `gcss` / `gcrr` for the current line) | Toggle or set comments |
 | Surround | `sa` / `sd` / `sr` | Add/delete/replace quotes, brackets, etc. |
 | Change inside | `ci(` / `ci"` / `ci{` | Change text inside delimiters |
 | Multiple replace | `*` then `ciw` then `n` `.` | Find-and-replace one at a time with control |
@@ -2222,6 +2519,7 @@ Custom snippets live in the `my_snippets/` directory. Each file targets a specif
 | `tex.snippets` | LaTeX | LaTeX environments and commands |
 | `markdown.snippets` | Markdown | Markdown structures |
 | `vim.snippets` | Vimscript | Vim plugin development |
+| `snippets.snippets` | Snippet files | `snip`: template for a new snippet definition |
 
 ## Creating Your Own Snippets
 
@@ -2426,7 +2724,9 @@ It never saves unnamed, read-only or special buffers (terminals, help, ...) and 
 
 ## Session Management
 
-Plugin: **vim-obsession**. Save and restore your entire Neovim session (open files, window layout, etc.).
+Plugin: **persistence.nvim** saves a session for the current folder (and git branch) automatically when you quit, once a real file was opened. It is never restored by itself: restore it from the dashboard (`r` this folder, `L` last session). Windows of Claude Code, terminals, nvim-tree, the outline, help and quickfix are left out of the saved session. `<Space>sv` (restart) brings windows, tabs and files back on its own.
+
+Plugin: **vim-obsession** (manual alternative). Save and restore your entire Neovim session (open files, window layout, etc.).
 
 | Command | What it does |
 | --- | --- |
@@ -2460,6 +2760,13 @@ Plugin: **instant.nvim**. Real-time collaborative editing.
 | `:Neogit` | Full git UI |
 | `:DevdocsOpen` | Browse programming documentation |
 | `:YankyRingHistory` | Browse yank history |
+| `:LspAttached` | Popup with the LSP servers attached to this buffer |
+| `:LspLog` | Open the LSP log |
+| `:Undotree` | Toggle the undo tree (`<Space>u`) |
+| `:AerialToggle!` | Toggle the symbol outline (`<Space>t`) |
+| `:Dashboard` | Open the start screen |
+| `:CodeDiff` | VSCode-style side-by-side diff |
+| `:DBUI` / `:Dbee` | SQL clients |
 
 ---
 ---
@@ -3250,6 +3557,10 @@ This config sets some command abbreviations (type the short form as the first wo
 | `pud` | `Lazy update` |
 | `pc` | `Lazy clean` |
 | `ps` | `Lazy sync` |
+| `z` | `Z` (zoxide jump; only when it is the whole command so far) |
+| `norm` | `Norm` (`:norm` with a live preview while you type) |
+
+Two insert-mode abbreviations fix typos: `reqire` -> `require`, `serveral` -> `several`.
 
 ---
 
@@ -3322,6 +3633,7 @@ This is the single most important mental model for understanding Vim. Almost eve
 | `gu` | Convert to **lowercase** |
 | `~` | **Toggle case** (in this config `~` is an operator because `tildeop` is set) |
 | `gc` | **Toggle comment** (vim-commentary) |
+| `gcs` / `gcr` | **Comment** / **uncomment** whole rows (smart commenting) |
 | `gq` | **Format/wrap** text |
 
 ## Motions (Nouns)
@@ -3563,6 +3875,7 @@ You can also press any partial key sequence and wait:
 | Command | What it does |
 | --- | --- |
 | `:Telescope keymaps` | Searchable list of all defined keymaps |
+| `m` on the dashboard | Search keymaps (fzf-lua) |
 | `:map` | Show all mappings (raw output) |
 | `:nmap` | Show normal-mode mappings |
 | `:imap` | Show insert-mode mappings |
@@ -3585,6 +3898,7 @@ You can also press any partial key sequence and wait:
 | --- | --- |
 | `:checkhealth` | Diagnose installation issues (LSP servers, providers, etc.) |
 | `:LspInfo` | LSP status: opens `:checkhealth vim.lsp` (clients and configuration) |
+| `:LspAttached` | Popup with the LSP servers attached to this buffer |
 | `:Lazy` | Open the plugin manager |
 | `:messages` | Show recent notification messages |
 
