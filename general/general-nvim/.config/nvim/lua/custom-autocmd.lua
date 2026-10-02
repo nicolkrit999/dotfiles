@@ -240,15 +240,43 @@ api.nvim_create_autocmd("ColorScheme", {
   pattern = "*",
   desc = "Define or override some highlight groups",
   callback = function()
-    -- For yank highlight
-    vim.api.nvim_set_hl(0, "YankColor", { fg = "#34495E", bg = "#2ECC71", ctermfg = 59, ctermbg = 41 })
+    -- Yank flash, cursor and float border: colours come from the ACTIVE colorscheme's own
+    -- groups (no fixed hex). A theme lacking the source group gets a link to an existing group.
+    local function get(name)
+      local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = name, link = false })
+      return ok and hl or {}
+    end
 
-    -- For cursor colors, see option guicursor for more info
-    vim.api.nvim_set_hl(0, "Cursor", { fg = "black", bg = "#00c918", bold = true, update = true })
+    -- For yank highlight: the theme's search highlight (IncSearch, else Search), else Visual
+    local yank = get("IncSearch")
+    if not yank.bg then
+      yank = get("Search")
+    end
+    if yank.bg then
+      vim.api.nvim_set_hl(0, "YankColor", { fg = yank.fg or get("Normal").bg, bg = yank.bg })
+    else
+      vim.api.nvim_set_hl(0, "YankColor", { link = "Visual" })
+    end
+
+    -- For cursor colors, see option guicursor for more info: inverse of the theme's Normal
+    -- (bold). Without both Normal colours (transparent theme) only bold is added and the
+    -- theme's own Cursor colours stay.
+    local normal = get("Normal")
+    if normal.fg and normal.bg then
+      vim.api.nvim_set_hl(0, "Cursor", { fg = normal.bg, bg = normal.fg, bold = true, update = true })
+    else
+      vim.api.nvim_set_hl(0, "Cursor", { bold = true, update = true })
+    end
     vim.api.nvim_set_hl(0, "Cursor2", { fg = "red", bg = "red", update = true }) -- user decision: keep red (upstream: fg None, bg yellow)
 
-    -- For floating windows border highlight
-    vim.api.nvim_set_hl(0, "FloatBorder", { fg = "LightGreen", bg = "None", bold = true, update = true })
+    -- For floating windows border highlight: the theme's Function colour (bold, no bg);
+    -- a theme without it links to WinSeparator
+    local border = get("Function")
+    if border.fg then
+      vim.api.nvim_set_hl(0, "FloatBorder", { fg = border.fg, bg = "None", bold = true, update = true })
+    else
+      vim.api.nvim_set_hl(0, "FloatBorder", { link = "WinSeparator" })
+    end
 
     -- change the background color of floating window to None, so it blends better
     vim.api.nvim_set_hl(0, "NormalFloat", { bg = "None", update = true })
