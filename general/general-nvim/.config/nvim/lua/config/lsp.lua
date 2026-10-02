@@ -275,6 +275,10 @@ local servers = {
   -- JavaScript/TypeScript (typescript-language-server: node devShell). No cmd here: nvim-lspconfig's
   -- cmd is a function that prefers the project's node_modules/.bin copy; binary checked in `needs`
   ts_ls = {},
+
+  -- PHP (phpactor: php devShell). nvim-lspconfig's filetypes/root_markers are kept; the config only
+  -- pins the command, so the binary check below is exactly executable("phpactor")
+  phpactor = { cmd = { "phpactor", "language-server" }, filetypes = { "php" } },
 }
 
 -- binaries a server needs, when that is not just cmd[1]
