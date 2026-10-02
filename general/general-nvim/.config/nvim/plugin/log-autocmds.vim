@@ -14,6 +14,9 @@ function! s:log_autocmds_toggle()
     return
   endif
 
+  " fresh file each time logging is switched on (the stop message above still appends)
+  call mkdir(fnamemodify(s:logfile, ':h'), 'p')
+  call writefile([], s:logfile)
   call s:log('Started autocmd log (' . l:date . ')')
   echomsg 'LogAutocmds: logging to ' . s:logfile
   augroup LogAutocmd
