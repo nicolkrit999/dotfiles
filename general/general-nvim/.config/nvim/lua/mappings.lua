@@ -138,6 +138,9 @@ end, { silent = true, desc = "close qf and location list" })
 keymap.set("n", [[\d]], function()
   local listed = vim.fn.getbufinfo({ buflisted = 1 })
   local only = #listed == 1 and listed[1].bufnr == vim.api.nvim_get_current_buf()
+  if only and vim.api.nvim_buf_get_name(0) == "" and not vim.bo.modified then
+    return -- already the empty start buffer: nothing to delete (`:enew` would reuse it -> E516)
+  end
   local ok, err = pcall(vim.cmd, (only and "enew" or "bprevious") .. " | bdelete #")
   if not ok then -- e.g. E89 unsaved changes: show the plain Vim error, not a Lua traceback
     vim.notify((tostring(err):gsub("^.-Vim%(%a+%):", "")), vim.log.levels.ERROR)
@@ -274,7 +277,7 @@ end
 -- keeps the register, honours "a and keeps the line intact when the selection starts at col 0.
 -- NOT dead: yanky.nvim (which remaps x p) only loads on :YankyRingHistory, so this is the effective
 -- visual p in every session until then.
-keymap.set("x", "p", "P")
+keymap.set("x", "p", "P", { desc = "paste over selection (keep register)" })
 
 -- Go to a certain buffer
 keymap.set("n", "gb", '<cmd>call buf_utils#GoToBuffer(v:count, "forward")<cr>', { desc = "go to next buffer ({N}gb: buffer N)" })
@@ -545,15 +548,22 @@ keymap.set("c", "<C-A>", "<HOME>")
 keymap.set("i", "<C-D>", "<DEL>")
 
 -- Blink cursorline/cursorcolumn in the window where the key was pressed (also when another
--- window becomes current meanwhile); the original values come back at the end.
+-- window becomes current meanwhile); the original values come back at the end. A press while
+-- that window is still blinking is ignored (it would save the half-blinked state as original).
 keymap.set("n", "<leader>cb", function()
   local win = vim.api.nvim_get_current_win()
+  if vim.w[win].cb_blinking then return end
+  vim.w[win].cb_blinking = true
   local orig_cul, orig_cuc = vim.wo[win].cursorline, vim.wo[win].cursorcolumn
   local cnt = 0
   local blink_times = 7
   local timer = uv.new_timer()
-  if timer == nil then return end
+  if timer == nil then
+    vim.w[win].cb_blinking = nil
+    return
+  end
   local function stop()
+    if vim.api.nvim_win_is_valid(win) then vim.w[win].cb_blinking = nil end
     timer:stop()
     if not timer:is_closing() then timer:close() end
   end
