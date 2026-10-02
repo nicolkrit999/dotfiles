@@ -298,8 +298,9 @@ for _, m in ipairs(java_maps) do
   keymap.set("n", m[1], java_not_attached, { desc = m[3] .. " (needs jdtls)" })
 end
 
+local java_group = vim.api.nvim_create_augroup("java_keymaps", { clear = true })
 vim.api.nvim_create_autocmd("LspAttach", {
-  group = vim.api.nvim_create_augroup("java_keymaps", { clear = true }),
+  group = java_group,
   desc = "buffer-local Java keymaps when jdtls attaches",
   callback = function(ev)
     local client = vim.lsp.get_client_by_id(ev.data.client_id)
@@ -309,6 +310,20 @@ vim.api.nvim_create_autocmd("LspAttach", {
     local bufnr = ev.buf
     for _, m in ipairs(java_maps) do
       keymap.set("n", m[1], "<cmd>" .. m[2] .. "<cr>", { buffer = bufnr, desc = m[3] })
+    end
+  end,
+})
+-- jdtls detached (stopped/crashed): remove the buffer-local maps, the global fallbacks apply again
+vim.api.nvim_create_autocmd("LspDetach", {
+  group = java_group,
+  desc = "remove buffer-local Java keymaps when jdtls detaches",
+  callback = function(ev)
+    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+    if not client or client.name ~= "jdtls" then
+      return
+    end
+    for _, m in ipairs(java_maps) do
+      pcall(keymap.del, "n", m[1], { buffer = ev.buf })
     end
   end,
 })
