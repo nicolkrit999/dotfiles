@@ -81,8 +81,13 @@ end
 --- check if we are inside a git repo
 --- @return boolean
 function M.inside_git_repo()
-  local result = vim.system({ "git", "rev-parse", "--is-inside-work-tree" }, { text = true }):wait()
-  if result.code ~= 0 then
+  if fn.executable("git") ~= 1 then
+    return false
+  end
+  local ok, result = pcall(function()
+    return vim.system({ "git", "rev-parse", "--is-inside-work-tree" }, { text = true }):wait()
+  end)
+  if not ok or result.code ~= 0 then
     return false
   end
 
@@ -174,8 +179,13 @@ function M._get_branch(is_local)
   else
     git_cmd = { "git", "for-each-ref", "--exclude=refs/remotes/*/HEAD", "--format=%(refname:short)", "refs/remotes/" }
   end
-  local result = vim.system(git_cmd, { text = true }):wait()
-  if result.code ~= 0 then
+  if fn.executable("git") ~= 1 then
+    return {}
+  end
+  local ok, result = pcall(function()
+    return vim.system(git_cmd, { text = true }):wait()
+  end)
+  if not ok or result.code ~= 0 then
     vim.notify("error fetching git branch", vim.log.levels.WARN)
     return {}
   end
