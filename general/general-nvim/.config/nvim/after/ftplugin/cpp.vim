@@ -4,7 +4,8 @@ setlocal formatoptions-=r
 
 " <F9> compile & run: only when a C++ compiler is on PATH (e.g. g++ from the c-cpp devShell)
 if executable('clang++') || executable('g++')
-  nnoremap <silent> <buffer> <F9> :call <SID>compile_run_cpp()<CR>
+  call v:lua.vim.keymap.set('n', '<F9>', ':call ' . expand('<SID>') . 'compile_run_cpp()<CR>',
+        \ {'buffer': v:true, 'silent': v:true, 'desc': 'C++: compile and run'})
 endif
 
 function! s:compile_run_cpp() abort

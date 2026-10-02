@@ -72,8 +72,9 @@ vim.api.nvim_create_user_command("JSONFormat", function(context)
     return
   end
 
-  if range == 0 or range == 2 then
-    -- range is only passed when invoked as `:JSONFormat`, not via `<cmd>JSONFormat`
+  if range == 0 or range == 1 or range == 2 then
+    -- range is only passed when invoked as `:JSONFormat`, not via `<cmd>JSONFormat`;
+    -- range 1 (`:2JSONFormat`) has line1 == line2
     local buf = vim.api.nvim_get_current_buf()
     local lines = vim.api.nvim_buf_get_lines(buf, line1 - 1, line2, false)
     local res = vim.system({ python_cmd, "-m", "json.tool", "--indent", "2" }, {
