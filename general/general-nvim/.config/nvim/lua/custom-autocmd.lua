@@ -453,3 +453,26 @@ api.nvim_create_autocmd("BufWritePost", {
     end)
   end,
 })
+
+-- Spell: the *.add word lists are tracked, their compiled *.add.spl are not (gitignored). Vim only
+-- compiles an .add file when you `zg` a word, so on a fresh checkout (or after a `git pull` that
+-- changed a list) the words would be flagged until then. At VimEnter, silently run :mkspell! for
+-- every list in 'spellfile' whose .spl is missing or older. Never errors: a read-only spell dir
+-- (nix store, other user) or a failing :mkspell just leaves things as they are.
+api.nvim_create_autocmd("VimEnter", {
+  group = api.nvim_create_augroup("spell_rebuild", { clear = true }),
+  desc = "Rebuild stale spell/*.add.spl word-list binaries",
+  callback = function()
+    vim.schedule(function()
+      -- 'spellfile' is a comma list of the per-language .add files (see lua/options.lua)
+      for _, add in ipairs(vim.split(vim.o.spellfile, ",", { plain = true, trimempty = true })) do
+        local spl = add .. ".spl"
+        local add_time = vim.fn.getftime(add)
+        -- getftime() is -1 for a missing file: no .add, nothing to compile
+        if add_time > 0 and vim.fn.filewritable(vim.fs.dirname(add)) == 2 and add_time > vim.fn.getftime(spl) then
+          pcall(vim.cmd, "silent mkspell! " .. vim.fn.fnameescape(add))
+        end
+      end
+    end)
+  end,
+})
