@@ -36,7 +36,11 @@ local function unique_definition()
         return
       end
       vim.fn.setloclist(0, {}, " ", options)
-      if #options.items > 1 then vim.cmd.lopen() else vim.cmd([[silent! lfirst]]) end
+      if #options.items > 1 then
+        vim.cmd.lopen()
+      else
+        vim.cmd([[silent! lfirst]])
+      end
     end,
   }
 end
@@ -71,10 +75,14 @@ local our_maps = {} ---@type table<integer, table<string, function>>
 ---@param lhs string
 local function del_our_map(bufnr, lhs)
   local cb = (our_maps[bufnr] or {})[lhs]
-  if not cb then return end
+  if not cb then
+    return
+  end
   our_maps[bufnr][lhs] = nil
   -- maparg reads the current buffer: look it up from bufnr's side
-  local m = vim.api.nvim_buf_call(bufnr, function() return vim.fn.maparg(lhs, "n", false, true) end)
+  local m = vim.api.nvim_buf_call(bufnr, function()
+    return vim.fn.maparg(lhs, "n", false, true)
+  end)
   if m.buffer == 1 and m.callback == cb then
     pcall(vim.keymap.del, "n", lhs, { buffer = bufnr })
   end
@@ -83,14 +91,18 @@ end
 ---@param bufnr integer
 ---@param detaching_id integer? client that is detaching (still listed during LspDetach)
 local function update_lsp_keys(bufnr, detaching_id)
-  if not vim.api.nvim_buf_is_valid(bufnr) then return end
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
   local clients = vim.tbl_filter(function(c)
     return c.id ~= detaching_id
   end, vim.lsp.get_clients { bufnr = bufnr })
   our_maps[bufnr] = our_maps[bufnr] or {}
   for _, k in ipairs(lsp_keys) do
     local lhs, method, action, desc, fallback = k[1], k[2], k[3], k[4], k[5]
-    local supported = vim.iter(clients):any(function(c) return c:supports_method(method, bufnr) end)
+    local supported = vim.iter(clients):any(function(c)
+      return c:supports_method(method, bufnr)
+    end)
     -- no client left: drop the warning maps too, the global fallbacks below take over
     local cb = supported and action or (#clients > 0 and fallback or nil)
     if cb then
@@ -176,9 +188,8 @@ local servers = {
     cmd = { "yaml-language-server", "--stdio" },
     -- only plain yaml: nothing here sets yaml.docker-compose/gitlab/helm-values
     filetypes = { "yaml" },
-    settings = { yaml = { format = { enable = true } } }
+    settings = { yaml = { format = { enable = true } } },
   },
-
 
   -- Markdown setup
   marksman = {
@@ -269,7 +280,9 @@ end
 local function startable_names(bufnr)
   local ft, names = vim.bo[bufnr].filetype, {}
   for _, config in ipairs(vim.lsp.get_configs { enabled = true }) do
-    local live = vim.tbl_filter(function(c) return not c:is_stopped() end, vim.lsp.get_clients { bufnr = bufnr, name = config.name })
+    local live = vim.tbl_filter(function(c)
+      return not c:is_stopped()
+    end, vim.lsp.get_clients { bufnr = bufnr, name = config.name })
     if (config.filetypes == nil or vim.list_contains(config.filetypes, ft)) and #live == 0 then
       table.insert(names, config.name)
     end
@@ -308,7 +321,11 @@ vim.api.nvim_create_user_command("LspStart", function(opts)
         vim.lsp.start(config, { bufnr = bufnr, reuse_client = config.reuse_client })
       end
       if type(config.root_dir) == "function" then
-        config.root_dir(bufnr, function(root) vim.schedule(function() start(root) end) end)
+        config.root_dir(bufnr, function(root)
+          vim.schedule(function()
+            start(root)
+          end)
+        end)
       else
         start(config.root_dir or (config.root_markers and vim.fs.root(bufnr, config.root_markers)) or nil)
       end
@@ -318,7 +335,9 @@ end, {
   nargs = "*",
   desc = "Start LSP clients for this buffer (enabled ones not running, or the given names)",
   complete = function(arglead)
-    return vim.tbl_filter(function(n) return vim.startswith(n, arglead) end, startable_names(0))
+    return vim.tbl_filter(function(n)
+      return vim.startswith(n, arglead)
+    end, startable_names(0))
   end,
 })
 

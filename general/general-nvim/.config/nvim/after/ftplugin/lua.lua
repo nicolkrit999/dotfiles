@@ -71,7 +71,9 @@ local function stylua_format()
       view.topline = math.max(1, math.min(new_row(hunks, view.topline), last))
       local len = #(vim.api.nvim_buf_get_lines(buf, view.lnum - 1, view.lnum, false)[1] or "")
       view.col = math.max(0, math.min(view.col, len - 1))
-      vim.api.nvim_win_call(win, function() vim.fn.winrestview(view) end)
+      vim.api.nvim_win_call(win, function()
+        vim.fn.winrestview(view)
+      end)
     end
   end
 end
