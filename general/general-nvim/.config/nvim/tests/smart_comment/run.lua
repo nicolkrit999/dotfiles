@@ -343,6 +343,31 @@ local keymap_tests = {
     keys = { "gg", "gcs" },
     exp = { "// void f() {", "  a();", "}" },
   },
+  -- Q62: visual gcs/gcr extend to whole closed folds at either end of the selection
+  {
+    name = "Q62 V on a closed fold + gcs comments the whole fold",
+    lines = { "void f() {", "  a();", "}", "x();" },
+    setup = function()
+      fold_setup({ { 1, 3 } })
+    end,
+    teardown = function()
+      fold_teardown()
+    end,
+    keys = { "gg", "V", "gcs" },
+    exp = { "// void f() {", "//   a();", "// }", "x();" },
+  },
+  {
+    name = "Q62 V from a row into a closed fold below + gcr",
+    lines = { "// x();", "// void f() {", "//   a();", "// }", "// y();" },
+    setup = function()
+      fold_setup({ { 2, 4 } })
+    end,
+    teardown = function()
+      fold_teardown()
+    end,
+    keys = { "gg", "Vj", "gcr" },
+    exp = { "x();", "void f() {", "  a();", "}", "// y();" },
+  },
   {
     name = "Q45 single undo after gcr deleting delimiter rows",
     lines = { "x();", "/*", "a();", "b();", "*/", "y();" },

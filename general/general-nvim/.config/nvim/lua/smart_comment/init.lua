@@ -364,6 +364,16 @@ function M.run(action)
   local s, e
   if mode == "v" or mode == "V" or mode == "\22" then
     s, e = vim.fn.line("v"), vim.fn.line(".")
+    if s > e then
+      s, e = e, s
+    end
+    -- like Vim's operators in Visual mode: closed folds at either end count as a whole (Q62)
+    if vim.fn.foldclosed(s) ~= -1 then
+      s = vim.fn.foldclosed(s)
+    end
+    if vim.fn.foldclosedend(e) ~= -1 then
+      e = vim.fn.foldclosedend(e)
+    end
     vim.api.nvim_feedkeys(vim.keycode("<Esc>"), "nx", false)
   else
     -- like `dd`: a closed fold counts as one row (the whole fold), and the count counts visible rows
