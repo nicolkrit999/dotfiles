@@ -1089,7 +1089,13 @@ local plugin_specs = {
   },
   {
     "jbyuki/instant.nvim",
-    config = function()
+    -- loaded on its first command (full list from plugin/instant.vim)
+    cmd = {
+      "InstantStartServer", "InstantStopServer", "InstantStartSession", "InstantJoinSession",
+      "InstantStartSingle", "InstantJoinSingle", "InstantStop", "InstantStatus", "InstantFollow",
+      "InstantStopFollow", "InstantOpenAll", "InstantSaveAll", "InstantMark", "InstantMarkClear",
+    },
+    init = function()
       vim.g.instant_username = vim.env.USER or vim.env.USERNAME or "krit"
       -- host and port are not options: pass them to :InstantStartServer / :InstantStartSession /
       -- :InstantJoinSession (e.g. `:InstantStartSession 127.0.0.1 8081`)
