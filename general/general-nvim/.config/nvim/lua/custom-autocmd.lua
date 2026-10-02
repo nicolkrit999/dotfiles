@@ -140,7 +140,15 @@ end
 api.nvim_create_autocmd({ "VimEnter" }, {
   group = api.nvim_create_augroup("open_tree_on_dir", { clear = true }),
   desc = "nvim <dir>: cd into it and open nvim-tree",
-  callback = open_nvim_tree,
+  callback = function(data)
+    -- scheduled, outside VimEnter: wiping the dir buffer inside the event skipped the remaining
+    -- VimEnter autocmds, and the cd's DirChanged (git repo check) would not fire (not nested)
+    vim.schedule(function()
+      if api.nvim_buf_is_valid(data.buf) then
+        open_nvim_tree(data)
+      end
+    end)
+  end,
 })
 
 -- Do not use smart case in command line mode, extracted from https://vi.stackexchange.com/a/16511/15292.
