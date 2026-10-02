@@ -633,10 +633,15 @@ local plugin_specs = {
       -- (vim.keymap.set, not `nmap`/`omap`, so the maps carry a desc; remap = true like nmap)
       vim.keymap.set("n", "s", "<Nop>", { remap = true, desc = "Disabled (s is the vim-sandwich prefix, use cl)" })
       -- operator-pending: `gcs`, pause, `s` must not leave the operator pending (the next motion
-      -- would run it): cancel it. vim-sandwich's longer o-mode maps (`sa`...) still win.
+      -- would run it): cancel it. Instant because nothing longer starts with o-mode `s` (the
+      -- o-mode `sa` is unmapped in config() below).
       vim.keymap.set("o", "s", "<Esc>", { remap = true, desc = "Cancel the pending operator (s is the vim-sandwich prefix)" })
     end,
     config = function()
+      -- vim-sandwich's o-mode `sa` (<Plug>(sandwich-add)) has no user-facing use (adding is the
+      -- normal/visual `sa`); drop it so o-mode `s` (= cancel) is not a prefix of it and which-key
+      -- stops reporting "<s> overlaps with <sa>"
+      pcall(vim.keymap.del, "o", "sa")
       -- let targets.vim own ab/ib (`:checkhealth targets` conflict)
       for _, mode in ipairs({ "x", "o" }) do
         pcall(vim.keymap.del, mode, "ab")
