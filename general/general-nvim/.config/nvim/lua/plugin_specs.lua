@@ -642,7 +642,7 @@ local plugin_specs = {
     end,
   },
 
-  -- Only use these plugin on Windows and Mac and when LaTeX is installed
+  -- LaTeX support: loaded on every platform whenever `latex` is on PATH (on Linux via the LaTeX devShell)
   {
     "lervag/vimtex",
     enabled = function()
