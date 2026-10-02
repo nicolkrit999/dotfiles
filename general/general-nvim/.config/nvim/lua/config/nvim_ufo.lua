@@ -115,7 +115,7 @@ vim.keymap.set("n", "zm", function()
   step_folds(-1, "zm")
 end, { desc = "Close one more fold level" })
 vim.keymap.set("n", "<leader>K", function()
-  local _ = require("ufo").peekFoldedLinesUnderCursor()
+  require("ufo").peekFoldedLinesUnderCursor()
 end, {
   desc = "Preview folded lines",
 })
