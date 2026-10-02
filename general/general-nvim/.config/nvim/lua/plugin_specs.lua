@@ -1,7 +1,7 @@
 local utils = require("utils")
 
-local plugin_dir = vim.fn.stdpath("data") .. "/lazy"
-local lazypath = plugin_dir .. "/lazy.nvim"
+local plugin_dir = vim.fs.joinpath(vim.fn.stdpath("data"), "lazy")
+local lazypath = vim.fs.joinpath(plugin_dir, "lazy.nvim")
 
 if not vim.uv.fs_stat(lazypath) then
   vim.fn.system {
@@ -125,6 +125,7 @@ local plugin_specs = {
   { "machakann/vim-swap",          event = "VeryLazy" },
 {
     "nvim-treesitter/nvim-treesitter",
+    branch = "main",
     build = function()
       if not (vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")) then
         vim.cmd(":TSUpdate")
@@ -502,7 +503,10 @@ local plugin_specs = {
 
   {
     "sindrets/diffview.nvim",
-    cmd = { "DiffviewOpen" },
+    cmd = { "DiffviewOpen", "DiffviewFileHistory" },
+    config = function()
+      require("config.diffview")
+    end,
   },
 
   {
@@ -810,7 +814,7 @@ local plugin_specs = {
     -- it seems that we can only call the firenvim function directly.
     -- Using vim.fn or vim.cmd to call this function will fail.
     build = function()
-      local firenvim_path = plugin_dir .. "/firenvim"
+      local firenvim_path = vim.fs.joinpath(plugin_dir, "firenvim")
       vim.opt.runtimepath:append(firenvim_path)
       vim.cmd("runtime! firenvim.vim")
 
@@ -949,6 +953,8 @@ local plugin_specs = {
         -- See the configuration section for more details
         -- Load luvit types when the `vim.uv` word is found
         { path = "${3rd}/luv/library", words = { "vim%.uv" } },
+        -- types for `vim.lsp.Config` / lspconfig settings (used in after/lsp/*.lua)
+        { path = "nvim-lspconfig", words = { "lspconfig" } },
       },
     },
   },
@@ -983,7 +989,13 @@ local plugin_specs = {
   {
     "catgoose/nvim-colorizer.lua",
     event = "VeryLazy",
-    opts = { -- set to setup table
+    opts = {
+      options = {
+        parsers = {
+          -- do not color plain color words such as "red" or "Black"
+          names = { enable = false },
+        },
+      },
     },
   },
   {
@@ -991,7 +1003,14 @@ local plugin_specs = {
     event = "FileType qf",
     ---@module "quicker"
     ---@type quicker.SetupOptions
-    opts = {},
+    opts = {
+      edit = {
+        enabled = false,
+      },
+      max_filename_width = function()
+        return math.floor(math.min(40, vim.o.columns / 2))
+      end,
+    },
   },
 
   {
@@ -1097,6 +1116,8 @@ local plugin_specs = {
 ---@diagnostic disable-next-line: missing-fields
 require("lazy").setup {
   spec = plugin_specs,
+  -- limit parallel git jobs to avoid GitHub rate limits
+  concurrency = 5,
   ui = {
     border = "rounded",
     title = "Plugin Manager",
@@ -1114,7 +1135,7 @@ require("lazy").setup {
 -- Nix-provided plugins/grammars onto ~/.local/share/nvim/site/pack/hm/start/ (neovim.nix's
 -- programs.neovim.plugins), so append any such start packages to &rtp ourselves, after lazy is done
 -- rewriting it.
-for _, dir in ipairs(vim.fn.globpath(vim.fn.stdpath("data") .. "/site/pack/*/start/*", "", false, true)) do
+for _, dir in ipairs(vim.fn.globpath(vim.fs.joinpath(vim.fn.stdpath("data"), "site/pack/*/start/*"), "", false, true)) do
   vim.opt.rtp:append(dir)
 end
 

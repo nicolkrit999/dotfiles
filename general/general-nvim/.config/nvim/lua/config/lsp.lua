@@ -42,12 +42,19 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end, { desc = "unique definition" })
 
     -- Standard Mappings
-    map("n", "K", function() vim.lsp.buf.hover({ border = "single" }) end)
+    map("n", "K", function()
+      vim.lsp.buf.hover {
+        border = "single",
+        max_height = 40,
+        max_width = 100,
+      }
+    end, { desc = "LSP hover" })
     map("n", "<space>rn", vim.lsp.buf.rename, { desc = "rename" })
     map("n", "<space>ca", vim.lsp.buf.code_action, { desc = "code action" })
   end,
 })
 -- 4. Define and Enable Servers
+---@type table<string, vim.lsp.Config>
 local servers = {
   pyright = { cmd = { "pyright-langserver", "--stdio" } },
   ruff = { cmd = { "ruff", "server" } },

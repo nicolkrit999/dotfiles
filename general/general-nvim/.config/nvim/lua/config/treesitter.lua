@@ -10,7 +10,7 @@ ts.setup({})
 -- and the filesystem is read-only, so only install parsers on non-Nix systems.
 local is_nix = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
 if not is_nix then
-  ts.install({ "python", "cpp", "lua", "vim", "json", "toml", "html" })
+  ts.install({ "cpp", "diff", "dockerfile", "git_config", "git_rebase", "gitcommit", "html", "json", "lua", "python", "toml", "vim" })
 end
 
 -- Highlighting is no longer a module option: start it per buffer when a parser exists.

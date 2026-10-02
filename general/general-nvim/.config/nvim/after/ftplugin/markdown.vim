@@ -55,7 +55,7 @@ function! AddListSymbol(type, ...) abort
 endfunction
 
 " Add hard line breaks for Markdown
-nnoremap <buffer><silent> \ :set operatorfunc=AddLineBreak<CR>g@
+nnoremap <buffer><silent> <leader>mb :set operatorfunc=AddLineBreak<CR>g@
 xnoremap <buffer><silent> \ :<C-U> call AddLineBreak(visualmode(), 1)<CR>
 
 function! AddLineBreak(type, ...) abort

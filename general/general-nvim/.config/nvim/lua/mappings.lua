@@ -93,9 +93,9 @@ keymap.set("n", [[\D]], function()
   end
 end, { desc = "delete other buffers" })
 
--- Insert a blank line below or above current line (do not move the cursor), see https://stackoverflow.com/a/16136133/6064933
-keymap.set("n", "<space>o", "printf('m`%so<ESC>``', v:count1)", { expr = true, desc = "insert line below" })
-keymap.set("n", "<space>O", "printf('m`%sO<ESC>``', v:count1)", { expr = true, desc = "insert line above" })
+-- Close the current tab / all other tabs
+keymap.set("n", [[\t]], "<cmd>tabclose<cr>", { silent = true, desc = "close current tab" })
+keymap.set("n", [[\T]], "<cmd>tabonly<cr>", { silent = true, desc = "close other tabs" })
 
 -- Move the cursor based on physical lines, not the actual lines.
 keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true })
@@ -116,13 +116,18 @@ keymap.set("x", ">", ">gv")
 
 -- Edit and reload nvim config file quickly
 keymap.set("n", "<leader>ev", "<cmd>tabnew $MYVIMRC <bar> tcd %:h<cr>", { silent = true, desc = "open init.lua" })
+-- Restart nvim (0.12 `:restart`) after writing all buffers, and reopen the current file.
+-- Re-sourcing $MYVIMRC is not supported with lazy.nvim. The builtin `ZR` also restarts,
+-- but does not write all buffers nor reopen the current file.
 keymap.set("n", "<leader>sv", function()
-  vim.cmd([[
-      update $MYVIMRC
-      source $MYVIMRC
-    ]])
-  vim.notify("Nvim config successfully reloaded!", vim.log.levels.INFO, { title = "nvim-config" })
-end, { silent = true, desc = "reload init.lua" })
+  local cur = vim.fn.expand("%:p")
+  vim.cmd("silent! wall")
+  if cur ~= "" then
+    vim.cmd("restart edit " .. vim.fn.fnameescape(cur))
+  else
+    vim.cmd("restart")
+  end
+end, { silent = true, desc = "restart nvim (write all, reopen current file)" })
 
 -- Reselect the text that has just been pasted, see also https://stackoverflow.com/a/4317090/6064933
 keymap.set("n", "<leader>v", "printf('`[%s`]', getregtype()[0])", { expr = true, desc = "reselect last pasted area" })

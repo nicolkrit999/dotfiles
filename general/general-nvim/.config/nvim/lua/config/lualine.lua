@@ -101,6 +101,11 @@ local function ime_state()
 end
 
 local function trailing_space()
+  -- do not warn while typing (insert mode, incl. ic/ix completion sub-modes)
+  if vim.api.nvim_get_mode().mode:sub(1, 1) == "i" then
+    return ""
+  end
+
   if not vim.o.modifiable then
     return ""
   end
@@ -154,6 +159,27 @@ local function mixed_indent()
   else
     return "MI:" .. space_indent
   end
+end
+
+-- show encoding only when it is not UTF-8
+local function show_encoding()
+  local fileencoding = vim.api.nvim_get_option_value("fileencoding", { buf = 0 })
+  fileencoding = string.upper(fileencoding)
+  if fileencoding ~= "UTF-8" and fileencoding ~= "" then
+    return fileencoding
+  end
+  return ""
+end
+
+-- show fileformat only when it is not unix
+local function show_fileformat()
+  local fileformat = vim.api.nvim_get_option_value("fileformat", { buf = 0 })
+  -- unix is the common case, do not show it
+  if fileformat == "unix" then
+    return ""
+  end
+  local symbols = { dos = "win", mac = "mac" }
+  return symbols[fileformat] or fileformat
 end
 
 local diff = function()
@@ -224,10 +250,10 @@ require("lualine").setup {
   options = {
     icons_enabled = true,
     theme = "auto",
-    component_separators = { left = "⏐", right = "⏐" },
-    section_separators = "",
+    component_separators = { left = "\\", right = "/" },
+    section_separators = { left = "\u{e0b8}", right = "\u{e0ba}" },
     disabled_filetypes = {},
-    always_divide_middle = true,
+    always_divide_middle = false,
     refresh = {
       statusline = 1000,
     },
@@ -237,13 +263,14 @@ require("lualine").setup {
       {
         "filename",
         symbols = {
-          readonly = "[🔒]",
+          readonly = "\u{f0221}",
         },
       },
     },
     lualine_b = {
       {
         "branch",
+        icon = "\u{f47f}",
         fmt = function(name, _)
           -- truncate branch name in case the name is too long
           return string.sub(name, 1, 20)
@@ -257,6 +284,12 @@ require("lualine").setup {
       {
         "diff",
         source = diff,
+      },
+      {
+        "diagnostics",
+        sources = { "nvim_diagnostic" },
+        color = { gui = "bold" },
+        symbols = { error = "🆇 ", warn = "⚠️ ", info = "ℹ️ ", hint = " " },
       },
       {
         virtual_env,
@@ -276,12 +309,7 @@ require("lualine").setup {
     lualine_x = {
       {
         get_active_lsp,
-        icon = "📡",
-      },
-      {
-        "diagnostics",
-        sources = { "nvim_diagnostic" },
-        symbols = { error = "🆇 ", warn = "⚠️ ", info = "ℹ️ ", hint = " " },
+        icon = "\u{f013}",
       },
       {
         trailing_space,
@@ -294,25 +322,19 @@ require("lualine").setup {
     },
     lualine_y = {
       {
-        "encoding",
-        fmt = string.upper,
+        show_encoding,
+        color = "ErrorMsg",
       },
       {
-        "fileformat",
-        symbols = {
-          unix = "unix",
-          dos = "win",
-          mac = "mac",
-        },
+        show_fileformat,
+        color = "ErrorMsg",
       },
-      "filetype",
       {
         ime_state,
         color = { fg = "black", bg = "#f46868" },
       },
     },
     lualine_z = {
-      "location",
       "progress",
     },
   },
