@@ -1,4 +1,5 @@
 local fn = vim.fn
+local utils = require("utils")
 
 -- cache for git states
 local git_status_cache = {
@@ -203,19 +204,11 @@ local virtual_env = function()
     return ""
   end
 
-  local conda_env = os.getenv("CONDA_DEFAULT_ENV")
-  local venv_path = os.getenv("VIRTUAL_ENV")
-
-  if venv_path == nil then
-    if conda_env == nil then
-      return ""
-    else
-      return string.format("  %s (conda)", conda_env)
-    end
-  else
-    local venv_name = vim.fn.fnamemodify(venv_path, ":t")
-    return string.format("  %s (venv)", venv_name)
+  local venv_name, kind = utils.get_virtual_env()
+  if kind == nil then
+    return ""
   end
+  return string.format("  %s (%s)", venv_name, kind)
 end
 
 local get_active_lsp = function()
@@ -246,6 +239,43 @@ local get_active_lsp = function()
   return string.format("%s (+%d)", names[1], #names - 1)
 end
 
+-- statusline click handlers (upstream 7b30596, adapted: vim.ui.select / snacks picker for branches)
+local show_branch_menu = function()
+  local info = utils.get_git_branches()
+  local items = {}
+  for _, b in ipairs(info["local"]) do
+    table.insert(items, { name = b, is_local = true })
+  end
+  for _, b in ipairs(info.remote) do
+    table.insert(items, { name = b, is_local = false })
+  end
+  if #items == 0 then
+    return
+  end
+  vim.ui.select(items, {
+    prompt = "Git branches",
+    format_item = function(item)
+      return (item.is_local and "\u{f47f} " or "\u{f0c2} ") .. item.name
+    end,
+  }, function(item)
+    if not item then
+      return
+    end
+    local cmd = item.is_local and { "git", "checkout", item.name } or { "git", "checkout", "--track", item.name }
+    local r = vim.system(cmd, { text = true }):wait()
+    if r.code ~= 0 then
+      vim.notify("failed to switch branch:\n" .. (r.stderr or ""), vim.log.levels.ERROR)
+    else
+      vim.cmd("checktime")
+    end
+  end)
+end
+
+-- same popup as :LspAttached
+local show_lsp_menu = function()
+  vim.cmd("LspAttached")
+end
+
 require("lualine").setup {
   options = {
     icons_enabled = true,
@@ -271,6 +301,7 @@ require("lualine").setup {
       {
         "branch",
         icon = "\u{f47f}",
+        on_click = show_branch_menu,
         fmt = function(name, _)
           -- truncate branch name in case the name is too long
           return string.sub(name, 1, 20)
@@ -310,6 +341,7 @@ require("lualine").setup {
       {
         get_active_lsp,
         icon = "\u{f013}",
+        on_click = show_lsp_menu,
       },
       {
         trailing_space,

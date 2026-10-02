@@ -128,4 +128,64 @@ function M.reorder_list_element(items, ele)
   return new_items
 end
 
+--- Get the current virtual env name ("" if none) and its kind
+--- @return string venv_name
+--- @return string|nil kind "venv" | "conda" | nil (no env)
+function M.get_virtual_env()
+  local conda_env = os.getenv("CONDA_DEFAULT_ENV")
+  local venv_path = os.getenv("VIRTUAL_ENV")
+  if venv_path ~= nil then
+    return vim.fn.fnamemodify(venv_path, ":t"), "venv"
+  end
+  if conda_env ~= nil then
+    return conda_env, "conda"
+  end
+  return "", nil
+end
+
+--- Project root for python files
+--- @return string|nil
+function M.get_proj_root()
+  return vim.fs.root(0, { ".git", "pyproject.toml" })
+end
+
+--- Python env kind of the current project
+--- @return "plain_venv"|"uv"|""|nil (nil = no project root)
+function M.get_py_env()
+  local project_root = M.get_proj_root()
+  if project_root == nil then
+    return nil
+  end
+  if M.get_virtual_env() ~= "" then
+    return "plain_venv"
+  end
+  if vim.fn.filereadable(vim.fs.joinpath(project_root, "uv.lock")) == 1 then
+    return "uv"
+  end
+  return ""
+end
+
+---@param is_local boolean
+---@return string[]
+function M._get_branch(is_local)
+  local git_cmd
+  if is_local then
+    git_cmd = { "git", "branch", "--list", "--format=%(refname:short)" }
+  else
+    git_cmd = { "git", "for-each-ref", "--exclude=refs/remotes/*/HEAD", "--format=%(refname:short)", "refs/remotes/" }
+  end
+  local result = vim.system(git_cmd, { text = true }):wait()
+  if result.code ~= 0 then
+    vim.notify("error fetching git branch", vim.log.levels.WARN)
+    return {}
+  end
+  return vim.split(result.stdout, "\n", { trimempty = true })
+end
+
+--- Get local and remote branches
+---@return {local: string[], remote: string[]}
+function M.get_git_branches()
+  return { ["local"] = M._get_branch(true), remote = M._get_branch(false) }
+end
+
 return M

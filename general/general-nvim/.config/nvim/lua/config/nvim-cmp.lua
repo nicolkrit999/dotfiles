@@ -73,6 +73,7 @@ cmp.setup {
 cmp.setup.filetype("tex", {
   sources = {
     { name = "omni" },
+    { name = "nvim_lsp" }, -- texlab (LaTeX devShell); no-op when no LSP is attached
     { name = "ultisnips" },
     { name = "buffer",   keyword_length = 2 },
     { name = "path" },

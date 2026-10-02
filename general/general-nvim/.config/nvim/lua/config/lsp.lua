@@ -97,6 +97,9 @@ local servers = {
   -- Grammar/spell checking (LanguageTool) for prose filetypes; replaces vim-grammarous
   ltex_plus = { cmd = { "ltex-ls-plus" } },
 
+  -- Source-code spell checker (typos); attaches to every filetype
+  typos_lsp = { cmd = { "typos-lsp" } },
+
   -- Nix setup
   nixd = {
     cmd = { "nixd" },
@@ -123,6 +126,9 @@ local servers = {
       formatterMode = "typstyle",
     },
   },
+
+  -- LaTeX (texlab comes from the LaTeX devShell; enabled only when executable)
+  texlab = { cmd = { "texlab" } },
 }
 
 for name, config in pairs(servers) do
@@ -140,3 +146,33 @@ vim.api.nvim_create_user_command("LspLog", function(_)
 end, { desc = "Show LSP log" })
 
 vim.api.nvim_create_user_command("LspRestart", "lsp restart", { desc = "Restart LSP" })
+
+-- Runtime toggle for LSP inlay hints (off by default)
+vim.g.lsp_inlay_hint_enabled = false
+
+vim.api.nvim_create_user_command("LspInlayHints", function(context)
+  if context.args == "enable" then
+    vim.g.lsp_inlay_hint_enabled = true
+  elseif context.args == "disable" then
+    vim.g.lsp_inlay_hint_enabled = false
+  end
+  -- some servers also need hints enabled in their own settings (lua_ls: settings.Lua.hint.enable = true)
+  vim.lsp.inlay_hint.enable(vim.g.lsp_inlay_hint_enabled)
+end, {
+  nargs = 1,
+  force = true,
+  desc = "Enable/disable LSP inlay hints globally",
+  complete = function()
+    return { "enable", "disable" }
+  end,
+})
+
+vim.api.nvim_create_user_command("LspAttached", function()
+  local size = { width = 40, height = 10 }
+  local win_width, win_height = vim.api.nvim_win_get_width(0), vim.api.nvim_win_get_height(0)
+  local position = {
+    col = math.max(0, math.floor((win_width - size.width) / 2)),
+    row = math.max(0, math.floor((win_height - size.height) / 2)),
+  }
+  require("lsp_utils").show_lsp_menu(size, position)
+end, { desc = "Show LSP attached to current buffer" })
