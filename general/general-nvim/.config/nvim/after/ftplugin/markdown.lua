@@ -36,7 +36,7 @@ end
 -- new {row, col} for a cursor at {row, col} of `old` after the hunks turned `old` into `new`:
 -- a line outside the hunks keeps its text and column (shifted by the line-count changes above
 -- it); a changed line is looked up in its hunk (same text, else same text with squashed
--- whitespace, nearest to its old offset); no match -> the same offset in the hunk, clamped.
+-- whitespace, nearest to its old offset); else the text anywhere in the new buffer; no match -> the same offset in the hunk, clamped.
 local function fm_cursor(old, new, hunks, row, col)
   local delta = 0
   for _, h in ipairs(hunks) do
@@ -56,6 +56,26 @@ local function fm_cursor(old, new, hunks, row, col)
         end
         if best then
           return best, pass == 1 and col or remap_col(text, new[best], col)
+        end
+      end
+      -- not inside its own hunk (a big merged hunk, e.g. several blank lines collapsed): look for
+      -- the text in the whole new buffer, nearest to the old position; blank lines are skipped
+      -- (they match anywhere)
+      if squash(text) ~= "" then
+        for pass = 1, 2 do
+          local best
+          for l = 1, #new do
+            local same = new[l] == text
+            if pass == 2 then
+              same = squash(new[l]) == squash(text)
+            end
+            if same and (not best or math.abs(l - want) < math.abs(best - want)) then
+              best = l
+            end
+          end
+          if best then
+            return best, pass == 1 and col or remap_col(text, new[best], col)
+          end
         end
       end
       if b_count == 0 then
