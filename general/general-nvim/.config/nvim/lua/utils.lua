@@ -1,5 +1,4 @@
 local fn = vim.fn
-local version = vim.version
 
 local M = {}
 
@@ -50,39 +49,16 @@ function M.rand_element(seq)
   return seq[idx]
 end
 
---- check if the current nvim version is compatible with the allowed version
---- @param expected_version string
---- @return boolean
-function M.is_compatible_version(expected_version)
-  -- check if we have the latest stable version of nvim
-  local expect_ver = version.parse(expected_version)
-  local actual_ver = vim.version()
-
-  if expect_ver == nil then
-    local msg = string.format("Unsupported version string: %s", expected_version)
-    vim.api.nvim_echo({ { msg } }, true, { err = true })
-    return false
-  end
-
-  local result = version.cmp(expect_ver, actual_ver)
-  if result ~= 0 then
-    local _ver = string.format("%s.%s.%s", actual_ver.major, actual_ver.minor, actual_ver.patch)
-    local msg = string.format(
-      "Expect nvim version %s, but your current nvim version is %s. Use at your own risk!",
-      expected_version,
-      _ver
-    )
-    vim.api.nvim_echo({ { msg } }, true, { err = true })
-  end
-
-  return true
-end
-
 --- check if we are inside a git repo
 --- @return boolean
 function M.inside_git_repo()
-  local result = vim.system({ "git", "rev-parse", "--is-inside-work-tree" }, { text = true }):wait()
-  if result.code ~= 0 then
+  if fn.executable("git") ~= 1 then
+    return false
+  end
+  local ok, result = pcall(function()
+    return vim.system({ "git", "rev-parse", "--is-inside-work-tree" }, { text = true }):wait()
+  end)
+  if not ok or result.code ~= 0 then
     return false
   end
 
@@ -163,29 +139,6 @@ function M.get_py_env()
     return "uv"
   end
   return ""
-end
-
----@param is_local boolean
----@return string[]
-function M._get_branch(is_local)
-  local git_cmd
-  if is_local then
-    git_cmd = { "git", "branch", "--list", "--format=%(refname:short)" }
-  else
-    git_cmd = { "git", "for-each-ref", "--exclude=refs/remotes/*/HEAD", "--format=%(refname:short)", "refs/remotes/" }
-  end
-  local result = vim.system(git_cmd, { text = true }):wait()
-  if result.code ~= 0 then
-    vim.notify("error fetching git branch", vim.log.levels.WARN)
-    return {}
-  end
-  return vim.split(result.stdout, "\n", { trimempty = true })
-end
-
---- Get local and remote branches
----@return {local: string[], remote: string[]}
-function M.get_git_branches()
-  return { ["local"] = M._get_branch(true), remote = M._get_branch(false) }
 end
 
 return M

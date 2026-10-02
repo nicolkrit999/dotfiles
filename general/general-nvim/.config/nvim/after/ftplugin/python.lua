@@ -23,5 +23,25 @@ if vim.fn.exists(":AsyncRun") == 2 then
   vim.keymap.set("n", "<F9>", string.format(':<C-U>AsyncRun %s -u "%%"<CR>', py_cmd), { buffer = true, silent = true, desc = "run python file" })
 end
 
-local py_fmt_cmd = (py_env == "uv") and "!uv run black" or "!black"
-vim.keymap.set("n", "<Space>f", string.format("<cmd>silent %s %%<CR>", py_fmt_cmd), { buffer = true, silent = true, desc = "format file" })
+-- <Space>f black: only when the formatter can run (black e.g. from the python devShell;
+-- in a uv project black comes from the project env through `uv run`). Without it the key shows
+-- ONE warning (an unmapped key would fall through to <Space> + f).
+local py_fmt_bin = (py_env == "uv") and "uv" or "black"
+if vim.fn.executable(py_fmt_bin) == 1 then
+  local py_fmt_cmd = (py_env == "uv") and "!uv run black" or "!black"
+  vim.keymap.set("n", "<Space>f", string.format("<cmd>silent %s %%<CR>", py_fmt_cmd), { buffer = true, silent = true, desc = "format file" })
+else
+  vim.keymap.set("n", "<Space>f", function()
+    vim.notify("Python: black not found on PATH (open nvim inside the python devShell)", vim.log.levels.WARN)
+  end, { buffer = true, desc = "format file (needs black)" })
+end
+
+-- <leader>dp: start pdb on the current file (nvim-gdb, lazy-loaded on :GdbStart*; pdb is the
+-- python stdlib module). nvim-gdb is disabled on macOS -> one warning instead.
+if vim.fn.exists(":GdbStartPDB") == 2 then
+  vim.keymap.set("n", "<leader>dp", [[:<C-U>GdbStartPDB python -m pdb %<CR>]], { buffer = true, desc = "start pdb on current file (nvim-gdb)" })
+else
+  vim.keymap.set("n", "<leader>dp", function()
+    vim.notify("<leader>dp: nvim-gdb is not available on this platform", vim.log.levels.WARN)
+  end, { buffer = true, desc = "start pdb (needs nvim-gdb)" })
+end

@@ -26,7 +26,4 @@ dbee.setup {
 -- store result, navigate the drawer tree, etc.) use dbee's own buffer-local
 -- keymaps inside the Dbee UI, configurable via the `mappings` table passed to
 -- setup() above if you want to change them from the plugin's defaults.
-local keymap = vim.keymap
-keymap.set("n", "<leader>Dt", function() dbee.toggle() end, { desc = "Dbee: Toggle UI" })
-keymap.set("n", "<leader>Do", function() dbee.open() end, { desc = "Dbee: Open UI" })
-keymap.set("n", "<leader>Dc", function() dbee.close() end, { desc = "Dbee: Close UI" })
+-- The global <leader>Dt/Do/Dc maps are lazy `keys` in the nvim-dbee spec (lua/plugin_specs.lua).

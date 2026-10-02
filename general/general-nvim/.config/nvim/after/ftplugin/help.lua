@@ -5,5 +5,5 @@ if win_width < 200 then
   return
 end
 
--- L moves the window to the far right, using the full height (`:h CTRL-W_L`)
-vim.cmd.wincmd([[L]])
+-- H = leftmost, full height (`:h CTRL-W_H`); keeps the right side for the claude-code.nvim panel
+vim.cmd.wincmd([[H]])

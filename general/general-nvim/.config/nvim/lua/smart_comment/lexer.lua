@@ -326,6 +326,164 @@ specials.perl_quotelike = {
   end,
 }
 
+-- Perl last-index `$#array`, `$#{$ref}`, `$#$ref`: the `#` is not a comment.
+specials.perl_lastidx = {
+  trig = "$",
+  match = function(line, j)
+    if line:find("^%$#[%a_{$:]", j) then
+      return { len = 2, k = "skip" }
+    end
+  end,
+}
+
+-- CMake bracket comment `#[[ ... ]]` / `#[==[ ... ]==]` and bracket argument `[[ ... ]]` (a string).
+-- An escaped `\#[[` is not a comment.
+specials.cmake_bracket = {
+  trig = "#[",
+  match = function(line, j)
+    local eq = line:match("^#%[(=*)%[", j)
+    if eq then
+      local n, k = 0, j - 1
+      while k >= 1 and line:sub(k, k) == "\\" do
+        n, k = n + 1, k - 1
+      end
+      if n % 2 == 1 then
+        return nil
+      end
+      return { len = 3 + #eq, k = "block", open = "#[" .. eq .. "[", close = "]" .. eq .. "]" }
+    end
+    eq = line:match("^%[(=*)%[", j)
+    if eq then
+      return { len = 2 + #eq, k = "string", close = "]" .. eq .. "]", ml = true }
+    end
+  end,
+}
+
+-- A quoted string whose interpolations (`#{...}` in Elixir, `${...}` / `%{...}` in HCL) may contain
+-- nested quoted strings: `"#{m["#"]}"`. The whole string is skipped when it closes on the same row;
+-- otherwise nil, and the spec's plain `strings` entry takes over (multi-line strings).
+-- quotes: chars that open such a string; opens: interpolation openers; lits: escaped (literal) openers.
+local function interp_string(quotes, opens, lits)
+  local scan_str
+  local function scan_expr(line, k)
+    local depth = 1
+    while k <= #line do
+      local ch = line:sub(k, k)
+      if quotes:find(ch, 1, true) then
+        k = scan_str(line, k + 1, ch)
+        if not k then
+          return nil
+        end
+      else
+        if ch == "{" then
+          depth = depth + 1
+        elseif ch == "}" then
+          depth = depth - 1
+          if depth == 0 then
+            return k + 1
+          end
+        end
+        k = k + 1
+      end
+    end
+  end
+  scan_str = function(line, k, q)
+    while k <= #line do
+      local ch = line:sub(k, k)
+      local lit, open
+      for _, l in ipairs(lits) do
+        if line:sub(k, k + #l - 1) == l then
+          lit = l
+        end
+      end
+      if not lit then
+        for _, o in ipairs(opens) do
+          if line:sub(k, k + #o - 1) == o then
+            open = o
+          end
+        end
+      end
+      if ch == "\\" then
+        k = k + 2
+      elseif lit then
+        k = k + #lit
+      elseif open then
+        k = scan_expr(line, k + #open)
+        if not k then
+          return nil
+        end
+      elseif ch == q then
+        return k + 1
+      else
+        k = k + 1
+      end
+    end
+  end
+  return {
+    -- scan(line, k, close): end column + 1 of a string body starting at k and closed by `close`
+    -- (interpolations skipped), or nil when it does not close on this row
+    scan = function(line, k, close)
+      return scan_str(line, k, close)
+    end,
+    trig = quotes,
+    match = function(line, j)
+      local q = line:sub(j, j)
+      if line:sub(j, j + 2) == q:rep(3) then
+        return nil -- heredoc / triple-quoted string: the spec's strings handle it
+      end
+      local k = scan_str(line, j + 1, q)
+      if k then
+        return { len = k - j, k = "skip" }
+      end
+    end,
+  }
+end
+
+specials.elixir_interp = interp_string([["']], { "#{" }, {})
+specials.hcl_string = interp_string('"', { "${", "%{" }, { "$${", "%%{" })
+
+-- Elixir sigils: ~r/.../, ~s(...), ~w[...], ~S"""...""" (lowercase: one letter; uppercase: letters
+-- and digits). The content is opaque text, like a string.
+specials.elixir_sigil = {
+  trig = "~",
+  match = function(line, j)
+    local name = line:match("^~(%l)", j) or line:match("^~(%u[%u%d]*)", j)
+    if not name then
+      return nil
+    end
+    local k = j + 1 + #name
+    local d = line:sub(k, k)
+    if d == "" or not d:find("[/|\"'%(%[{<]") then
+      return nil
+    end
+    if (d == '"' or d == "'") and line:sub(k, k + 2) == d:rep(3) then
+      return { len = k + 3 - j, k = "string", close = d:rep(3), esc = "\\", ml = true }
+    end
+    local close = brackets[d] or d
+    -- lowercase sigils interpolate: `#{...}` may hold the closing delimiter (`~s(#{f(x)} # y)`)
+    local e = name:find("^%l") and specials.elixir_interp.scan(line, k + 1, close)
+    if e then
+      return { len = e - j, k = "skip" }
+    end
+    return { len = k + 1 - j, k = "string", close = close, esc = "\\", ml = true }
+  end,
+}
+
+-- HCL / Terraform heredoc `<<EOF` / `<<-EOF` (the opener ends the row; the closing identifier may
+-- be indented).
+specials.heredoc_hcl = {
+  trig = "<",
+  match = function(line, j, ctx)
+    if ctx.inner then
+      return nil
+    end
+    local s, e, _, id = line:find("^<<(%-?)([%a_][%w_%-]*)%s*$", j)
+    if s then
+      return { len = e - j + 1, k = "heredoc", delim = id, strip = "^%s*" }
+    end
+  end,
+}
+
 local function class_escape(ch)
   return ch:find("[%^%]%-%%]") and "%" .. ch or ch
 end
@@ -359,7 +517,7 @@ local function prepare(spec)
   for _, s in ipairs(spec.strings or {}) do
     table.insert(p.tokens, {
       k = "string", open = s[1], close = s[2], esc = s.esc, dbl = s.dbl, ml = s.ml, nix = s.nix,
-      not_after_word = s.not_after_word,
+      not_after_word = s.not_after_word, oneline = s.oneline,
     })
     trig(s[1])
   end
@@ -442,6 +600,8 @@ local function candidate(line, j, spec, p, ctx, fnb)
       elseif t.k == "block" then
         if t.bol and not (j == 1 and is_ws(line:sub(j + n, j + n))) then
           ok = false
+        elseif spec.bol_only and not spec.bol_string_heuristic and j ~= fnb then
+          ok = false -- strict bol_only ('commentstring' fallback): only as the first non-blank char
         elseif inner and not (is_ws(before) and is_ws(line:sub(j + n, j + n))) then
           ok = false
         end
@@ -454,8 +614,8 @@ local function candidate(line, j, spec, p, ctx, fnb)
       else
         if t.not_after_word and is_word(before) then
           ok = false
-        elseif inner and not line:find(t.close, j + n, true) then
-          ok = false
+        elseif (inner or t.oneline) and not line:find(t.close, j + n, true) then
+          ok = false -- oneline: only a string when it closes on the same row (vim's conf syntax)
         end
         if ok then
           offer({ len = n, k = "string", close = t.close, esc = t.esc, dbl = t.dbl, ml = t.ml, nix = t.nix })

@@ -29,6 +29,13 @@ diffview.setup {
       { "n", "<leader>gCt", actions.conflict_choose("theirs"), { desc = "Conflict choose theirs" } },
       { "n", "<leader>gCo", actions.conflict_choose("ours"), { desc = "Conflict choose ours" } },
       { "n", "<leader>gCa", actions.conflict_choose("all"), { desc = "Conflict choose both" } },
+      { "n", "<leader>gCb", actions.conflict_choose("base"), { desc = "Conflict choose base" } },
+      -- diffview defaults replaced by <leader>gC*; disabled so the user's global
+      -- <leader>cb (show cursor) and LSP <leader>ca (code action) keep working inside diffview
+      { "n", "<leader>co", false },
+      { "n", "<leader>ct", false },
+      { "n", "<leader>cb", false },
+      { "n", "<leader>ca", false },
       { "n", "]C", actions.next_conflict, { desc = "Next conflict" } },
       { "n", "[C", actions.prev_conflict, { desc = "Previous conflict" } },
     },

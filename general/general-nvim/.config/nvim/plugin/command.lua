@@ -1,29 +1,49 @@
 -- Copy file path to clipboard
+local copy_path_choices = { "nameonly", "relative", "absolute" }
 vim.api.nvim_create_user_command("CopyPath", function(context)
-  local full_path = vim.fn.glob("%:p")
-
-  local file_path = nil
-  if context["args"] == "nameonly" then
-    file_path = vim.fn.fnamemodify(full_path, ":t")
+  local kind = context["args"]
+  if not vim.tbl_contains(copy_path_choices, kind) then
+    vim.notify("CopyPath: argument must be one of " .. table.concat(copy_path_choices, ", "), vim.log.levels.WARN)
+    return
   end
 
-  -- get the file path relative to project root
-  if context["args"] == "relative" then
-    local project_marker = { ".git", "pyproject.toml" }
-    local project_root = vim.fs.root(0, project_marker)
+  local full_path = vim.api.nvim_buf_get_name(0)
+  if full_path == "" then
+    vim.notify("CopyPath: the buffer has no file path", vim.log.levels.WARN)
+    return
+  end
+  full_path = vim.fn.fnamemodify(full_path, ":p")
+
+  local file_path
+  if kind == "nameonly" then
+    file_path = vim.fn.fnamemodify(full_path, ":t")
+  elseif kind == "absolute" then
+    file_path = full_path
+  else
+    -- the file path relative to the project root (plain string handling, no regex)
+    local project_root = vim.fs.root(0, { ".git", "pyproject.toml" })
     if project_root == nil then
-      vim.print("can not find project root")
+      vim.notify("CopyPath: can not find project root", vim.log.levels.WARN)
       return
     end
-
-    file_path = vim.fn.substitute(full_path, project_root, "<project-root>", "g")
+    local rel = vim.fs.relpath(project_root, full_path)
+    if rel == nil then
+      vim.notify("CopyPath: file is not inside the project root", vim.log.levels.WARN)
+      return
+    end
+    file_path = "<project-root>/" .. rel
   end
 
-  if context["args"] == "absolute" then
-    file_path = full_path
+  if file_path == nil or file_path == "" then
+    vim.notify("CopyPath: empty path, nothing copied", vim.log.levels.WARN)
+    return
   end
 
-  vim.fn.setreg("+", file_path)
+  local ok, err = pcall(vim.fn.setreg, "+", file_path)
+  if not ok then
+    vim.notify("CopyPath: could not set the clipboard: " .. tostring(err), vim.log.levels.WARN)
+    return
+  end
   vim.print("Filepath copied to clipboard!")
 end, {
   bang = false,
@@ -31,7 +51,7 @@ end, {
   force = true,
   desc = "Copy current file path to clipboard",
   complete = function()
-    return { "nameonly", "relative", "absolute" }
+    return copy_path_choices
   end,
 })
 
@@ -52,10 +72,28 @@ vim.api.nvim_create_user_command("JSONFormat", function(context)
     return
   end
 
-  if range == 0 or range == 2 then
-    -- range is only passed when invoked as `:JSONFormat`, not via `<cmd>JSONFormat`
-    local cmd_str = string.format("%s,%s!%s -m json.tool --indent 2", line1, line2, python_cmd)
-    vim.fn.execute(cmd_str)
+  if range == 0 or range == 1 or range == 2 then
+    -- range is only passed when invoked as `:JSONFormat`, not via `<cmd>JSONFormat`;
+    -- range 1 (`:2JSONFormat`) has line1 == line2
+    local buf = vim.api.nvim_get_current_buf()
+    local lines = vim.api.nvim_buf_get_lines(buf, line1 - 1, line2, false)
+    local res = vim.system({ python_cmd, "-m", "json.tool", "--indent", "2" }, {
+      stdin = table.concat(lines, "\n") .. "\n",
+      text = true,
+    }):wait()
+    if res.code ~= 0 then
+      -- invalid JSON: leave the buffer alone
+      -- python's last stderr line is the error ("Expecting value: line 1 column 1 (char 0)")
+      local errlines = vim.split(vim.trim(res.stderr or ""), "\n", { plain = true })
+      local msg = errlines[#errlines]
+      if msg == "" then
+        msg = "failed (exit " .. res.code .. ")"
+      end
+      vim.notify("JSONFormat: " .. msg, vim.log.levels.ERROR)
+      return
+    end
+    local out = vim.split((res.stdout or ""):gsub("\n$", ""), "\n", { plain = true })
+    vim.api.nvim_buf_set_lines(buf, line1 - 1, line2, false, out)
   else
     vim.api.nvim_echo({ { string.format("unsupported range: %s", range) } }, true, { err = true })
   end

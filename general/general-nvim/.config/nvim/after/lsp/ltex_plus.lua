@@ -1,5 +1,4 @@
 -- LanguageTool grammar/spell checking via ltex-ls-plus (installed globally by nix).
--- Replaces vim-grammarous (removed by H8c).
 ---@type vim.lsp.Config
 return {
   filetypes = { "markdown", "tex", "plaintex", "typst", "gitcommit", "text" },
@@ -12,6 +11,9 @@ return {
       language = "en-US",
       -- language ids (after get_language_id): this list REPLACES lspconfig's default list
       enabled = { "markdown", "latex", "tex", "plaintex", "typst", "gitcommit", "git-commit", "plaintext", "text" },
+      -- setting ltex.ltex-ls.logLevel: the default ("fine") writes whole documents to stderr,
+      -- i.e. into lsp.log, on every check
+      ["ltex-ls"] = { logLevel = "warning" },
     },
   },
 }

@@ -8,6 +8,8 @@ require("options")
 require("custom-autocmd")
 -- all the user-defined mappings
 require("mappings")
+-- :z / :Z zoxide jump
+require("zoxide")
 -- all the plugins installed and their configurations
 require("plugin_specs")
 

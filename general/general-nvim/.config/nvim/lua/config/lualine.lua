@@ -1,83 +1,117 @@
 local fn = vim.fn
 local utils = require("utils")
 
--- cache for git states
-local git_status_cache = {
-  fetch_success = false,
-  behind_count = 0,
-  ahead_count = 0,
-}
+--- git repo root of the current buffer (unnamed / special buffers: of the cwd), nil outside a repo
+local function buf_repo_root()
+  return vim.fs.root(0, ".git")
+end
 
-local on_exit_fetch = function(result)
-  if result.code == 0 then
-    git_status_cache.fetch_success = true
+-- ahead/behind state for ONE repo (the current buffer's); reset when the repo changes
+local FETCH_INTERVAL_MS = 60 * 1000 -- at most one `git fetch origin` per repo per minute
+local COUNT_INTERVAL_MS = 5 * 1000 -- local ahead/behind recount (cheap, no network)
+local git_state = { root = nil, ahead = 0, behind = 0, running = false }
+local last_fetch = {} -- root -> vim.uv.now() of the last fetch start
+local last_count = {} -- root -> vim.uv.now() of the last recount start
+local fetch_ok = {} -- root -> true once `git fetch origin` succeeded there
+
+--- vim.system that never throws and never asks anywhere (GIT_TERMINAL_PROMPT=0, GIT_ASKPASS/SSH_ASKPASS=true);
+--- on_exit always runs (code -1 on spawn failure)
+local function git_async(root, args, on_exit)
+  -- background-only: never pop up a prompt (terminal, askpass GUI or credential helper dialog)
+  local cmd = vim.list_extend({ "git", "-c", "credential.interactive=never" }, args)
+  local ok = pcall(vim.system, cmd, {
+    cwd = root,
+    text = true,
+    timeout = 30000,
+    env = { GIT_TERMINAL_PROMPT = "0", GIT_ASKPASS = "true", SSH_ASKPASS = "true" },
+  }, on_exit)
+  if not ok then
+    on_exit { code = -1, stdout = "", stderr = "" }
   end
 end
 
-local function handle_numeric_result(cache_key)
-  return function(result)
-    if result.code == 0 then
-      git_status_cache[cache_key] = tonumber(result.stdout:match("(%d+)")) or 0
-    else
-      -- git rev-list fails e.g. when the current branch has no upstream;
-      -- reset the count so the previous branch's numbers do not linger
-      git_status_cache[cache_key] = 0
-    end
-  end
-end
-
-local async_cmd = function(cmd_str, on_exit)
-  local cmd = vim.tbl_filter(function(element)
-    return element ~= ""
-  end, vim.split(cmd_str, " "))
-
-  vim.system(cmd, { text = true }, on_exit)
-end
-
-local async_git_status_update = function()
-  -- Fetch the latest changes from the remote repository (replace 'origin' if needed)
-  async_cmd("git fetch origin", on_exit_fetch)
-  if not git_status_cache.fetch_success then
+local function update_ahead_behind(root)
+  local now = vim.uv.now()
+  local want_fetch = not last_fetch[root] or now - last_fetch[root] >= FETCH_INTERVAL_MS
+  local want_count = want_fetch or not last_count[root] or now - last_count[root] >= COUNT_INTERVAL_MS
+  if git_state.running or not want_count then
     return
   end
+  git_state.running = true
+  last_count[root] = now
+  if want_fetch then
+    last_fetch[root] = now
+  end
 
-  -- Get the number of commits behind
-  -- the @{upstream} notation is inspired by post: https://www.reddit.com/r/neovim/comments/t48x5i/git_branch_aheadbehind_info_status_line_component/
-  -- note that here we should use double dots instead of triple dots
-  local behind_cmd_str = "git rev-list --count HEAD..@{upstream}"
-  async_cmd(behind_cmd_str, handle_numeric_result("behind_count"))
+  local function count()
+    -- the @{upstream} notation is inspired by post: https://www.reddit.com/r/neovim/comments/t48x5i/git_branch_aheadbehind_info_status_line_component/
+    -- --left-right with three dots: "<only in upstream>\t<only in HEAD>" = behind, ahead
+    git_async(root, { "rev-list", "--left-right", "--count", "@{upstream}...HEAD" }, function(r)
+      git_state.running = false
+      if git_state.root ~= root then
+        return -- the buffer switched to another repo meanwhile
+      end
+      local behind, ahead = (r.stdout or ""):match("(%d+)%s+(%d+)")
+      -- fails e.g. when the branch has no upstream: show nothing instead of old numbers
+      git_state.behind = r.code == 0 and tonumber(behind) or 0
+      git_state.ahead = r.code == 0 and tonumber(ahead) or 0
+    end)
+  end
 
-  -- Get the number of commits ahead
-  local ahead_cmd_str = "git rev-list --count @{upstream}..HEAD"
-  async_cmd(ahead_cmd_str, handle_numeric_result("ahead_count"))
+  -- as before: numbers only for a repo whose `origin` could be fetched (at least once)
+  local function count_if_fetched()
+    if fetch_ok[root] then
+      return count()
+    end
+    git_state.running = false
+  end
+
+  if not want_fetch then
+    return count_if_fetched()
+  end
+  -- fetch only from an existing `origin` remote
+  git_async(root, { "remote" }, function(r)
+    local has_origin = r.code == 0 and vim.list_contains(vim.split(r.stdout or "", "\n", { trimempty = true }), "origin")
+    if not has_origin then
+      fetch_ok[root] = nil
+      return count_if_fetched()
+    end
+    git_async(root, { "fetch", "--quiet", "origin" }, function(f)
+      if f.code == 0 then
+        fetch_ok[root] = true
+      end
+      count_if_fetched()
+    end)
+  end)
 end
 
 local function get_git_ahead_behind_info()
-  async_git_status_update()
-
-  local status = git_status_cache
-  if not status then
+  if fn.executable("git") == 0 then
     return ""
   end
+  local root = buf_repo_root()
+  if root ~= git_state.root then
+    -- another repo (or none): forget the previous repo's numbers
+    git_state.root, git_state.ahead, git_state.behind = root, 0, 0
+  end
+  if not root then
+    return ""
+  end
+  update_ahead_behind(root)
 
   local msg = ""
-
-  if type(status.ahead_count) == "number" and status.ahead_count > 0 then
-    local ahead_str = string.format("↑[%d] ", status.ahead_count)
-    msg = msg .. ahead_str
+  if git_state.ahead > 0 then
+    msg = msg .. string.format("↑[%d] ", git_state.ahead)
   end
-
-  if type(status.behind_count) == "number" and status.behind_count > 0 then
-    local behind_str = string.format("↓[%d] ", status.behind_count)
-    msg = msg .. behind_str
+  if git_state.behind > 0 then
+    msg = msg .. string.format("↓[%d] ", git_state.behind)
   end
-
   return msg
 end
 
 local function spell()
   if vim.o.spell then
-    return string.format("[SPELL]")
+    return "[SPELL]"
   end
 
   return ""
@@ -85,9 +119,13 @@ end
 
 --- show indicator for Chinese IME
 local function ime_state()
-  if vim.g.is_mac then
+  -- needs the xkbswitch library path (vim-xkbswitch's g:XkbSwitchLib); without it there is nothing to ask
+  if vim.g.is_mac and vim.g.XkbSwitchLib then
     -- ref: https://github.com/vim-airline/vim-airline/blob/master/autoload/airline/extensions/xkblayout.vim#L11
-    local layout = fn.libcall(vim.g.XkbSwitchLib, "Xkb_Switch_getXkbLayout", "")
+    local ok, layout = pcall(fn.libcall, vim.g.XkbSwitchLib, "Xkb_Switch_getXkbLayout", "")
+    if not ok or type(layout) ~= "string" then
+      return ""
+    end
 
     -- We can use `xkbswitch -g` on the command line to get current mode.
     -- mode for macOS builtin pinyin IME: com.apple.inputmethod.SCIM.ITABC
@@ -101,6 +139,65 @@ local function ime_state()
   return ""
 end
 
+--- One pass over the buffer for both white-space checks (Lua string.find runs in C; measured about
+--- 2x faster than a regex search() on a 200k-line buffer). Results are 1-based line numbers or nil.
+local function scan_whitespace(buf)
+  local n = vim.api.nvim_buf_line_count(buf)
+  local r = { space_cnt = 0, tab_cnt = 0 }
+  local CHUNK = 5000
+  for s = 0, n - 1, CHUNK do
+    local lines = vim.api.nvim_buf_get_lines(buf, s, math.min(s + CHUNK, n), false)
+    for i, l in ipairs(lines) do
+      local lnum = s + i
+      -- trailing white space = Vim's \s (space or tab) at the end of the line
+      if not r.trailing and l:find("[ \t]$") then
+        r.trailing = lnum
+      end
+      local c = l:byte(1)
+      if c == 32 then -- indented with spaces
+        r.space_cnt = r.space_cnt + 1
+        r.first_space = r.first_space or lnum
+        if not r.first_same and l:find("^ +\t") then
+          r.first_same = lnum
+        end
+      elseif c == 9 then -- indented with tabs
+        r.tab_cnt = r.tab_cnt + 1
+        r.first_tab = r.first_tab or lnum
+        if not r.first_same and l:find("^\t+ ") then
+          r.first_same = lnum
+        end
+      end
+    end
+  end
+  return r
+end
+
+-- the scan runs at most once per buffer change (b:changedtick), not on every redraw
+local ws_cache = {} -- bufnr -> { tick = changedtick, result = scan_whitespace() }
+
+local function whitespace_info()
+  local buf = vim.api.nvim_get_current_buf()
+  local tick = vim.api.nvim_buf_get_changedtick(buf)
+  local c = ws_cache[buf]
+  -- every typed key is a change: while in insert mode keep the last result, rescan after leaving it
+  if c and vim.api.nvim_get_mode().mode:sub(1, 1) == "i" then
+    return c.result
+  end
+  if not c or c.tick ~= tick then
+    c = { tick = tick, result = scan_whitespace(buf) }
+    ws_cache[buf] = c
+  end
+  return c.result
+end
+
+vim.api.nvim_create_autocmd("BufWipeout", {
+  group = vim.api.nvim_create_augroup("lualine_ws_cache", { clear = true }),
+  callback = function(ev)
+    ws_cache[ev.buf] = nil
+  end,
+  desc = "lualine: drop the whitespace-check cache of a wiped buffer",
+})
+
 local function trailing_space()
   -- do not warn while typing (insert mode, incl. ic/ix completion sub-modes)
   if vim.api.nvim_get_mode().mode:sub(1, 1) == "i" then
@@ -111,25 +208,9 @@ local function trailing_space()
     return ""
   end
 
-  local line_num = nil
-
-  for i = 1, fn.line("$") do
-    local linetext = fn.getline(i)
-    -- To prevent invalid escape error, we wrap the regex string with `[[]]`.
-    local idx = fn.match(linetext, [[\v\s+$]])
-
-    if idx ~= -1 then
-      line_num = i
-      break
-    end
-  end
-
-  local msg = ""
-  if line_num ~= nil then
-    msg = string.format("[%d]trailing", line_num)
-  end
-
-  return msg
+  -- FIRST line with trailing white space
+  local line_num = whitespace_info().trailing
+  return line_num and string.format("[%d]trailing", line_num) or ""
 end
 
 local function mixed_indent()
@@ -137,29 +218,16 @@ local function mixed_indent()
     return ""
   end
 
-  local space_pat = [[\v^ +]]
-  local tab_pat = [[\v^\t+]]
-  local space_indent = fn.search(space_pat, "nwc")
-  local tab_indent = fn.search(tab_pat, "nwc")
-  local mixed = (space_indent > 0 and tab_indent > 0)
-  local mixed_same_line
-  if not mixed then
-    mixed_same_line = fn.search([[\v^(\t+ | +\t)]], "nwc")
-    mixed = mixed_same_line > 0
+  local w = whitespace_info()
+  if w.first_space and w.first_tab then
+    -- both kinds of indent in the buffer: the FIRST line of the less used kind is the offender
+    return "MI:" .. (w.space_cnt > w.tab_cnt and w.first_tab or w.first_space)
   end
-  if not mixed then
-    return ""
+  if w.first_same then
+    -- tabs and spaces mixed inside one line's indent: the FIRST such line
+    return "MI:" .. w.first_same
   end
-  if mixed_same_line ~= nil and mixed_same_line > 0 then
-    return "MI:" .. mixed_same_line
-  end
-  local space_indent_cnt = fn.searchcount({ pattern = space_pat, max_count = 1e3 }).total
-  local tab_indent_cnt = fn.searchcount({ pattern = tab_pat, max_count = 1e3 }).total
-  if space_indent_cnt > tab_indent_cnt then
-    return "MI:" .. tab_indent
-  else
-    return "MI:" .. space_indent
-  end
+  return ""
 end
 
 -- show encoding only when it is not UTF-8
@@ -193,9 +261,7 @@ local diff = function()
   local remove_num = git_status.removed
   local add_num = git_status.added
 
-  local info = { added = add_num, modified = modify_num, removed = remove_num }
-  -- vim.print(info)
-  return info
+  return { added = add_num, modified = modify_num, removed = remove_num }
 end
 
 local virtual_env = function()
@@ -239,15 +305,83 @@ local get_active_lsp = function()
   return string.format("%s (+%d)", names[1], #names - 1)
 end
 
+--- "#rrggbb" of a highlight attribute ("fg"/"bg") of the ACTIVE colorscheme, nil when the theme leaves it unset
+local function theme_hex(group, attr)
+  local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = group, link = false })
+  local v = ok and hl[attr]
+  return v and string.format("#%06x", v) or nil
+end
+
+-- component colours are FUNCTIONS: lualine re-evaluates them, so they follow :colorscheme (no fixed hex)
+local colors = {
+  -- text in the theme's warning colour
+  warn_text = function()
+    return { fg = theme_hex("DiagnosticWarn", "fg") }
+  end,
+  -- "badge": editor background colour as text on a theme accent
+  badge = function(accent_group)
+    return function()
+      return { fg = theme_hex("Normal", "bg"), bg = theme_hex(accent_group, "fg") }
+    end
+  end,
+  special_bold = function()
+    return { fg = theme_hex("Special", "fg") or theme_hex("DiagnosticInfo", "fg"), gui = "bold" }
+  end,
+}
+
 -- statusline click handlers (upstream 7b30596, adapted: vim.ui.select / snacks picker for branches)
+--- run git synchronously in `root`; returns the output lines, or nil + error text
+local function git_lines(root, args)
+  local ok, r = pcall(function()
+    return vim.system(vim.list_extend({ "git" }, args), {
+      cwd = root,
+      text = true,
+      env = { GIT_TERMINAL_PROMPT = "0", GIT_ASKPASS = "true", SSH_ASKPASS = "true" },
+    }):wait()
+  end)
+  if not ok then
+    return nil, tostring(r)
+  end
+  if r.code ~= 0 then
+    return nil, r.stderr or ""
+  end
+  return vim.split(r.stdout or "", "\n", { trimempty = true })
+end
+
 local show_branch_menu = function()
-  local info = utils.get_git_branches()
+  if fn.executable("git") == 0 then
+    vim.notify("git not found", vim.log.levels.WARN)
+    return
+  end
+  -- the repo of the current buffer, not nvim's cwd
+  local root = buf_repo_root()
+  if not root then
+    vim.notify("not in a git repository", vim.log.levels.WARN)
+    return
+  end
+  local locals = git_lines(root, { "for-each-ref", "--format=%(refname:short)", "refs/heads/" })
+  -- "<remote>/<branch>\t<branch>" (lstrip=3 drops refs/remotes/<remote>/, keeps slashes in the branch)
+  local remotes = git_lines(root, {
+    "for-each-ref",
+    "--format=%(refname:short)%09%(refname:lstrip=3)",
+    "refs/remotes/",
+  })
+  if not locals or not remotes then
+    vim.notify("error fetching git branch", vim.log.levels.WARN)
+    return
+  end
+  local is_local_branch = {}
   local items = {}
-  for _, b in ipairs(info["local"]) do
+  for _, b in ipairs(locals) do
+    is_local_branch[b] = true
     table.insert(items, { name = b, is_local = true })
   end
-  for _, b in ipairs(info.remote) do
-    table.insert(items, { name = b, is_local = false })
+  for _, line in ipairs(remotes) do
+    local name, branch = line:match("^(.-)\t(.*)$")
+    -- skip the symbolic refs/remotes/<remote>/HEAD (no `--exclude`: that needs git >= 2.42)
+    if name and branch ~= "HEAD" then
+      table.insert(items, { name = name, is_local = false, branch = branch })
+    end
   end
   if #items == 0 then
     return
@@ -261,10 +395,18 @@ local show_branch_menu = function()
     if not item then
       return
     end
-    local cmd = item.is_local and { "git", "checkout", item.name } or { "git", "checkout", "--track", item.name }
-    local r = vim.system(cmd, { text = true }):wait()
-    if r.code ~= 0 then
-      vim.notify("failed to switch branch:\n" .. (r.stderr or ""), vim.log.levels.ERROR)
+    local args
+    if item.is_local then
+      args = { "checkout", item.name }
+    elseif is_local_branch[item.branch] then
+      -- remote branch that already exists locally (origin/main -> main): switch to the local one
+      args = { "checkout", item.branch }
+    else
+      args = { "checkout", "--track", item.name }
+    end
+    local out, err = git_lines(root, args)
+    if not out then
+      vim.notify("failed to switch branch:\n" .. (err or ""), vim.log.levels.ERROR)
     else
       vim.cmd("checktime")
     end
@@ -282,7 +424,6 @@ require("lualine").setup {
     theme = "auto",
     component_separators = { left = "\\", right = "/" },
     section_separators = { left = "\u{e0b8}", right = "\u{e0ba}" },
-    disabled_filetypes = {},
     always_divide_middle = false,
     refresh = {
       statusline = 1000,
@@ -310,7 +451,7 @@ require("lualine").setup {
       },
       {
         get_git_ahead_behind_info,
-        color = { fg = "#E0C479" },
+        color = colors.warn_text,
       },
       {
         "diff",
@@ -320,21 +461,22 @@ require("lualine").setup {
         "diagnostics",
         sources = { "nvim_diagnostic" },
         color = { gui = "bold" },
-        symbols = { error = "🆇 ", warn = "⚠️ ", info = "ℹ️ ", hint = " " },
+        -- same glyphs as the sign column (lua/diagnostic-conf.lua)
+        symbols = { error = "\u{F015A} ", warn = "\u{F002A} ", info = "\u{F02FD} ", hint = "\u{F0336} " },
       },
       {
         virtual_env,
-        color = { fg = "black", bg = "#F1CA81" },
+        color = colors.badge("DiagnosticWarn"),
       },
     },
     lualine_c = {
       {
         "%S",
-        color = { gui = "bold", fg = "cyan" },
+        color = colors.special_bold,
       },
       {
         spell,
-        color = { fg = "black", bg = "#a7c080" },
+        color = colors.badge("String"),
       },
     },
     lualine_x = {
@@ -363,7 +505,7 @@ require("lualine").setup {
       },
       {
         ime_state,
-        color = { fg = "black", bg = "#f46868" },
+        color = colors.badge("DiagnosticError"),
       },
     },
     lualine_z = {

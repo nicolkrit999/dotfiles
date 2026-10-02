@@ -7,11 +7,12 @@ diagnostic.config {
   virtual_text = false,
   virtual_lines = false,
   signs = {
+    -- nerd-font glyphs (Material Design set, nf-md), all four the same width
     text = {
-      [diagnostic.severity.ERROR] = "🆇",
-      [diagnostic.severity.WARN] = "⚠️",
-      [diagnostic.severity.INFO] = "ℹ️",
-      [diagnostic.severity.HINT] = "",
+      [diagnostic.severity.ERROR] = "\u{F015A}", -- nf-md-close_circle_outline
+      [diagnostic.severity.WARN] = "\u{F002A}", -- nf-md-alert_outline
+      [diagnostic.severity.INFO] = "\u{F02FD}", -- nf-md-information_outline
+      [diagnostic.severity.HINT] = "\u{F0336}", -- nf-md-lightbulb_outline
     },
   },
   severity_sort = true,
@@ -28,8 +29,11 @@ diagnostic.config {
 
 -- set quickfix list from diagnostics in a certain buffer, not the whole workspace
 local set_qflist = function(buf_num, severity)
-  local diagnostics = nil
-  diagnostics = diagnostic.get(buf_num, { severity = severity })
+  local diagnostics = diagnostic.get(buf_num, { severity = severity })
+  if #diagnostics == 0 then
+    vim.notify("No diagnostics in this buffer", vim.log.levels.INFO)
+    return
+  end
 
   local qf_items = diagnostic.toqflist(diagnostics)
   vim.fn.setqflist({}, " ", { title = "Diagnostics", items = qf_items })
@@ -39,7 +43,7 @@ local set_qflist = function(buf_num, severity)
 end
 
 -- this puts diagnostics from opened files to quickfix
-vim.keymap.set("n", "<space>qw", diagnostic.setqflist, { desc = "put window diagnostics to qf" })
+vim.keymap.set("n", "<space>qw", diagnostic.setqflist, { desc = "put all diagnostics to qf" })
 
 -- this puts diagnostics from current buffer to quickfix
 vim.keymap.set("n", "<space>qb", function()
@@ -48,9 +52,10 @@ end, { desc = "put buffer diagnostics to qf" })
 
 -- automatically show diagnostic in float win for current line
 api.nvim_create_autocmd("CursorHold", {
+  group = api.nvim_create_augroup("diagnostic_float", { clear = true }),
   pattern = "*",
   callback = function()
-    if #vim.diagnostic.get(0) == 0 then
+    if not vim.diagnostic.is_enabled({ bufnr = 0 }) or #vim.diagnostic.get(0) == 0 then
       return
     end
 

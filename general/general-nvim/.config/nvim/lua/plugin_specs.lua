@@ -4,7 +4,7 @@ local plugin_dir = vim.fs.joinpath(vim.fn.stdpath("data"), "lazy")
 local lazypath = vim.fs.joinpath(plugin_dir, "lazy.nvim")
 
 if not vim.uv.fs_stat(lazypath) then
-  vim.fn.system {
+  local out = vim.fn.system {
     "git",
     "clone",
     "--filter=blob:none",
@@ -12,6 +12,11 @@ if not vim.uv.fs_stat(lazypath) then
     "--branch=stable", -- latest stable release
     lazypath,
   }
+  if vim.v.shell_error ~= 0 then
+    -- one error with git's output, then stop loading the plugin specs (nothing below works without lazy)
+    vim.api.nvim_echo({ { "Failed to clone lazy.nvim:\n" .. out, "ErrorMsg" } }, true, { err = true })
+    return
+  end
 end
 vim.opt.rtp:prepend(lazypath)
 
@@ -36,43 +41,23 @@ local plugin_specs = {
       require("config.nvim-cmp")
     end,
   },
+  -- treesitter-colored completion labels (used by lua/config/nvim-cmp.lua)
+  {
+    "xzbdmw/colorful-menu.nvim",
+    lazy = true,
+    config = function()
+      require("config.colorful_menu")
+    end,
+  },
+  -- ASCII art headers for the dashboard; loaded by lua/config/dashboard-nvim.lua (require("ascii"))
   {
     "MaximilianLloyd/ascii.nvim",
+    lazy = true,
     dependencies = {
       "MunifTanjim/nui.nvim",
     },
   },
 
-  -- 1. Unified Mason Setup
-  {
-    "williamboman/mason.nvim",
-    config = function()
-      require("mason").setup({
-        registries = {
-          "github:mason-org/mason-registry",
-        },
-      })
-    end,
-  },
-
--- 2. Unified Mason-LSPConfig
-  {
-    "williamboman/mason-lspconfig.nvim",
-    dependencies = { "williamboman/mason.nvim", "neovim/nvim-lspconfig" },
-    config = function()
-      local is_nix_managed = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
-
-      require("mason-lspconfig").setup({
-        ensure_installed = is_nix_managed and {} or {
-          "lua_ls",
-          "pyright",
-          "ruff",
-          "bashls",
-          "spring_boot",
-        },
-      })
-    end,
-  },
   {
     "nvim-java/nvim-java",
     -- nvim-java's own lazy.lua already declares nui.nvim, nvim-dap and JavaHello/spring-boot.nvim
@@ -82,13 +67,16 @@ local plugin_specs = {
     },
     config = function()
       local is_nix_managed = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
+      -- java (JDK) only exists inside the Java devShell: outside it, stay silent
+      -- (no spring-boot LS spawn, no jdtls start -> no ENOENT 'java' warnings on .java files)
+      local has_java = vim.fn.executable("java") == 1
 
       require("java").setup({
         -- nix: never download a JDK (no nix-ld); the devShell provides JAVA_HOME (jdk25) and java on PATH
         jdk = { auto_install = not is_nix_managed },
         java_test = { enable = true },
         java_debug_adapter = { enable = true },
-        spring_boot_tools = { enable = true },
+        spring_boot_tools = { enable = has_java },
         -- jdtls.path intentionally unset: nvim-java uses its own jdtls 1.54.0 from
         -- ~/.local/share/nvim/nvim-java/packages (the devShell's `jdtls` is a bin/ wrapper, not a jdtls root)
       })
@@ -100,14 +88,16 @@ local plugin_specs = {
           java = { home = vim.env.JAVA_HOME },
         },
       })
-      vim.lsp.enable("jdtls")
+      if has_java then
+        vim.lsp.enable("jdtls")
+      end
     end,
   },
 
-  -- 4. Core LSP Config (Loads your lua/config/lsp.lua)
+  -- Core LSP Config (Loads your lua/config/lsp.lua); LSP binaries come from nix
   {
     "neovim/nvim-lspconfig",
-    dependencies = { "williamboman/mason-lspconfig.nvim", "nvim-java/nvim-java" },
+    dependencies = { "nvim-java/nvim-java" },
     -- No config function here anymore.
     -- We load our own lsp config file separately.
     init = function()
@@ -122,8 +112,19 @@ local plugin_specs = {
     end,
     event = "VeryLazy",
   },
-  { "machakann/vim-swap",          event = "VeryLazy" },
-{
+  {
+    "machakann/vim-swap",
+    event = "VeryLazy",
+    init = function()
+      -- no plugin defaults: they also map g< / g>, and g< would shadow the builtin
+      -- "show the last command output again". Only the interactive swap on gs is kept.
+      vim.g.swap_no_default_key_mappings = 1
+    end,
+    config = function()
+      vim.keymap.set({ "n", "x" }, "gs", "<Plug>(swap-interactive)", { desc = "Swap items interactively (vim-swap)" })
+    end,
+  },
+  {
     "nvim-treesitter/nvim-treesitter",
     branch = "main",
     build = function()
@@ -136,24 +137,8 @@ local plugin_specs = {
     end,
   },
   {
-    "vlime/vlime",
-    enabled = function()
-      return utils.executable("sbcl")
-    end,
-    init = function()
-      vim.cmd([[
-        command! -nargs=0 StartVlime call jobstart(printf("sbcl --load %s/vlime/lisp/start-vlime.lisp", g:package_home))
-      ]])
-    end,
-    config = function(plugin)
-      vim.opt.rtp:append(plugin.dir .. "/vim")
-    end,
-    ft = { "lisp" },
-  },
-
-  {
     "smoka7/hop.nvim",
-    keys = { "f" },
+    keys = { { "f", mode = { "n", "x", "o" }, desc = "Hop to 2-char match" } },
     config = function()
       require("config.nvim_hop")
     end,
@@ -163,7 +148,12 @@ local plugin_specs = {
   {
     "kevinhwang91/nvim-hlslens",
     branch = "main",
-    keys = { "*", "#", "n", "N" },
+    keys = {
+      { "*", desc = "Search: word under cursor forward (with lens)" },
+      { "#", desc = "Search: word under cursor backward (with lens)" },
+      { "n", desc = "Search: next match (with lens)" },
+      { "N", desc = "Search: previous match (with lens)" },
+    },
     config = function()
       require("config.hlslens")
     end,
@@ -182,7 +172,7 @@ local plugin_specs = {
     end,
     event = "VeryLazy",
   },
-{
+  {
     "MeanderingProgrammer/render-markdown.nvim",
     main = "render-markdown",
     ft = { "markdown" },
@@ -194,7 +184,7 @@ local plugin_specs = {
       -- 2. Strict Mode Limits.
       -- Ensures it ONLY renders in Normal ('n') and Command ('c') mode.
       -- When you enter Insert ('i') mode to type, rendering pauses completely.
-      render_modes = { 'n', 'c' },
+      render_modes = { "n", "c" },
 
       -- 3. Limit processing on huge files.
       -- Stops trying to render if a markdown file is over 1.5MB.
@@ -218,23 +208,25 @@ local plugin_specs = {
   { "catppuccin/nvim",             name = "catppuccin", lazy = true },
   { "olimorris/onedarkpro.nvim",   lazy = true },
   { "marko-cerovac/material.nvim", lazy = true },
+  -- all colorschemes are lazy: lazy.nvim loads the plugin providing a colorscheme on
+  -- `:colorscheme <name>` (nix uses nix_colorscheme() -> base16; non-nix picks a random one)
   {
     "rockyzhang24/arctic.nvim",
     dependencies = { "rktjmp/lush.nvim" },
     name = "arctic",
     branch = "v2",
+    lazy = true,
   },
   { "rebelot/kanagawa.nvim",        lazy = true },
-  { "miikanissi/modus-themes.nvim", priority = 1000 },
-  { "wtfox/jellybeans.nvim",        priority = 1000 },
-  { "projekt0n/github-nvim-theme",  name = "github-theme" },
-  { "e-ink-colorscheme/e-ink.nvim", priority = 1000 },
-  { "ficcdaf/ashen.nvim",           priority = 1000 },
-  { "savq/melange-nvim",            priority = 1000 },
-  { "Skardyy/makurai-nvim",         priority = 1000 },
-  { "vague2k/vague.nvim",           priority = 1000 },
-  { "webhooked/kanso.nvim",         priority = 1000 },
-  { "zootedb0t/citruszest.nvim",    priority = 1000 },
+  { "miikanissi/modus-themes.nvim", lazy = true },
+  { "wtfox/jellybeans.nvim",        lazy = true },
+  { "projekt0n/github-nvim-theme",  name = "github-theme", lazy = true },
+  { "ficcdaf/ashen.nvim",           lazy = true },
+  { "savq/melange-nvim",            lazy = true },
+  { "Skardyy/makurai-nvim",         lazy = true },
+  { "vague2k/vague.nvim",           lazy = true },
+  { "webhooked/kanso.nvim",         lazy = true },
+  { "zootedb0t/citruszest.nvim",    lazy = true },
   { "RRethy/nvim-base16",           lazy = true },
 
   -- plugins to provide nerdfont icons
@@ -267,10 +259,27 @@ local plugin_specs = {
     end,
   },
 
-  -- fancy start screen
+  -- fancy start screen: loaded only for a bare `nvim` (no file/dir argument, no stdin) or by :Dashboard
   {
     "nvimdev/dashboard-nvim",
     cond = firenvim_not_active,
+    -- :Dashboard keeps working after `nvim file` (a cond with argc() would remove the command too)
+    cmd = "Dashboard",
+    init = function()
+      vim.api.nvim_create_autocmd("VimEnter", {
+        group = vim.api.nvim_create_augroup("dashboard_lazy_start", { clear = true }),
+        once = true,
+        desc = "Load dashboard-nvim on a bare start (it then opens itself on UIEnter)",
+        callback = function()
+          -- same test as the plugin's own UIEnter autocmd; stdin is checked here because the
+          -- plugin's VimEnter stdin detector does not run when it is loaded during VimEnter
+          if vim.fn.argc() ~= 0 or vim.api.nvim_buf_get_name(0) ~= "" or vim.tbl_contains(vim.v.argv, "-") then
+            return
+          end
+          require("lazy").load { plugins = { "dashboard-nvim" } }
+        end,
+      })
+    end,
     config = function()
       require("config.dashboard-nvim")
     end,
@@ -291,7 +300,6 @@ local plugin_specs = {
   },
   {
     "luukvbaal/statuscol.nvim",
-    opts = {},
     config = function()
       require("config.nvim-statuscol")
     end,
@@ -300,7 +308,6 @@ local plugin_specs = {
     "kevinhwang91/nvim-ufo",
     dependencies = "kevinhwang91/promise-async",
     event = "VeryLazy",
-    opts = {},
     init = function()
       vim.o.foldcolumn = "1" -- '0' is not bad
       vim.o.foldlevel = 99   -- Using ufo provider need a large value, feel free to decrease the value
@@ -311,8 +318,36 @@ local plugin_specs = {
       require("config.nvim_ufo")
     end,
   },
+  -- highlight other occurrences of the word under the cursor (LSP references)
+  {
+    "RRethy/vim-illuminate",
+    event = "VeryLazy",
+    config = function()
+      require("config.vim-illuminate")
+    end,
+  },
+
+  -- split/join tables, argument lists, arrays (gS)
+  {
+    "Wansmer/treesj",
+    keys = { { "gS", desc = "Toggle split join" } },
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    config = function()
+      require("config.treesj")
+    end,
+  },
+
+  -- dim inactive windows
+  {
+    "tadaa/vimade",
+    event = "VeryLazy",
+    config = function()
+      require("config.vimade")
+    end,
+  },
+
   -- Highlight URLs inside vim
-  { "itchyny/vim-highlighturl", event = "BufReadPost" },
+  { "itchyny/vim-highlighturl", event = { "BufReadPost", "BufNewFile" } },
 
   -- notification plugin
   {
@@ -327,37 +362,23 @@ local plugin_specs = {
 
   {
     "chrishrb/gx.nvim",
-    keys = { { "gx", "<cmd>Browse<cr>", mode = { "n", "x" } } },
+    keys = { { "gx", "<cmd>Browse<cr>", mode = { "n", "x" }, desc = "Open URL or file under cursor (gx.nvim)" } },
     cmd = { "Browse" },
     init = function()
       vim.g.netrw_nogx = 1 -- disable netrw gx
-    end,
-    enabled = function()
-      return vim.g.is_win or vim.g.is_mac or vim.g.is_linux
     end,
     config = true,      -- default settings
     submodules = false, -- not needed, submodules are required only for tests
   },
 
+  -- symbol outline sidebar (treesitter/LSP, no ctags needed)
   {
-    "liuchengxu/vista.vim",
-    enabled = function()
-      return utils.executable("ctags")
-    end,
-    cmd = "Vista",
-    init = function()
-      vim.cmd([[
-        let g:vista#renderer#icons = {
-              \ 'member': '',
-              \ }
-
-        " Do not echo message on command line
-        let g:vista_echo_cursor = 0
-        " Stay in current window when vista window is opened
-        let g:vista_stay_on_open = 0
-
-        nnoremap <silent> <Space>t :<C-U>Vista!!<CR>
-      ]])
+    "stevearc/aerial.nvim",
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    keys = { { "<space>t", "<cmd>AerialToggle!<CR>", desc = "Toggle symbol outline (aerial)" } },
+    cmd = { "AerialToggle", "AerialOpen", "AerialNavToggle" },
+    config = function()
+      require("config.aerial")
     end,
   },
 
@@ -371,7 +392,8 @@ local plugin_specs = {
     ft = "snippets",
     init = function()
       vim.cmd([[
-        " Trigger configuration. Do not use <tab> if you use YouCompleteMe
+        " Single source of truth for the UltiSnips triggers (nvim-cmp.lua must not set them):
+        " <C-j> = expand or jump forward, <C-k> = jump back
         let g:UltiSnipsExpandTrigger='<c-j>'
 
         " Do not look for SnipMate snippets
@@ -381,7 +403,7 @@ local plugin_specs = {
         let g:UltiSnipsJumpForwardTrigger='<c-j>'
         let g:UltiSnipsJumpBackwardTrigger='<c-k>'
 
-        " Configuration for custom snippets directory, see
+        " Configuration for custom snippets directory
         let g:UltiSnipsSnippetDirectories=['UltiSnips', 'my_snippets']
       ]])
     end,
@@ -398,27 +420,13 @@ local plugin_specs = {
   {
     "tpope/vim-commentary",
     keys = {
-      { "gc", mode = "n" },
-      { "gc", mode = "v" },
+      { "gc", mode = "n", desc = "Comment operator (vim-commentary)" },
+      { "gc", mode = "x", desc = "Comment selection (vim-commentary)" },
     },
   },
 
   -- Multiple cursor plugin like Sublime Text?
   -- 'mg979/vim-visual-multi'
-
-  -- Show undo history visually
-  {
-    "simnalamburt/vim-mundo",
-    cmd = { "MundoToggle", "MundoShow" },
-    init = function()
-      vim.cmd([[
-        let g:mundo_verbose_graph = 0
-        let g:mundo_width = 80
-
-        nnoremap <silent> <Space>u :MundoToggle<CR>
-      ]])
-    end,
-  },
 
   -- Manage your yank history
   {
@@ -452,14 +460,6 @@ local plugin_specs = {
     init = function()
       vim.g.XkbSwitchEnabled = 1
     end,
-  },
-
-  {
-    "Neur1n/neuims",
-    enabled = function()
-      return vim.g.is_win
-    end,
-    event = { "InsertEnter" },
   },
 
   -- Git command inside vim
@@ -509,6 +509,27 @@ local plugin_specs = {
     end,
   },
 
+  -- syntax/treesitter highlighting inside fugitive/neogit/gitsigns diff buffers
+  -- (vim.g.diffs is read when the plugin is sourced, so it is set in init)
+  {
+    "https://forge.barrettruth.com/barrettruth/diffs.nvim",
+    init = function()
+      vim.g.diffs = {
+        integrations = {
+          fugitive = true,
+          neogit = true,
+          gitsigns = true,
+        },
+      }
+    end,
+  },
+
+  -- VSCode-style side-by-side diff (:CodeDiff); downloads a native lib on first use
+  {
+    "esmuellert/codediff.nvim",
+    cmd = "CodeDiff",
+  },
+
   {
     "kevinhwang91/nvim-bqf",
     ft = "qf",
@@ -523,64 +544,15 @@ local plugin_specs = {
   -- Vim tabular plugin for manipulate tabular, required by markdown plugins
   { "godlygeek/tabular",                ft = { "markdown" } },
 
-  -- Markdown previewing (only for Mac and Windows)
+  -- Markdown previewing in the browser
   {
     "iamcco/markdown-preview.nvim",
-    enabled = function()
-      return vim.g.is_win or vim.g.is_mac or vim.g.is_linux
-    end,
     build = "cd app && npm install && git restore .",
     ft = { "markdown" },
     init = function()
-      -- Only setting this for suitable platforms
-      if vim.g.is_win or vim.g.is_mac then
-        -- Do not close the preview tab when switching to other buffers
-        vim.g.mkdp_auto_close = 0
-      end
+      -- Do not close the preview tab when switching to other buffers (all platforms)
+      vim.g.mkdp_auto_close = 0
     end,
-  },
-
-  {
-    "rhysd/vim-grammarous",
-    enabled = function()
-      return vim.g.is_mac
-    end,
-    ft = { "markdown" },
-    init = function()
-      vim.cmd([[
-        if g:is_mac
-          let g:grammarous#languagetool_cmd = 'languagetool'
-          let g:grammarous#disabled_rules = {
-              \ '*' : ['WHITESPACE_RULE', 'EN_QUOTES', 'ARROWS', 'SENTENCE_WHITESPACE',
-              \        'WORD_CONTAINS_UNDERSCORE', 'COMMA_PARENTHESIS_WHITESPACE',
-              \        'EN_UNPAIRED_BRACKETS', 'UPPERCASE_SENTENCE_START',
-              \        'ENGLISH_WORD_REPEAT_BEGINNING_RULE', 'DASH_RULE', 'PLUS_MINUS',
-              \        'PUNCTUATION_PARAGRAPH_END', 'MULTIPLICATION_SIGN', 'PRP_CHECKOUT',
-              \        'CAN_CHECKOUT', 'SOME_OF_THE', 'DOUBLE_PUNCTUATION', 'HELL',
-              \        'CURRENCY', 'POSSESSIVE_APOSTROPHE', 'ENGLISH_WORD_REPEAT_RULE',
-              \        'NON_STANDARD_WORD', 'AU', 'DATE_NEW_YEAR'],
-              \ }
-
-          augroup grammarous_map
-            autocmd!
-            autocmd FileType markdown nmap <buffer> <leader>x <Plug>(grammarous-close-info-window)
-            autocmd FileType markdown nmap <buffer> <c-n> <Plug>(grammarous-move-to-next-error)
-            autocmd FileType markdown nmap <buffer> <c-p> <Plug>(grammarous-move-to-previous-error)
-          augroup END
-        endif
-      ]])
-    end,
-  },
-
-
-
-
-
-
-  -- Debugger adapter protocol client
-  {
-    "mfussenegger/nvim-dap",
-    lazy = true,
   },
 
   -- SQL database client (browse connections/schema, run queries, view results).
@@ -596,6 +568,12 @@ local plugin_specs = {
       require("dbee").install()
     end,
     cmd = { "Dbee" },
+    -- lazy key triggers: the maps work before :Dbee was ever run
+    keys = {
+      { "<leader>Dt", function() require("dbee").toggle() end, desc = "Dbee: Toggle UI" },
+      { "<leader>Do", function() require("dbee").open() end, desc = "Dbee: Open UI" },
+      { "<leader>Dc", function() require("dbee").close() end, desc = "Dbee: Close UI" },
+    },
     config = function()
       require("config.dbee")
     end,
@@ -633,7 +611,12 @@ local plugin_specs = {
   {
     "chrisbra/unicode.vim",
     -- the plugin loads on the first `ga`; no separate `nmap ga` (it would overwrite lazy's key stub)
-    keys = { { "ga", "<Plug>(UnicodeGA)", remap = true, desc = "unicode info of char under cursor" } },
+    -- <leader>cu: our own lhs for the swap map. Lazy sets the real <leader>cu map before the plugin is
+    -- sourced, so unicode.vim's hasmapto() check skips its default <leader>un (which made <leader>u wait).
+    keys = {
+      { "ga", "<Plug>(UnicodeGA)", remap = true, desc = "unicode info of char under cursor" },
+      { "<leader>cu", "<Plug>(UnicodeSwapCompleteName)", remap = true, desc = "unicode: swap <C-x><C-z> completion (name/char)" },
+    },
     cmd = { "UnicodeSearch" },
   },
 
@@ -646,13 +629,19 @@ local plugin_specs = {
     "machakann/vim-sandwich",
     event = "VeryLazy",
     init = function()
-      vim.cmd([[
-        " Map s to nop since s in used by vim-sandwich. Use cl instead of s.
-        nmap s <Nop>
-        omap s <Nop>
-      ]])
+      -- Map s to nop since s in used by vim-sandwich. Use cl instead of s.
+      -- (vim.keymap.set, not `nmap`/`omap`, so the maps carry a desc; remap = true like nmap)
+      vim.keymap.set("n", "s", "<Nop>", { remap = true, desc = "Disabled (s is the vim-sandwich prefix, use cl)" })
+      -- operator-pending: `gcs`, pause, `s` must not leave the operator pending (the next motion
+      -- would run it): cancel it. Instant because nothing longer starts with o-mode `s` (the
+      -- o-mode `sa` is unmapped in config() below).
+      vim.keymap.set("o", "s", "<Esc>", { remap = true, desc = "Cancel the pending operator (s is the vim-sandwich prefix)" })
     end,
     config = function()
+      -- vim-sandwich's o-mode `sa` (<Plug>(sandwich-add)) has no user-facing use (adding is the
+      -- normal/visual `sa`); drop it so o-mode `s` (= cancel) is not a prefix of it and which-key
+      -- stops reporting "<s> overlaps with <sa>"
+      pcall(vim.keymap.del, "o", "sa")
       -- let targets.vim own ab/ib (`:checkhealth targets` conflict)
       for _, mode in ipairs({ "x", "o" }) do
         pcall(vim.keymap.del, mode, "ab")
@@ -661,7 +650,7 @@ local plugin_specs = {
     end,
   },
 
-  -- Only use these plugin on Windows and Mac and when LaTeX is installed
+  -- LaTeX support: loaded on every platform whenever `latex` is on PATH (on Linux via the LaTeX devShell)
   {
     "lervag/vimtex",
     enabled = function()
@@ -770,7 +759,7 @@ local plugin_specs = {
   -- Modern matchit implementation
   {
     "andymass/vim-matchup",
-    event = "BufRead",
+    event = { "BufReadPost", "BufNewFile" },
     init = function()
       -- Improve performance
       vim.g.matchup_matchparen_deferred = 1
@@ -808,9 +797,6 @@ local plugin_specs = {
   -- Edit text area in browser using nvim
   {
     "glacambre/firenvim",
-    enabled = function()
-      return vim.g.is_win or vim.g.is_mac or vim.g.is_linux
-    end,
     -- it seems that we can only call the firenvim function directly.
     -- Using vim.fn or vim.cmd to call this function will fail.
     build = function()
@@ -882,11 +868,47 @@ local plugin_specs = {
       -- do not let nvim-gdb create its global <leader>dd/dl/dp/db/dr start maps
       -- (they would overwrite the user's <leader>dd / <leader>db / <leader>dp)
       vim.g.nvimgdb_disable_start_keymaps = true
-      vim.keymap.set("n", "<leader>dp", [[:<C-U>GdbStartPDB python -m pdb %<CR>]], { desc = "start pdb on current file (nvim-gdb)" })
+      -- <leader>dp (pdb on the current file) is python buffer-local: after/ftplugin/python.lua
     end,
     config = function()
       -- nvim-gdb's setup() maps cmdline <c-e> globally (cmake executable picker); keep the builtin <C-e>
       pcall(vim.keymap.del, "c", "<c-e>")
+    end,
+  },
+
+  -- Auto-save a session per cwd on exit (never auto-restored; restore from the dashboard items
+  -- "Restore session (this folder)" / "Restore last session").
+  {
+    "folke/persistence.nvim",
+    event = "BufReadPre", -- only start saving once a real file was opened
+    opts = {},
+    config = function(_, opts)
+      require("persistence").setup(opts)
+      -- Keep transient/panel windows out of saved sessions: close them just before the save
+      -- (PersistenceSavePre fires on VimLeavePre) and drop terminals/help from sessionoptions.
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "PersistenceSavePre",
+        group = vim.api.nvim_create_augroup("persistence_exclude", { clear = true }),
+        desc = "Exclude claude-code, nvim-tree, aerial, help, quickfix windows from the session",
+        callback = function()
+          vim.opt.sessionoptions:remove { "terminal", "help" }
+          local claude = {}
+          local ok, cc = pcall(require, "claude-code")
+          if ok and cc.claude_code then
+            for _, b in pairs(cc.claude_code.instances or {}) do claude[b] = true end
+          end
+          local skip_ft = { qf = true, help = true, aerial = true, NvimTree = true, dashboard = true }
+          for _, win in ipairs(vim.api.nvim_list_wins()) do
+            local buf = vim.api.nvim_win_get_buf(win)
+            if skip_ft[vim.bo[buf].filetype] or vim.bo[buf].buftype == "terminal" or claude[buf] then
+              if #vim.api.nvim_list_wins() > 1 then pcall(vim.api.nvim_win_close, win, true) end
+            end
+          end
+          for b in pairs(claude) do
+            if vim.api.nvim_buf_is_valid(b) then pcall(vim.api.nvim_buf_delete, b, { force = true }) end
+          end
+        end,
+      })
     end,
   },
 
@@ -923,16 +945,36 @@ local plugin_specs = {
         },
       },
       -- more beautiful vim.ui.select
-      picker = { enabled = true },
+      -- db: frecency/history in sqlite. The nix nvim wrapper exports SNACKS_SQLITE3_PATH (full libsqlite3
+      -- path); unset elsewhere -> nil -> snacks falls back to its default loader.
+      picker = { enabled = true, db = { sqlite3_path = vim.env.SNACKS_SQLITE3_PATH } },
+      -- light mode for big files (> 1.5 MB, or average line length > 5000 = minified bundles):
+      -- filetype `bigfile`, no treesitter/ftplugin maps; LSP of the real filetype starts after a short
+      -- delay without semantic tokens or completion (no typos_lsp/ltex_plus/lua_ls), see
+      -- lua/config/bigfile.lua. `:lsp stop` to drop the LSP; `:set ft=json` (etc.) for full mode.
+      bigfile = {
+        enabled = true,
+        line_length = 5000,
+        setup = function(ctx)
+          require("config.bigfile").setup(ctx)
+        end,
+      },
     },
   },
   -- show and trim trailing whitespaces
-  { "nvim-zh/whitespace.nvim", event = "VeryLazy" },
+  {
+    "nvim-zh/whitespace.nvim",
+    event = "VeryLazy",
+    init = function()
+      -- plugin default list + markdown: trailing spaces there are hard line breaks, not errors
+      vim.g.trailing_whitespace_exclude_filetypes = { "alpha", "git", "floggraph", "dashboard", "markdown" }
+    end,
+  },
 
   -- file explorer
   {
     "nvim-tree/nvim-tree.lua",
-    keys = { "<space>s" },
+    keys = { { "<space>s", desc = "toggle nvim-tree" } },
     config = function()
       require("config.nvim-tree")
     end,
@@ -971,7 +1013,7 @@ local plugin_specs = {
     "folke/trouble.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     cmd = "Trouble",
-    opts = { use_diagnostics_signs = true },
+    opts = {},
   },
   {
     -- show hint for code actions, the user can also implement code actions themselves,
@@ -1007,8 +1049,9 @@ local plugin_specs = {
       edit = {
         enabled = false,
       },
+      -- quicker adds 3 columns (the "…" and 2 more) to this width: -3 shows a 40 column name
       max_filename_width = function()
-        return math.floor(math.min(40, vim.o.columns / 2))
+        return math.floor(math.min(40, vim.o.columns / 2)) - 3
       end,
     },
   },
@@ -1020,29 +1063,41 @@ local plugin_specs = {
       "nvim-telescope/telescope.nvim",
       "nvim-treesitter/nvim-treesitter",
     },
-    opts = {},
     config = function()
       require("config.devdocs")
     end,
-    event = "VeryLazy", -- or choose a loading event you prefer
+    -- only used through its commands; loading at VeryLazy also pulled in telescope on every startup
+    cmd = {
+      "DevdocsFetch", "DevdocsInstall", "DevdocsUninstall", "DevdocsOpen", "DevdocsOpenFloat",
+      "DevdocsOpenCurrent", "DevdocsOpenCurrentFloat", "DevdocsKeywordprg", "DevdocsUpdate",
+      "DevdocsUpdateAll", "DevdocsToggle",
+    },
   },
 
 
   {
-    "Pocco81/auto-save.nvim",
+    -- maintained fork of the archived Pocco81/auto-save.nvim
+    "okuuva/auto-save.nvim",
     config = function()
       require("auto-save").setup {
-        trigger_events = { "FocusLost", "BufLeave" },
+        -- save when leaving a buffer or when nvim loses focus; no saves while typing
+        -- (the fork's defaults also save on QuitPre/VimSuspend and after InsertLeave/TextChanged)
+        trigger_events = {
+          immediate_save = { "BufLeave", "FocusLost" },
+          defer_save = {},
+          cancel_deferred_save = {},
+        },
         condition = function(buf)
+          -- Skip buffers that cannot be written (unnamed, readonly, not modifiable);
+          -- otherwise auto-save reports "saved" although :write failed (E32/E45).
+          if vim.api.nvim_buf_get_name(buf) == "" or vim.bo[buf].readonly or not vim.bo[buf].modifiable then
+            return false
+          end
+
           -- Disable for filetypes with external watchers (typst watch, vimtex)
           -- to avoid re-triggering the watcher process on every auto-save event.
           local ft = vim.api.nvim_get_option_value("filetype", { buf = buf })
           if ft == "typst" or ft == "tex" then
-            return false
-          end
-
-          -- If the LSP lock is active, ABORT the auto-save
-          if vim.b[buf].is_formatting then
             return false
           end
 
@@ -1054,14 +1109,34 @@ local plugin_specs = {
           return true
         end,
       }
+
+      -- the fork dropped the built-in "saved" message; show it once (the old plugin echoed it twice)
+      -- and clear the message area again after 1.25 s, as before
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "AutoSaveWritePost",
+        group = vim.api.nvim_create_augroup("auto_save_message", { clear = true }),
+        desc = "AutoSave: show 'saved at' message",
+        callback = function()
+          vim.api.nvim_echo({ { "AutoSave: saved at " .. vim.fn.strftime("%H:%M:%S"), "MsgArea" } }, true, {})
+          vim.defer_fn(function()
+            vim.cmd("echon ''")
+          end, 1250)
+        end,
+      })
     end,
   },
   {
     "jbyuki/instant.nvim",
-    config = function()
+    -- loaded on its first command (full list from plugin/instant.vim)
+    cmd = {
+      "InstantStartServer", "InstantStopServer", "InstantStartSession", "InstantJoinSession",
+      "InstantStartSingle", "InstantJoinSingle", "InstantStop", "InstantStatus", "InstantFollow",
+      "InstantStopFollow", "InstantOpenAll", "InstantSaveAll", "InstantMark", "InstantMarkClear",
+    },
+    init = function()
       vim.g.instant_username = vim.env.USER or vim.env.USERNAME or "krit"
-      vim.g.instant_server_host = "127.0.0.1" -- Localhost
-      vim.g.instant_server_port = 8081        -- The port you chose above
+      -- host and port are not options: pass them to :InstantStartServer / :InstantStartSession /
+      -- :InstantJoinSession (e.g. `:InstantStartSession 127.0.0.1 8081`)
     end,
   },
 
@@ -1085,7 +1160,8 @@ local plugin_specs = {
           enable = true,
           updatetime = 100,
           timer_interval = 1000,
-          show_notifications = true,
+          -- off: lua/custom-autocmd.lua (FileChangedShellPost) gives the one reload/deleted message
+          show_notifications = false,
         },
         git = {
           use_git_root = true,
@@ -1099,7 +1175,10 @@ local plugin_specs = {
         keymaps = {
           toggle = {
             normal = "<leader>cc",
-            terminal = "<leader>ct",
+            -- no terminal-mode toggle: a global `t <Space>ct` map made every terminal wait on a
+            -- typed space and toggled Claude on text like " ctags". Leave the terminal with
+            -- <C-\><C-n>, then toggle with <Space>cc.
+            terminal = false,
             variants = {
               continue = "<leader>cR",
               verbose = "<leader>cV",
@@ -1108,6 +1187,27 @@ local plugin_specs = {
           window_navigation = true,
           scrolling = true,
         },
+      })
+
+      -- <Esc> inside the Claude Code terminal goes to Claude (e.g. to interrupt it) instead of
+      -- the global `t <Esc>` map (leave terminal mode, lua/mappings.lua). Buffer-local, so other
+      -- terminals keep the global map; <C-\><C-n> still leaves terminal mode here.
+      -- claude-code.nvim tracks its terminal buffers in claude_code.instances (git root -> bufnr).
+      local function is_claude_buf(buf)
+        for _, b in pairs(require("claude-code").claude_code.instances or {}) do
+          if b == buf then return true end
+        end
+        return false
+      end
+      vim.api.nvim_create_autocmd("TermEnter", {
+        group = vim.api.nvim_create_augroup("claude_code_esc", { clear = true }),
+        desc = "Claude Code terminal: <Esc> passes through to Claude",
+        callback = function(ev)
+          if vim.b[ev.buf].claude_esc_passthrough or not is_claude_buf(ev.buf) then return end
+          -- noremap <Esc> in terminal mode = send Esc to the terminal job
+          vim.keymap.set("t", "<Esc>", "<Esc>", { buffer = ev.buf, nowait = true, desc = "Esc to Claude Code" })
+          vim.b[ev.buf].claude_esc_passthrough = true
+        end,
       })
     end,
   },

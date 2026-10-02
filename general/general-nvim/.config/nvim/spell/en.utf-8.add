@@ -314,7 +314,6 @@ CTAN
 MikTex/!
 MikTeX
 softwares/!
-Zong
 cjk
 backupcopy
 nowritebackup
@@ -368,17 +367,14 @@ fvim
 CUDA
 cuda
 cpu
-jdhao
 whitelisted
 BST
 autocmd
 init
 miniconda
-tsinghua
 pylsp
 mypy
 isort
-ustc
 PyTorch
 maxcdn
 torchvision
@@ -390,8 +386,6 @@ argmax
 NeruIPS
 InfoNCE
 LSTM
-linkedin
-hotmail
 datetime
 csv
 iterable
@@ -408,7 +402,6 @@ ReLU
 CIFAR
 ResNet
 XGBoost
-Shenzhen
 Tanh
 Kaggle
 minist
@@ -435,8 +428,6 @@ reddit
 viml
 PostgreSQL
 CNY
-wechat
-ziroom
 Postgres
 plpgsql
 postgres

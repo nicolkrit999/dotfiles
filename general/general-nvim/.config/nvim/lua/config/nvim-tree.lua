@@ -15,7 +15,7 @@ local function my_on_attach(bufnr)
   -- 2. Create custom "Open and Stay" action
   local function open_and_keep_focus()
     local node = api.tree.get_node_under_cursor()
-    if node and node.type == "file" then
+    if node and (node.type == "file" or (node.type == "link" and not node.nodes)) then
       -- Open the file in the main window (adds to your bufferline tabs)
       api.node.open.edit()
       -- Instantly snap the cursor back to the tree
