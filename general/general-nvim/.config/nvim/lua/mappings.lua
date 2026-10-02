@@ -2,7 +2,7 @@ local keymap = vim.keymap
 local uv = vim.uv
 
 -- Save key strokes (now we do not need to press shift to enter command mode).
-keymap.set({ "n", "x" }, ";", ":")
+keymap.set({ "n", "x" }, ";", ":", { desc = "Enter command mode without Shift" })
 
 -- ============================================================================
 -- DIAGNOSTICS & NAV (Leader d...)
@@ -172,21 +172,21 @@ keymap.set("n", [[\t]], "<cmd>tabclose<cr>", { silent = true, desc = "close curr
 keymap.set("n", [[\T]], "<cmd>tabonly<cr>", { silent = true, desc = "close other tabs" })
 
 -- Move the cursor based on physical lines, not the actual lines.
-keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true })
-keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", { expr = true })
-keymap.set("n", "^", "g^")
-keymap.set("n", "0", "g0")
+keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true, desc = "Move down by display line" })
+keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", { expr = true, desc = "Move up by display line" })
+keymap.set("n", "^", "g^", { desc = "First non-blank of display line" })
+keymap.set("n", "0", "g0", { desc = "Start of display line" })
 
 -- Do not include white space characters when using $ in visual mode, see https://vi.stackexchange.com/q/12607/15292
-keymap.set("x", "$", "g_")
+keymap.set("x", "$", "g_", { desc = "Last non-blank char of line" })
 
 -- Go to start or end of line easier
-keymap.set({ "n", "x" }, "H", "^")
-keymap.set({ "n", "x" }, "L", "g_")
+keymap.set({ "n", "x" }, "H", "^", { desc = "Go to first non-blank char of line" })
+keymap.set({ "n", "x" }, "L", "g_", { desc = "Go to last non-blank char of line" })
 
 -- Continuous visual shifting (does not exit Visual mode), `gv` means to reselect previous visual area, see https://superuser.com/q/310417/736190
-keymap.set("x", "<", "<gv")
-keymap.set("x", ">", ">gv")
+keymap.set("x", "<", "<gv", { desc = "Shift left, keep selection" })
+keymap.set("x", ">", ">gv", { desc = "Shift right, keep selection" })
 
 -- Edit and reload nvim config file quickly
 keymap.set("n", "<leader>ev", "<cmd>tabnew $MYVIMRC <bar> tcd %:h<cr>", { silent = true, desc = "open init.lua" })
@@ -213,15 +213,15 @@ keymap.set("n", "<leader>v", "printf('`[%s`]', getregtype()[0])", { expr = true,
 keymap.set("n", "<leader>cd", "<cmd>lcd %:p:h<cr><cmd>pwd<cr>", { desc = "cd to file dir (this window)" })
 
 -- Use Esc to quit builtin terminal
-keymap.set("t", "<Esc>", [[<c-\><c-n>]])
+keymap.set("t", "<Esc>", [[<c-\><c-n>]], { desc = "Leave terminal mode" })
 
 -- Toggle spell checking
 keymap.set("n", "<leader>cz", "<cmd>set spell!<cr>", { desc = "toggle spell" })
 
 -- Change text without putting it into the vim register, see https://stackoverflow.com/q/54255/6064933
-keymap.set("n", "c", '"_c')
-keymap.set("n", "C", '"_C')
-keymap.set("x", "c", '"_c')
+keymap.set("n", "c", '"_c', { desc = "Change without yanking" })
+keymap.set("n", "C", '"_C', { desc = "Change to end of line without yanking" })
+keymap.set("x", "c", '"_c', { desc = "Change selection without yanking" })
 
 -- Remove trailing whitespace characters
 keymap.set("n", "<leader><space>", "<cmd>StripTrailingWhitespace<cr>", { desc = "remove trailing space" })
@@ -287,10 +287,10 @@ keymap.set("n", "gb", '<cmd>call buf_utils#GoToBuffer(v:count, "forward")<cr>', 
 keymap.set("n", "gB", '<cmd>call buf_utils#GoToBuffer(v:count, "backward")<cr>', { desc = "go to previous buffer (no count; use {N}gb)" })
 
 -- Switch windows
-keymap.set("n", "<left>", "<c-w>h")
-keymap.set("n", "<Right>", "<C-W>l")
-keymap.set("n", "<Up>", "<C-W>k")
-keymap.set("n", "<Down>", "<C-W>j")
+keymap.set("n", "<left>", "<c-w>h", { desc = "Go to left window" })
+keymap.set("n", "<Right>", "<C-W>l", { desc = "Go to right window" })
+keymap.set("n", "<Up>", "<C-W>k", { desc = "Go to upper window" })
+keymap.set("n", "<Down>", "<C-W>j", { desc = "Go to lower window" })
 
 -- ---- TEXT OBJECTS [Conflict-free] ----
 
@@ -530,7 +530,7 @@ keymap.set("n", "gJ", join_keep_cursor("gJ"), { desc = "join lines without space
 -- Break inserted text into smaller undo units when we insert some punctuation chars.
 local undo_ch = { ",", ".", "!", "?", ";", ":" }
 for _, ch in ipairs(undo_ch) do
-  keymap.set("i", ch, ch .. "<c-g>u")
+  keymap.set("i", ch, ch .. "<c-g>u", { desc = "Insert " .. ch .. " (start new undo unit)" })
 end
 
 -- insert semicolon in the end (cursor stays where it is, no marks touched)
@@ -541,14 +541,14 @@ keymap.set("i", "<A-;>", function()
 end, { desc = "append ; at line end" })
 
 -- Go to the beginning and end of current line in insert mode quickly
-keymap.set("i", "<C-A>", "<HOME>")
-keymap.set("i", "<C-E>", "<END>")
+keymap.set("i", "<C-A>", "<HOME>", { desc = "Go to start of line" })
+keymap.set("i", "<C-E>", "<END>", { desc = "Go to end of line" })
 
 -- Go to beginning of command in command-line mode
-keymap.set("c", "<C-A>", "<HOME>")
+keymap.set("c", "<C-A>", "<HOME>", { desc = "Go to start of command line" })
 
 -- Delete the character to the right of the cursor
-keymap.set("i", "<C-D>", "<DEL>")
+keymap.set("i", "<C-D>", "<DEL>", { desc = "Delete char to the right" })
 
 -- Blink cursorline/cursorcolumn in the window where the key was pressed (also when another
 -- window becomes current meanwhile); the original values come back at the end. A press while

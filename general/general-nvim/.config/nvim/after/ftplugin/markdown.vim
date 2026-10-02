@@ -15,15 +15,14 @@ if exists(':FootnoteNumber')
 
   lua vim.keymap.set("n", "^^", ":<C-U>call markdownfootnotes#VimFootnotes('i')<CR>", { buffer = true, silent = true, desc = "markdown: insert footnote" })
   lua vim.keymap.set("i", "^^", "<C-O>:<C-U>call markdownfootnotes#VimFootnotes('i')<CR>", { buffer = true, silent = true, desc = "markdown: insert footnote" })
-  imap <buffer> <silent> @@ <Plug>ReturnFromFootnote
-  nmap <buffer> <silent> @@ <Plug>ReturnFromFootnote
+  lua vim.keymap.set("i", "@@", "<Plug>ReturnFromFootnote", { buffer = true, silent = true, remap = true, desc = "markdown: return from footnote" })
+  lua vim.keymap.set("n", "@@", "<Plug>ReturnFromFootnote", { buffer = true, silent = true, remap = true, desc = "markdown: return from footnote" })
 endif
 
 " Text objects for Markdown code blocks.
-xnoremap <buffer><silent> ic :<C-U>call text_obj#MdCodeBlock('i')<CR>
-xnoremap <buffer><silent> ac :<C-U>call text_obj#MdCodeBlock('a')<CR>
-onoremap <buffer><silent> ic :<C-U>call text_obj#MdCodeBlock('i')<CR>
-onoremap <buffer><silent> ac :<C-U>call text_obj#MdCodeBlock('a')<CR>
+" (set from Lua so the maps have a desc)
+lua vim.keymap.set({ "x", "o" }, "ic", ":<C-U>call text_obj#MdCodeBlock('i')<CR>", { buffer = true, silent = true, desc = "markdown: inner code block" })
+lua vim.keymap.set({ "x", "o" }, "ac", ":<C-U>call text_obj#MdCodeBlock('a')<CR>", { buffer = true, silent = true, desc = "markdown: around code block" })
 
 " Use + to turn several lines to an unordered list.
 " Ref: https://vi.stackexchange.com/q/5495/15292 and https://stackoverflow.com/q/42438795/6064933.

@@ -138,7 +138,7 @@ local plugin_specs = {
   },
   {
     "smoka7/hop.nvim",
-    keys = { { "f", mode = { "n", "x", "o" } } },
+    keys = { { "f", mode = { "n", "x", "o" }, desc = "Hop to 2-char match" } },
     config = function()
       require("config.nvim_hop")
     end,
@@ -148,7 +148,12 @@ local plugin_specs = {
   {
     "kevinhwang91/nvim-hlslens",
     branch = "main",
-    keys = { "*", "#", "n", "N" },
+    keys = {
+      { "*", desc = "Search: word under cursor forward (with lens)" },
+      { "#", desc = "Search: word under cursor backward (with lens)" },
+      { "n", desc = "Search: next match (with lens)" },
+      { "N", desc = "Search: previous match (with lens)" },
+    },
     config = function()
       require("config.hlslens")
     end,
@@ -357,7 +362,7 @@ local plugin_specs = {
 
   {
     "chrishrb/gx.nvim",
-    keys = { { "gx", "<cmd>Browse<cr>", mode = { "n", "x" } } },
+    keys = { { "gx", "<cmd>Browse<cr>", mode = { "n", "x" }, desc = "Open URL or file under cursor (gx.nvim)" } },
     cmd = { "Browse" },
     init = function()
       vim.g.netrw_nogx = 1 -- disable netrw gx
@@ -415,8 +420,8 @@ local plugin_specs = {
   {
     "tpope/vim-commentary",
     keys = {
-      { "gc", mode = "n" },
-      { "gc", mode = "x" },
+      { "gc", mode = "n", desc = "Comment operator (vim-commentary)" },
+      { "gc", mode = "x", desc = "Comment selection (vim-commentary)" },
     },
   },
 
@@ -624,11 +629,9 @@ local plugin_specs = {
     "machakann/vim-sandwich",
     event = "VeryLazy",
     init = function()
-      vim.cmd([[
-        " Map s to nop since s in used by vim-sandwich. Use cl instead of s.
-        nmap s <Nop>
-        omap s <Nop>
-      ]])
+      -- Map s to nop since s in used by vim-sandwich. Use cl instead of s.
+      -- (vim.keymap.set, not `nmap`/`omap`, so the maps carry a desc; remap = true like nmap)
+      vim.keymap.set({ "n", "o" }, "s", "<Nop>", { remap = true, desc = "Disabled (s is the vim-sandwich prefix, use cl)" })
     end,
     config = function()
       -- let targets.vim own ab/ib (`:checkhealth targets` conflict)
