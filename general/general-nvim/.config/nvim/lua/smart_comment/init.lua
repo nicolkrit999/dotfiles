@@ -360,7 +360,8 @@ end
 
 -- Operator (Q70): gcs / gcr are expr maps returning `g@`, so they take a motion (gcsip, gcr200j,
 -- gcsG), a count (200gcs = 200 rows from the cursor down) or a Visual selection, and `.` repeats
--- them. Whatever the motion, whole rows are changed.
+-- them. Whatever the motion, whole rows are changed. gcss / gcrr (Q71) = the cursor row ({count}:
+-- count rows), without waiting for a motion.
 
 -- Cursor when the key was typed (not set on `.`): the cursor then stays on its text row inside the
 -- range, as before the operator form, instead of jumping to the range start.
@@ -405,7 +406,8 @@ function M.opfunc_uncomment()
 end
 
 --- Expr-map body for gcs ("comment") / gcr ("uncomment") in Normal and Visual mode.
-function M.operator(action)
+--- `rows` = true (Q71, gcss / gcrr): never wait for a motion, no count = the cursor row only.
+function M.operator(action, rows)
   pending = {
     buf = vim.api.nvim_get_current_buf(),
     tick = vim.b.changedtick,
@@ -416,7 +418,7 @@ function M.operator(action)
   if mode == "v" or mode == "V" or mode == "\22" then
     return "g@"
   end
-  if vim.v.count == 0 then
+  if vim.v.count == 0 and not rows then
     -- waits for a motion: forget the cursor once Operator-pending mode ends (after the operator ran,
     -- or when it was cancelled with <Esc> / an invalid key), so a later `.` never uses a stale one
     vim.api.nvim_create_autocmd("ModeChanged", {
@@ -429,9 +431,10 @@ function M.operator(action)
     })
     return "g@"
   end
-  -- Count form (Q47): `{count}g@_` = count rows from the cursor down, a closed fold counting as one
-  -- row like `dd`. `_` with a count > 1 fails on the last row (or a closed fold reaching it), so
-  -- there the count is dropped (<Esc> cancels it silently) and only that row / fold is changed.
+  -- Count form (Q47, also gcss / gcrr): `{count}g@_` = count rows from the cursor down (no count:
+  -- the cursor row), a closed fold counting as one row like `dd`. `_` with a count > 1 fails on the
+  -- last row (or a closed fold reaching it), so there the count is dropped (<Esc> cancels it
+  -- silently) and only that row / fold is changed.
   local r = vim.fn.line(".")
   local fe = vim.fn.foldclosedend(r)
   if vim.v.count > 1 and (fe ~= -1 and fe or r) >= vim.fn.line("$") then

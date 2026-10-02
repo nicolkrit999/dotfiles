@@ -532,6 +532,141 @@ local keymap_tests = {
       return #w == 1 and w[1]:find("not modifiable") ~= nil, "warnings " .. vim.inspect(w)
     end,
   },
+  -- Q71: gcss / gcrr = the cursor row ({count} = rows), no motion needed; `.` repeats them
+  {
+    name = "Q71 gcss comments the cursor row",
+    lines = { "a();", "b();", "c();" },
+    keys = { "2G", "gcss" },
+    exp = { "a();", "// b();", "c();" },
+    mode = "n",
+  },
+  {
+    name = "Q71 gcrr uncomments the cursor row",
+    lines = { "// a();", "// b();", "// c();" },
+    keys = { "2G", "gcrr" },
+    exp = { "// a();", "b();", "// c();" },
+    mode = "n",
+  },
+  {
+    name = "Q71 3gcss = 3 rows",
+    lines = { "a();", "b();", "c();", "d();", "e();" },
+    keys = { "2G", "3gcss" },
+    exp = { "a();", "// b();", "// c();", "// d();", "e();" },
+  },
+  {
+    name = "Q71 200gcrr stops at the last row",
+    lines = { "// a();", "// b();", "// c();" },
+    keys = { "2G", "200gcrr" },
+    exp = { "// a();", "b();", "c();" },
+  },
+  {
+    name = "Q71 3gcss on the last row changes only that row",
+    lines = { "a();", "b();", "c();" },
+    keys = { "G", "3gcss" },
+    exp = { "a();", "b();", "// c();" },
+  },
+  {
+    name = "Q71 . repeats gcss",
+    lines = { "a();", "b();", "c();", "d();" },
+    keys = { "gg", "gcss", "3G", "." },
+    exp = { "// a();", "b();", "// c();", "d();" },
+  },
+  {
+    name = "Q71 . repeats 2gcrr",
+    lines = { "// a();", "// b();", "// c();", "// d();", "// e();" },
+    keys = { "gg", "2gcrr", "4G", "." },
+    exp = { "a();", "b();", "// c();", "d();", "e();" },
+  },
+  {
+    name = "Q71 gcss on a closed fold comments the whole fold",
+    lines = { "void f() {", "  a();", "}", "x();" },
+    setup = function()
+      fold_setup({ { 1, 3 } })
+    end,
+    teardown = function()
+      fold_teardown()
+    end,
+    keys = { "gg", "gcss" },
+    exp = { "// void f() {", "//   a();", "// }", "x();" },
+  },
+  {
+    name = "Q71 cursor stays on its text after gcss",
+    lines = { "  a();", "b();" },
+    keys = { "gg", "gcss" },
+    exp = { "  // a();", "b();" },
+    check = function()
+      local c = vim.api.nvim_win_get_cursor(0)
+      return c[1] == 1 and c[2] == 2, "cursor " .. vim.inspect(c)
+    end,
+  },
+  -- the operator form still works next to gcss / gcrr
+  {
+    name = "Q71 gcsip typed in one go",
+    lines = { "a();", "b();", "", "c();" },
+    keys = { "gg", "gcsip" },
+    exp = { "// a();", "// b();", "", "c();" },
+  },
+  {
+    name = "Q71 gcs_ = the cursor row",
+    lines = { "a();", "b();" },
+    keys = { "gg", "gcs_" },
+    exp = { "// a();", "b();" },
+  },
+  {
+    name = "Q71 gcsl = the cursor row",
+    lines = { "a();", "b();" },
+    keys = { "gg", "gcsl" },
+    exp = { "// a();", "b();" },
+  },
+  {
+    name = "Q71 1gcs = the cursor row",
+    lines = { "a();", "b();" },
+    keys = { "gg", "1gcs" },
+    exp = { "// a();", "b();" },
+  },
+  {
+    name = "Q71 200gcr (count form) stops at the last row",
+    lines = { "// a();", "// b();", "// c();" },
+    keys = { "2G", "200gcr" },
+    exp = { "// a();", "b();", "c();" },
+  },
+  {
+    name = "Q71 gcs3j",
+    lines = { "a();", "b();", "c();", "d();", "e();" },
+    keys = { "gg", "gcs3j" },
+    exp = { "// a();", "// b();", "// c();", "// d();", "e();" },
+  },
+  {
+    name = "Q71 gcsgcs still acts on the gc comment block (unchanged trap)",
+    lines = { "a();", "// b();" },
+    keys = { "gg", "gcsgcs" },
+    exp = { "// a();", "// b();" },
+  },
+  {
+    name = "Q71 visual gcs is not a prefix (Vjgcs acts at once)",
+    lines = { "a();", "b();", "c();" },
+    keys = { "ggVj", "gcs" },
+    exp = { "// a();", "// b();", "c();" },
+    mode = "n",
+  },
+  {
+    name = "Q71 vim-commentary gcc still comments the row",
+    lines = { "a();", "b();" },
+    keys = { "gg", "gcc" },
+    exp = { "// a();", "b();" },
+  },
+  {
+    name = "Q71 vim-commentary gcu still uncomments the block",
+    lines = { "// a();", "// b();", "c();" },
+    keys = { "gg", "gcu" },
+    exp = { "a();", "b();", "c();" },
+  },
+  {
+    name = "Q71 gc{motion} (gcj) still works",
+    lines = { "a();", "b();", "c();" },
+    keys = { "gg", "gcj" },
+    exp = { "// a();", "// b();", "c();" },
+  },
   {
     name = "Q45 single undo after gcr deleting delimiter rows",
     lines = { "x();", "/*", "a();", "b();", "*/", "y();" },

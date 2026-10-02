@@ -658,3 +658,10 @@ keymap.set({ "n", "x" }, "gcs", function() return smart_comment.operator("commen
   { expr = true, desc = "Comment lines (motion/count)" })
 keymap.set({ "n", "x" }, "gcr", function() return smart_comment.operator("uncomment") end,
   { expr = true, desc = "Uncomment lines (motion/count)" })
+-- current row(s): gcss / gcrr, {count}gcss = count rows. (They make `gcs` / `gcr` a prefix in Normal
+-- mode: after a PAUSE following `gcs` Vim waits 'timeoutlen' for an `s`; `gcsip` typed in one go is
+-- not affected, the same as builtin `gc` / `gcc`.)
+keymap.set("n", "gcss", function() return smart_comment.operator("comment", true) end,
+  { expr = true, desc = "Comment current line(s)" })
+keymap.set("n", "gcrr", function() return smart_comment.operator("uncomment", true) end,
+  { expr = true, desc = "Uncomment current line(s)" })
