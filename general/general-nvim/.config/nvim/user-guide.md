@@ -284,12 +284,25 @@ More: sections 13 and 44.
 | `<Space>gs` | Git status |
 | `<Space>gw` / `<Space>gc` | Add the current file / commit |
 | `<Space>gpl` / `<Space>gpu` | Pull / push |
+| `<Space>gB` | Branch menu: pick a branch to switch to (same as clicking the branch in the statusline) |
 | `]c` / `[c` | Next / previous changed hunk |
 | `<Space>hp` / `<Space>hb` | Preview the hunk / blame the line |
 | `<Space>gl` | Copy a permalink for the line |
 | `:Neogit` / `:NeogitLogCurrent` | Open the Neogit status window / the log of the current file (`q` closes) |
 
 More: sections 20 and 48.
+
+### Mouse
+
+| Action | What it does |
+| --- | --- |
+| Click a tab in the top line | Switch to that buffer |
+| Click the `x` / `●` of a tab | Close the buffer (a changed file asks Save / Discard / Cancel) |
+| Click the branch name in the statusline | Branch menu (also `<Space>gB`) |
+| Click the language-server name in the statusline | Popup with the attached language servers (also `:LspAttached`) |
+| Right-click in the text | Neovim's menu: `Paste` pastes the clipboard, `Select All` selects the whole file, `Inspect` shows which highlight and syntax group is under the click, `How-to disable mouse` opens the help for it |
+
+More: sections 7 and 32.
 
 ### Lists with a search bar (pickers)
 
@@ -1140,6 +1153,10 @@ This section explains how to open, navigate, resize, and close split windows ent
 | `<Ctrl-w>x` | **Swap** current window with the next one |
 | `<Ctrl-w>T` | Move current window to a **new tab** |
 
+## Buffer Tabs (the Top Line)
+
+The top line shows one tab per open buffer (bufferline). Click a tab to switch to it. The `x` at the right of a tab closes it; while that buffer has unsaved changes the `x` is replaced by a `●`, and clicking the `●` closes it too. For a changed file Vim then asks `Save changes to "name"? [Y]es, (N)o, (C)ancel`: Yes saves and closes, No discards and closes, Cancel keeps the buffer and shows the warning "unsaved changes, buffer kept". A terminal whose program is still running is kept ("running terminal, buffer kept"). A right-click opens Neovim's own menu (see the Mouse table in the cheat sheet).
+
 ## Closing Windows
 
 | Keymap / Command | Description |
@@ -1484,6 +1501,7 @@ The same `<Ctrl-n>` / `<Ctrl-p>` also move through the completion menu (section 
 | `<Space>fb` | Search currently open buffers |
 | `<Space>fr` | Search recently opened files |
 | `<Space>gbl` | Fuzzy-search git branches (`<Enter>` checks the branch out) |
+| `<Space>gB` | n | Branch menu (the same menu as clicking the branch name in the statusline): choose a branch and Neovim switches to it. Move with `<Ctrl-n>` / `<Ctrl-p>`, see "Moving Inside Any Picker" |
 
 `<Space>ff` has no preview window and shows git status icons next to modified/untracked files; `.gitignore` is respected.
 
