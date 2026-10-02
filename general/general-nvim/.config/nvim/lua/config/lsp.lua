@@ -1,11 +1,11 @@
 local utils = require("utils")
 
--- 2. Configure Global Native LSP behavior
+-- Capabilities shared by every server
 vim.lsp.config("*", {
   capabilities = require("lsp_utils").get_default_capabilities(),
 })
 
--- 3. Create the Attachment Logic (Keymaps + Format on Save)
+-- Buffer-local LSP keymaps on attach (formatting is not automatic: <space>fm formats on demand)
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("lsp_buf_conf", { clear = true }),
   callback = function(event_context)
@@ -18,26 +18,32 @@ vim.api.nvim_create_autocmd("LspAttach", {
       vim.keymap.set(mode, l, r, opts)
     end
 
-    -- Custom Go-To-Definition logic
+    -- Go to definition, with duplicate locations (several servers, or one server reporting the
+    -- same place twice) removed: one result jumps, several open the location list. Zero results
+    -- never reach on_list: Nvim itself shows "No locations found" once.
     map("n", "gd", function()
       vim.lsp.buf.definition {
         on_list = function(options)
           local unique_defs, def_loc_hash = {}, {}
-          for _, def_location in pairs(options.items) do
-            local key = def_location.filename .. def_location.lnum
+          for _, def_location in ipairs(options.items) do
+            -- separators: "a.lua" line 12 and "a.lua1" line 2 must not collide
+            local key = def_location.filename .. ":" .. def_location.lnum .. ":" .. def_location.col
             if not def_loc_hash[key] then
               def_loc_hash[key] = true
               table.insert(unique_defs, def_location)
             end
           end
           options.items = unique_defs
+          if #unique_defs == 0 then
+            vim.notify("No definition found", vim.log.levels.INFO)
+            return
+          end
           vim.fn.setloclist(0, {}, " ", options)
           if #options.items > 1 then vim.cmd.lopen() else vim.cmd([[silent! lfirst]]) end
         end,
       }
     end, { desc = "unique definition" })
 
-    -- Standard Mappings
     map("n", "K", function()
       vim.lsp.buf.hover {
         border = "single",
@@ -49,7 +55,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
     map("n", "<space>ca", vim.lsp.buf.code_action, { desc = "code action" })
   end,
 })
--- 4. Define and Enable Servers
+
+-- Servers: configured here (plus after/lsp/<name>.lua), enabled only when the binary exists
 ---@type table<string, vim.lsp.Config>
 local servers = {
   pyright = { cmd = { "pyright-langserver", "--stdio" } },
