@@ -139,7 +139,8 @@ nvim_tree.setup {
   hijack_unnamed_buffer_when_opening = false,
   tab = { sync = { open = false, close = false } },
   sort = { sorter = "name" },
-  sync_root_with_cwd = false,
+  -- the tree root follows :cd / :tcd / :Z / :z (it keeps its folder until the working folder changes)
+  sync_root_with_cwd = true,
   view = {
     width = {
       min = 30,

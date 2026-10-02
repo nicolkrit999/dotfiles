@@ -1137,7 +1137,7 @@ This is the **most practical replacement method** for everyday use. It gives you
 
 # 11. File Explorer (`nvim-tree`)
 
-Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or the first `:NvimTreeToggle`, `:NvimTreeOpen`, `:NvimTreeFocus`, `:NvimTreeFindFile` or `:NvimTreeFindFileToggle`; `nvim <dir>` and the dashboard entry open it too.
+Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or the first `:NvimTreeToggle`, `:NvimTreeOpen`, `:NvimTreeFocus`, `:NvimTreeFindFile` or `:NvimTreeFindFileToggle`; `nvim <dir>` and the dashboard entry open it too. The tree shows the folder it was opened on until the working folder changes: after `:cd`, `:tcd`, `:Z` or `:z` it shows the new folder (also when it is open, or was closed and is opened again).
 
 | Keymap | Context | Description |
 | --- | --- | --- |
