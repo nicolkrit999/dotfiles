@@ -101,6 +101,16 @@ for _, c in ipairs(cases) do
       end
       cleanup(buf)
 
+      -- the one-go write used for large ranges in heavily injected buffers gives the same result
+      if bi == 1 then
+        local budget = sc.bulk_budget
+        sc.bulk_budget = -1
+        local gb, bb, errb = run(c.ft, c.lines, c.s, c.e, c.act, be, c.cs)
+        sc.bulk_budget = budget
+        record(gb and vim.deep_equal(gb, c.exp), c.name, c, be, "bulk write", c.lines, c.s, c.e, c.act, c.exp, gb or errb)
+        cleanup(bb)
+      end
+
       -- idempotence: applying the same action to the expected output changes nothing
       if not c.noidem then
         local e2 = c.e + (#c.exp - #c.lines)
@@ -248,6 +258,24 @@ local keymap_tests = {
     end,
   },
   {
+    name = "Q45 one-go write (large range) keeps lowercase marks and gv",
+    lines = { "a();", "  bb();", "c();", "d();" },
+    setup = function()
+      sc.bulk_budget = -1
+    end,
+    teardown = function()
+      sc.bulk_budget = 50000
+    end,
+    keys = { "2G4|", "ma", "2GVj", "gcs", "gv" },
+    exp = { "a();", "//   bb();", "// c();", "d();" },
+    check = function()
+      local m = vim.api.nvim_buf_get_mark(0, "a")
+      local s, e = vim.fn.line("v"), vim.fn.line(".")
+      return m[1] == 2 and math.min(s, e) == 2 and math.max(s, e) == 3,
+        string.format("mark a=%s visual %d-%d", vim.inspect(m), s, e)
+    end,
+  },
+  {
     name = "Q45 single undo after gcr deleting delimiter rows",
     lines = { "x();", "/*", "a();", "b();", "*/", "y();" },
     keys = { "3GVj", "gcr", "u" },
@@ -274,12 +302,50 @@ for _, t in ipairs(keymap_tests) do
       ok = okc and cok
       note = okc and cmsg or ("check ERROR: " .. tostring(cok))
     end
+    if t.teardown then
+      t.teardown(buf)
+    end
     record(ok, t.name, { ft = "c" }, "keys", "keymap", t.lines, 0, 0, "c", t.exp,
       okk and ((t.mode and (show(got) .. " mode=" .. mode) or show(got)) .. (note and ("  " .. note) or ""))
       or ("ERROR: " .. tostring(err)))
     keys("<Esc>")
     cleanup(buf)
   end
+end
+
+--------------------------------------------------------------------------------------------------
+-- Q46 perf sanity: 3000 python rows with trailing comments (3000 injected `comment` trees), parsed
+-- and highlighted like a real buffer. Was ~4.6 s (gcs) / ~2.6 s (gcr); now ~0.2 s. The limit is
+-- generous so a busy machine does not fail it; the result must match the lexer's.
+--------------------------------------------------------------------------------------------------
+if (not fft or fft == "python") and not fname and ts_available("python") then
+  local function perf(label, gen, act)
+    local lines = {}
+    for i = 1, 3000 do
+      lines[i] = gen(i)
+    end
+    local buf = mkbuf("python", lines)
+    pcall(vim.treesitter.start, buf)
+    vim.treesitter.get_parser(buf):parse(true)
+    local t0 = vim.uv.hrtime()
+    local okp, err = pcall(sc.apply, buf, 1, #lines, act)
+    local ms = (vim.uv.hrtime() - t0) / 1e6
+    local got = lines_of(buf)
+    cleanup(buf)
+    local lb = mkbuf("python", lines)
+    sc.apply(lb, 1, #lines, act, { backend = "lexer" })
+    local want = lines_of(lb)
+    cleanup(lb)
+    record(okp and ms < 2000 and vim.deep_equal(got, want), label, { ft = "python" }, "ts", "perf < 2 s", { "(3000 rows)" },
+      1, #lines, act == "comment" and "c" or "u", { "same as lexer, < 2000 ms" },
+      okp and string.format("%.0f ms, same as lexer: %s", ms, tostring(vim.deep_equal(got, want))) or ("ERROR: " .. tostring(err)))
+  end
+  perf("Q46 gcs-all 3000 rows with trailing comments", function(i)
+    return "x" .. i .. " = 'a # b'  # c"
+  end, "comment")
+  perf("Q46 gcr-all 3000 comment rows", function(i)
+    return "# x" .. i .. " = 1"
+  end, "uncomment")
 end
 
 --------------------------------------------------------------------------------------------------

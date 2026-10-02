@@ -126,17 +126,46 @@ local function ts_collect(buf, lines, lo, hi, root)
     visit(tree:root())
   end)
 
+  -- Language per row. Only injected trees whose language has its own spec matter (html
+  -- <script>/<style>, markdown fences, make recipes -> bash...), or that contain such a tree.
+  -- Helper trees (comment, jsdoc, regex...) have no spec and are skipped: a buffer with thousands
+  -- of comments has thousands of `comment` trees, and testing each of them for every row made
+  -- large ranges slow (rows x comments). Without any such tree every row is the host language.
+  local useful = {}
+  local function mark_useful(lt)
+    local any = false
+    for _, child in pairs(lt:children()) do
+      if mark_useful(child) or specs.get(child:lang()) then
+        useful[child] = true
+        any = true
+      end
+    end
+    return any
+  end
+  local per_row = mark_useful(parser)
+  local function lang_at(lt, range)
+    for _, child in pairs(lt:children()) do
+      if useful[child] and child:contains(range) then
+        return lang_at(child, range)
+      end
+    end
+    return lt
+  end
+  local host = specs.get(parser:lang()) or root
+
   for r = lo, hi do
     local line = lines[r]
-    local fnb = (line:find("%S") or 1) - 1
-    local ok_l, lt = pcall(parser.language_for_range, parser, { r - 1, fnb, r - 1, fnb + 1 })
     local sp
-    -- injected helper languages (comment, jsdoc, regex...) have no spec: use the host language
-    while ok_l and lt and not sp do
-      sp = specs.get(lt:lang())
-      lt = lt:parent()
+    if per_row then
+      local fnb = (line:find("%S") or 1) - 1
+      local ok_l, lt = pcall(lang_at, parser, { r - 1, fnb, r - 1, fnb + 1 })
+      -- a tree without a spec of its own: use the nearest enclosing language that has one
+      while ok_l and lt and not sp do
+        sp = specs.get(lt:lang())
+        lt = lt:parent()
+      end
     end
-    res.row_spec[r] = sp or root
+    res.row_spec[r] = sp or host
     table.sort(res.pieces[r], function(a, b)
       return a.s < b.s
     end)
