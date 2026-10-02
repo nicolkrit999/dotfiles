@@ -323,7 +323,7 @@ local plugin_specs = {
   },
 
   -- Highlight URLs inside vim
-  { "itchyny/vim-highlighturl", event = "BufReadPost" },
+  { "itchyny/vim-highlighturl", event = { "BufReadPost", "BufNewFile" } },
 
   -- notification plugin
   {
