@@ -16,12 +16,18 @@ keymap.set("n", "<leader>gbn", function()
       return
     end
 
-    local cmd_str = string.format("G checkout -b %s", user_input)
-    vim.cmd(cmd_str)
+    -- whitespace, `|` (Ex command separator), `"` and `\` can never be part of the name here:
+    -- refuse instead of letting :Git parse them as extra arguments / commands
+    if user_input:find('[%s|"\\]') then
+      vim.notify("Invalid branch name (no spaces, |, \" or \\)", vim.log.levels.WARN)
+      return
+    end
+    -- structured call: the name is passed as an argument, not as Ex command text
+    vim.cmd { cmd = "Git", args = { "checkout -b " .. user_input } }
   end)
 end, {
   desc = "Git: create new branch",
 })
 
 keymap.set("n", "<leader>gf", ":Git fetch ", { desc = "Git: fetch (type args)" })
-keymap.set("n", "<leader>gbd", ":Git branch -D ", { desc = "Git: delete branch" })
+keymap.set("n", "<leader>gbd", ":Git branch -D ", { desc = "Git: delete branch (type name)" })
