@@ -140,7 +140,7 @@ local plugin_specs = {
   },
   {
     "smoka7/hop.nvim",
-    keys = { { "f", mode = { "n", "x", "o" }, desc = "Hop to 2-char match" } },
+    keys = { { "f", mode = { "n", "x", "o" }, desc = "Hop: jump to a 2-char match" } },
     config = function()
       require("config.nvim_hop")
     end,
