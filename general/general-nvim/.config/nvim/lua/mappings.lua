@@ -116,15 +116,22 @@ end, { silent = true, desc = "close qf and location list" })
 -- Delete a buffer, without closing the window, see https://stackoverflow.com/q/4465095/6064933
 keymap.set("n", [[\d]], "<cmd>bprevious <bar> bdelete #<cr>", { silent = true, desc = "delete current buffer" })
 
+-- Delete all other listed buffers. Buffers with unsaved changes are kept (one message
+-- "kept N unsaved buffer(s)"); a delete that fails for another reason also counts as kept.
 keymap.set("n", [[\D]], function()
-  local buf_ids = vim.api.nvim_list_bufs()
-  local cur_buf = vim.api.nvim_win_get_buf(0)
-  for _, buf_id in pairs(buf_ids) do
-    if vim.api.nvim_get_option_value("buflisted", { buf = buf_id }) and buf_id ~= cur_buf then
-      vim.api.nvim_buf_delete(buf_id, { force = true })
+  local cur_buf = vim.api.nvim_get_current_buf()
+  local kept = 0
+  for _, buf_id in ipairs(vim.api.nvim_list_bufs()) do
+    if buf_id ~= cur_buf and vim.api.nvim_buf_is_valid(buf_id) and vim.bo[buf_id].buflisted then
+      if vim.bo[buf_id].modified or not pcall(vim.api.nvim_buf_delete, buf_id, {}) then
+        kept = kept + 1
+      end
     end
   end
-end, { desc = "delete other buffers" })
+  if kept > 0 then
+    vim.notify(string.format("kept %d unsaved buffer(s)", kept), vim.log.levels.WARN)
+  end
+end, { desc = "delete other buffers (keeps unsaved ones)" })
 
 -- Close the current tab / all other tabs
 keymap.set("n", [[\t]], "<cmd>tabclose<cr>", { silent = true, desc = "close current tab" })
