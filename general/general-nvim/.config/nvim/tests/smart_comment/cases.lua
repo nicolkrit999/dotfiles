@@ -455,7 +455,8 @@ both("asm", "code becomes NASM style", { "mov eax, 1" }, { "; mov eax, 1" }, { "
 
 both("fish", "code + trailing comment", { "set -x X 1 # c" }, { "# set -x X 1 c" }, { "set -x X 1 c" })
 
--- "#" comments almost everywhere in Make, including recipe lines, unless escaped as "\#".
+-- "#" comments in Make unless escaped as "\#"; in recipe rows the shell decides (make passes the row
+-- to the shell unchanged), and a trailing ` # c` is a shell comment there too.
 add("make", "recipe line comment", { "all:", "\techo hi # c" }, "u", { "all:", "\techo hi c" }, { s = 2, e = 2 })
 add("make", "escaped hash is literal", { "x = a \\# b" }, "u", { "x = a \\# b" })
 

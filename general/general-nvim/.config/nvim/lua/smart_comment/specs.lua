@@ -357,12 +357,13 @@ specs.fish = {
 
 specs.make = {
   line = { "#" },
-  -- "#" is a comment almost everywhere in a Makefile, including inside TAB-indented recipe lines
-  -- (Make strips it before the shell ever sees the line) unless escaped as "\#".
+  -- "#" starts a comment in Makefile rows unless escaped as "\#". In a TAB-indented recipe row GNU
+  -- make does NOT strip it: the row goes to the shell as is, and the shell decides what is a comment
+  -- (so `echo '#'` keeps its `#`). This lexer-only spec still treats every unescaped "#" in a recipe
+  -- row as a comment (Q67: left as is; the tree-sitter path below is correct).
   escape_char = "\\",
-  -- tree-sitter-make injects bash into recipe lines; unlike an opaque string, Make has none of its
-  -- own to protect here, and bash's own "#" comment detection there is correct at the Make level
-  -- too (see the note above), so the injection is safe to follow for the ts backend.
+  -- tree-sitter-make injects bash into recipe lines, so with the ts backend the shell's own rules
+  -- (quotes, `$#`, `a#b`) decide what is a comment there, which is what make itself does.
   regions = { { lang = "bash" } },
 }
 
