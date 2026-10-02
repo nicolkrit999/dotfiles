@@ -181,7 +181,7 @@ The `matchpairs` option also includes: `<>`, and several CJK bracket pairs.
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `f` | n, v, o | Press `f`, then type 2 characters. All matches on screen get labeled. Press the label letter to jump there instantly. Case insensitive. Press `<Esc>` to cancel. |
+| `f` | n, x, o | Press `f`, then type 2 characters. All matches on screen get labeled. Press the label letter to jump there instantly. Case insensitive. Press `<Esc>` to cancel. |
 
 ## Jump History
 
@@ -276,7 +276,7 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 | --- | --- | --- |
 | `p` | n | Paste after the cursor |
 | `P` | n | Paste before the cursor |
-| `p` | x | Replace the selection with the register (yanky's paste: the replaced text goes into the register, so a second `p` pastes what was replaced; use `"_` or `<Space>`-free tricks like `"0p` to paste the last yank again) |
+| `p` | x | Replace the selection with the register (yanky's paste: the replaced text goes into the register, so a second `p` pastes what was replaced; use `"0p` to paste the last yank again) |
 | `<Space>p` | n | Paste on a new line below (custom) |
 | `<Space>P` | n | Paste on a new line above (custom) |
 | `[y` | n | After pasting, cycle to previous yank history entry (needs a paste first) |
@@ -1434,7 +1434,7 @@ Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `sni
 | `gcu` | n | Uncomment the adjacent commented lines |
 | `:[range]Commentary` | cmd | Toggle comment on a range (`:2,3Commentary`) |
 
-vim-commentary loads right after the first screen (VeryLazy), so these commands and the `gc` text object exist from then on; the `gc` keys also load it on first use.
+vim-commentary loads right after the first screen (VeryLazy), so these commands and the `gc` text object exist from then on.
 
 ## Smart Commenting (Custom)
 
@@ -1543,7 +1543,7 @@ After running, the terminal output appears in a split. See [Terminal Integration
 
 ## vim-fugitive (Plugin)
 
-The fugitive keys (and the gitlinker keys below) exist only inside a git repository: nvim started in one, or a file of one opened. Outside a repository `<Space>gs` and friends do nothing.
+The fugitive keys (and the gitlinker keys below) exist only inside a git repository: nvim started in one, or a file of one opened. Outside a repository these keys are not mapped: `<Space>` just moves the cursor one column right and the next keys run as their normal Vim/plugin meaning (`<Space>gs` becomes `l` plus vim-swap's `gs`). `<Space>gbl` works everywhere (fzf-lua).
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -1552,7 +1552,7 @@ The fugitive keys (and the gitlinker keys below) exist only inside a git reposit
 | `<Space>gc` | n | Git commit |
 | `<Space>gpl` | n | Git pull |
 | `<Space>gpu` | n | Git push (opens terminal split) |
-| `<Space>gb` | v | Git blame selected lines |
+| `<Space>gb` | x | Git blame selected lines |
 | `<Space>gbn` | n | Create new branch (prompts for name) |
 | `<Space>gbd` | n | Puts `:Git branch -D ` on the command line: type the branch name and press Enter (force delete) |
 | `<Space>gf` | n | Puts `:Git fetch ` on the command line (add arguments, then Enter) |
@@ -1575,7 +1575,7 @@ Shows `+` `~` `_` signs in the gutter for added/changed/deleted lines.
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `<Space>gl` | n, v | Copy permalink for current line(s) |
+| `<Space>gl` | n, x | Copy permalink for current line(s) |
 | `<Space>gbr` | n | Open repository in browser |
 
 ## Other Git Tools
@@ -1583,7 +1583,7 @@ Shows `+` `~` `_` signs in the gutter for added/changed/deleted lines.
 | Plugin | Command / Trigger | Description |
 | --- | --- | --- |
 | neogit | `:Neogit` | Full git UI (magit-like; loads on the first `:Neogit*` command, in any directory; also `:NeogitCommit`, `:NeogitLogCurrent`, `:NeogitResetState`) |
-| diffview.nvim | `:DiffviewOpen`, `:DiffviewFileHistory`, `:DiffviewClose` | Side-by-side diff viewer and 3-way merge tool; file history panel |
+| diffview.nvim | `:DiffviewOpen`, `:DiffviewFileHistory` (`:DiffviewClose` once a view was opened) | Side-by-side diff viewer and 3-way merge tool; file history panel |
 | vim-flog | `:Flog` | Visual git log graph |
 | diffs.nvim | `:Diff` (and automatic) | Unified diff of the current file against git; also colours the diffs shown by fugitive, neogit and gitsigns, and conflict markers |
 | codediff.nvim | `:CodeDiff` | VSCode-style side-by-side diff (downloads a small native library on first use) |
@@ -1717,7 +1717,7 @@ quicker.nvim formats the list (grouped by file, file-name column at most 40 char
 | `<Space>mf` | n | Add footnote (markdown buffers only; elsewhere one warning) |
 | `<Space>mr` | n | Return from footnote (markdown buffers only) |
 | `^^` | n, i | Insert footnote number (markdown files only) |
-| `@@` | n, i | Return from footnote (markdown files only) |
+| `@@` | n, i | Return from footnote (markdown files only; it shadows the macro replay `@@` in Markdown buffers) |
 
 ## Text Objects & Operators (Markdown Only)
 
@@ -2625,6 +2625,8 @@ DAP is configured automatically when jdtls starts. Debugging uses the nvim-dap c
 | `<Space>jem` | `:JavaRefactorExtractMethod` | Extract a method |
 | `<Space>jef` | `:JavaRefactorExtractField` | Extract a field |
 | `<Space>jj` | `:JavaSettingsChangeRuntime` | Switch the JDK version |
+
+The `:Java*` commands (except `:JavaRunnerRunMain` and `:JavaProfile`) exist only while jdtls is attached.
 
 ---
 
