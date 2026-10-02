@@ -11,7 +11,7 @@ keymap.set({ "n", "x", "o" }, "f", "", {
   callback = function()
     hop.hint_char2()
   end,
-  desc = "nvim-hop char2",
+  desc = "Hop: jump to a 2-char match",
 })
 
 -- Hint keys: colours from the ACTIVE colorscheme (no fixed hex): the theme's search

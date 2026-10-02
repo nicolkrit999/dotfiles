@@ -60,6 +60,9 @@ local plugin_specs = {
 
   {
     "nvim-java/nvim-java",
+    -- loads on the first Java file (not at startup, not an nvim-lspconfig dependency): its
+    -- config() ends with vim.lsp.enable("jdtls"), which attaches jdtls to the already open buffer
+    ft = "java",
     -- nvim-java's own lazy.lua already declares nui.nvim, nvim-dap and JavaHello/spring-boot.nvim
     dependencies = {
       "MunifTanjim/nui.nvim",
@@ -97,7 +100,6 @@ local plugin_specs = {
   -- Core LSP Config (Loads your lua/config/lsp.lua); LSP binaries come from nix
   {
     "neovim/nvim-lspconfig",
-    dependencies = { "nvim-java/nvim-java" },
     -- No config function here anymore.
     -- We load our own lsp config file separately.
     init = function()
@@ -138,7 +140,7 @@ local plugin_specs = {
   },
   {
     "smoka7/hop.nvim",
-    keys = { { "f", mode = { "n", "x", "o" }, desc = "Hop to 2-char match" } },
+    keys = { { "f", mode = { "n", "x", "o" }, desc = "Hop: jump to a 2-char match" } },
     config = function()
       require("config.nvim_hop")
     end,
@@ -288,6 +290,7 @@ local plugin_specs = {
   {
     "nvim-mini/mini.indentscope",
     version = false,
+    event = "VeryLazy", -- the scope line only draws on CursorMoved; ii/ai exist after the first screen
     config = function()
       local mini_indent = require("mini.indentscope")
       mini_indent.setup {
@@ -419,6 +422,9 @@ local plugin_specs = {
   -- Comment plugin
   {
     "tpope/vim-commentary",
+    -- also at VeryLazy so :Commentary / :5,9Commentary, the dgc/ygc text object and gcu exist
+    -- without first typing gc (the keys below stay as stubs for the first moments)
+    event = "VeryLazy",
     keys = {
       { "gc", mode = "n", desc = "Comment operator (vim-commentary)" },
       { "gc", mode = "x", desc = "Comment selection (vim-commentary)" },
@@ -434,11 +440,21 @@ local plugin_specs = {
     config = function()
       require("config.yanky")
     end,
+    -- load right after the first screen (not on the first p/P) so EVERY yank of the session is
+    -- recorded in the yank history; config.yanky then owns p/P/[y/]y
+    event = "VeryLazy",
     cmd = "YankyRingHistory",
   },
 
   -- Handy unix command inside Vim (Rename, Move etc.)
-  { "tpope/vim-eunuch",          cmd = { "Rename", "Delete" } },
+  -- (every command plugin/eunuch.vim defines, so each one works from a fresh start)
+  {
+    "tpope/vim-eunuch",
+    cmd = {
+      "Mkdir", "Unlink", "Remove", "Delete", "Copy", "Move", "Duplicate", "Rename", "Chmod",
+      "Cfind", "Clocate", "Lfind", "Llocate", "SudoEdit", "SudoWrite", "Wall", "W",
+    },
+  },
 
   -- Repeat vim motions
   { "tpope/vim-repeat",          event = "VeryLazy" },
@@ -478,7 +494,9 @@ local plugin_specs = {
       -- Only one of these is needed.
       "ibhagwan/fzf-lua",       -- optional
     },
-    event = "User InGitRepo",
+    -- only used through its commands (no map or autocmd needs it earlier); diffview, fzf-lua
+    -- and plenary are loaded as its dependencies on the first use
+    cmd = { "Neogit", "NeogitCommit", "NeogitLogCurrent", "NeogitResetState" },
   },
 
   -- Better git log display
@@ -542,7 +560,7 @@ local plugin_specs = {
   { "vim-pandoc/vim-markdownfootnotes", ft = { "markdown" } },
 
   -- Vim tabular plugin for manipulate tabular, required by markdown plugins
-  { "godlygeek/tabular",                ft = { "markdown" } },
+  { "godlygeek/tabular",                ft = { "markdown" }, cmd = { "Tabularize" } },
 
   -- Markdown previewing in the browser
   {
@@ -636,16 +654,20 @@ local plugin_specs = {
       -- would run it): cancel it. Instant because nothing longer starts with o-mode `s` (the
       -- o-mode `sa` is unmapped in config() below).
       vim.keymap.set("o", "s", "<Esc>", { remap = true, desc = "Cancel the pending operator (s is the vim-sandwich prefix)" })
+      -- do not let vim-sandwich define its default text-object maps (ib/ab auto, is/as query):
+      -- the builtin sentence objects keep is/as, targets.vim keeps ib/ab, and the query objects
+      -- are mapped below on iS/aS. (Operator maps sa/sd/sr are a separate flag, untouched.)
+      vim.g.textobj_sandwich_no_default_key_mappings = 1
     end,
     config = function()
       -- vim-sandwich's o-mode `sa` (<Plug>(sandwich-add)) has no user-facing use (adding is the
       -- normal/visual `sa`); drop it so o-mode `s` (= cancel) is not a prefix of it and which-key
       -- stops reporting "<s> overlaps with <sa>"
       pcall(vim.keymap.del, "o", "sa")
-      -- let targets.vim own ab/ib (`:checkhealth targets` conflict)
+      -- sandwich's query objects on iS/aS ("S" = Sandwich; capital, so builtin is/as stay sentences)
       for _, mode in ipairs({ "x", "o" }) do
-        pcall(vim.keymap.del, mode, "ab")
-        pcall(vim.keymap.del, mode, "ib")
+        vim.keymap.set(mode, "iS", "<Plug>(textobj-sandwich-query-i)", { desc = "Sandwich: inner surrounding (query)" })
+        vim.keymap.set(mode, "aS", "<Plug>(textobj-sandwich-query-a)", { desc = "Sandwich: around surrounding (query)" })
       end
     end,
   },
@@ -670,7 +692,8 @@ local plugin_specs = {
           augroup vimtex_common
             autocmd!
             autocmd FileType tex call s:write_server_name()
-            autocmd FileType tex nmap <buffer> <F9> <plug>(vimtex-compile)
+            " buffer-local like the old nmap, via Lua so the map can carry a desc
+            autocmd FileType tex lua vim.keymap.set("n", "<F9>", "<Plug>(vimtex-compile)", { buffer = true, remap = true, desc = "LaTeX: start/stop compiling (vimtex)" })
           augroup END
 
           let g:vimtex_compiler_latexmk = {
@@ -913,7 +936,8 @@ local plugin_specs = {
   },
 
   -- Session management plugin
-  { "tpope/vim-obsession",   cmd = "Obsession" },
+  -- event: after `nvim -S Session.vim` the session keeps being tracked without typing :Obsession
+  { "tpope/vim-obsession",   cmd = "Obsession", event = "VeryLazy" },
 
   {
     "ojroques/vim-oscyank",
@@ -975,6 +999,8 @@ local plugin_specs = {
   {
     "nvim-tree/nvim-tree.lua",
     keys = { { "<space>s", desc = "toggle nvim-tree" } },
+    -- the :NvimTree* commands (e.g. :NvimTreeFindFile) also load it
+    cmd = { "NvimTreeToggle", "NvimTreeOpen", "NvimTreeFocus", "NvimTreeFindFile", "NvimTreeFindFileToggle" },
     config = function()
       require("config.nvim-tree")
     end,
@@ -1078,6 +1104,7 @@ local plugin_specs = {
   {
     -- maintained fork of the archived Pocco81/auto-save.nvim
     "okuuva/auto-save.nvim",
+    event = "VeryLazy", -- its triggers (BufLeave/FocusLost) cannot happen before the first screen
     config = function()
       require("auto-save").setup {
         -- save when leaving a buffer or when nvim loses focus; no saves while typing
@@ -1143,7 +1170,7 @@ local plugin_specs = {
   -- Claude Code AI assistant integration
   {
     "greggh/claude-code.nvim",
-    lazy = false,
+    event = "VeryLazy", -- <Space>cc/cR/cV and :ClaudeCode* exist right after the first screen
     dependencies = {
       "nvim-lua/plenary.nvim",
     },

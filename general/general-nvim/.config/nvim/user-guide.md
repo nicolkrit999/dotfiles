@@ -181,7 +181,7 @@ The `matchpairs` option also includes: `<>`, and several CJK bracket pairs.
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `f` | n, v, o | Press `f`, then type 2 characters. All matches on screen get labeled. Press the label letter to jump there instantly. Case insensitive. Press `<Esc>` to cancel. |
+| `f` | n, x, o | Press `f`, then type 2 characters. All matches on screen get labeled. Press the label letter to jump there instantly. Case insensitive. Press `<Esc>` to cancel. |
 
 ## Jump History
 
@@ -276,13 +276,13 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 | --- | --- | --- |
 | `p` | n | Paste after the cursor |
 | `P` | n | Paste before the cursor |
-| `p` | x | Replace the selection with the register. Until yanky.nvim has loaded (see below) the register is NOT overwritten, so the next `p` pastes the same text again. After `:YankyRingHistory` was run once, visual `p` is yanky's paste and the replaced text goes into the register |
+| `p` | x | Replace the selection with the register (yanky's paste: the replaced text goes into the register, so a second `p` pastes what was replaced; use `"0p` to paste the last yank again) |
 | `<Space>p` | n | Paste on a new line below (custom) |
 | `<Space>P` | n | Paste on a new line above (custom) |
-| `[y` | n | After pasting, cycle to previous yank history entry (only once yanky.nvim is loaded, see below) |
-| `]y` | n | After pasting, cycle to next yank history entry (only once yanky.nvim is loaded) |
+| `[y` | n | After pasting, cycle to previous yank history entry (needs a paste first) |
+| `]y` | n | After pasting, cycle to next yank history entry (needs a paste first) |
 
-yanky.nvim loads the first time you run `:YankyRingHistory` in a session. From then on `p`/`P` (Normal and Visual) are yanky's paste with a 300 ms highlight of the pasted text, and `[y`/`]y` exist. Before that, `p`/`P` are Vim's own paste (and visual `p` keeps the register, see above). <!-- CHECK-USER: yanky (p/P highlight, [y/]y) only works after :YankyRingHistory was run once; intended, or should yanky load on p/P? Once loaded, visual `p` also stops keeping the register (yanky's map replaces the keep-register map); intended? -->
+yanky.nvim loads right after the first screen (VeryLazy), so every yank of the session is recorded in its history. `p`/`P` (Normal and Visual) are then yanky's paste with a 300 ms highlight of the pasted text, and `[y`/`]y` exist (after a paste).
 
 ## Changing (Delete + Enter Insert)
 
@@ -450,7 +450,9 @@ These are the most powerful selection commands. They work with `v` (select), `d`
 | `vaw` | Select the word + surrounding whitespace |
 | `viW` | Select the WORD under cursor (delimited by whitespace only) |
 | `vaW` | Select the WORD + surrounding whitespace |
-| `vis(` / `vas(` | NOT the sentence here: `is` / `as` are the vim-sandwich "query" objects: type the surrounding character after them (`vis(` selects inside the nearest `(...)`, `vas"` around the nearest `"..."`; `vis` alone just waits for that character). The sentence motions `(` / `)` still work. <!-- CHECK-USER: confirm you want the builtin sentence objects is/as shadowed by vim-sandwich --> |
+| `vis` | Select the sentence (inner: without the trailing whitespace) |
+| `vas` | Select the sentence + trailing whitespace (`das`, `dis`, `cis` work the same; the sentence motions are `(` / `)`) |
+| `viS(` / `vaS(` | vim-sandwich "query" objects: type the surrounding character after them (`viS(` selects inside the nearest `(...)`, `vaS"` around the nearest `"..."`; `viS` alone just waits for that character; `diS(`, `daS"`, `ciS[` work in the same way). `ib` / `ab` stay targets.vim's any-bracket objects |
 | `vip` | Select the paragraph (block of non-empty lines) |
 | `vap` | Select the paragraph + surrounding blank lines |
 
@@ -1133,7 +1135,7 @@ This is the **most practical replacement method** for everyday use. It gives you
 
 # 11. File Explorer (`nvim-tree`)
 
-Plugin: nvim-tree.lua. A sidebar file tree.
+Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or the first `:NvimTreeToggle`, `:NvimTreeOpen`, `:NvimTreeFocus`, `:NvimTreeFindFile` or `:NvimTreeFindFileToggle`; `nvim <dir>` and the dashboard entry open it too.
 
 | Keymap | Context | Description |
 | --- | --- | --- |
@@ -1428,6 +1430,11 @@ Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `sni
 | `gcc` | n | Toggle comment on current line |
 | `gc` + motion | n | Toggle comment on a motion (e.g., `gcip` comments a paragraph) |
 | `gc` | v | Toggle comment on selected lines |
+| `gc` | o | Comment text object: `dgc` deletes the comment block under the cursor, `ygc` yanks it |
+| `gcu` | n | Uncomment the adjacent commented lines |
+| `:[range]Commentary` | cmd | Toggle comment on a range (`:2,3Commentary`) |
+
+vim-commentary loads right after the first screen (VeryLazy), so these commands and the `gc` text object exist from then on.
 
 ## Smart Commenting (Custom)
 
@@ -1536,7 +1543,7 @@ After running, the terminal output appears in a split. See [Terminal Integration
 
 ## vim-fugitive (Plugin)
 
-The fugitive keys (and the gitlinker keys below) exist only inside a git repository: nvim started in one, or a file of one opened. Outside a repository `<Space>gs` and friends do nothing.
+The fugitive keys (and the gitlinker keys below) exist only inside a git repository: nvim started in one, or a file of one opened. Outside a repository these keys are not mapped: `<Space>` just moves the cursor one column right and the next keys run as their normal Vim/plugin meaning (`<Space>gs` becomes `l` plus vim-swap's `gs`). `<Space>gbl` works everywhere (fzf-lua).
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -1545,7 +1552,7 @@ The fugitive keys (and the gitlinker keys below) exist only inside a git reposit
 | `<Space>gc` | n | Git commit |
 | `<Space>gpl` | n | Git pull |
 | `<Space>gpu` | n | Git push (opens terminal split) |
-| `<Space>gb` | v | Git blame selected lines |
+| `<Space>gb` | x | Git blame selected lines |
 | `<Space>gbn` | n | Create new branch (prompts for name) |
 | `<Space>gbd` | n | Puts `:Git branch -D ` on the command line: type the branch name and press Enter (force delete) |
 | `<Space>gf` | n | Puts `:Git fetch ` on the command line (add arguments, then Enter) |
@@ -1568,15 +1575,15 @@ Shows `+` `~` `_` signs in the gutter for added/changed/deleted lines.
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `<Space>gl` | n, v | Copy permalink for current line(s) |
+| `<Space>gl` | n, x | Copy permalink for current line(s) |
 | `<Space>gbr` | n | Open repository in browser |
 
 ## Other Git Tools
 
 | Plugin | Command / Trigger | Description |
 | --- | --- | --- |
-| neogit | `:Neogit` | Full git UI (magit-like; available inside a git repository) |
-| diffview.nvim | `:DiffviewOpen`, `:DiffviewFileHistory`, `:DiffviewClose` | Side-by-side diff viewer and 3-way merge tool; file history panel |
+| neogit | `:Neogit` | Full git UI (magit-like; loads on the first `:Neogit*` command, in any directory; also `:NeogitCommit`, `:NeogitLogCurrent`, `:NeogitResetState`) |
+| diffview.nvim | `:DiffviewOpen`, `:DiffviewFileHistory` (`:DiffviewClose` once a view was opened) | Side-by-side diff viewer and 3-way merge tool; file history panel |
 | vim-flog | `:Flog` | Visual git log graph |
 | diffs.nvim | `:Diff` (and automatic) | Unified diff of the current file against git; also colours the diffs shown by fugitive, neogit and gitsigns, and conflict markers |
 | codediff.nvim | `:CodeDiff` | VSCode-style side-by-side diff (downloads a small native library on first use) |
@@ -1640,7 +1647,7 @@ Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, et
 | `[y` | n | After pasting, cycle to previous yank entry |
 | `]y` | n | After pasting, cycle to next yank entry |
 
-Command: `:YankyRingHistory` to browse all yank history. yanky.nvim is loaded by that command: the three rows above only work after `:YankyRingHistory` was run once in the session. Before that `p`/`P` are Vim's own paste, and in Visual mode `p` replaces the selection without overwriting the register. Once yanky has loaded, Visual `p` is yanky's and DOES overwrite the unnamed register with the replaced text.
+Command: `:YankyRingHistory` to browse all yank history. yanky.nvim loads right after the first screen (VeryLazy), so the yank history contains every yank of the session. In Visual mode `p` is yanky's: it overwrites the unnamed register with the replaced text (there is no separate keep-register map any more).
 
 ---
 
@@ -1710,7 +1717,7 @@ quicker.nvim formats the list (grouped by file, file-name column at most 40 char
 | `<Space>mf` | n | Add footnote (markdown buffers only; elsewhere one warning) |
 | `<Space>mr` | n | Return from footnote (markdown buffers only) |
 | `^^` | n, i | Insert footnote number (markdown files only) |
-| `@@` | n, i | Return from footnote (markdown files only) |
+| `@@` | n, i | Return from footnote (markdown files only; it shadows the macro replay `@@` in Markdown buffers) |
 
 ## Text Objects & Operators (Markdown Only)
 
@@ -1845,7 +1852,7 @@ Besides the builtin spell checker two language servers report problems as diagno
 | **Colorschemes** | On Nix systems the base16 theme named by `NVIM_BASE16_THEME` (fallback Catppuccin Mocha); on other systems one of 19 themes chosen at random at each start. UI colours (yank flash, hop keys, notifications, float borders) follow the active theme |
 | **dropbar.nvim** | Breadcrumb bar at top showing file > class > function |
 | **nvim-colorizer** | Color codes (hex, rgb) are highlighted with their actual color |
-| **mini.indentscope** | Visual `▏` guide for current indent scope |
+| **mini.indentscope** | Visual `▏` guide for current indent scope (loads right after the first screen; `ii`/`ai` exist from then on) |
 | **fidget.nvim** | LSP progress messages in bottom-right corner |
 | **nvim-lightbulb** | Lightbulb icon when code actions are available |
 | **vim-illuminate** | Highlights the other uses of the word under the cursor (`<Alt-n>` / `<Alt-p>` jump between them) |
@@ -1992,7 +1999,7 @@ URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 
 | Plugin | Trigger | Description |
 | --- | --- | --- |
-| `auto-save.nvim` | Automatic | Saves on `FocusLost` / `BufLeave` (message "AutoSave: saved at HH:MM:SS"); never saves unnamed, read-only or special buffers, nor Typst and LaTeX files |
+| `auto-save.nvim` | Automatic (active from right after the first screen) | Saves on `FocusLost` / `BufLeave` (message "AutoSave: saved at HH:MM:SS"); never saves unnamed, read-only or special buffers, nor Typst and LaTeX files |
 | `better-escape.vim` | `jk` (insert) | Fast escape from insert mode (200ms window) |
 | `vim-repeat` | `.` | Makes plugin actions repeatable with `.` |
 | `vim-swap` | `gs` (n, x) | Interactively swap function arguments / list items |
@@ -2081,7 +2088,7 @@ These happen without any keypress:
 | File changed on disk | Checked when Neovim gets focus and when idle. An unmodified buffer is reloaded ("File changed on disk. Buffer reloaded!"); if the buffer was changed too it is kept ("File changed on disk and in the buffer (buffer kept)"); a deleted file keeps its buffer (one warning) |
 | Format check after save | After saving a Python or Lua file, `black --check` / `stylua --check` run in the background; an unformatted file gives the warning `<file>: file is not formatted (black)` (`(stylua)` for Lua); a file the tool cannot check (syntax error) gives `<file>: <tool> could not check the file (syntax error?)` plus the first error line. Nothing is changed |
 | `nvim <directory>` | The directory becomes the working directory and the file tree opens there |
-| Git plugins | fugitive, neogit and gitlinker load when the working directory or an opened file is inside a git repository |
+| Git plugins | fugitive and gitlinker load when the working directory or an opened file is inside a git repository; neogit loads on its first `:Neogit*` command (with diffview and fzf-lua) |
 | Big files | Files over about 1.5 MB (or with very long lines) open in a light mode: no Treesitter, no completion, the language server starts a little later. `:set ft=<language>` gives the full mode back |
 | Help window | On a screen of at least 200 columns `:help` opens as a full-height split on the far left |
 
@@ -2327,7 +2334,7 @@ This config includes several git-related plugins that each handle a different as
 | **vim-fugitive** | Run git commands from inside Neovim. The core git plugin. | `<Space>gs` for status, `<Space>gc` for commit, etc. |
 | **gitsigns.nvim** | Shows which lines changed in the gutter. Navigate between changes. | `]c` / `[c` to jump between hunks, `<Space>hp` to preview. |
 | **gitlinker.nvim** | Generate shareable URLs to specific lines of code. | `<Space>gl` to copy a permalink. |
-| **neogit** | A full git UI inside Neovim (like Magit for Emacs). | `:Neogit` to open. |
+| **neogit** | A full git UI inside Neovim (like Magit for Emacs). | `:Neogit` to open (loads on that command; also `:NeogitCommit`, `:NeogitLogCurrent`, `:NeogitResetState`). |
 | **diffview.nvim** | Side-by-side diff viewer for comparing branches, commits, etc. | `:DiffviewOpen` to open. |
 | **vim-flog** | Visual git log/graph showing branch history. | `:Flog` to open. |
 | **diffs.nvim** | Syntax highlighting inside the diffs of fugitive, neogit and gitsigns; conflict markers. `:Diff` shows the file against git. | Automatic, `:Diff`. |
@@ -2368,7 +2375,7 @@ The gutter signs mean:
 
 Plugin: **claude-code.nvim**
 
-Claude Code is an AI coding assistant that runs in a terminal inside Neovim.
+Claude Code is an AI coding assistant that runs in a terminal inside Neovim. The plugin loads right after the first screen is drawn (VeryLazy), so its keys and `:ClaudeCode*` commands exist a fraction of a second after Neovim starts.
 
 | Keymap | Mode | What it does |
 | --- | --- | --- |
@@ -2564,7 +2571,7 @@ Press `K` on any symbol to see its documentation in a floating window. This pull
 
 Plugin: **nvim-java**.
 
-This is the most feature-rich language setup in this config. It provides a full Java IDE experience.
+This is the most feature-rich language setup in this config. It provides a full Java IDE experience. nvim-java loads when you open the first Java file of the session (not at startup), so opening a Java file takes a moment longer the first time; non-Java sessions do not pay for it.
 
 ## How It Works
 
@@ -2618,6 +2625,8 @@ DAP is configured automatically when jdtls starts. Debugging uses the nvim-dap c
 | `<Space>jem` | `:JavaRefactorExtractMethod` | Extract a method |
 | `<Space>jef` | `:JavaRefactorExtractField` | Extract a field |
 | `<Space>jj` | `:JavaSettingsChangeRuntime` | Switch the JDK version |
+
+The `:Java*` commands (except `:JavaRunnerRunMain` and `:JavaProfile`) exist only while jdtls is attached.
 
 ---
 
@@ -2694,7 +2703,7 @@ Plugin: **nvim-gdb**. For C/C++ debugging with GDB. Available on Linux and Windo
 | Plugin / Feature | What it does |
 | --- | --- |
 | **nvim-tree** (`<Space>s`) | Visual file browser. Create (`a`), delete (`d`), rename (`r`), copy (`c`), cut (`x`), paste (`p`). |
-| **vim-eunuch** | Unix file commands: `:Rename <newname>`, `:Delete` (deletes current file and buffer); once eunuch is loaded (by the first `:Rename` or `:Delete`) also `:Move`, `:Mkdir`. <!-- CHECK-USER: :Move and :Mkdir only exist after vim-eunuch is loaded; add them to its lazy cmd list, or keep documenting it like this? --> |
+| **vim-eunuch** | Unix file commands, all available from a fresh start (lazy `cmd` list): `:Rename <newname>`, `:Move <path>` (move the file, creating directories), `:Duplicate <name>`, `:Copy <path>`, `:Delete` / `:Remove` / `:Unlink` (delete the file; `:Delete` also the buffer), `:Mkdir[!] <dir>` (`!` = with parents), `:Chmod <mode>`, `:Cfind` / `:Lfind` / `:Clocate` / `:Llocate` (find / locate into the quickfix / location list), `:SudoEdit`, `:SudoWrite`, `:Wall` (write all) and `:W` (= `:Wall`). |
 | **gx.nvim** (`gx`) | Open the URL or file path under cursor in a browser. |
 | `:CopyPath absolute` | Copy the full file path to clipboard. |
 | `:CopyPath relative` | Copy path relative to project root. |
@@ -2726,7 +2735,7 @@ It never saves unnamed, read-only or special buffers (terminals, help, ...) and 
 
 Plugin: **persistence.nvim** saves a session for the current folder (and git branch) automatically when you quit, once a real file was opened. It is never restored by itself: restore it from the dashboard (`r` this folder, `L` last session). Windows of Claude Code, terminals, nvim-tree, the outline, help and quickfix are left out of the saved session. `<Space>sv` (restart) brings windows, tabs and files back on its own.
 
-Plugin: **vim-obsession** (manual alternative). Save and restore your entire Neovim session (open files, window layout, etc.).
+Plugin: **vim-obsession** (manual alternative). Save and restore your entire Neovim session (open files, window layout, etc.). It loads right after the first screen, so a session started with `nvim -S Session.vim` keeps being updated while you work (no need to type `:Obsession` again).
 
 | Command | What it does |
 | --- | --- |
@@ -3537,7 +3546,7 @@ e          d
 
 ## Align Text
 
-Plugin: **tabular**. Aligns text around a character. It loads with the first Markdown file of the session; in other filetypes run `:Lazy load tabular` first. <!-- CHECK-USER: should tabular get cmd = {"Tabularize"} so it works in every filetype? (config change, not guide) -->
+Plugin: **tabular**. Aligns text around a character. `:Tabularize` works in every filetype from a fresh start (it loads on the first `:Tabularize`, and with the first Markdown file).
 
 | Command | What it does |
 | --- | --- |
@@ -3662,7 +3671,8 @@ This is the single most important mental model for understanding Vim. Almost eve
 | --- | --- |
 | `iw` / `aw` | Inner word / a word (with whitespace) |
 | `iW` / `aW` | Inner WORD / a WORD |
-| `is` / `as` | vim-sandwich "query" object: type the surrounding character after it, e.g. `dis(`, `cas"`, `vis[` (inside / around that surrounding pair; the builtin sentence objects are shadowed here) |
+| `is` / `as` | Inner sentence / a sentence (with trailing whitespace) |
+| `iS` / `aS` | vim-sandwich "query" object: type the surrounding character after it, e.g. `diS(`, `caS"`, `viS[` (inside / around that surrounding pair) |
 | `ip` / `ap` | Inner paragraph / a paragraph |
 | `i(` / `a(` | Inside / around parentheses |
 | `i{` / `a{` | Inside / around braces |
