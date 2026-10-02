@@ -79,17 +79,43 @@ function M.setup(ctx)
   -- :NoMatchParen is vim-matchup's global switch and would stay off in every buffer)
   vim.b[buf].matchup_matchparen_enabled = 0
   vim.b[buf].matchup_matchparen_fallback = 0
-  -- remember the window options per window (restored by the `:set ft=` escape hatch)
-  local orig = {}
+  -- Window options: remember the original values per window (restored by the `:set ft=` escape
+  -- hatch) and apply the bigfile ones. `default` (the opening window's values) is the fallback for
+  -- windows opened on the big buffer later: a :split inherits the already-bigfile values, so those
+  -- cannot serve as "original".
+  local orig, default = {}, nil
   local win_opts = { "statuscolumn", "foldmethod", "conceallevel", "foldcolumn" }
-  local wins = vim.fn.win_findbuf(buf)
-  local cur = vim.api.nvim_get_current_win()
-  if vim.api.nvim_win_get_buf(cur) == buf and not vim.tbl_contains(wins, cur) then table.insert(wins, cur) end
-  for _, win in ipairs(wins) do
-    orig[win] = {}
-    for _, o in ipairs(win_opts) do orig[win][o] = vim.wo[win][o] end
+  local big_wo = { foldmethod = "manual", statuscolumn = "", conceallevel = 0, foldcolumn = "0" }
+  local function snapshot(win)
+    local o = {}
+    for _, name in ipairs(win_opts) do o[name] = vim.wo[win][name] end
+    return o
   end
-  Snacks.util.wo(0, { foldmethod = "manual", statuscolumn = "", conceallevel = 0, foldcolumn = "0" })
+  local function is_big(o)
+    for name, val in pairs(big_wo) do
+      if o[name] ~= val then return false end
+    end
+    return true
+  end
+  local function apply(win)
+    if not orig[win] then
+      local o = snapshot(win)
+      orig[win] = (is_big(o) and default) or o
+      default = default or orig[win]
+    end
+    Snacks.util.wo(win, big_wo)
+  end
+  local function restore(win)
+    local o = orig[win] or default
+    if o and vim.api.nvim_win_is_valid(win) then
+      for name, val in pairs(o) do vim.wo[win][name] = val end
+    end
+  end
+  local cur = vim.api.nvim_get_current_win()
+  local wins = vim.fn.win_findbuf(buf)
+  if vim.api.nvim_win_get_buf(cur) == buf and not vim.tbl_contains(wins, cur) then table.insert(wins, cur) end
+  if #wins == 0 then wins = { cur } end -- as before: Snacks.util.wo(0, ...) hit the current window
+  for _, win in ipairs(wins) do apply(win) end
   vim.b[buf].completion = false -- read by the nvim-cmp `enabled` function
   vim.b[buf].minianimate_disable = true
   vim.b[buf].minihipatterns_disable = true
@@ -108,12 +134,19 @@ function M.setup(ctx)
         vim.b[ev.buf][var] = nil
       end
       vim.lsp.semantic_tokens.enable(true, { bufnr = ev.buf })
-      for win, o in pairs(orig) do
-        if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == ev.buf then
-          for name, val in pairs(o) do vim.wo[win][name] = val end
-        end
-      end
+      -- every window currently showing the buffer (also ones opened after it loaded)
+      for _, win in ipairs(vim.fn.win_findbuf(ev.buf)) do restore(win) end
       pcall(vim.api.nvim_del_augroup_by_id, group)
+    end,
+  })
+
+  -- windows opened on the big buffer later (:split, :b N in another window) get the bigfile window
+  -- options too (window-local, so other buffers shown there later are unaffected)
+  vim.api.nvim_create_autocmd("BufWinEnter", {
+    buffer = buf,
+    group = group,
+    callback = function(ev)
+      if vim.bo[ev.buf].filetype == "bigfile" then apply(vim.api.nvim_get_current_win()) end
     end,
   })
 
