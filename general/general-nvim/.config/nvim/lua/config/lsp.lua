@@ -253,8 +253,7 @@ local servers = {
   -- LaTeX (texlab comes from the LaTeX devShell; enabled only when executable)
   texlab = { cmd = { "texlab" } },
 
-  -- Rust (rust-analyzer: rust devShell). nvim-lspconfig's root_dir also needs `cargo` (silent
-  -- without it)
+  -- Rust (rust-analyzer + cargo: rust devShell); binaries checked in `needs` below
   rust_analyzer = { cmd = { "rust-analyzer" } },
 
   -- Go (gopls + go: go devShell); binaries checked in `needs` below
@@ -280,6 +279,8 @@ local servers = {
 
 -- binaries a server needs, when that is not just cmd[1]
 local needs = {
+  -- nvim-lspconfig's rust_analyzer root_dir runs `cargo metadata` (it warns "cargo not found")
+  rust_analyzer = { "rust-analyzer", "cargo" },
   -- nvim-lspconfig's gopls root_dir runs `go env` (it would fail without `go`)
   gopls = { "gopls", "go" },
   ts_ls = { "typescript-language-server" },
