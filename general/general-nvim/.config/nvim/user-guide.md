@@ -236,6 +236,7 @@ More: sections 10 and 23.
 | `<Ctrl-w>h` `j` `k` `l` | Move between windows |
 | `<Ctrl-w>=` / `<Ctrl-w>o` | Make windows equal / keep only this window |
 | `gt` / `gT`, `\t` / `\T` | Next / previous tab, close this tab / the other tabs |
+| `:sp <file>` / `:vs <file>` | Open a file in a new horizontal / vertical split (`;` works like `:`, so `;vs <file>` too) |
 
 More: section 7.
 
@@ -289,6 +290,44 @@ More: sections 13 and 44.
 | `:Neogit` / `:NeogitLogCurrent` | Open the Neogit status window / the log of the current file (`q` closes) |
 
 More: sections 20 and 48.
+
+### Lists with a search bar (pickers)
+
+| Keys | What it does |
+| --- | --- |
+| `<Ctrl-n>` / `<Ctrl-p>` or `<Down>` / `<Up>` | Next / previous item (branch menu, code actions, `<Space>ff`, `<Space>fg`, Telescope ...) |
+| `<Ctrl-j>` / `<Ctrl-k>` | Same, except in Telescope |
+| `<Tab>` | Move down (marks the item too in fzf-lua and Telescope) |
+| `<Enter>` / `<Esc>` | Choose / close (in snacks and Telescope the first `<Esc>` only leaves the search bar) |
+
+`j` and `k` type letters into the search bar. More: section 12.
+
+### Quickfix list (search results, errors)
+
+| Keys | What it does |
+| --- | --- |
+| `:copen` / `:cclose` | Open / close the list |
+| `:cnext` / `:cprev` | Next / previous item |
+| `\x` | Close the quickfix and location lists |
+| `p` / `zf` in the list | Preview the item / filter the list with fzf |
+| `<Tab>` in the list | Mark the item |
+| `<Ctrl-x>` / `<Ctrl-v>` in the list | Open the item in a horizontal / vertical split |
+| `:cfdo %s/old/new/g \| update` | Replace in every file of the list |
+
+More: sections 26 and 51.
+
+### Spell checking
+
+| Keys | What it does |
+| --- | --- |
+| `<Space>cz` | Spell checking on / off (`:set spell` / `:set nospell` too) |
+| `]s` / `[s` | Next / previous misspelled word |
+| `z=` | Show suggestions |
+| `zg` / `zw` | Add the word to your allowed list / mark it as wrong (`2zg` Italian, `3zg` German, `4zg` French) |
+| `zug` | Undo the last `zg` |
+| `:e ~/.config/nvim/spell/en.utf-8.add` | Open the list of allowed English words (one per line: delete a line to forbid the word again) |
+
+`:set nospell` only turns off the built-in checker. Typo underlines that come from the language servers (`typos_lsp` in code, `ltex_plus` in prose) stay; they are diagnostics. More: section 31.
 
 ### Run code and terminal
 
@@ -1420,6 +1459,20 @@ Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or 
 
 Plugin: **fzf-lua**. A powerful popup interface that connects to FZF (a command-line fuzzy finder). It lets you search file names, search text inside files, browse buffers, and more. The popup opens centered on screen at 70% height.
 
+## Moving Inside Any Picker (Lists With a Search Bar)
+
+Several things look the same: a search bar on top and a filtered list below it. They are the fzf-lua pickers (`<Space>ff`, `<Space>fg`, `<Space>fb`, `<Space>fr`, `<Space>gbl` ...), the snacks pickers (the branch menu you get by clicking the branch in the statusline, the code-action menu `<Space>ca`, every other `vim.ui.select` list) and Telescope (`:Telescope`, `<Space>db`, the devdocs commands). The search bar takes your typing, so `j` and `k` type the letters `j` and `k` there. Move through the list with these keys (all tested in a real terminal):
+
+| Keys | What it does |
+| --- | --- |
+| `<Ctrl-n>` / `<Ctrl-p>`, or `<Down>` / `<Up>` | Next / previous item. Works in all three kinds of picker. |
+| `<Ctrl-j>` / `<Ctrl-k>` | The same, but only in fzf-lua and the snacks pickers (NOT in Telescope) |
+| `<Tab>` | Move down. In fzf-lua and Telescope it also marks the item, so you can choose several at once |
+| `<Enter>` | Choose the item (or the marked ones) |
+| `<Esc>` | fzf-lua: close the picker. snacks and Telescope: the first `<Esc>` leaves the search bar for Normal mode, where `j` / `k` move the list; a second `<Esc>` closes it |
+
+The same `<Ctrl-n>` / `<Ctrl-p>` also move through the completion menu (section 14); on the `:` command line use `<Tab>` / `<S-Tab>`.
+
 ## Keymaps
 
 | Keymap | Description |
@@ -2071,6 +2124,8 @@ Languages: English, Italian, German, French.
 | `zg` | Add the word to the English word list (`spell/en.utf-8.add`) |
 | `2zg` / `3zg` / `4zg` | Add the word to the Italian / German / French list |
 | `zw` | Mark word as wrong (same counts) |
+| `zug` | Undo the last `zg` |
+| `:e ~/.config/nvim/spell/en.utf-8.add` | Show the allowed words of a language (`it`, `de`, `fr` in the other files); delete a line to remove a word |
 
 `spellfile` has one word list per language, in the order of `spelllang` (en, it, de, fr): `zg` adds to the first, a count picks another. The lists are `spell/*.utf-8.add` inside the config, which is tracked in a PUBLIC repository: `spell/README.md` says these words are public, so review new words before committing. At startup Neovim silently recompiles any list whose compiled `.add.spl` file is missing or older, so the words of the tracked lists are accepted on a fresh checkout.
 
