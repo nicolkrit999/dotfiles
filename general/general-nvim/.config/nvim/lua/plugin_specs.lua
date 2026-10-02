@@ -438,14 +438,6 @@ local plugin_specs = {
     end,
   },
 
-  {
-    "Neur1n/neuims",
-    enabled = function()
-      return vim.g.is_win
-    end,
-    event = { "InsertEnter" },
-  },
-
   -- Git command inside vim
   {
     "tpope/vim-fugitive",
