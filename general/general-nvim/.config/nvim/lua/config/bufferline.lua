@@ -1,7 +1,14 @@
 require("bufferline").setup {
   options = {
     numbers = "none",
-    close_command = "bdelete %d", -- refuses buffers with unsaved changes
+    -- refuses buffers with unsaved changes: one short warning instead of the raw E89 error
+    close_command = function(bufnr)
+      -- with 'confirm' a cancelled prompt does not raise: the buffer simply survives
+      local ok = pcall(vim.cmd.bdelete, bufnr)
+      if not ok or vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].buflisted then
+        vim.notify("unsaved changes, buffer kept", vim.log.levels.WARN)
+      end
+    end,
     right_mouse_command = false,
     left_mouse_command = "buffer %d",
     middle_mouse_command = nil,
