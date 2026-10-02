@@ -113,6 +113,10 @@ keymap.set("n", "<leader>P", "m`O<ESC>p``", { desc = "paste above current line" 
 -- Shortcut for faster save and quit
 keymap.set("n", "<leader>w", "<cmd>update<cr>", { silent = true, desc = "save buffer" })
 
+-- Split the window (the new window shows the same buffer; below / to the right, see splitbelow, splitright)
+keymap.set("n", "<leader>-", "<cmd>split<cr>", { silent = true, desc = "split window horizontally" })
+keymap.set("n", "<leader>|", "<cmd>vsplit<cr>", { silent = true, desc = "split window vertically" })
+
 -- Saves the file if modified and quit
 keymap.set("n", "<leader>q", "<cmd>x<cr>", { silent = true, desc = "save if modified and quit window" })
 

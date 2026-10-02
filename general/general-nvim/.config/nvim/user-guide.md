@@ -804,6 +804,8 @@ This section explains how to open, navigate, resize, and close split windows ent
 | --- | --- |
 | `<Ctrl-w>s` or `:sp` | Split the current window **horizontally** (new window appears below) |
 | `<Ctrl-w>v` or `:vs` | Split the current window **vertically** (new window appears to the right) |
+| `<Space>-` | Split the current window **horizontally** (new window below, same buffer) |
+| `<Space>\|` | Split the current window **vertically** (new window to the right, same buffer) |
 | `:sp <file>` | Open `<file>` in a new horizontal split |
 | `:vs <file>` | Open `<file>` in a new vertical split |
 
