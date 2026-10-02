@@ -1140,7 +1140,7 @@ Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or 
 | Keymap | Context | Description |
 | --- | --- | --- |
 | `<Space>s` | global | Toggle the file explorer on/off |
-| `<Enter>` | in tree | Open file (cursor moves to file) / expand directory <!-- CHECK-USER: with 2+ editor windows open, does <Enter> in the tree ask for a window letter (window picker)? --> |
+| `<Enter>` | in tree | Open file (cursor moves to file) / expand directory. With 2 or more editor windows open and the file not already shown in one of them, it asks "Pick window:": a letter (A, B, C, ...) is drawn in the middle of each window's status line, press the letter of the window you want; any other key cancels. A file that is already open in a window is just focused. The dimming plugin vimade is switched off only while the letters are shown (otherwise they were nearly invisible) and switched on again right after. The tree itself always opens at the far left of the screen. |
 | `<Tab>` | in tree | Open file but **keep cursor in the tree** (great for opening multiple files) |
 | `<BS>` | in tree | Close (collapse) the directory under the cursor; on a file it closes its parent directory |
 | `a` | in tree | Create a new file. Type the name and press Enter. Add `/` at the end for a directory. |
