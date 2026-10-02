@@ -63,15 +63,16 @@ local function star_search(dir_char)
   -- special notation must be replaced by its internal representation to act as a real Enter
   local enter = vim.api.nvim_replace_termcodes("<CR>", true, false, true)
   local cmd = string.format("normal! %s%s%s%s", count > 1 and count or "", dir_char, pattern, enter)
-  if count == 1 then
-    -- N keeps the cursor where it was
-    cmd = cmd .. "N"
-  end
 
   local ok, err = pcall(vim.fn.execute, cmd)
   if not ok then
+    -- e.g. E384/E385 with 'nowrapscan': stay put like the builtin `*`
     api.nvim_echo({ { tostring(err):match("E%d+:.*") or tostring(err) } }, true, { err = true })
     return
+  end
+  if count == 1 then
+    -- N keeps the cursor where it was (only after a successful search)
+    pcall(vim.fn.execute, "normal! N")
   end
   hlslens.start()
 end
