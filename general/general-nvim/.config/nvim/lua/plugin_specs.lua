@@ -692,7 +692,8 @@ local plugin_specs = {
           augroup vimtex_common
             autocmd!
             autocmd FileType tex call s:write_server_name()
-            autocmd FileType tex nmap <buffer> <F9> <plug>(vimtex-compile)
+            " buffer-local like the old nmap, via Lua so the map can carry a desc
+            autocmd FileType tex lua vim.keymap.set("n", "<F9>", "<Plug>(vimtex-compile)", { buffer = true, remap = true, desc = "LaTeX: start/stop compiling (vimtex)" })
           augroup END
 
           let g:vimtex_compiler_latexmk = {
