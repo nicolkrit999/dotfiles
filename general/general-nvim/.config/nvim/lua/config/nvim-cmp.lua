@@ -43,7 +43,8 @@ cmp.setup {
       end
     end, { "i", "s" }),
 
-    ["<CR>"] = cmp.mapping.confirm { select = true },
+    -- confirm only an item picked with <Tab>/<C-n>; nothing selected -> plain newline
+    ["<CR>"] = cmp.mapping.confirm { select = false },
 
     ["<C-e>"] = cmp.mapping.abort(),
     ["<Esc>"] = cmp.mapping.close(),
