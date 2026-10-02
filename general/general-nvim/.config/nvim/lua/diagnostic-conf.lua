@@ -48,9 +48,10 @@ end, { desc = "put buffer diagnostics to qf" })
 
 -- automatically show diagnostic in float win for current line
 api.nvim_create_autocmd("CursorHold", {
+  group = api.nvim_create_augroup("diagnostic_float", { clear = true }),
   pattern = "*",
   callback = function()
-    if #vim.diagnostic.get(0) == 0 then
+    if not vim.diagnostic.is_enabled({ bufnr = 0 }) or #vim.diagnostic.get(0) == 0 then
       return
     end
 

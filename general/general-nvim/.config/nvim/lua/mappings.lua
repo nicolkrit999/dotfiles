@@ -39,17 +39,11 @@ end, { desc = "Prev Error" })
 -- Show the message in a floating window (Detail)
 keymap.set("n", "<leader>dd", vim.diagnostic.open_float, { desc = "Show Diagnostic Detail" })
 
--- Toggle Diagnostics (Version Safe)
-local diagnostics_active = true
+-- Toggle Diagnostics (globally; follows the real state, also after :lua vim.diagnostic.enable(...))
 keymap.set("n", "<leader>dt", function()
-  diagnostics_active = not diagnostics_active
-  if diagnostics_active then
-    vim.diagnostic.enable(true)
-    vim.notify("Diagnostics Enabled")
-  else
-    vim.diagnostic.enable(false)
-    vim.notify("Diagnostics Disabled")
-  end
+  local on = not vim.diagnostic.is_enabled()
+  vim.diagnostic.enable(on)
+  vim.notify(on and "Diagnostics Enabled" or "Diagnostics Disabled")
 end, { desc = "Toggle Diagnostics" })
 
 -- ============================================================================
