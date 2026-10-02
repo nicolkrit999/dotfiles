@@ -534,11 +534,8 @@ local plugin_specs = {
     build = "cd app && npm install && git restore .",
     ft = { "markdown" },
     init = function()
-      -- Only setting this for suitable platforms
-      if vim.g.is_win or vim.g.is_mac then
-        -- Do not close the preview tab when switching to other buffers
-        vim.g.mkdp_auto_close = 0
-      end
+      -- Do not close the preview tab when switching to other buffers (all platforms)
+      vim.g.mkdp_auto_close = 0
     end,
   },
 
