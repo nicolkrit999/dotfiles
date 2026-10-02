@@ -38,11 +38,22 @@ end
 -- almost invisible. Nothing here depends on timing: `:VimadeDisable` un-dims synchronously (it
 -- sets g:vimade_running = 0, stops the timer and removes the highlights), the picker then blocks
 -- on the key press, and the `finally`-style restore below always runs.
+local picker_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+local picker_exclude = {
+  filetype = { "notify", "qf", "diff", "fugitive", "fugitiveblame" },
+  buftype = { "nofile", "terminal", "help" },
+}
+
 local function pick_window()
-  local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-  local excluded_ft = { notify = true, qf = true, diff = true, fugitive = true, fugitiveblame = true }
-  local excluded_bt = { nofile = true, terminal = true, help = true }
-  local tree_win = vim.api.nvim_get_current_win()
+  local chars = picker_chars
+  local excluded_ft = vim.iter(picker_exclude.filetype):fold({}, function(t, v) t[v] = true return t end)
+  local excluded_bt = vim.iter(picker_exclude.buftype):fold({}, function(t, v) t[v] = true return t end)
+  local ok_view, tree_win = pcall(function()
+    return require("nvim-tree.view").get_winnr()
+  end)
+  if not ok_view or not tree_win then
+    tree_win = vim.api.nvim_get_current_win()
+  end
 
   local selectable = {}
   for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
@@ -111,7 +122,9 @@ local function pick_window()
   vim.cmd("redraw | echo ''")
 
   if not ok then
-    vim.notify("nvim-tree window picker failed: " .. tostring(resp), vim.log.levels.WARN)
+    if not tostring(resp):find("Keyboard interrupt", 1, true) then -- Ctrl-C cancels silently
+      vim.notify("nvim-tree window picker failed: " .. tostring(resp), vim.log.levels.WARN)
+    end
     return nil
   end
   return win_of[resp] -- nil (cancel) for any other key
@@ -196,11 +209,8 @@ nvim_tree.setup {
       window_picker = {
         enable = true,
         picker = pick_window,
-        chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
-        exclude = {
-          filetype = { "notify", "qf", "diff", "fugitive", "fugitiveblame" },
-          buftype = { "nofile", "terminal", "help" },
-        },
+        chars = picker_chars,
+        exclude = picker_exclude,
       },
     },
   },
