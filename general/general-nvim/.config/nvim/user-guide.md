@@ -238,7 +238,7 @@ Marks `a-z` are local to the file. Marks `A-Z` are global (across files).
 
 ## Deleting Text
 
-All delete operations also **cut** (yank) the text into a register, so you can paste it with `p`. Exception: `c`, `C`, `cc` in this config send to the black hole register (they do NOT save to paste register).
+All delete operations also **cut** (yank) the text into a register, so you can paste it with `p`. Exception: `c`, `C`, `cc` (also `c` on a selection) in this config send to the black hole register (they do NOT save to paste register). `S` is NOT redirected: it fills the paste register.
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -276,13 +276,13 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 | --- | --- | --- |
 | `p` | n | Paste after the cursor |
 | `P` | n | Paste before the cursor |
-| `p` | x | Replace the selection with the register WITHOUT overwriting the register (so the next `p` pastes the same text again) |
+| `p` | x | Replace the selection with the register. Until yanky.nvim has loaded (see below) the register is NOT overwritten, so the next `p` pastes the same text again. After `:YankyRingHistory` was run once, visual `p` is yanky's paste and the replaced text goes into the register |
 | `<Space>p` | n | Paste on a new line below (custom) |
 | `<Space>P` | n | Paste on a new line above (custom) |
 | `[y` | n | After pasting, cycle to previous yank history entry (only once yanky.nvim is loaded, see below) |
 | `]y` | n | After pasting, cycle to next yank history entry (only once yanky.nvim is loaded) |
 
-yanky.nvim loads the first time you run `:YankyRingHistory` in a session. From then on `p`/`P` (Normal and Visual) are yanky's paste with a 300 ms highlight of the pasted text, and `[y`/`]y` exist. Before that, `p`/`P` are Vim's own paste. <!-- CHECK-USER: yanky (p/P highlight, [y/]y) only works after :YankyRingHistory was run once; intended, or should yanky load on p/P? -->
+yanky.nvim loads the first time you run `:YankyRingHistory` in a session. From then on `p`/`P` (Normal and Visual) are yanky's paste with a 300 ms highlight of the pasted text, and `[y`/`]y` exist. Before that, `p`/`P` are Vim's own paste (and visual `p` keeps the register, see above). <!-- CHECK-USER: yanky (p/P highlight, [y/]y) only works after :YankyRingHistory was run once; intended, or should yanky load on p/P? Once loaded, visual `p` also stops keeping the register (yanky's map replaces the keep-register map); intended? -->
 
 ## Changing (Delete + Enter Insert)
 
@@ -450,7 +450,7 @@ These are the most powerful selection commands. They work with `v` (select), `d`
 | `vaw` | Select the word + surrounding whitespace |
 | `viW` | Select the WORD under cursor (delimited by whitespace only) |
 | `vaW` | Select the WORD + surrounding whitespace |
-| `vis` / `vas` | NOT the sentence here: `is` / `as` are the vim-sandwich "query" objects (inside / around the nearest surrounding pair). The sentence motions `(` / `)` still work. <!-- CHECK-USER: confirm you want the builtin sentence objects is/as shadowed by vim-sandwich --> |
+| `vis(` / `vas(` | NOT the sentence here: `is` / `as` are the vim-sandwich "query" objects: type the surrounding character after them (`vis(` selects inside the nearest `(...)`, `vas"` around the nearest `"..."`; `vis` alone just waits for that character). The sentence motions `(` / `)` still work. <!-- CHECK-USER: confirm you want the builtin sentence objects is/as shadowed by vim-sandwich --> |
 | `vip` | Select the paragraph (block of non-empty lines) |
 | `vap` | Select the paragraph + surrounding blank lines |
 
@@ -484,8 +484,8 @@ Neovim 0.12 can grow and shrink a selection along the syntax tree (needs a Trees
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
-| `an` | x | Select the parent (outer) node: press `v`, then `an` repeatedly to grow the selection |
-| `in` | x | Select the child (inner) node: shrinks the selection again |
+| `an` | x, o | Select the parent (outer) node: press `v`, then `an` repeatedly to grow the selection |
+| `in` | x, o | Select the child (inner) node: shrinks the selection again |
 | `]n` / `[n` | x | Select the next / previous node |
 | `]N` / `[N` | x | Select the next / previous sibling node |
 
@@ -549,7 +549,7 @@ How to select (or delete/copy/change) from the cursor to a specific character, w
 - To **include** the target, add `l` after it: `vt:l` (up to and including the next `:`).
 - `f` cannot be used for this, because `f` is hop.nvim here (it asks for 2 characters and shows labels). `vf:` does not do what you expect. After an operator `f` is still hop, but it is **not limited to the current line**: see the `df,` note below.
 - Works with operators: `dt)` deletes up to before `)`, `yt"` copies up to before `"`, `ct)` changes up to before `)`. To include the target character with an operator, use `v` first: `vt)l` then `d`.
-- **`f` after an operator (`df,`, `cf,`) is hop, not the built-in `f`** (tested): `df,` deleted from the cursor through a comma several lines below (it was the only comma in the visible text), so it is **not limited to the current line** and the target character is **deleted too**. `cf,` deleted the same kind of range (as `c` does, it should also leave you in Insert mode; not checked). <!-- CHECK-USER: does cf, enter Insert mode after the hop label is picked? --> With several matches on screen, hop shows labels and you choose the target, so the deleted range depends on the label you press; check what you typed before pressing `d`/`c` on a big range (`u` undoes it).
+- **`f` after an operator (`df,`, `cf,`) is hop, not the built-in `f`** (tested): `df,` deleted from the cursor through a comma several lines below (it was the only comma in the visible text), so it is **not limited to the current line** and the target character is **deleted too**. `cf,` deleted the same kind of range (tested with one match on screen: `cf,` deleted the same range as `df,` and left you in Insert mode; with several matches you pick the label first). With several matches on screen, hop shows labels and you choose the target, so the deleted range depends on the label you press; check what you typed before pressing `d`/`c` on a big range (`u` undoes it).
 
 ### Counting: `v2tX` is not `2vtX`
 
@@ -638,7 +638,7 @@ With relative line numbers the gutter shows how far each line is from the cursor
 
 1. `Nj` moves down `N` lines, where `N` is the number shown next to the target line (with a count, `j` moves real lines, not wrapped ones). Use `Nk` to go up.
 2. `L` goes to the end of that line.
-3. `?foo<Enter>` searches **backward** from the end of the line, which should find the **last** `foo` on that line (**not confirmed**: in one real test of steps 1 to 4 on a line with several matches the user reported that the **first** match was selected, cause not found yet; re-test step by step before relying on it). <!-- CHECK-USER: ?foo after L: does it select the last or the first match on the line? --> (Searching forward from the middle of the line could hit an earlier, unwanted match or a capitalised one.)
+3. `?foo<Enter>` searches **backward** from the end of the line, which should find the **last** `foo` on that line (retested headless in 3 variants and the LAST match was selected every time; an earlier user report of the first match is not reproduced, so watch for it). <!-- CHECK-USER: ?foo after L: does it select the last or the first match on the line? --> (Searching forward from the middle of the line could hit an earlier, unwanted match or a capitalised one.)
 4. `viw` selects the word, or `ve` selects from the match start to the word end.
 
 Related: `V3j` selects the current line and 3 below; `d3j` deletes 4 lines; `10G` or `;10` (Enter) jumps to absolute line 10.
@@ -866,9 +866,9 @@ This section explains how to open, navigate, resize, and close split windows ent
 | Keymap / Command | Description |
 | --- | --- |
 | `gb` | Go to the **next** buffer; `{N}gb` (e.g. `3gb`) goes to buffer number N (an invalid number warns "Invalid bufnr") |
-| `gB` | Go to the **previous** buffer (a count is ignored; use `{N}gb`) |
+| `gB` | Go to the **previous** buffer. Do not give it a count: `{N}gB` does nothing (an invalid number warns "Invalid bufnr"); use `{N}gb` to jump to buffer N |
 | `<Space>bp` | **Pick** a buffer: each open buffer shows a letter, press it to switch |
-| `\d` | Close/delete the current buffer (window stays open, shows previous buffer). On the last buffer an empty buffer is left; a buffer with unsaved changes is refused (E89) |
+| `\d` | Close/delete the current buffer (window stays open, shows previous buffer). On the last buffer an empty buffer is left. A named file with changes is saved first by auto-save (BufLeave); a buffer auto-save does not save (unnamed, read-only, Typst/LaTeX) is not deleted: you land in the previous buffer and the unsaved one stays loaded. <!-- CHECK-USER: \d on an unsaved unnamed buffer: with 'confirm' on, do you get a Save changes? dialog or an E89 message? (headless shows neither) --> |
 | `\D` | Close all other buffers, but **keep** buffers with unsaved changes and terminals that are still running (one message "kept N buffer(s) (unsaved or running terminal)") |
 | `:ls` or `:buffers` | List all open buffers |
 | `:b <name>` | Switch to a buffer by (partial) name |
@@ -924,8 +924,8 @@ The terminal automatically starts in insert mode (you can type immediately) and 
 | Method | Description |
 | --- | --- |
 | `<Space>q` | While the terminal window is focused (press `<Esc>` first), close the window. A program that is still running keeps running in a hidden buffer (`\D` keeps such buffers) |
-| Type `exit` | In the terminal, type `exit` to end the shell process, then the window closes <!-- CHECK-USER: after `exit` the window closed in a test; after a failing <Space>rr program, does the window stay with "[Process exited N]"? --> |
-| `\d` | Delete the terminal buffer <!-- CHECK-USER: does \d on a terminal whose program is still running ask "Close ...?" first? (two headless checks disagreed) --> |
+| Type `exit` | In an interactive shell terminal (`:term`), `exit` ends the shell and the window closes. A `<Space>rr` run does NOT close its window when the program ends: the output stays (tested, no exit-code line is shown) until you close it with `<Space>q` |
+| `\d` | Delete the terminal buffer <!-- CHECK-USER: does \d on a terminal whose program is still running ask "Close ...?" first? (headless deleted it silently; with 'confirm' on a real UI may ask first) --> |
 
 ---
 
@@ -965,7 +965,7 @@ This is one of the most important sections in the guide. It covers searching wit
 | `?pattern` | Search **backward** for `pattern` |
 | `n` | Jump to the **next** match (with hlslens showing `[x/y]` count) |
 | `N` | Jump to the **previous** match |
-| `*` | Search **forward** for the exact word under cursor (whole word, literal; the cursor stays on the word, `3*` jumps to the 3rd match) |
+| `*` | Search **forward** for the exact word under cursor (whole word, literal; the cursor stays on the word, `3*` jumps to the 3rd match after the cursor) |
 | `#` | Search **backward** for the exact word under cursor |
 | `;noh<Enter>` (`;` is `:` here) | Clear the yellow search highlight (tested). The search itself is kept, so `n` / `N` still work; the highlight comes back on the next search or `*`. |
 
@@ -1109,7 +1109,7 @@ These are the fastest ways to search for a word:
 1. Place cursor on any word
 2. Press `*` -- all occurrences highlight, the hlslens overlay shows `[1/N]`
 3. Press `n` to jump forward, `N` to jump backward
-4. With no count the cursor stays on the word you pressed `*` on (custom behavior in this config: a whole-word, literal search; `3*` jumps to the 3rd match instead)
+4. With no count the cursor stays on the word you pressed `*` on (custom behavior in this config: a whole-word, literal search; `3*` jumps to the 3rd match after the cursor instead)
 
 This is often combined with `ciw` + `.` for selective replacement (see below).
 
@@ -1176,7 +1176,7 @@ Plugin: **fzf-lua**. A powerful popup interface that connects to FZF (a command-
 | `<Space>ff` | **Find files**: search file names in the project |
 | `<Space>fg` | **Live grep**: search text content across all files in the project |
 | `<Space>fh` | Search Neovim help tags |
-| `<Space>ft` | Search tags (functions, classes) in the current buffer |
+| `<Space>ft` | Search tags (functions, classes) in the current buffer (needs `ctags`; the Nix nvim wrapper provides universal-ctags) |
 | `<Space>fb` | Search currently open buffers |
 | `<Space>fr` | Search recently opened files |
 | `<Space>gbl` | Fuzzy-search git branches (`<Enter>` checks the branch out) |
@@ -1191,7 +1191,7 @@ Plugin: **fzf-lua**. A powerful popup interface that connects to FZF (a command-
 | `<Enter>` | Open the selected result |
 | `<Esc>` | Cancel and close the popup |
 | `<Ctrl-j>` / `<Ctrl-k>` | Move down / up in the results list |
-| `<Ctrl-n>` / `<Ctrl-p>` | Move down / up (alternative keys) <!-- CHECK-USER: in the fzf popup do <Ctrl-j>/<Ctrl-k> and <Ctrl-n>/<Ctrl-p> both move the selection? --> |
+| `<Ctrl-n>` / `<Ctrl-p>` | Move down / up (alternative keys) |
 
 ## `<Space>fg` -- Live Grep (Project-Wide Text Search) In Depth
 
@@ -1255,7 +1255,7 @@ Searches **file names** (not content). Useful when you know the file you want bu
 | **Find files** | `<Space>ff` | **File names** in the project | Opening a file by name |
 | **Buffer search** | `<Space>fb` | Names of **currently open** files | Switching between open files |
 | **Recent files** | `<Space>fr` | Files you **recently edited** | Returning to a file you had open earlier |
-| **Buffer tags** | `<Space>ft` | Functions/classes in **current file** | Jumping to a function in the current file |
+| **Buffer tags** | `<Space>ft` | Functions/classes in **current file** (needs `ctags`) | Jumping to a function in the current file |
 | **In-file search** | `/pattern` | Text in **current file only** | Finding something in the file you're editing |
 | **Word under cursor** | `*` | Current word in **current file** | Quick highlight and jump to next occurrence |
 
@@ -1309,7 +1309,7 @@ Neovim's own LSP keys also work next to the custom ones (in every buffer with a 
 | --- | --- | --- |
 | `grn` | n | Rename (same as `<Space>rn`) |
 | `gra` | n, x | Code action (same as `<Space>ca`) |
-| `grr` | n | References (location list) |
+| `grr` | n | References (quickfix list) |
 | `gri` | n | Implementation |
 | `grt` | n | Type definition |
 | `grx` | n | Run the code lens of the line |
@@ -1324,7 +1324,7 @@ Neovim's own LSP keys also work next to the custom ones (in every buffer with a 
 | Command | What it does |
 | --- | --- |
 | `:LspInfo` | LSP status (same as `:checkhealth vim.lsp`) |
-| `:LspAttached` | Small popup with the servers attached to this buffer (`q` / `<Esc>` closes; also opens when you click the LSP name in the statusline) |
+| `:LspAttached` | Small popup with the servers attached to this buffer (`q` / `<Esc>` closes; also opens when you click the LSP name in the statusline; with no server attached it only shows a notification) |
 | `:LspLog` | Open the LSP log file |
 | `:LspRestart [name...]` | Restart the servers of this buffer, or the named ones |
 | `:LspStop [name...]` | Stop them |
@@ -1458,7 +1458,7 @@ no longer makes `gcss` (gcs is then waiting for a motion and `s` cancels it);
 `gcs` / `gcr` always change WHOLE rows (a charwise motion such as `gcse` changes
 every row it touches); the cursor stays on its text row; `.` repeats with the
 same motion, count or number of Visual rows. In a non-modifiable buffer they
-show one warning. Avoid `gcsgcs` (the second `gc` is Neovim's comment text
+show one warning. Avoid `gcsgcs` (the second `gc` is the comment text
 object).
 
 Fully supported languages: asm, bash, c, cmake, conf, cpp, cs, css,
@@ -1501,7 +1501,7 @@ Plugin: nvim-ufo. Folds code blocks using the LSP folding ranges, falling back t
 | `zC` / `zO` | Close / open all folds recursively |
 | `zR` | Open **all** folds in the file |
 | `zM` | Close **all** folds in the file |
-| `zr` | Open one more fold level (`2zr` = two levels; counted from the folds you see, so it works right after `zM`) |
+| `zr` | Open one more fold level (`2zr` = two levels; counted from the folds you see, so it works right after `zM`; in a buffer without ufo folds: one warning) |
 | `zm` | Close one more fold level (accepts a count) |
 | `<Space>K` | Preview folded lines in a popup |
 | `zi` | Toggle folding feature on/off |
@@ -1510,13 +1510,13 @@ Plugin: nvim-ufo. Folds code blocks using the LSP folding ranges, falling back t
 
 # 19. Code Running
 
-Custom function in `lua/mappings.lua`. Opens the output in a vertical split terminal on the left. If the file is unsaved or unnamed, the filetype has no runner, or the needed program is not on PATH, you get one warning (naming the devShell to start nvim in) instead of a terminal.
+Custom function in `lua/mappings.lua`. Opens the output in a vertical split terminal on the left. If the file has no name (the buffer was never saved), the filetype has no runner, or the needed program is not on PATH, you get one warning (naming the devShell to start nvim in) instead of a terminal. A named buffer with unsaved changes runs the version on disk, so save first (`:w`).
 
 | Keymap | Description |
 | --- | --- |
 | `<Space>rr` | Run current file (auto-detects language) |
 
-Supported: Python, Java, C, C++, C#, JavaScript, TypeScript, Go, Rust, Bash, Lua, Ruby, PHP.
+Supported: Python, Java, C, C++, C#, JavaScript, TypeScript, Go, Rust, Bash, Lua, Ruby, PHP. Special cases: Java with jdtls attached runs `:JavaRunnerRunMain` (no terminal); Rust inside a cargo project runs `cargo run`; C# with a `.csproj` runs `dotnet run --project`; Go runs `go run .` for the whole package.
 
 After running, the terminal output appears in a split. See [Terminal Integration](#8-terminal-integration) for how to navigate to/from it and close it.
 
@@ -1607,7 +1607,7 @@ Adds many additional text objects for quotes, brackets, arguments, separators. W
 
 ## vim-matchup (Plugin)
 
-Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, etc.). Shows offscreen match in popup. Also: `g%` (backwards `%`), `[%` / `]%` (start / end of the enclosing pair), `z%` (into the next pair), text objects `i%` / `a%`. <!-- CHECK-USER: exact behaviour of g% and z% is taken from the vim-matchup docs, not tested -->
+Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, etc.). Shows offscreen match in popup. Also: `g%` (backwards `%`), `[%` / `]%` (start / end of the enclosing pair), `z%` (into the next pair), text objects `i%` / `a%`. `g%` and `[%` / `]%` were tested (`g%` from `if` goes backwards to `end`). <!-- CHECK-USER: `z%` was not confirmed: from `if` it moved just inside the keyword; what does it do for you? -->
 
 ---
 
@@ -1627,7 +1627,7 @@ Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, et
 | --- | --- |
 | `n` | Next match with `[x/y]` count overlay |
 | `N` | Previous match with count overlay |
-| `*` | Search the word under the cursor forward as a whole word (the cursor stays on the word; with a count, e.g. `3*`, it jumps to that match) |
+| `*` | Search the word under the cursor forward as a whole word (the cursor stays on the word; with a count, e.g. `3*`, it jumps 3 matches forward from the cursor, like `3n`) |
 | `#` | Same, backward |
 
 ---
@@ -1640,7 +1640,7 @@ Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, et
 | `[y` | n | After pasting, cycle to previous yank entry |
 | `]y` | n | After pasting, cycle to next yank entry |
 
-Command: `:YankyRingHistory` to browse all yank history. yanky.nvim is loaded by that command: the three rows above only work after `:YankyRingHistory` was run once in the session. Before that `p`/`P` are Vim's own paste, and in Visual mode `p` replaces the selection without overwriting the register.
+Command: `:YankyRingHistory` to browse all yank history. yanky.nvim is loaded by that command: the three rows above only work after `:YankyRingHistory` was run once in the session. Before that `p`/`P` are Vim's own paste, and in Visual mode `p` replaces the selection without overwriting the register. Once yanky has loaded, Visual `p` is yanky's and DOES overwrite the unnamed register with the replaced text.
 
 ---
 
@@ -1650,7 +1650,7 @@ Command: `:YankyRingHistory` to browse all yank history. yanky.nvim is loaded by
 | --- | --- |
 | `<Space>u` | Toggle Neovim's builtin undo tree (`nvim.undotree`) in a 30-column panel on the far left |
 
-Inside the panel there are no extra keys: moving the cursor onto an entry switches the buffer to that undo state. Close it with `<Space>u` again or `:q`. <!-- CHECK-USER: confirm that moving the cursor in the undo tree panel changes the buffer (not testable headless) -->
+Inside the panel there are no extra keys: moving the cursor onto an entry switches the buffer to that undo state (documented in `:h undotree.open()`). Close it with `<Space>u` again or `:q`.
 
 ---
 
@@ -1750,7 +1750,7 @@ The texlab language server adds diagnostics, hover, symbols and rename when `tex
 | --- | --- |
 | `<Space>tw` | Typst buffers: `:TypstWatch`, recompile on save and open the PDF |
 
-Needs the `typst` program (typst devShell): without it `<Space>tw` shows one warning and the Typst plugin does not load. Errors go to the quickfix list. The PDF viewer is `zathura` if installed, else `$TYPST_PDF_VIEWER`. LSP: `tinymist`. Typst buffers use `textwidth=100` and wrap. Auto-save never saves Typst files.
+Needs the `typst` program (typst devShell): without it `<Space>tw` shows one warning and the Typst plugin does not load. Errors go to the quickfix list. The PDF viewer is `$TYPST_PDF_VIEWER` if set, else `zathura` if installed. LSP: `tinymist`. Typst buffers use `textwidth=100` and wrap. Auto-save never saves Typst files.
 
 ---
 
@@ -1827,7 +1827,7 @@ Besides the builtin spell checker two language servers report problems as diagno
 | Section | Position | Contents |
 | --- | --- | --- |
 | A | Leftmost | Filename + a lock icon (Nerd Font) when the file is read-only |
-| B | Left | Git branch (click: pick a branch and check it out), `↑[n]` / `↓[n]` commits ahead / behind the upstream, diff stats (+~-), diagnostic counts (same icons as the sign column), Python virtualenv (Python buffers only) |
+| B | Left | Git branch (click: pick a branch and check it out), `↑[n]` / `↓[n]` commits ahead / behind the upstream (the upstream is refreshed with a silent `git fetch origin` at most once a minute; long branch names are cut at 20 characters), diff stats (+~-), diagnostic counts (same icons as the sign column), Python virtualenv (Python buffers only) |
 | C | Center-left | Pending command (e.g. `2d`), spell indicator (`[SPELL]`) |
 | X | Center-right | Active LSP (gear icon; ` (+N)` = other attached clients; click: popup with the attached clients), `[N]trailing` (first line with trailing whitespace), `MI:N` (mixed tabs and spaces) |
 | Y | Right | Encoding (only when not UTF-8) and file format (only when not unix), both in red; `[CN]` input-method badge on macOS |
@@ -1888,7 +1888,7 @@ The other items show their normal key: Find File `<Space>ff`, Recently opened fi
 | `:JSONFormat` | Format JSON (whole file or visual range) |
 | `:Redir <cmd>` | Run the command and show its output in a new tab (scratch buffer, wiped when closed) |
 | `:Edit <pattern>...` | Open every file matching the glob patterns (`:Edit src/*.lua`); `:edit` typed as the first word expands to `:Edit` |
-| `:Datetime` | Show date and time |
+| `:Datetime [format]` | Show date and time (optional format argument) |
 | `:ToPDF` | Convert markdown to PDF (requires pandoc) |
 | `:Z {keywords}` | zoxide jump (see Working with Directories) |
 | `:TermHL` | Show the current buffer (e.g. a log with ANSI colour codes) rendered with its colours in a read-only terminal buffer |
@@ -1982,7 +1982,7 @@ Commands: `:AerialToggle`, `:AerialOpen`, `:AerialNavToggle`.
 | `<Space>cu` | n | Swap `<Ctrl-x><Ctrl-z>` between completing the character and completing its name |
 | `<F4>` + motion | n, x | Turn 2-character digraph pairs in the text into their characters |
 
-Commands: `:UnicodeSearch {name or U+hex}`, `:UnicodeName`, `:UnicodeTable`. <!-- CHECK-USER: the unicode.vim key meanings come from its docs; only their existence was tested -->
+Commands: `:UnicodeSearch {name or U+hex}`, `:UnicodeName`, `:UnicodeTable`. The plugin loads on the first `ga`, `<Space>cu` or `:UnicodeSearch`; the insert keys, `<F4>` and `:UnicodeName` / `:UnicodeTable` exist only after that. Example: `<F4>$` on `a:e:o:u:` gives the umlauts (per the plugin doc).
 
 URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 
@@ -2054,7 +2054,7 @@ Connections come from the environment (set them in an untracked shell file, dire
 | Python | 4-space indent, `<F9>` to run, `<Space>f` to format with Black (needs `black`, python devShell; one warning otherwise; in a uv project both use `uv run`) |
 | Lua | `<F9>` to execute (`:luafile %`), `<Space>f` and `<Space>fm` format with Stylua |
 | C++ | `<F9>` to compile and run (only when a C++ compiler is on PATH, e.g. the c-cpp devShell) |
-| Markdown | Word wrap enabled, extended syntax highlight column; `<Space>fm` formats with Prettier (one warning if `prettier` is missing); `<Space><Space>` does not strip trailing spaces |
+| Markdown | Word wrap enabled, syntax highlighting continues up to column 3000 on long lines; `<Space>fm` formats with Prettier (one warning if `prettier` is missing); `<Space><Space>` does not strip trailing spaces |
 | JSON | `<Space>f` runs `:JSONFormat` on the buffer (in Visual mode on the selection) |
 | Typst | `<Space>tw` TypstWatch, `textwidth=100`, wrap |
 | Vim script | `<F9>` sources the file |
@@ -2079,7 +2079,7 @@ These happen without any keypress:
 | Colorscheme | Fixed base16 theme on Nix systems (`NVIM_BASE16_THEME`, fallback Catppuccin Mocha); random on other systems |
 | Auto-save | Files save automatically on focus lost / buffer leave (not unnamed, read-only or special buffers, not Typst/LaTeX) |
 | File changed on disk | Checked when Neovim gets focus and when idle. An unmodified buffer is reloaded ("File changed on disk. Buffer reloaded!"); if the buffer was changed too it is kept ("File changed on disk and in the buffer (buffer kept)"); a deleted file keeps its buffer (one warning) |
-| Format check after save | After saving a Python or Lua file, `black --check` / `stylua --check` run in the background; an unformatted file gives the warning "<file>: file is not formatted (black or stylua)". Nothing is changed |
+| Format check after save | After saving a Python or Lua file, `black --check` / `stylua --check` run in the background; an unformatted file gives the warning `<file>: file is not formatted (black)` (`(stylua)` for Lua); a file the tool cannot check (syntax error) gives `<file>: <tool> could not check the file (syntax error?)` plus the first error line. Nothing is changed |
 | `nvim <directory>` | The directory becomes the working directory and the file tree opens there |
 | Git plugins | fugitive, neogit and gitlinker load when the working directory or an opened file is inside a git repository |
 | Big files | Files over about 1.5 MB (or with very long lines) open in a light mode: no Treesitter, no completion, the language server starts a little later. `:set ft=<language>` gives the full mode back |
@@ -2577,7 +2577,7 @@ nvim-java wraps the Eclipse JDT Language Server (jdtls) and adds:
 
 All of this only starts inside the Java devShell (`java` on PATH). Elsewhere `.java` files open without Java tooling, and the `<Space>j` keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell)".
 
-On NixOS, JDK is managed by the system. On other systems, nvim-java auto-installs it.
+On Nix systems the JDK comes from the Java devShell (`JAVA_HOME`) and nvim-java never downloads one. On other systems nvim-java auto-installs a JDK.
 
 ## Build & Run
 
@@ -2606,7 +2606,7 @@ On NixOS, JDK is managed by the system. On other systems, nvim-java auto-install
 | --- | --- | --- |
 | `<Space>jd` | `:JavaDapConfig` | Configure the debug adapter (auto-runs on Java file open, but can be re-triggered) |
 
-DAP is configured automatically when jdtls starts. Debugging uses the nvim-dap commands (`:DapToggleBreakpoint`, `:DapContinue`, `:DapStepOver`, `:DapStepInto`, `:DapStepOut`, `:DapTerminate`); this config has no keys for them. <!-- CHECK-USER: confirm there is no keymap for breakpoints/stepping that you use -->
+DAP is configured automatically when jdtls starts. Debugging uses the nvim-dap commands (`:DapToggleBreakpoint`, `:DapContinue`, `:DapStepOver`, `:DapStepInto`, `:DapStepOut`, `:DapTerminate`); this config has no keys for them.
 
 ## Refactoring
 
@@ -2731,7 +2731,7 @@ Plugin: **vim-obsession** (manual alternative). Save and restore your entire Neo
 | Command | What it does |
 | --- | --- |
 | `:Obsession` | Start recording the session (saves to `Session.vim`) |
-| `:Obsession!` | Stop recording |
+| `:Obsession!` | Stop recording and delete the session file |
 | `nvim -S Session.vim` | Restore the session from the command line |
 
 ## Collaborative Editing
@@ -2762,7 +2762,7 @@ Plugin: **instant.nvim**. Real-time collaborative editing.
 | `:YankyRingHistory` | Browse yank history |
 | `:LspAttached` | Popup with the LSP servers attached to this buffer |
 | `:LspLog` | Open the LSP log |
-| `:Undotree` | Toggle the undo tree (`<Space>u`) |
+| `<Space>u` | Toggle the undo tree (the `:Undotree` command exists only after the first `<Space>u`) |
 | `:AerialToggle!` | Toggle the symbol outline (`<Space>t`) |
 | `:Dashboard` | Open the start screen |
 | `:CodeDiff` | VSCode-style side-by-side diff |
@@ -2786,7 +2786,7 @@ Macros record a sequence of keystrokes and replay them. They are one of the most
 ## Recording a Macro
 
 1. Press `Q` followed by a register letter (e.g., `Qa` to record into register `a`)
-2. The statusline shows `recording @a` -- everything you do now is being recorded <!-- CHECK-USER: with showmode off and no lualine recording component, is "recording @a" visible while recording? -->
+2. The command line (bottom line) shows `recording @a` (tested in a real terminal) -- everything you do now is being recorded
 3. Perform the editing actions you want to repeat
 4. Press `q` to stop recording
 
@@ -2846,9 +2846,9 @@ Starting with 4 consecutive lines that each end with `;`, add ` // ok` to the en
 Result: all 4 lines end with `; // ok`.
 
 - **Why it repeats well**: `A` goes to the end of the line wherever the cursor is, so the column does not matter, and the macro ends on `j`, so the next run starts on the next line.
-- **Where the cursor ends**: one line **below** the last processed line (the final `j` of the last run). If that line is blank, the cursor is on the blank line.
+- **Where the cursor ends**: one line **below** the last processed line (the final `j` of the last run). If that line is blank, the cursor is on the blank line. When the block is the last in the file the final `j` fails and the cursor stays on the last line.
 - **Count**: use `number of lines - 1`, because the recording already did the first line. A count that goes past the last line stops early with an error, which is harmless.
-- **Undo**: one `u` undid all the edits from the replay (tested). It was not checked whether the line edited by hand during recording was also undone.
+- **Undo**: one `u` undoes the whole replay (lines 2-4); the line you edited by hand while recording needs a second `u` (tested).
 
 ## Scenario: Convert a List of Variables to Assignments
 
@@ -2863,12 +2863,11 @@ Turn each into `self.name = name`:
 
 1. Cursor on `name`
 2. `Qa` -- start recording
-3. `Iself.<Esc>` -- prepend `self.`
-4. `A = <Esc>` -- append ` = `
-5. `yiw` -- yank the original word (it's the last word now)
-6. `A<Esc>p` -- go to end, exit insert, paste the word
-7. ... actually simpler: `0yiw` `Iself.<Esc>` `A = <Esc>p` `j`
-8. `q` then `2@a`
+3. `0yiw` -- yank the word
+4. `Iself.<Esc>` -- prepend `self.`
+5. `A = <Esc>p` -- append ` = ` and paste the word
+6. `j` -- next line
+7. `q`, then `2@a` (tested: gives `self.name = name`, `self.age = age`, `self.email = email`)
 
 ## Scenario: Turn CSV into SQL VALUES
 
@@ -2876,7 +2875,7 @@ Starting with `John,30,john@email.com`:
 
 1. `Qa` -- start recording
 2. `I('<Esc>` -- prepend `('`
-3. `:%s/,/','/g<CR>` -- would change all lines; for single-line use `:s/,/','/g<CR>`
+3. `:s/,/','/g<CR>` -- replace the commas on this line only (use `:s`, not `:%s`)
 4. `A'),<Esc>` -- append `'),`
 5. `j` -- next line
 6. `q` then replay
@@ -3076,7 +3075,7 @@ Or use `<Alt-j>` / `<Alt-k>` to move lines up/down without cutting.
 
 ## Swap Two Words
 
-Plugin: **vim-swap**. Place the cursor on a function argument and press `gs`: labels appear on the items, pick the one to swap with. Works with comma-separated items.
+Plugin: **vim-swap**. Put the cursor on an item of a comma-separated list (function arguments) and press `gs`: this starts "swap mode". There `h`/`l` move the current item left/right (swap with its neighbour), `j`/`k` choose another item, `1`-`9` choose the nth item, `s`/`S` sort ascending/descending, `r` reverses, `u`/`<Ctrl-r>` undo/redo, `<Esc>` leaves swap mode.
 
 For manual word swap:
 1. On the first word: `diw` (delete inner word)
@@ -3136,9 +3135,9 @@ Place your cursor on one of the arguments inside parentheses:
 
 | Keymap | What it does |
 | --- | --- |
-| `gs` | Enter interactive swap mode (shows labels, press to pick target) |
+| `gs` | Start swap mode (then `h`/`l` swap with the neighbour, `j`/`k` choose an item, `1`-`9` pick an item, `<Esc>` exit) |
 
-**Example**: Given `func(a, b, c)` with the cursor on `b`, press `gs`, then pick the target item by its label. <!-- CHECK-USER: the exact label/pick keys of vim-swap gs were not testable headless -->
+**Example**: Given `func(a, b, c)` with the cursor on `b`, press `gs`, then `l`: `b` moves one place right, giving `func(a, c, b)`. Press `<Esc>` to leave swap mode (tested).
 
 Works with any comma-separated list: function arguments, array literals, dictionary entries, etc.
 
@@ -3238,7 +3237,7 @@ This is the most versatile method. It uses ripgrep (very fast) to search the ent
 When the `c` flag is active, for each match you see it highlighted and can press:
 - `y` to replace this one
 - `n` to skip this one
-- `a` to replace all remaining in this file (then moves to next file) <!-- CHECK-USER: does 'a' under :cfdo apply to the current file only? not tested interactively -->
+- `a` to replace all remaining in this file (then moves to the next file, where you are prompted again; tested)
 - `q` to stop entirely
 
 ### Step-by-Step: Review Results Before Replacing
@@ -3261,7 +3260,7 @@ Now you can see every file and line that matches. Use `:cnext`/`:cprev` (or `j`/
 | Command | What it finds |
 | --- | --- |
 | `:grep "TODO"` | All lines containing `TODO` |
-| `:grep "TODO\|FIXME"` | Lines with `TODO` or `FIXME` |
+| `:grep "TODO\|FIXME"` | Lines with `TODO` or `FIXME` (type `\|` with the backslash; a rendered table may hide it) |
 | `:grep "\buser\b"` | Only the whole word `user` |
 | `:grep "def \w+\("` | Python function definitions |
 | `:grep "console\.log"` | All `console.log` calls |
@@ -3381,7 +3380,7 @@ If the replace went wrong, each file has its own undo history:
 1. `:cfdo undo` -- undo the last change in every affected file
 2. `:cfdo update` -- save the reverted files
 
-Or use `:cfdo earlier 1f` to go back one save-state in each file. <!-- CHECK-USER: the multi-file undo recipes were not tested -->
+Or use `:cfdo earlier 1f` to go back one save-state in each file (both recipes tested: both files were restored exactly).
 
 ---
 
@@ -3411,7 +3410,7 @@ Or use `:cfdo earlier 1f` to go back one save-state in each file. <!-- CHECK-USE
 
 **Scenario**: Generate a numbered list. Type `0.` on 5 lines, select them with `<Ctrl-v>`, then `g<Ctrl-a>` turns them into `1. 2. 3. 4. 5.`
 
-**Important**: `g<Ctrl-a>` doesn't "know" what you want incremented -- it purely acts on whatever number the highlighted column(s) overlap on each line, ignoring every other number on the line. Wherever you place the block is what gets incremented.
+**Important**: `g<Ctrl-a>` doesn't "know" what you want incremented -- it purely acts on whatever number the highlighted column(s) overlap on each line, ignoring every other number on the line. Wherever you place the block is what gets incremented. Only the digits inside the block count as the number.
 
 **Gotcha -- starting value**: because it *adds* `1×n` to each line, starting from `1` gives `1+1=2, 1+2=3, 1+3=4...` (starts at 2, not 1). If you want the sequence to start at 1, your placeholder number must start at `0`.
 
@@ -3474,13 +3473,15 @@ photo_001.jpg
 photo_001.jpg
 ```
 
-Put the cursor anywhere on the `001` (block only needs to touch it, not cover all 3 digits), `<Ctrl-v>`, `G`, `g<Ctrl-a>`:
+Put the cursor on the first `0` of `001`, widen the block over all three digits (`<Ctrl-v>ll`, then `G`), then `g<Ctrl-a>`:
 
 ```
 photo_002.jpg
 photo_003.jpg
 photo_004.jpg
 ```
+
+Warning: a block that covers only part of the digits increments only those digits (cursor on the first `0` with a 1-column block gives `photo_101.jpg`, `photo_201.jpg`, ...). Leading zeros are kept as long as the number does not outgrow its width (tested).
 
 If you want it to start at `001` instead of `002`, apply the same Example 3 shift: reselect the block, plain `<Ctrl-x>` once.
 
@@ -3541,8 +3542,9 @@ Plugin: **tabular**. Aligns text around a character. It loads with the first Mar
 | Command | What it does |
 | --- | --- |
 | `:Tabularize /=` | Align all `=` signs in a selection or file |
-| `:Tabularize /\|` | Align table pipes |
 | `:Tabularize /:` | Align colons (for JSON/YAML-like structures) |
+
+To align the pipes of a Markdown table, type `:Tabularize /|` (shown outside the table because a pipe breaks a table row).
 
 ## Command Abbreviations
 
@@ -3660,7 +3662,7 @@ This is the single most important mental model for understanding Vim. Almost eve
 | --- | --- |
 | `iw` / `aw` | Inner word / a word (with whitespace) |
 | `iW` / `aW` | Inner WORD / a WORD |
-| `is` / `as` | vim-sandwich "query" object: inside / around the nearest surrounding pair (the builtin sentence objects are shadowed here) |
+| `is` / `as` | vim-sandwich "query" object: type the surrounding character after it, e.g. `dis(`, `cas"`, `vis[` (inside / around that surrounding pair; the builtin sentence objects are shadowed here) |
 | `ip` / `ap` | Inner paragraph / a paragraph |
 | `i(` / `a(` | Inside / around parentheses |
 | `i{` / `a{` | Inside / around braces |
@@ -4081,7 +4083,7 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `Qa` ... `q` then `@a` | Record and replay any sequence of actions |
 | `V` select then `:norm @a` | Run a macro on selected lines |
 | `:g/pattern/command` | Run a command on every matching line |
-| `:grep "text"` then `:cfdo %s/old/new/g \| update` | Project-wide search and replace |
+| `:grep "text"` then `:cfdo ...` | Project-wide search and replace (the substitute + `| update` recipe is in section 67) |
 | `<Space>rn` | Intelligent rename across project |
 | `qf` list + `:cnext`/`:cprev` | Jump through search results or errors |
 | `.` | Repeat last change (combine with `n` for find-and-repeat) |
