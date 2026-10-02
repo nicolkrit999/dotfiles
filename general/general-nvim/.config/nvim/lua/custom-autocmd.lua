@@ -152,12 +152,22 @@ api.nvim_create_autocmd("TermOpen", {
       return
     end
 
-    -- Do not use number and relative number for terminal inside nvim
-    vim.wo.relativenumber = false
-    vim.wo.number = false
+    -- Do not use number and relative number for terminal inside nvim: window-local for this
+    -- buffer only (like :setlocal), so a file opened later in the same window gets its numbers back
+    local win = fn.bufwinid(args.buf)
+    if win ~= -1 then
+      vim.wo[win][0].relativenumber = false
+      vim.wo[win][0].number = false
+    end
 
-    -- Go to insert mode by default to start typing command
-    vim.cmd("startinsert")
+    -- Go to insert mode by default to start typing command, but only when the terminal is in the
+    -- current window. Checked after the event: a terminal started from nvim_win_call() in another
+    -- window looks current here, and startinsert would then apply to the real current window.
+    vim.schedule(function()
+      if api.nvim_get_current_buf() == args.buf and api.nvim_get_mode().mode == "nt" then
+        vim.cmd("startinsert")
+      end
+    end)
   end,
 })
 
