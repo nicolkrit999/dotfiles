@@ -135,7 +135,7 @@ endfunction
 function! utils#MultiEdit(patterns) abort
   for p in a:patterns
     for f in glob(p, 0, 1)
-      execute 'edit ' . f
+      execute 'edit ' . fnameescape(f)
     endfor
   endfor
 endfunction
