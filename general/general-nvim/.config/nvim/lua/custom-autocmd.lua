@@ -247,13 +247,26 @@ api.nvim_create_autocmd("ColorScheme", {
       return ok and hl or {}
     end
 
-    -- For yank highlight: the theme's search highlight (IncSearch, else Search), else Visual
-    local yank = get("IncSearch")
-    if not yank.bg then
-      yank = get("Search")
+    -- For yank highlight: the theme's search highlight (IncSearch, else Search), else Visual.
+    -- A group drawn with `reverse` (elflord, torte, ...) has its fg/bg swapped here: copying the
+    -- raw values without the attribute would give black-on-black or the wrong colours.
+    local normal = get("Normal")
+    local function effective(hl)
+      local fg, bg = hl.fg or normal.fg, hl.bg or normal.bg
+      if hl.reverse then
+        fg, bg = bg, fg
+      end
+      return fg, bg
     end
-    if yank.bg then
-      vim.api.nvim_set_hl(0, "YankColor", { fg = yank.fg or get("Normal").bg, bg = yank.bg })
+    local yank_fg, yank_bg
+    for _, group in ipairs { "IncSearch", "Search" } do
+      yank_fg, yank_bg = effective(get(group))
+      if yank_bg then
+        break
+      end
+    end
+    if yank_bg then
+      vim.api.nvim_set_hl(0, "YankColor", { fg = yank_fg or normal.bg, bg = yank_bg })
     else
       vim.api.nvim_set_hl(0, "YankColor", { link = "Visual" })
     end
@@ -261,7 +274,6 @@ api.nvim_create_autocmd("ColorScheme", {
     -- For cursor colors, see option guicursor for more info: inverse of the theme's Normal
     -- (bold). Without both Normal colours (transparent theme) only bold is added and the
     -- theme's own Cursor colours stay.
-    local normal = get("Normal")
     if normal.fg and normal.bg then
       vim.api.nvim_set_hl(0, "Cursor", { fg = normal.bg, bg = normal.fg, bold = true, update = true })
     else
