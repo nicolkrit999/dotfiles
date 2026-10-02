@@ -139,6 +139,19 @@ More: sections 4, 11, 24, 57.
 
 More: section 5 ("ii / ai").
 
+### Text objects (what to delete, change or copy)
+
+| Keys | What it does |
+| --- | --- |
+| `diw` / `daw` | The word / the word with its space |
+| `das` / `dis` / `cis` | The sentence with / without the space after it; change the sentence |
+| `dip` / `dap` | The paragraph (without / with the blank line after it) |
+| `di(` / `da(` | The text inside the parentheses / with the parentheses |
+| `diS(` / `daS(` | Sandwich: empty the surrounding `(` `)` / remove them with their content |
+| `ii` / `ai` | The indented block (see above) |
+
+The same objects work after `c`, `y` and `v`. More: sections 5, 6, 17 and 70.
+
 ### Macros
 
 | Keys | What it does |
@@ -170,7 +183,7 @@ Files are renamed one at a time with the commands above. More: sections 10 and 6
 | `u` / `<Ctrl-r>` | Undo / redo |
 | `<Space>u` | Show the undo tree in a left panel |
 | `.` | Repeat the last change (e.g. `ciw` + word, then `n` and `.` on the next match) |
-| `[y` / `]y` | After a paste, step through earlier / later yanks |
+| `[y` / `]y` | After a paste, replace the pasted text with an earlier / later yank (yank two lines, `p`, then `[y`) |
 
 More: sections 24, 25, 61.
 
@@ -194,6 +207,8 @@ More: section 62.
 | `gcc` / `gc` + motion / `gc` in Visual | Toggle a comment on a line / a motion / the selection (`gcip` = paragraph) |
 | `gcss` / `gcs` + motion, `gcr` + motion | Comment / uncomment exactly the rows given (`gcsip`, `gcr200j`) |
 | `gcu` | Uncomment the adjacent commented lines |
+| `:1,3Commentary` | Toggle comments on a line range |
+| `dgc` / `ygc` | Delete / copy the comment block under the cursor |
 | `saiw"` | Surround the word with `"` |
 | `sd"` | Delete the surrounding `"` |
 | `sr"'` | Change the surrounding `"` into `'` |
@@ -232,6 +247,7 @@ More: section 7.
 | `<Space>q` | Save and close this window |
 | `<Space>Q` | Quit nvim, asks first (default No), discards unsaved work |
 | `:wa` / `:q!` | Save all buffers / close this window and discard changes |
+| (automatic) | Auto-save: a changed file saves itself when you switch buffer or leave the nvim window; a message "AutoSave: saved at ..." appears |
 
 More: section 72.
 
@@ -270,6 +286,7 @@ More: sections 13 and 44.
 | `]c` / `[c` | Next / previous changed hunk |
 | `<Space>hp` / `<Space>hb` | Preview the hunk / blame the line |
 | `<Space>gl` | Copy a permalink for the line |
+| `:Neogit` / `:NeogitLogCurrent` | Open the Neogit status window / the log of the current file (`q` closes) |
 
 More: sections 20 and 48.
 
@@ -870,7 +887,7 @@ With relative line numbers the gutter shows how far each line is from the cursor
 
 1. `Nj` moves down `N` lines, where `N` is the number shown next to the target line (with a count, `j` moves real lines, not wrapped ones). Use `Nk` to go up.
 2. `L` goes to the end of that line.
-3. `?foo<Enter>` searches **backward** from the end of the line, which should find the **last** `foo` on that line (retested headless in 3 variants and the LAST match was selected every time; an earlier user report of the first match is not reproduced, so watch for it). <!-- CHECK-USER: ?foo after L: does it select the last or the first match on the line? --> (Searching forward from the middle of the line could hit an earlier, unwanted match or a capitalised one.)
+3. `?foo<Enter>` searches **backward** from the end of the line, which finds the **last** `foo` on that line (tested in a real terminal). In general `?foo` goes to the start of the `foo` the cursor is inside; from the first letter of a `foo` it goes to the previous `foo`. (Searching forward from the middle of the line could hit an earlier, unwanted match or a capitalised one.)
 4. `viw` selects the word, or `ve` selects from the match start to the word end.
 
 Related: `V3j` selects the current line and 3 below; `d3j` deletes 4 lines; `10G` or `;10` (Enter) jumps to absolute line 10.
@@ -1367,7 +1384,7 @@ This is the **most practical replacement method** for everyday use. It gives you
 
 # 11. File Explorer (`nvim-tree`)
 
-Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or the first `:NvimTreeToggle`, `:NvimTreeOpen`, `:NvimTreeFocus`, `:NvimTreeFindFile` or `:NvimTreeFindFileToggle`; `nvim <dir>` and the dashboard entry open it too. The tree shows the folder it was opened on until the working folder changes: after `:cd`, `:tcd`, `:Z` or `:z` it shows the new folder (also when it is open, or was closed and is opened again).
+Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or the first `:NvimTreeToggle`, `:NvimTreeOpen`, `:NvimTreeFocus`, `:NvimTreeFindFile` or `:NvimTreeFindFileToggle`; `nvim <dir>` and the dashboard entry open it too. Which folder it shows: `nvim` or `nvim .` shows the folder you started in; `nvim <folder>` shows that folder; `nvim <folder>/file` shows the folder you started in (not the file's folder). From then on it keeps that folder until the working folder changes: after `:cd`, `:tcd`, `:Z` or `:z` it shows the new folder (also when it is open, or was closed and is opened again).
 
 | Keymap | Context | Description |
 | --- | --- | --- |
@@ -1846,7 +1863,7 @@ Adds many additional text objects for quotes, brackets, arguments, separators. W
 
 ## vim-matchup (Plugin)
 
-Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, etc.). Shows offscreen match in popup. Also: `g%` (backwards `%`), `[%` / `]%` (start / end of the enclosing pair), `z%` (into the next pair), text objects `i%` / `a%`. `g%` and `[%` / `]%` were tested (`g%` from `if` goes backwards to `end`). <!-- CHECK-USER: `z%` was not confirmed: from `if` it moved just inside the keyword; what does it do for you? -->
+Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, etc.). Shows offscreen match in popup. Also: `g%` (backwards `%`), `[%` / `]%` (start / end of the enclosing pair), `z%` (into the next pair), text objects `i%` / `a%`. `g%` and `[%` / `]%` were tested (`g%` from `if` goes backwards to `end`). `z%` was tested in a real terminal: from `if` it moves to the closing `)` of the next pair inside the block.
 
 ---
 
