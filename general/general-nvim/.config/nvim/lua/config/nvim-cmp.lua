@@ -107,18 +107,46 @@ cmp.setup.cmdline(":", {
   matching = { disallow_symbol_nonprefix_matching = false },
 })
 
--- Visual highlighting
-vim.cmd([[
-  highlight! link CmpItemMenu Comment
-  highlight! CmpItemAbbrDeprecated guibg=NONE gui=strikethrough guifg=#808080
-  highlight! CmpItemAbbrMatch guibg=NONE guifg=#569CD6
-  highlight! CmpItemAbbrMatchFuzzy guibg=NONE guifg=#569CD6
-  highlight! CmpItemKindVariable guibg=NONE guifg=#9CDCFE
-  highlight! CmpItemKindInterface guibg=NONE guifg=#9CDCFE
-  highlight! CmpItemKindText guibg=NONE guifg=#9CDCFE
-  highlight! CmpItemKindFunction guibg=NONE guifg=#C586C0
-  highlight! CmpItemKindMethod guibg=NONE guifg=#C586C0
-  highlight! CmpItemKindKeyword guibg=NONE guifg=#D4D4D4
-  highlight! CmpItemKindProperty guibg=NONE guifg=#D4D4D4
-  highlight! CmpItemKindUnit guibg=NONE guifg=#D4D4D4
-]])
+-- Visual highlighting: every colour comes from the ACTIVE colorscheme's groups (no fixed hex),
+-- re-applied on :colorscheme (which clears all highlights)
+local function first_fg(groups)
+  for _, name in ipairs(groups) do
+    local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = name, link = false })
+    if ok and hl.fg then
+      return hl.fg
+    end
+  end
+end
+
+-- fg only (bg stays NONE so the menu background shows through); a group missing in the theme
+-- falls back to a plain link to the first source group
+local function fg_from(target, groups, extra)
+  local fg = first_fg(groups)
+  if fg then
+    vim.api.nvim_set_hl(0, target, vim.tbl_extend("force", { fg = fg }, extra or {}))
+  else
+    vim.api.nvim_set_hl(0, target, { link = groups[1] })
+  end
+end
+
+local function apply_highlights()
+  vim.api.nvim_set_hl(0, "CmpItemMenu", { link = "Comment" })
+  fg_from("CmpItemAbbrDeprecated", { "Comment" }, { strikethrough = true })
+  fg_from("CmpItemAbbrMatch", { "Function", "Special" }, { bold = true })
+  fg_from("CmpItemAbbrMatchFuzzy", { "Function", "Special" }, { bold = true })
+  fg_from("CmpItemKindVariable", { "Identifier" })
+  fg_from("CmpItemKindInterface", { "Type" })
+  fg_from("CmpItemKindText", { "Normal" })
+  fg_from("CmpItemKindFunction", { "Function" })
+  fg_from("CmpItemKindMethod", { "Function" })
+  fg_from("CmpItemKindKeyword", { "Keyword", "Statement" })
+  fg_from("CmpItemKindProperty", { "@property", "Identifier" })
+  fg_from("CmpItemKindUnit", { "Number" })
+end
+
+apply_highlights()
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group = vim.api.nvim_create_augroup("cmp_theme_highlights", { clear = true }),
+  callback = apply_highlights,
+  desc = "cmp: derive completion menu colours from the new colorscheme",
+})
