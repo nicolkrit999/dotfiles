@@ -191,10 +191,75 @@ local keymap_tests = {
     keys = { "ggVjj", "gcs", "u" },
     exp = { "a();", "b();", "c();" },
   },
+  -- Q45: only the marker bytes change, so marks, extmarks, '< '> and gv behave like builtin gc
+  {
+    name = "Q45 lowercase mark kept by gcs",
+    lines = { "a();", "  bb();", "c();" },
+    keys = { "2G4|", "ma", "gcs" },
+    exp = { "a();", "  // bb();", "c();" },
+    check = function()
+      local m = vim.api.nvim_buf_get_mark(0, "a")
+      return m[1] == 2, "mark a=" .. vim.inspect(m)
+    end,
+  },
+  {
+    name = "Q45 lowercase mark kept by gcr",
+    lines = { "// a();", "// b();" },
+    keys = { "2G4|", "ma", "gg", "Vj", "gcr" },
+    exp = { "a();", "b();" },
+    check = function()
+      local m = vim.api.nvim_buf_get_mark(0, "a")
+      return m[1] == 2, "mark a=" .. vim.inspect(m)
+    end,
+  },
+  {
+    name = "Q45 extmark follows its text on gcs",
+    lines = { "a();", "  bb();", "c();" },
+    setup = function(buf)
+      local ns = vim.api.nvim_create_namespace("sc_test")
+      vim.b[buf].sc_mark = vim.api.nvim_buf_set_extmark(buf, ns, 1, 3, {})
+    end,
+    keys = { "2G", "gcs" },
+    exp = { "a();", "  // bb();", "c();" },
+    check = function(buf)
+      local ns = vim.api.nvim_create_namespace("sc_test")
+      local p = vim.api.nvim_buf_get_extmark_by_id(buf, ns, vim.b[buf].sc_mark, {})
+      return p[1] == 1 and p[2] == 6, "extmark=" .. vim.inspect(p)
+    end,
+  },
+  {
+    name = "Q45 gv after visual gcs reselects all rows",
+    lines = { "a();", "b();", "c();", "d();", "e();" },
+    keys = { "2GVjj", "gcs", "gv" },
+    exp = { "a();", "// b();", "// c();", "// d();", "e();" },
+    check = function()
+      local s, e = vim.fn.line("v"), vim.fn.line(".")
+      return vim.api.nvim_get_mode().mode == "V" and math.min(s, e) == 2 and math.max(s, e) == 4,
+        string.format("visual %d-%d mode=%s", s, e, vim.api.nvim_get_mode().mode)
+    end,
+  },
+  {
+    name = "Q45 cursor stays on its text when gcr deletes a row above",
+    lines = { "x();", "/*", "a();", "b();", "*/", "y();" },
+    keys = { "3GVj", "gcr" },
+    exp = { "x();", "a();", "b();", "y();" },
+    check = function()
+      return vim.fn.line(".") == 3, "cursor row " .. vim.fn.line(".")
+    end,
+  },
+  {
+    name = "Q45 single undo after gcr deleting delimiter rows",
+    lines = { "x();", "/*", "a();", "b();", "*/", "y();" },
+    keys = { "3GVj", "gcr", "u" },
+    exp = { "x();", "/*", "a();", "b();", "*/", "y();" },
+  },
 }
 for _, t in ipairs(keymap_tests) do
   if not fft or fft == "c" then
     local buf = mkbuf("c", t.lines)
+    if t.setup then
+      t.setup(buf)
+    end
     local okk, err = pcall(function()
       for _, k in ipairs(t.keys) do
         keys(k)
@@ -203,8 +268,15 @@ for _, t in ipairs(keymap_tests) do
     local got = lines_of(buf)
     local mode = vim.api.nvim_get_mode().mode
     local ok = okk and vim.deep_equal(got, t.exp) and (not t.mode or mode == t.mode)
+    local note
+    if ok and t.check then
+      local okc, cok, cmsg = pcall(t.check, buf)
+      ok = okc and cok
+      note = okc and cmsg or ("check ERROR: " .. tostring(cok))
+    end
     record(ok, t.name, { ft = "c" }, "keys", "keymap", t.lines, 0, 0, "c", t.exp,
-      okk and (t.mode and (show(got) .. " mode=" .. mode) or got) or ("ERROR: " .. tostring(err)))
+      okk and ((t.mode and (show(got) .. " mode=" .. mode) or show(got)) .. (note and ("  " .. note) or ""))
+      or ("ERROR: " .. tostring(err)))
     keys("<Esc>")
     cleanup(buf)
   end

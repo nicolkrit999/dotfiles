@@ -235,19 +235,56 @@ function M.apply(buf, s, e, action, opts)
   if not first then
     return false
   end
-  local repl = {}
-  for r = first, last do
-    vim.list_extend(repl, out.before[r] or {})
-    local t = out.new[r]
-    if t == nil then
-      table.insert(repl, lines[r])
-    elseif t then
-      table.insert(repl, t)
-    end
-    vim.list_extend(repl, out.after[r] or {})
+  -- Write only what changed, bottom-up so row numbers above stay valid: per row one
+  -- nvim_buf_set_text over the differing bytes (marks, extmarks, '< '> stay on their text, like
+  -- builtin gc); whole rows are deleted / inserted only where the result needs it. Everything
+  -- happens inside one call, so it is still ONE undo step.
+  local function cont(b)
+    return b and b >= 0x80 and b < 0xC0
   end
-  vim.api.nvim_buf_set_lines(buf, first - 1, last, false, repl)
-  return true
+  for r = last, first, -1 do
+    if out.after[r] then
+      vim.api.nvim_buf_set_lines(buf, r, r, false, out.after[r])
+    end
+    local old, t = lines[r], out.new[r]
+    if t == false then
+      vim.api.nvim_buf_set_lines(buf, r - 1, r, false, {})
+    elseif t and t ~= old then
+      local max = math.min(#old, #t)
+      local p = 0
+      while p < max and old:byte(p + 1) == t:byte(p + 1) do
+        p = p + 1
+      end
+      while p > 0 and cont(old:byte(p + 1)) do -- keep UTF-8 chars whole
+        p = p - 1
+      end
+      local q = 0
+      while q < max - p and old:byte(#old - q) == t:byte(#t - q) do
+        q = q + 1
+      end
+      while q > 0 and cont(old:byte(#old - q + 1)) do
+        q = q - 1
+      end
+      vim.api.nvim_buf_set_text(buf, r - 1, p, r - 1, #old - q, { t:sub(p + 1, #t - q) })
+    end
+    if out.before[r] then
+      vim.api.nvim_buf_set_lines(buf, r - 1, r - 1, false, out.before[r])
+    end
+  end
+
+  -- old row -> new row (a deleted row maps to the row that took its place, like `dd`)
+  local function map(row)
+    local d = 0
+    for r = first, math.min(row, last) do
+      if r < row then
+        d = d + #(out.before[r] or {}) + #(out.after[r] or {}) - (out.new[r] == false and 1 or 0)
+      else
+        d = d + #(out.before[r] or {})
+      end
+    end
+    return row + d
+  end
+  return true, map
 end
 
 --- Run on the current line(s) (normal mode, with count) or the visual selection.
@@ -265,9 +302,12 @@ function M.run(action)
     s, e = e, s
   end
   local cur = vim.api.nvim_win_get_cursor(0)
-  M.apply(0, s, e, action)
-  local n = vim.api.nvim_buf_line_count(0)
-  local row = math.min(math.max(s, math.min(cur[1], e)), n)
+  local row = math.max(s, math.min(cur[1], e))
+  local changed, map = M.apply(0, s, e, action)
+  if changed and map then
+    row = map(row) -- same text row, also when rows above it were deleted / inserted
+  end
+  row = math.max(1, math.min(row, vim.api.nvim_buf_line_count(0)))
   pcall(vim.api.nvim_win_set_cursor, 0, { row, 0 })
   vim.cmd("normal! ^")
 end
