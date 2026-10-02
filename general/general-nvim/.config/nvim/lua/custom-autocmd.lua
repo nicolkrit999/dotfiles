@@ -60,11 +60,18 @@ api.nvim_create_autocmd({ "BufWritePre" }, {
 -- line before executing this command, see also https://vi.stackexchange.com/a/20397/15292 .
 api.nvim_create_augroup("auto_read", { clear = true })
 
+-- The only notification for this (claude-code's own refresh notification is off, plugin_specs.lua).
+-- v:fcs_reason is not reliable in the Post event (empty for a normal change), so a deleted file is
+-- detected on disk. Never add a FileChangedShell autocmd: it would replace Nvim's builtin reload.
 api.nvim_create_autocmd({ "FileChangedShellPost" }, {
   pattern = "*",
   group = "auto_read",
-  callback = function()
-    vim.notify("File changed on disk. Buffer reloaded!", vim.log.levels.WARN, { title = "nvim-config" })
+  callback = function(ev)
+    if ev.file ~= "" and vim.uv.fs_stat(ev.file) == nil then
+      vim.notify("File deleted on disk (buffer kept)", vim.log.levels.WARN, { title = "nvim-config" })
+    else
+      vim.notify("File changed on disk. Buffer reloaded!", vim.log.levels.WARN, { title = "nvim-config" })
+    end
   end,
 })
 

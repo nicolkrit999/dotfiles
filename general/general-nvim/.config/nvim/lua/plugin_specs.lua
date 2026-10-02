@@ -1129,7 +1129,8 @@ local plugin_specs = {
           enable = true,
           updatetime = 100,
           timer_interval = 1000,
-          show_notifications = true,
+          -- off: lua/custom-autocmd.lua (FileChangedShellPost) gives the one reload/deleted message
+          show_notifications = false,
         },
         git = {
           use_git_root = true,
