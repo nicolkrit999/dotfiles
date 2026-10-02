@@ -33,7 +33,8 @@ pcall(keymap.del, "n", "<leader>gy")
 pcall(keymap.del, "v", "<leader>gy")
 
 keymap.set({ "n", "x" }, "<leader>gl", function()
-  local mode = string.lower(vim.fn.mode())
+  -- any visual mode (v, V, blockwise) is a range: only normal mode stays 'n'
+  local mode = vim.fn.mode() == "n" and "n" or "v"
   gitlinker.get_buf_range_url(mode)
 end, {
   silent = true,
