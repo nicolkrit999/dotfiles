@@ -217,8 +217,6 @@ end, {
   desc = "Add reference link at buffer end",
   nargs = "+",
   complete = function(arg_lead, cmdline, curpos)
-    -- vim.print(string.format("arg_lead: '%s', cmdline: '%s', curpos: %d", arg_lead, cmdline, curpos))
-
     -- only complete the first argument
     if count_consecutive_spaces(cmdline) > 1 then
       -- we are now starting the second argument, so no completion anymore
