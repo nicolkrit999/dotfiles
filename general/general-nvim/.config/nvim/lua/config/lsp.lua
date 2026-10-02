@@ -62,10 +62,10 @@ end
 
 -- lhs -> { method, LSP action, desc, action when unsupported (nil = remove our map -> builtin) }
 local lsp_keys = {
-  { "K", "textDocument/hover", hover, "LSP hover" },
-  { "gd", "textDocument/definition", unique_definition, "unique definition" },
-  { "<space>rn", "textDocument/rename", vim.lsp.buf.rename, "rename", unsupported("rename") },
-  { "<space>ca", "textDocument/codeAction", vim.lsp.buf.code_action, "code action", unsupported("code action") },
+  { "K", "textDocument/hover", hover, "LSP: hover" },
+  { "gd", "textDocument/definition", unique_definition, "LSP: go to definition" },
+  { "<space>rn", "textDocument/rename", vim.lsp.buf.rename, "LSP: rename symbol", unsupported("rename") },
+  { "<space>ca", "textDocument/codeAction", vim.lsp.buf.code_action, "LSP: code action", unsupported("code action") },
 }
 
 -- buffer -> lhs -> callback we set (so only OUR maps are ever removed)
@@ -158,10 +158,10 @@ vim.api.nvim_create_autocmd("BufWipeout", {
 
 -- global fallbacks (no client attached): one warning, no fall-through (<Space> = l, then rn would
 -- replace a character); the buffer-local maps above override them
-for _, k in ipairs { { "<space>rn", "rename" }, { "<space>ca", "code action" } } do
+for _, k in ipairs { { "<space>rn", "rename", "LSP: rename symbol" }, { "<space>ca", "code action", "LSP: code action" } } do
   vim.keymap.set("n", k[1], function()
     vim.notify(k[2] .. ": no language server attached to this buffer", vim.log.levels.WARN)
-  end, { desc = k[2] .. " (needs LSP)" })
+  end, { desc = k[3] .. " (needs LSP)" })
 end
 
 -- Servers: configured here (plus after/lsp/<name>.lua), enabled only when the binary exists

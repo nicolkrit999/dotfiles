@@ -117,7 +117,7 @@ keymap.set("n", "<leader>w", "<cmd>update<cr>", { silent = true, desc = "save bu
 keymap.set("n", "<leader>q", "<cmd>x<cr>", { silent = true, desc = "save if modified and quit window" })
 
 -- Auto format --
-keymap.set("n", "<space>fm", function() vim.lsp.buf.format({ async = true }) end, { desc = "Format file" })
+keymap.set("n", "<space>fm", function() vim.lsp.buf.format({ async = true }) end, { desc = "LSP: format file" })
 
 -- Quit all opened buffers
 keymap.set("n", "<leader>Q", "<cmd>qa!<cr>", { silent = true, desc = "quit nvim (discard unsaved changes)" })
