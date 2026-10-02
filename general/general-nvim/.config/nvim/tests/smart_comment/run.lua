@@ -501,6 +501,16 @@ local keymap_tests = {
     mode = "n",
   },
   {
+    name = "Q70 . after a cancelled gcs does not use the cancelled cursor",
+    lines = { "a();", "b();", "c();", "d();", "e();", "f();", "g();", "h();" },
+    keys = { "5G", "gcsk", "8G", "gcs<Esc>", "3G", "." },
+    exp = { "a();", "// b();", "// c();", "// d();", "// e();", "f();", "g();", "h();" },
+    check = function()
+      local row = vim.api.nvim_win_get_cursor(0)[1]
+      return row == 2, "cursor row " .. row
+    end,
+  },
+  {
     name = "Q70 non-modifiable buffer: one warning, motion not run as keys",
     lines = { "a();", "b();", "c();" },
     setup = function(buf)

@@ -413,7 +413,20 @@ function M.operator(action)
   }
   vim.o.operatorfunc = "v:lua.require'smart_comment'.opfunc_" .. action
   local mode = vim.fn.mode()
-  if mode == "v" or mode == "V" or mode == "\22" or vim.v.count == 0 then
+  if mode == "v" or mode == "V" or mode == "\22" then
+    return "g@"
+  end
+  if vim.v.count == 0 then
+    -- waits for a motion: forget the cursor once Operator-pending mode ends (after the operator ran,
+    -- or when it was cancelled with <Esc> / an invalid key), so a later `.` never uses a stale one
+    vim.api.nvim_create_autocmd("ModeChanged", {
+      group = vim.api.nvim_create_augroup("smart_comment_pending", { clear = true }),
+      pattern = "no*:n",
+      once = true,
+      callback = function()
+        pending = nil
+      end,
+    })
     return "g@"
   end
   -- Count form (Q47): `{count}g@_` = count rows from the cursor down, a closed fold counting as one
