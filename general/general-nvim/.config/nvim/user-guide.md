@@ -1430,6 +1430,11 @@ Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `sni
 | `gcc` | n | Toggle comment on current line |
 | `gc` + motion | n | Toggle comment on a motion (e.g., `gcip` comments a paragraph) |
 | `gc` | v | Toggle comment on selected lines |
+| `gc` | o | Comment text object: `dgc` deletes the comment block under the cursor, `ygc` yanks it |
+| `gcu` | n | Uncomment the adjacent commented lines |
+| `:[range]Commentary` | cmd | Toggle comment on a range (`:2,3Commentary`) |
+
+vim-commentary loads right after the first screen (VeryLazy), so these commands and the `gc` text object exist from then on; the `gc` keys also load it on first use.
 
 ## Smart Commenting (Custom)
 

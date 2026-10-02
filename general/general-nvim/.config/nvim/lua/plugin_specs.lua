@@ -422,6 +422,9 @@ local plugin_specs = {
   -- Comment plugin
   {
     "tpope/vim-commentary",
+    -- also at VeryLazy so :Commentary / :5,9Commentary, the dgc/ygc text object and gcu exist
+    -- without first typing gc (the keys below stay as stubs for the first moments)
+    event = "VeryLazy",
     keys = {
       { "gc", mode = "n", desc = "Comment operator (vim-commentary)" },
       { "gc", mode = "x", desc = "Comment selection (vim-commentary)" },
