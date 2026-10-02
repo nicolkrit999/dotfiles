@@ -3,9 +3,10 @@ require("bufferline").setup {
     numbers = "none",
     -- refuses buffers with unsaved changes: one short warning instead of the raw E89 error
     close_command = function(bufnr)
-      -- with 'confirm' a cancelled prompt does not raise: the buffer simply survives
+      -- with 'confirm' a cancelled prompt does not raise: the buffer simply survives (still modified).
+      -- Closing the last buffer leaves a listed, unmodified empty buffer behind: that is a success.
       local ok = pcall(vim.cmd.bdelete, bufnr)
-      if not ok or vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].buflisted then
+      if not ok or (vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].buflisted and vim.bo[bufnr].modified) then
         vim.notify("unsaved changes, buffer kept", vim.log.levels.WARN)
       end
     end,
