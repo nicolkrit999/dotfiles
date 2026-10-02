@@ -114,7 +114,15 @@ keymap.set("n", [[\x]], function()
 end, { silent = true, desc = "close qf and location list" })
 
 -- Delete a buffer, without closing the window, see https://stackoverflow.com/q/4465095/6064933
-keymap.set("n", [[\d]], "<cmd>bprevious <bar> bdelete #<cr>", { silent = true, desc = "delete current buffer" })
+-- On the only listed buffer there is no previous one: open an empty buffer first (no E516).
+keymap.set("n", [[\d]], function()
+  local listed = vim.fn.getbufinfo({ buflisted = 1 })
+  local only = #listed == 1 and listed[1].bufnr == vim.api.nvim_get_current_buf()
+  local ok, err = pcall(vim.cmd, (only and "enew" or "bprevious") .. " | bdelete #")
+  if not ok then -- e.g. E89 unsaved changes: show the plain Vim error, not a Lua traceback
+    vim.notify((tostring(err):gsub("^.-Vim%(%a+%):", "")), vim.log.levels.ERROR)
+  end
+end, { silent = true, desc = "delete current buffer" })
 
 -- Delete all other listed buffers. Buffers with unsaved changes are kept (one message
 -- "kept N unsaved buffer(s)"); a delete that fails for another reason also counts as kept.
