@@ -1,4 +1,4 @@
-local handler = function(virtText, lnum, endLnum, width, truncate)
+local handler = function(virtText, lnum, endLnum, width, truncate, ctx)
   local newVirtText = {}
   local foldedLines = endLnum - lnum
   local suffix = (" 󰁂  %d"):format(foldedLines)
@@ -24,7 +24,10 @@ local handler = function(virtText, lnum, endLnum, width, truncate)
     end
     curWidth = curWidth + chunkWidth
   end
-  local rAlignAppndx = math.max(math.min(vim.o.textwidth, width - 1) - curWidth - sufWidth, 0)
+  -- align the suffix to textwidth of the FOLDED buffer; textwidth 0 -> the window edge
+  local tw = (ctx and ctx.bufnr and vim.api.nvim_buf_is_valid(ctx.bufnr)) and vim.bo[ctx.bufnr].textwidth or vim.bo.textwidth
+  local alignTo = tw > 0 and math.min(tw, width - 1) or (width - 1)
+  local rAlignAppndx = math.max(alignTo - curWidth - sufWidth, 0)
   suffix = (" "):rep(rAlignAppndx) .. suffix
   table.insert(newVirtText, { suffix, "MoreMsg" })
   return newVirtText
