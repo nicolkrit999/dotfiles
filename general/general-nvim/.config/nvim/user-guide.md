@@ -2706,7 +2706,7 @@ Plugin: **nvim-gdb**. For C/C++ debugging with GDB. Available on Linux and Windo
 | Plugin / Feature | What it does |
 | --- | --- |
 | **nvim-tree** (`<Space>s`) | Visual file browser. Create (`a`), delete (`d`), rename (`r`), copy (`c`), cut (`x`), paste (`p`). |
-| **vim-eunuch** | Unix file commands, all available from a fresh start (lazy `cmd` list): `:Rename <newname>`, `:Move <path>` (move the file, creating directories), `:Duplicate <name>`, `:Copy <path>`, `:Delete` / `:Remove` / `:Unlink` (delete the file; `:Delete` also the buffer), `:Mkdir[!] <dir>` (`!` = with parents), `:Chmod <mode>`, `:Cfind` / `:Lfind` / `:Clocate` / `:Llocate` (find / locate into the quickfix / location list), `:SudoEdit`, `:SudoWrite`, `:Wall` (write all) and `:W` (= `:Wall`). |
+| **vim-eunuch** | Unix file commands, all available from a fresh start (lazy `cmd` list): `:Rename <newname>`, `:Move <path>` (move the file, creating directories), `:Duplicate <name>`, `:Copy <path>`, `:Delete` / `:Remove` / `:Unlink` (delete the file; `:Delete` also the buffer), `:Mkdir <dir>` (always creates the missing parent folders, like `mkdir -p`; do NOT type `-p`, it would become part of the folder name; a `!` makes no difference; with no argument it creates the folder of the current file; an existing folder only gives the message "Directory already exists"), `:Chmod <mode>`, `:Cfind` / `:Lfind` / `:Clocate` / `:Llocate` (find / locate into the quickfix / location list), `:SudoEdit`, `:SudoWrite`, `:Wall` (write all) and `:W` (= `:Wall`). |
 | **gx.nvim** (`gx`) | Open the URL or file path under cursor in a browser. |
 | `:CopyPath absolute` | Copy the full file path to clipboard. |
 | `:CopyPath relative` | Copy path relative to project root. |
