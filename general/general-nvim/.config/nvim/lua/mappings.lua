@@ -653,5 +653,8 @@ end, { desc = "close floating win" })
 -- SMART COMMENTING (gcs = comment, gcr = uncomment; logic in lua/smart_comment/)
 -- ============================================================================
 local smart_comment = require("smart_comment")
-keymap.set({ "n", "x" }, "gcs", function() smart_comment.run("comment") end, { desc = "Smart Comment" })
-keymap.set({ "n", "x" }, "gcr", function() smart_comment.run("uncomment") end, { desc = "Smart Uncomment" })
+-- operators: gcs{motion} (gcsip, gcr200j), {count}gcs = count rows from the cursor, Visual; `.` repeats
+keymap.set({ "n", "x" }, "gcs", function() return smart_comment.operator("comment") end,
+  { expr = true, desc = "Comment lines (motion/count)" })
+keymap.set({ "n", "x" }, "gcr", function() return smart_comment.operator("uncomment") end,
+  { expr = true, desc = "Uncomment lines (motion/count)" })

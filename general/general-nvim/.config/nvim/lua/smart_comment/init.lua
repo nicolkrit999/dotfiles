@@ -358,52 +358,73 @@ function M.apply(buf, s, e, action, opts)
   return true, map
 end
 
---- Run on the current line(s) (normal mode, with count) or the visual selection.
-function M.run(action)
-  local mode = vim.fn.mode()
-  local s, e
-  if mode == "v" or mode == "V" or mode == "\22" then
-    s, e = vim.fn.line("v"), vim.fn.line(".")
-    if s > e then
-      s, e = e, s
-    end
-    -- like Vim's operators in Visual mode: closed folds at either end count as a whole (Q62)
-    if vim.fn.foldclosed(s) ~= -1 then
-      s = vim.fn.foldclosed(s)
-    end
-    if vim.fn.foldclosedend(e) ~= -1 then
-      e = vim.fn.foldclosedend(e)
-    end
-    vim.api.nvim_feedkeys(vim.keycode("<Esc>"), "nx", false)
-  else
-    -- like `dd`: a closed fold counts as one row (the whole fold), and the count counts visible rows
-    local last_row = vim.api.nvim_buf_line_count(0)
-    s = vim.fn.line(".")
-    if vim.fn.foldclosed(s) ~= -1 then
-      s = vim.fn.foldclosed(s)
-    end
-    local r = s
-    for _ = 1, vim.v.count1 do
-      if r > last_row then
-        break
-      end
-      local fe = vim.fn.foldclosedend(r)
-      e = fe ~= -1 and fe or r
-      r = e + 1
-    end
-  end
+-- Operator (Q70): gcs / gcr are expr maps returning `g@`, so they take a motion (gcsip, gcr200j,
+-- gcsG), a count (200gcs = 200 rows from the cursor down) or a Visual selection, and `.` repeats
+-- them. Whatever the motion, whole rows are changed.
+
+-- Cursor when the key was typed (not set on `.`): the cursor then stays on its text row inside the
+-- range, as before the operator form, instead of jumping to the range start.
+local pending
+
+local function operate(action)
+  local buf = vim.api.nvim_get_current_buf()
+  local s = vim.api.nvim_buf_get_mark(buf, "[")[1]
+  local e = vim.api.nvim_buf_get_mark(buf, "]")[1]
   if s > e then
     s, e = e, s
   end
+  -- closed folds at either end count as a whole, like Vim's own operators (also in Visual mode: Q62)
+  if vim.fn.foldclosed(s) ~= -1 then
+    s = vim.fn.foldclosed(s)
+  end
+  if vim.fn.foldclosedend(e) ~= -1 then
+    e = vim.fn.foldclosedend(e)
+  end
   local cur = vim.api.nvim_win_get_cursor(0)
+  local p = pending
+  pending = nil
+  if p and p.buf == buf and p.tick == vim.b[buf].changedtick then
+    cur = p.cursor
+  end
   local row = math.max(s, math.min(cur[1], e))
-  local changed, map = M.apply(0, s, e, action)
+  local changed, map = M.apply(buf, s, e, action)
   if changed and map then
     row = map(row) -- same text row, also when rows above it were deleted / inserted
   end
-  row = math.max(1, math.min(row, vim.api.nvim_buf_line_count(0)))
+  row = math.max(1, math.min(row, vim.api.nvim_buf_line_count(buf)))
   pcall(vim.api.nvim_win_set_cursor, 0, { row, 0 })
   vim.cmd("normal! ^")
+end
+
+--- 'operatorfunc' targets (one per action, so `.` repeats the right one)
+function M.opfunc_comment()
+  operate("comment")
+end
+function M.opfunc_uncomment()
+  operate("uncomment")
+end
+
+--- Expr-map body for gcs ("comment") / gcr ("uncomment") in Normal and Visual mode.
+function M.operator(action)
+  pending = {
+    buf = vim.api.nvim_get_current_buf(),
+    tick = vim.b.changedtick,
+    cursor = vim.api.nvim_win_get_cursor(0),
+  }
+  vim.o.operatorfunc = "v:lua.require'smart_comment'.opfunc_" .. action
+  local mode = vim.fn.mode()
+  if mode == "v" or mode == "V" or mode == "\22" or vim.v.count == 0 then
+    return "g@"
+  end
+  -- Count form (Q47): `{count}g@_` = count rows from the cursor down, a closed fold counting as one
+  -- row like `dd`. `_` with a count > 1 fails on the last row (or a closed fold reaching it), so
+  -- there the count is dropped (<Esc> cancels it silently) and only that row / fold is changed.
+  local r = vim.fn.line(".")
+  local fe = vim.fn.foldclosedend(r)
+  if vim.v.count > 1 and (fe ~= -1 and fe or r) >= vim.fn.line("$") then
+    return "<Esc>g@_"
+  end
+  return "g@_"
 end
 
 return M

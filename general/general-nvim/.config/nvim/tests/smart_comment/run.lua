@@ -159,9 +159,9 @@ local function fold_teardown()
 end
 local keymap_tests = {
   {
-    name = "normal gcs on current line",
+    name = "normal 1gcs on current line",
     lines = { "a();", "b();", "c();" },
-    keys = { "2G", "gcs" },
+    keys = { "2G", "1gcs" },
     exp = { "a();", "// b();", "c();" },
   },
   {
@@ -201,9 +201,9 @@ local keymap_tests = {
     exp = { "// a();", "// b();", "c();" },
   },
   {
-    name = "after visual gcs, normal gcs acts on the cursor line only",
+    name = "after visual gcs, normal 1gcs acts on the cursor line only",
     lines = { "a();", "b();", "c();", "d();" },
-    keys = { "ggVj", "gcs", "4G", "gcs" },
+    keys = { "ggVj", "gcs", "4G", "1gcs" },
     exp = { "// a();", "// b();", "c();", "// d();" },
   },
   {
@@ -223,7 +223,7 @@ local keymap_tests = {
   {
     name = "Q45 lowercase mark kept by gcs",
     lines = { "a();", "  bb();", "c();" },
-    keys = { "2G4|", "ma", "gcs" },
+    keys = { "2G4|", "ma", "1gcs" },
     exp = { "a();", "  // bb();", "c();" },
     check = function()
       local m = vim.api.nvim_buf_get_mark(0, "a")
@@ -247,7 +247,7 @@ local keymap_tests = {
       local ns = vim.api.nvim_create_namespace("sc_test")
       vim.b[buf].sc_mark = vim.api.nvim_buf_set_extmark(buf, ns, 1, 3, {})
     end,
-    keys = { "2G", "gcs" },
+    keys = { "2G", "1gcs" },
     exp = { "a();", "  // bb();", "c();" },
     check = function(buf)
       local ns = vim.api.nvim_create_namespace("sc_test")
@@ -295,7 +295,7 @@ local keymap_tests = {
   },
   -- Q47: normal-mode gcs/gcr on a closed fold act on the whole fold; a count counts visible rows
   {
-    name = "Q47 gcs on a closed fold comments the whole fold",
+    name = "Q47 1gcs on a closed fold comments the whole fold",
     lines = { "void f() {", "  a();", "  b();", "}", "x();" },
     setup = function()
       fold_setup({ { 1, 4 } })
@@ -303,11 +303,11 @@ local keymap_tests = {
     teardown = function()
       fold_teardown()
     end,
-    keys = { "gg", "gcs" },
+    keys = { "gg", "1gcs" },
     exp = { "// void f() {", "//   a();", "//   b();", "// }", "x();" },
   },
   {
-    name = "Q47 gcr with the cursor inside a closed fold",
+    name = "Q47 1gcr with the cursor inside a closed fold",
     lines = { "x();", "// void f() {", "//   a();", "// }", "y();" },
     setup = function()
       fold_setup({ { 2, 4 } })
@@ -315,7 +315,7 @@ local keymap_tests = {
     teardown = function()
       fold_teardown()
     end,
-    keys = { "3G", "gcr" },
+    keys = { "3G", "1gcr" },
     exp = { "x();", "void f() {", "  a();", "}", "y();" },
   },
   {
@@ -331,7 +331,7 @@ local keymap_tests = {
     exp = { "// x();", "// void f() {", "//   a();", "// }", "// y();", "z();" },
   },
   {
-    name = "Q47 open fold: gcs acts on the cursor row only",
+    name = "Q47 open fold: 1gcs acts on the cursor row only",
     lines = { "void f() {", "  a();", "}" },
     setup = function()
       fold_setup({ { 1, 3 } })
@@ -340,7 +340,7 @@ local keymap_tests = {
     teardown = function()
       fold_teardown()
     end,
-    keys = { "gg", "gcs" },
+    keys = { "gg", "1gcs" },
     exp = { "// void f() {", "  a();", "}" },
   },
   -- Q62: visual gcs/gcr extend to whole closed folds at either end of the selection
@@ -367,6 +367,160 @@ local keymap_tests = {
     end,
     keys = { "gg", "Vj", "gcr" },
     exp = { "x();", "void f() {", "  a();", "}", "// y();" },
+  },
+  -- Q70: gcs / gcr are operators: a motion, a count (rows from the cursor) or Visual; `.` repeats them
+  {
+    name = "Q70 gcsj comments the cursor row and the next",
+    lines = { "a();", "b();", "c();", "d();" },
+    keys = { "2G", "gcsj" },
+    exp = { "a();", "// b();", "// c();", "d();" },
+  },
+  {
+    name = "Q70 gcs2j",
+    lines = { "a();", "b();", "c();", "d();" },
+    keys = { "gg", "gcs2j" },
+    exp = { "// a();", "// b();", "// c();", "d();" },
+  },
+  {
+    name = "Q70 gcr200j stops at the last row",
+    lines = { "// a();", "// b();", "// c();", "// d();" },
+    keys = { "2G", "gcr200j" },
+    exp = { "// a();", "b();", "c();", "d();" },
+  },
+  {
+    name = "Q70 gcsip (text object)",
+    lines = { "a();", "b();", "", "c();" },
+    keys = { "2G", "gcsip" },
+    exp = { "// a();", "// b();", "", "c();" },
+  },
+  {
+    name = "Q70 gcs} (exclusive motion to a blank row)",
+    lines = { "a();", "b();", "", "c();" },
+    keys = { "gg", "gcs}" },
+    exp = { "// a();", "// b();", "", "c();" },
+  },
+  {
+    name = "Q70 gcsG",
+    lines = { "a();", "b();", "c();" },
+    keys = { "2G", "gcsG" },
+    exp = { "a();", "// b();", "// c();" },
+  },
+  {
+    name = "Q70 gcrk (upward motion)",
+    lines = { "// a();", "// b();", "// c();" },
+    keys = { "3G", "gcrk" },
+    exp = { "// a();", "b();", "c();" },
+  },
+  {
+    name = "Q70 charwise motion inside a row changes the whole row",
+    lines = { "  aa bb();", "c();" },
+    keys = { "gg", "w", "gcse" },
+    exp = { "  // aa bb();", "c();" },
+  },
+  {
+    name = "Q70 charwise motion over two rows changes both whole rows",
+    lines = { "a(); b();", "c(); d();", "e();" },
+    keys = { "gg", "w", "gcs/d<CR>" },
+    exp = { "// a(); b();", "// c(); d();", "e();" },
+  },
+  {
+    name = "Q70 closed fold inside a motion range is changed whole",
+    lines = { "x();", "void f() {", "  a();", "}", "y();" },
+    setup = function()
+      fold_setup({ { 2, 4 } })
+    end,
+    teardown = function()
+      fold_teardown()
+    end,
+    keys = { "gg", "gcsj" },
+    exp = { "// x();", "// void f() {", "//   a();", "// }", "y();" },
+  },
+  {
+    name = "Q70 3gcs on the last row changes only that row",
+    lines = { "a();", "b();", "c();" },
+    keys = { "G", "3gcs" },
+    exp = { "a();", "b();", "// c();" },
+  },
+  {
+    name = "Q70 200gcs stops at the last row",
+    lines = { "a();", "b();", "c();" },
+    keys = { "2G", "200gcs" },
+    exp = { "a();", "// b();", "// c();" },
+  },
+  {
+    name = "Q70 . repeats gcsj",
+    lines = { "a();", "b();", "c();", "d();", "e();" },
+    keys = { "gg", "gcsj", "3G", "." },
+    exp = { "// a();", "// b();", "// c();", "// d();", "e();" },
+  },
+  {
+    name = "Q70 . repeats the count form",
+    lines = { "a();", "b();", "c();", "d();", "e();", "f();" },
+    keys = { "gg", "2gcs", "4G", "." },
+    exp = { "// a();", "// b();", "c();", "// d();", "// e();", "f();" },
+  },
+  {
+    name = "Q70 . repeats visual gcs on as many rows",
+    lines = { "a();", "b();", "c();", "d();", "e();" },
+    keys = { "ggVj", "gcs", "4G", "." },
+    exp = { "// a();", "// b();", "c();", "// d();", "// e();" },
+  },
+  {
+    name = "Q70 . repeats gcr",
+    lines = { "// a();", "// b();", "// c();", "// d();", "// e();" },
+    keys = { "gg", "gcrj", "4G", "." },
+    exp = { "a();", "b();", "// c();", "d();", "e();" },
+  },
+  {
+    name = "Q70 one undo step for gcsip",
+    lines = { "a();", "b();", "c();", "", "d();" },
+    keys = { "gg", "gcsip", "u" },
+    exp = { "a();", "b();", "c();", "", "d();" },
+  },
+  {
+    name = "Q70 undo after . undoes only the repeat",
+    lines = { "a();", "b();", "c();", "d();" },
+    -- (feedkeys from one script joins undo blocks; setting 'undolevels' forces the break a user gets)
+    keys = { "gg", "gcsj", "<Cmd>let &undolevels = &undolevels<CR>", "3G", ".", "u" },
+    exp = { "// a();", "// b();", "c();", "d();" },
+  },
+  {
+    name = "Q70 cursor stays on its row (motion upwards)",
+    lines = { "a();", "b();", "c();" },
+    keys = { "3G", "gcsk" },
+    exp = { "a();", "// b();", "// c();" },
+    check = function()
+      return vim.fn.line(".") == 3, "cursor row " .. vim.fn.line(".")
+    end,
+  },
+  {
+    name = "Q70 gcs then <Esc> changes nothing",
+    lines = { "a();", "b();" },
+    keys = { "gg", "gcs<Esc>" },
+    exp = { "a();", "b();" },
+    mode = "n",
+  },
+  {
+    name = "Q70 non-modifiable buffer: one warning, motion not run as keys",
+    lines = { "a();", "b();", "c();" },
+    setup = function(buf)
+      vim.bo[buf].modifiable = false
+      _G.sc_test_notify, _G.sc_test_warns = vim.notify, {}
+      vim.notify = function(msg)
+        table.insert(_G.sc_test_warns, msg)
+      end
+    end,
+    teardown = function(buf)
+      vim.notify = _G.sc_test_notify
+      vim.bo[buf].modifiable = true
+    end,
+    keys = { "gg", "gcsip" },
+    exp = { "a();", "b();", "c();" },
+    mode = "n",
+    check = function()
+      local w = _G.sc_test_warns
+      return #w == 1 and w[1]:find("not modifiable") ~= nil, "warnings " .. vim.inspect(w)
+    end,
   },
   {
     name = "Q45 single undo after gcr deleting delimiter rows",
