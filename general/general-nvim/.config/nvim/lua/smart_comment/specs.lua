@@ -443,6 +443,9 @@ specs.terraform = {
   specials = { "hcl_string", "heredoc_hcl" },
 }
 
+-- Plain `.hcl` files (Packer, Nomad, Vault configs): the same HCL native syntax.
+specs.hcl = { inherits = "terraform" }
+
 -- Elixir: `#` comments; "..." / '...' (multi-line, `#{}` interpolation may hold nested strings),
 -- """ / ''' heredocs, sigils (~r/../, ~s(..) ...), character literals (`?#` is the code of `#`).
 specs.elixir = {

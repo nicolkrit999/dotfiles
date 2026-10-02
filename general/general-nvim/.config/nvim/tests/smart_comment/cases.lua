@@ -545,6 +545,13 @@ add("terraform", "heredoc body not a comment", { "x = <<EOF", "# not", "EOF" }, 
   { s = 2, e = 2 })
 add("terraform", "indented heredoc body not a comment", { "x = <<-EOT", "  # not", "  EOT", "# y = 1" }, "u",
   { "x = <<-EOT", "  # not", "  EOT", "y = 1" }, { s = 2, e = 4 })
+-- Q64: plain .hcl files (filetype hcl) use the terraform rules
+both("hcl", "# in string", { 'region = "a#b"' }, { '# region = "a#b"' }, { 'region = "a#b"' }, { rt = true })
+add("hcl", "trailing // comment gcr", { "x = 1 // c" }, "u", { "x = 1 c" })
+add("hcl", "trailing # comment gcr", { "x = 1 # c" }, "u", { "x = 1 c" })
+add("hcl", "block comment gcr", { "/* x = 1 */" }, "u", { "x = 1" })
+add("hcl", "heredoc body not a comment", { "x = <<EOF", "# not", "EOF" }, "u", { "x = <<EOF", "# not", "EOF" },
+  { s = 2, e = 2 })
 
 -- Elixir
 both("elixir", "interpolation", { 'IO.puts "#{x}"' }, { '# IO.puts "#{x}"' }, { 'IO.puts "#{x}"' }, { rt = true })
