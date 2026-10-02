@@ -73,8 +73,7 @@ opt.wildignore:append {
 opt.wildignorecase = true -- Ignore file and dir name cases in cmd-completion
 
 -- Set up backup directory
-vim.g.backupdir = fn.stdpath("data") .. "/backup//"
-opt.backupdir = vim.g.backupdir
+opt.backupdir = fn.stdpath("data") .. "/backup//"
 
 -- Skip backup for patterns in option wildignore
 opt.backupskip = o.wildignore
