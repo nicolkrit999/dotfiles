@@ -440,12 +440,9 @@ local plugin_specs = {
     config = function()
       require("config.yanky")
     end,
-    -- load on the first p/P (n and x) so the yanky paste (highlight, [y/]y, visual p) works from
-    -- the first paste; lazy.nvim replays the key after loading, config.yanky then owns p/P
-    keys = {
-      { "p", mode = { "n", "x" }, desc = "Paste after (yanky)" },
-      { "P", mode = { "n", "x" }, desc = "Paste before (yanky)" },
-    },
+    -- load right after the first screen (not on the first p/P) so EVERY yank of the session is
+    -- recorded in the yank history; config.yanky then owns p/P/[y/]y
+    event = "VeryLazy",
     cmd = "YankyRingHistory",
   },
 
