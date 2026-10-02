@@ -476,3 +476,20 @@ api.nvim_create_autocmd("VimEnter", {
     end)
   end,
 })
+
+-- lazy.nvim's dimming float (filetype `lazy_backdrop`) is opened without a border, so it inherits
+-- the global 'winborder' and :Lazy shows a second, full-screen frame around the editor. lazy sets
+-- the filetype right after opening the window: strip the border there. Lazy's own window keeps
+-- its rounded frame (`ui.border`).
+api.nvim_create_autocmd("FileType", {
+  group = api.nvim_create_augroup("lazy_backdrop_noborder", { clear = true }),
+  pattern = "lazy_backdrop",
+  desc = "No 'winborder' frame on lazy.nvim's backdrop window",
+  callback = function(ev)
+    for _, win in ipairs(fn.win_findbuf(ev.buf)) do
+      if api.nvim_win_get_config(win).relative ~= "" then
+        pcall(api.nvim_win_set_config, win, { border = "none" })
+      end
+    end
+  end,
+})
