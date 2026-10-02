@@ -2370,7 +2370,7 @@ The gutter signs mean:
 
 Plugin: **claude-code.nvim**
 
-Claude Code is an AI coding assistant that runs in a terminal inside Neovim.
+Claude Code is an AI coding assistant that runs in a terminal inside Neovim. The plugin loads right after the first screen is drawn (VeryLazy), so its keys and `:ClaudeCode*` commands exist a fraction of a second after Neovim starts.
 
 | Keymap | Mode | What it does |
 | --- | --- | --- |

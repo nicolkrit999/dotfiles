@@ -1162,7 +1162,7 @@ local plugin_specs = {
   -- Claude Code AI assistant integration
   {
     "greggh/claude-code.nvim",
-    lazy = false,
+    event = "VeryLazy", -- <Space>cc/cR/cV and :ClaudeCode* exist right after the first screen
     dependencies = {
       "nvim-lua/plenary.nvim",
     },
