@@ -1044,8 +1044,9 @@ local plugin_specs = {
       edit = {
         enabled = false,
       },
+      -- quicker adds 3 columns (the "…" and 2 more) to this width: -3 shows a 40 column name
       max_filename_width = function()
-        return math.floor(math.min(40, vim.o.columns / 2))
+        return math.floor(math.min(40, vim.o.columns / 2)) - 3
       end,
     },
   },
