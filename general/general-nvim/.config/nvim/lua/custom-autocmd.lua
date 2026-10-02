@@ -4,8 +4,6 @@ local api = vim.api
 local utils = require("utils")
 
 -- Display a message when the current file is not in utf-8 format.
--- Note that we need to use `unsilent` command here because of this issue:
--- https://github.com/vim/vim/issues/4379
 api.nvim_create_autocmd({ "BufRead" }, {
   pattern = "*",
   group = api.nvim_create_augroup("non_utf8_file", { clear = true }),
@@ -26,9 +24,12 @@ api.nvim_create_autocmd({ "TextYankPost" }, {
   end,
 })
 
+-- keep the cursor where it was after a yank (e.g. `yip` does not jump to the paragraph start)
+local yank_cursor_group = api.nvim_create_augroup("yank_keep_cursor", { clear = true })
 api.nvim_create_autocmd({ "CursorMoved" }, {
   pattern = "*",
-  group = yank_group,
+  group = yank_cursor_group,
+  desc = "remember the cursor position (restored after a yank)",
   callback = function()
     vim.g.current_cursor_pos = vim.fn.getcurpos()
   end,
@@ -36,9 +37,9 @@ api.nvim_create_autocmd({ "CursorMoved" }, {
 
 api.nvim_create_autocmd("TextYankPost", {
   pattern = "*",
-  group = yank_group,
-  ---@diagnostic disable-next-line: unused-local
-  callback = function(context)
+  group = yank_cursor_group,
+  desc = "restore the cursor position after a yank",
+  callback = function()
     if vim.v.event.operator == "y" then
       vim.fn.setpos(".", vim.g.current_cursor_pos)
     end
@@ -175,7 +176,7 @@ local number_toggle_group = api.nvim_create_augroup("numbertoggle", { clear = tr
 api.nvim_create_autocmd({ "BufEnter", "FocusGained", "InsertLeave", "WinEnter" }, {
   pattern = "*",
   group = number_toggle_group,
-  desc = "togger line number",
+  desc = "relative line numbers on (focused window)",
   callback = function()
     if vim.wo.number then
       vim.wo.relativenumber = true
@@ -185,7 +186,7 @@ api.nvim_create_autocmd({ "BufEnter", "FocusGained", "InsertLeave", "WinEnter" }
 
 api.nvim_create_autocmd({ "BufLeave", "FocusLost", "InsertEnter", "WinLeave" }, {
   group = number_toggle_group,
-  desc = "togger line number",
+  desc = "relative line numbers off (unfocused window / insert mode)",
   callback = function()
     if vim.wo.number then
       vim.wo.relativenumber = false
@@ -196,7 +197,7 @@ api.nvim_create_autocmd({ "BufLeave", "FocusLost", "InsertEnter", "WinLeave" }, 
 api.nvim_create_autocmd("ColorScheme", {
   group = api.nvim_create_augroup("custom_highlight", { clear = true }),
   pattern = "*",
-  desc = "Define or overrride some highlight groups",
+  desc = "Define or override some highlight groups",
   callback = function()
     -- For yank highlight
     vim.api.nvim_set_hl(0, "YankColor", { fg = "#34495E", bg = "#2ECC71", ctermfg = 59, ctermbg = 41 })
@@ -208,7 +209,7 @@ api.nvim_create_autocmd("ColorScheme", {
     -- For floating windows border highlight
     vim.api.nvim_set_hl(0, "FloatBorder", { fg = "LightGreen", bg = "None", bold = true, update = true })
 
-    -- change the background color of floating window to None, so it blenders better
+    -- change the background color of floating window to None, so it blends better
     vim.api.nvim_set_hl(0, "NormalFloat", { bg = "None", update = true })
 
     -- transparent popup menu (from upstream; user decision: yes)
