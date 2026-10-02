@@ -279,7 +279,14 @@ local servers = {
   -- PHP (phpactor: php devShell). nvim-lspconfig's filetypes/root_markers are kept; the config only
   -- pins the command, so the binary check below is exactly executable("phpactor")
   phpactor = { cmd = { "phpactor", "language-server" }, filetypes = { "php" } },
+
+  -- R (languageserver R package: R devShell). Enabled lazily by the one-time probe below, never
+  -- by the loop that enables the other servers
+  r_language_server = { cmd = { "R", "--no-echo", "-e", "languageserver::run()" } },
 }
+
+-- servers that are NOT enabled at startup (something else enables them later)
+local deferred = { r_language_server = true }
 
 -- binaries a server needs, when that is not just cmd[1]
 local needs = {
@@ -304,10 +311,60 @@ end
 
 for name, config in pairs(servers) do
   vim.lsp.config(name, config)
-  if not missing_binary(name) then
+  if not deferred[name] and not missing_binary(name) then
     vim.lsp.enable(name)
   end
 end
+
+-- r_language_server: `R` alone is not enough, the `languageserver` R package must be installed, and
+-- starting R to find out is slow. So: ONE probe, at the first R-ish file, async, cached for the
+-- session. Silent when R or the package is missing, or when the probe fails or times out. When it
+-- succeeds the server is enabled and started for the R buffers already open (vim.lsp.enable only
+-- hooks FileType events that come later; the buffer that triggered the probe is already past it).
+local r_probe = nil ---@type "running"|"ok"|"no"|nil
+local R_PROBE_TIMEOUT_MS = 10000
+
+local function probe_r_language_server()
+  if r_probe then
+    return
+  end
+  if not utils.executable("R") then
+    r_probe = "no"
+    return
+  end
+  r_probe = "running"
+  local ok = pcall(vim.system, {
+    "R",
+    "--no-echo",
+    "-e",
+    'quit(status = !requireNamespace("languageserver", quietly=TRUE))',
+  }, { timeout = R_PROBE_TIMEOUT_MS, stdin = false }, function(res)
+    -- exit 0 = package present; non-zero (also timeout: the process is killed) = treat as missing
+    r_probe = res.code == 0 and "ok" or "no"
+    if r_probe == "ok" then
+      vim.schedule(function()
+        vim.lsp.enable("r_language_server")
+        local fts = vim.lsp.config.r_language_server.filetypes or {}
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+          if vim.api.nvim_buf_is_loaded(buf) and vim.list_contains(fts, vim.bo[buf].filetype) then
+            -- same trigger as :LspStart (Nvim's own enable logic: root_dir, no duplicate client)
+            vim.api.nvim_exec_autocmds("FileType", { group = "nvim.lsp.enable", buffer = buf })
+          end
+        end
+      end)
+    end
+  end)
+  if not ok then
+    r_probe = "no"
+  end
+end
+
+vim.api.nvim_create_autocmd("FileType", {
+  group = lsp_keys_group,
+  pattern = { "r", "rmd", "quarto" }, -- the filetypes of r_language_server
+  desc = "One-time probe for the R languageserver package",
+  callback = probe_r_language_server,
+})
 
 -- LSP related commands (nvim-lspconfig no longer defines these on nvim 0.12)
 vim.api.nvim_create_user_command("LspInfo", "checkhealth vim.lsp", { desc = "Show LSP Info" })
