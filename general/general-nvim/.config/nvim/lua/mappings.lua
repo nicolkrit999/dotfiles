@@ -190,10 +190,11 @@ keymap.set("x", "<A-k>", ":m '<-2<CR>gv=gv", { noremap = true, silent = true, de
 
 
 
--- Replace visual selection with text in register, but not contaminate the register, see also https://stackoverflow.com/q/10723700/6064933
+-- Replace visual selection with text in register, but not contaminate the register: builtin `P`
+-- keeps the register, honours "a and keeps the line intact when the selection starts at col 0.
 -- NOT dead: yanky.nvim (which remaps x p) only loads on :YankyRingHistory, so this is the effective
 -- visual p in every session until then.
-keymap.set("x", "p", '"_c<Esc>p')
+keymap.set("x", "p", "P")
 
 -- Go to a certain buffer
 keymap.set("n", "gb", '<cmd>call buf_utils#GoToBuffer(v:count, "forward")<cr>', { desc = "go to buffer (forward)" })
