@@ -17,8 +17,8 @@ local new_capability = {
   },
 }
 
----@type vim.lsp.Config
 -- cmd lives in lua/config/lsp.lua (its executable check enables the server)
+---@type vim.lsp.Config
 return {
   ---@type lspconfig.settings.pyright
   settings = {

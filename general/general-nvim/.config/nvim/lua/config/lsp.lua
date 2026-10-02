@@ -118,6 +118,21 @@ local function update_lsp_keys(bufnr, detaching_id)
   end
 end
 
+-- Servers can register hover/definition/rename/codeAction later (client/registerCapability,
+-- e.g. jdtls after `initialized`); no LspAttach fires then, so recompute the keys here too.
+-- This also replaces Nvim's own default K (set by the same handler) with ours.
+for _, m in ipairs { "client/registerCapability", "client/unregisterCapability" } do
+  local orig = vim.lsp.handlers[m]
+  vim.lsp.handlers[m] = function(err, params, ctx, config)
+    local r1, r2 = orig(err, params, ctx, config)
+    local client = vim.lsp.get_client_by_id(ctx.client_id)
+    for b in pairs(client and client.attached_buffers or {}) do
+      update_lsp_keys(b)
+    end
+    return r1, r2
+  end
+end
+
 local lsp_keys_group = vim.api.nvim_create_augroup("lsp_buf_conf", { clear = true })
 vim.api.nvim_create_autocmd("LspAttach", {
   group = lsp_keys_group,
