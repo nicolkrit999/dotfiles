@@ -43,7 +43,12 @@ local function stylua_format()
     })
     :wait(10000)
   if res.code ~= 0 then
-    local first = vim.split(vim.trim(res.stderr or ""), "\n", { plain = true })[1]
+    local err_lines = vim.split(vim.trim(res.stderr or ""), "\n", { plain = true })
+    local first = vim.trim(err_lines[1])
+    -- a parse error's first line ends in "error parsing:"; the reason is on the next line
+    if first:sub(-1) == ":" and err_lines[2] then
+      first = first .. " " .. vim.trim(err_lines[2]):gsub("^%- ", "")
+    end
     vim.notify("stylua failed: " .. (first ~= "" and first or ("exit code " .. res.code)), vim.log.levels.WARN)
     return
   end
