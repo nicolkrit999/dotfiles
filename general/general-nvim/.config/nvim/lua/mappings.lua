@@ -103,7 +103,15 @@ keymap.set("n", "<space>fm", function() vim.lsp.buf.format({ async = true }) end
 keymap.set("n", "<leader>Q", "<cmd>qa!<cr>", { silent = true, desc = "quit nvim (discard unsaved changes)" })
 
 -- Close location list or quickfix list if they are present, see https://superuser.com/q/355325/736190
-keymap.set("n", [[\x]], "<cmd>windo lclose <bar> cclose <cr>", { silent = true, desc = "close qf and location list" })
+-- (loclists of every window in this tab via nvim_win_call, so the current window stays current)
+keymap.set("n", [[\x]], function()
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_call(win, function() vim.cmd.lclose() end)
+    end
+  end
+  vim.cmd.cclose()
+end, { silent = true, desc = "close qf and location list" })
 
 -- Delete a buffer, without closing the window, see https://stackoverflow.com/q/4465095/6064933
 keymap.set("n", [[\d]], "<cmd>bprevious <bar> bdelete #<cr>", { silent = true, desc = "delete current buffer" })
