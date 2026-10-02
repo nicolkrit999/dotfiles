@@ -362,7 +362,6 @@ local show_branch_menu = function()
   -- "<remote>/<branch>\t<branch>" (lstrip=3 drops refs/remotes/<remote>/, keeps slashes in the branch)
   local remotes = git_lines(root, {
     "for-each-ref",
-    "--exclude=refs/remotes/*/HEAD",
     "--format=%(refname:short)%09%(refname:lstrip=3)",
     "refs/remotes/",
   })
@@ -378,7 +377,8 @@ local show_branch_menu = function()
   end
   for _, line in ipairs(remotes) do
     local name, branch = line:match("^(.-)\t(.*)$")
-    if name then
+    -- skip the symbolic refs/remotes/<remote>/HEAD (no `--exclude`: that needs git >= 2.42)
+    if name and branch ~= "HEAD" then
       table.insert(items, { name = name, is_local = false, branch = branch })
     end
   end
