@@ -2566,7 +2566,7 @@ Press `K` on any symbol to see its documentation in a floating window. This pull
 
 Plugin: **nvim-java**.
 
-This is the most feature-rich language setup in this config. It provides a full Java IDE experience.
+This is the most feature-rich language setup in this config. It provides a full Java IDE experience. nvim-java loads when you open the first Java file of the session (not at startup), so opening a Java file takes a moment longer the first time; non-Java sessions do not pay for it.
 
 ## How It Works
 

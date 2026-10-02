@@ -60,6 +60,9 @@ local plugin_specs = {
 
   {
     "nvim-java/nvim-java",
+    -- loads on the first Java file (not at startup, not an nvim-lspconfig dependency): its
+    -- config() ends with vim.lsp.enable("jdtls"), which attaches jdtls to the already open buffer
+    ft = "java",
     -- nvim-java's own lazy.lua already declares nui.nvim, nvim-dap and JavaHello/spring-boot.nvim
     dependencies = {
       "MunifTanjim/nui.nvim",
@@ -97,7 +100,6 @@ local plugin_specs = {
   -- Core LSP Config (Loads your lua/config/lsp.lua); LSP binaries come from nix
   {
     "neovim/nvim-lspconfig",
-    dependencies = { "nvim-java/nvim-java" },
     -- No config function here anymore.
     -- We load our own lsp config file separately.
     init = function()
