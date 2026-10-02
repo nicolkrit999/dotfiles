@@ -491,22 +491,33 @@ keymap.set("c", "<C-A>", "<HOME>")
 -- Delete the character to the right of the cursor
 keymap.set("i", "<C-D>", "<DEL>")
 
+-- Blink cursorline/cursorcolumn in the window where the key was pressed (also when another
+-- window becomes current meanwhile); the original values come back at the end.
 keymap.set("n", "<leader>cb", function()
+  local win = vim.api.nvim_get_current_win()
+  local orig_cul, orig_cuc = vim.wo[win].cursorline, vim.wo[win].cursorcolumn
   local cnt = 0
   local blink_times = 7
   local timer = uv.new_timer()
   if timer == nil then return end
+  local function stop()
+    timer:stop()
+    if not timer:is_closing() then timer:close() end
+  end
   timer:start(
     0,
     100,
     vim.schedule_wrap(function()
-      vim.cmd([[
-      set cursorcolumn!
-      set cursorline!
-    ]])
-      if cnt == blink_times then
-        timer:close()
+      if timer:is_closing() then return end
+      if not vim.api.nvim_win_is_valid(win) then
+        return stop()
       end
+      if cnt >= blink_times then
+        vim.wo[win].cursorline, vim.wo[win].cursorcolumn = orig_cul, orig_cuc
+        return stop()
+      end
+      vim.wo[win].cursorline = not vim.wo[win].cursorline
+      vim.wo[win].cursorcolumn = not vim.wo[win].cursorcolumn
       cnt = cnt + 1
     end)
   )
