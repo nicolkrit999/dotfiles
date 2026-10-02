@@ -2728,7 +2728,7 @@ It never saves unnamed, read-only or special buffers (terminals, help, ...) and 
 
 Plugin: **persistence.nvim** saves a session for the current folder (and git branch) automatically when you quit, once a real file was opened. It is never restored by itself: restore it from the dashboard (`r` this folder, `L` last session). Windows of Claude Code, terminals, nvim-tree, the outline, help and quickfix are left out of the saved session. `<Space>sv` (restart) brings windows, tabs and files back on its own.
 
-Plugin: **vim-obsession** (manual alternative). Save and restore your entire Neovim session (open files, window layout, etc.).
+Plugin: **vim-obsession** (manual alternative). Save and restore your entire Neovim session (open files, window layout, etc.). It loads right after the first screen, so a session started with `nvim -S Session.vim` keeps being updated while you work (no need to type `:Obsession` again).
 
 | Command | What it does |
 | --- | --- |

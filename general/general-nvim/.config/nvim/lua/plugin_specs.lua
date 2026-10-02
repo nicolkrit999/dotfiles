@@ -935,7 +935,8 @@ local plugin_specs = {
   },
 
   -- Session management plugin
-  { "tpope/vim-obsession",   cmd = "Obsession" },
+  -- event: after `nvim -S Session.vim` the session keeps being tracked without typing :Obsession
+  { "tpope/vim-obsession",   cmd = "Obsession", event = "VeryLazy" },
 
   {
     "ojroques/vim-oscyank",
