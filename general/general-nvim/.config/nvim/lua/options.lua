@@ -226,8 +226,29 @@ opt.guicursor = "n-v:block-Cursor/lCursor,i-c-ci-ve:ver50-blinkwait50-blinkoff10
 
 opt.signcolumn = "yes:1"
 
--- Show a column marker at 100 characters
+-- Show a column marker at 100 characters (default); languages with a different convention get
+-- exactly that column below, so a line touching the marker is over the limit of that language
 opt.colorcolumn = "100"
+
+local colorcolumn_by_ft = {
+  -- 80: Linux/LLVM/Google C++, Google shell, yamllint, Vim style, Haskell, tidyverse R, Prettier/Google JS
+  c = 80, cpp = 80, sh = 80, bash = 80, yaml = 80, vim = 80, haskell = 80, r = 80,
+  javascript = 80, javascriptreact = 80, typescript = 80, typescriptreact = 80,
+  -- 88: black (the Python formatter used here)
+  python = 88,
+  -- 100: Google Java, rustfmt, swift-format, nixfmt; typst has textwidth=100
+  java = 100, rust = 100, swift = 100, nix = 100, typst = 100,
+  -- 120: stylua default, PSR-12 soft limit, tex textwidth=120
+  lua = 120, php = 120, tex = 120,
+}
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup("colorcolumn_by_ft", { clear = true }),
+  pattern = vim.tbl_keys(colorcolumn_by_ft),
+  desc = "Column marker at the line-length convention of the language",
+  callback = function(args)
+    vim.opt_local.colorcolumn = tostring(colorcolumn_by_ft[args.match])
+  end,
+})
 
 -- Remove certain character from file name pattern matching
 opt.isfname:remove { "=", "," }
