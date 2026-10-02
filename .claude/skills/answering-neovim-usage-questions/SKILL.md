@@ -10,7 +10,7 @@ Paths are relative to the dotfiles repo root (`/home/krit/dotfiles`):
 - Guide: `general/general-nvim/.config/nvim/user-guide.md` (large; never read it whole, grep first)
 - Keymaps: `general/general-nvim/.config/nvim/lua/mappings.lua`
 - Plugin keymaps and settings: `.../nvim/lua/config/*.lua`, `.../nvim/lua/plugin_specs.lua`
-- Options and other mappings: `.../nvim/viml_conf/`, `.../nvim/plugin/`, `.../nvim/after/`, `.../nvim/lua/custom-autocmd.lua`
+- Options and other mappings: `.../nvim/lua/options.lua`, `.../nvim/plugin/`, `.../nvim/after/`, `.../nvim/lua/custom-autocmd.lua`
 
 ## Hard rules
 
@@ -46,7 +46,7 @@ Never trust the guide alone, and never answer from generic Vim knowledge alone. 
 - Is the key remapped? Read `lua/mappings.lua` and grep `lua/config/` and `lua/plugin_specs.lua`. Known traps in this config: `f` is hop.nvim (2 characters plus a label), `;` is `:`, `$` is `g_` in visual mode only, `H`/`L` are remapped, `0` is `g0`, `c`/`C`/`cc` use the black-hole register, `s` is disabled (vim-sandwich), `j`/`k` follow wrapped lines only without a count.
 - **Which modes does the mapping cover?** A mapping for `{ "n", "x" }` does NOT apply after an operator (`d`, `y`, `c`). `dL` therefore uses the built-in `L` (bottom of screen, linewise) and deletes whole lines.
 - Is the plugin actually enabled, or commented out in `plugin_specs.lua`? (for example vim-visual-multi is commented out, so there is no multi-cursor.)
-- Options that change behaviour: `nowrap`, `ignorecase smartcase`, `relativenumber`. Check `viml_conf/options.vim` when they matter.
+- Options that change behaviour: `nowrap`, `ignorecase smartcase`, `relativenumber`. Check `lua/options.lua` when they matter.
 
 If a check is not possible (for example a plugin default not visible in the config), say which part could not be verified.
 
