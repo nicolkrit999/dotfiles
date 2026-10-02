@@ -11,6 +11,9 @@ return {
       language = "en-US",
       -- language ids (after get_language_id): this list REPLACES lspconfig's default list
       enabled = { "markdown", "latex", "tex", "plaintex", "typst", "gitcommit", "git-commit", "plaintext", "text" },
+      -- setting ltex.ltex-ls.logLevel: the default ("fine") writes whole documents to stderr,
+      -- i.e. into lsp.log, on every check
+      ["ltex-ls"] = { logLevel = "warning" },
     },
   },
 }

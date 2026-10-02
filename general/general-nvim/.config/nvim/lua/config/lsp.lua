@@ -103,7 +103,8 @@ local servers = {
 
   -- Nix setup
   nixd = {
-    cmd = { "nixd" },
+    -- --log=error: the default level writes every request to stderr, i.e. into lsp.log
+    cmd = { "nixd", "--log=error" },
     settings = {
       nixd = {
         formatting = { command = { "nixpkgs-fmt" } },
