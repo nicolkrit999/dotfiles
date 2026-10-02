@@ -139,6 +139,24 @@ end
 local function keys(k)
   vim.api.nvim_feedkeys(vim.keycode(k), "mx", false)
 end
+-- manual closed folds in the current window (the test buffer), undone by fold_teardown
+local saved_fold
+local function fold_setup(ranges)
+  saved_fold = { method = vim.wo.foldmethod, enable = vim.wo.foldenable }
+  vim.wo.foldmethod = "manual"
+  vim.wo.foldenable = true
+  vim.cmd("normal! zE")
+  for _, rg in ipairs(ranges) do
+    vim.cmd(string.format("%d,%dfold", rg[1], rg[2]))
+  end
+end
+local function fold_teardown()
+  vim.cmd("normal! zE")
+  if saved_fold then
+    vim.wo.foldmethod = saved_fold.method
+    vim.wo.foldenable = saved_fold.enable
+  end
+end
 local keymap_tests = {
   {
     name = "normal gcs on current line",
@@ -274,6 +292,56 @@ local keymap_tests = {
       return m[1] == 2 and math.min(s, e) == 2 and math.max(s, e) == 3,
         string.format("mark a=%s visual %d-%d", vim.inspect(m), s, e)
     end,
+  },
+  -- Q47: normal-mode gcs/gcr on a closed fold act on the whole fold; a count counts visible rows
+  {
+    name = "Q47 gcs on a closed fold comments the whole fold",
+    lines = { "void f() {", "  a();", "  b();", "}", "x();" },
+    setup = function()
+      fold_setup({ { 1, 4 } })
+    end,
+    teardown = function()
+      fold_teardown()
+    end,
+    keys = { "gg", "gcs" },
+    exp = { "// void f() {", "//   a();", "//   b();", "// }", "x();" },
+  },
+  {
+    name = "Q47 gcr with the cursor inside a closed fold",
+    lines = { "x();", "// void f() {", "//   a();", "// }", "y();" },
+    setup = function()
+      fold_setup({ { 2, 4 } })
+    end,
+    teardown = function()
+      fold_teardown()
+    end,
+    keys = { "3G", "gcr" },
+    exp = { "x();", "void f() {", "  a();", "}", "y();" },
+  },
+  {
+    name = "Q47 2gcs counts a closed fold as one row",
+    lines = { "x();", "void f() {", "  a();", "}", "y();", "z();" },
+    setup = function()
+      fold_setup({ { 2, 4 } })
+    end,
+    teardown = function()
+      fold_teardown()
+    end,
+    keys = { "gg", "3gcs" },
+    exp = { "// x();", "// void f() {", "//   a();", "// }", "// y();", "z();" },
+  },
+  {
+    name = "Q47 open fold: gcs acts on the cursor row only",
+    lines = { "void f() {", "  a();", "}" },
+    setup = function()
+      fold_setup({ { 1, 3 } })
+      vim.cmd("normal! zR")
+    end,
+    teardown = function()
+      fold_teardown()
+    end,
+    keys = { "gg", "gcs" },
+    exp = { "// void f() {", "  a();", "}" },
   },
   {
     name = "Q45 single undo after gcr deleting delimiter rows",

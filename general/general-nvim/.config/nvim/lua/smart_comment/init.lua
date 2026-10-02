@@ -365,8 +365,21 @@ function M.run(action)
     s, e = vim.fn.line("v"), vim.fn.line(".")
     vim.api.nvim_feedkeys(vim.keycode("<Esc>"), "nx", false)
   else
+    -- like `dd`: a closed fold counts as one row (the whole fold), and the count counts visible rows
+    local last_row = vim.api.nvim_buf_line_count(0)
     s = vim.fn.line(".")
-    e = s + vim.v.count1 - 1
+    if vim.fn.foldclosed(s) ~= -1 then
+      s = vim.fn.foldclosed(s)
+    end
+    local r = s
+    for _ = 1, vim.v.count1 do
+      if r > last_row then
+        break
+      end
+      local fe = vim.fn.foldclosedend(r)
+      e = fe ~= -1 and fe or r
+      r = e + 1
+    end
   end
   if s > e then
     s, e = e, s
