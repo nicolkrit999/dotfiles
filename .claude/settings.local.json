@@ -3,5 +3,6 @@
     "allow": [
       "Bash(cd /home/krit/.claude/skills/perplexity-search && python scripts/perplexity_search.py --check-setup 2>&1)"
     ]
-  }
+  },
+  "skillOverrides": {}
 }
