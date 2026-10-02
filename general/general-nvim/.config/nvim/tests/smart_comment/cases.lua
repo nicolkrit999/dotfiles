@@ -133,7 +133,6 @@ for _, L in ipairs(langs) do
     -- occurring later in the line is just literal text, never a redundant marker to clean up.
     local inner_exp = L.bol_only and (m .. " a " .. m .. " b") or (m .. " a b")
     add(ft, "2 inner redundant marker gcs", B({ m .. " a " .. m .. " b" }), "c", B({ inner_exp }), sel(1))
-    -- gcr removes every marker level (outside multi-line strings; inside them only one: Q69 cases)
     add(ft, "2 double marker gcr", B({ m .. " " .. m .. " a" }), "u", B({ "a" }), sel(1))
     add(ft, "2 no space after marker gcr", B({ m .. "a" }), "u", B({ "a" }), sel(1))
   else
@@ -303,34 +302,8 @@ add("python", "# inside triple-quoted string", { 's = """', "# not", '"""' }, "u
   { s = 2, e = 2 })
 both("python", "f-string", { 'f"{x}#no"' }, { '# f"{x}#no"' }, { 'f"{x}#no"' })
 
---------------------------------------------------------------------------------------------------
--- Q69: rows inside a multi-line string / heredoc keep their own marker through gcs + gcr: gcs adds
--- one marker (`# a` -> `# # a`), gcr removes only that one there, so gcr(gcs(x)) == x. (gcs on the
--- result again cleans `# # a` to `# a`, so those gcs cases are not idempotent: noidem.)
---------------------------------------------------------------------------------------------------
-add("python", "Q69 gcs over a string holding a # row", { 's = """', "# a", '"""', "x = 1" }, "c",
-  { '# s = """', "# # a", '# """', "# x = 1" }, { rt = true, noidem = true })
-add("python", "Q69 gcr keeps the # of a row inside a string", { '# s = """', "# # a", '# """', "# x = 1" }, "u",
-  { 's = """', "# a", '"""', "x = 1" })
-add("python", "Q69 indented string rows", { "def f():", '    s = """', "    # a  # b", '    """' }, "c",
-  { "# def f():", '#     s = """', "#     # a  # b", '#     """' }, { rt = true, noidem = true })
-add("python", "Q69 rows outside the string still lose every marker", { "# # a", '# s = """', "# # b", '# """', "# # c" },
-  "u", { "a", 's = """', "# b", '"""', "c" })
-add("lua", "Q69 gcs over a long string holding a -- row", { "s = [[", "-- a", "]]" }, "c",
-  { "-- s = [[", "-- -- a", "-- ]]" }, { rt = true, noidem = true })
-add("lua", "Q69 gcr keeps the -- of a row inside a long string", { "-- s = [[", "-- -- a", "-- ]]" }, "u",
-  { "s = [[", "-- a", "]]" })
-add("terraform", "Q69 gcs over a heredoc holding a # row", { "x = <<EOF", "# a", "EOF" }, "c",
-  { "# x = <<EOF", "# # a", "# EOF" }, { rt = true, noidem = true })
-add("terraform", "Q69 gcr keeps the # of a heredoc row", { "# x = <<EOF", "# # a", "# EOF" }, "u",
-  { "x = <<EOF", "# a", "EOF" })
-
 -- sh / bash
 for _, ft in ipairs({ "sh", "bash" }) do
-  add(ft, "Q69 gcs over a heredoc holding a # row", { "cat <<EOF", "# a", "EOF" }, "c",
-    { "# cat <<EOF", "# # a", "# EOF" }, { rt = true, noidem = true })
-  add(ft, "Q69 gcr keeps the # of a heredoc row", { "# cat <<EOF", "# # a", "# EOF" }, "u",
-    { "cat <<EOF", "# a", "EOF" })
   both(ft, "$# is not a comment", { "echo $#" }, { "# echo $#" }, { "echo $#" })
   both(ft, "${#a} is not a comment", { "echo ${#a}" }, { "# echo ${#a}" }, { "echo ${#a}" })
   both(ft, "a#b is not a comment", { "echo a#b" }, { "# echo a#b" }, { "echo a#b" })

@@ -3,8 +3,7 @@
 -- gcs: rows with code become comments (one marker per row, aligned at the minimum indent); misplaced
 --      or redundant markers are removed first. Rows that are already comments are left as they are,
 --      apart from dropping redundant inner markers.
--- gcr: every comment marker in the rows is removed, turning them back into code. Exception (Q69):
---      a row inside a multi-line string / heredoc loses only its leading marker, so gcr(gcs(x)) == x.
+-- gcr: every comment marker in the rows is removed, turning them back into code.
 --
 -- Comments are located with tree-sitter when a parser for the buffer is available, otherwise with a
 -- string-aware lexer (lexer.lua, per-language syntax in specs.lua). The rewrite itself is transform.lua.

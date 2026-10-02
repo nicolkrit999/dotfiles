@@ -6,7 +6,6 @@
 --               { k = "comment", c = comment, s, e, open, close, dstart, dend }  (part of a comment on that row)
 --               { k = "stray", s, e }                                           (unmatched block closer in code)
 --   row_spec  row_spec[row] = spec of the language at the row's first non-blank char (embedded regions)
---   in_string in_string[row] = true when the row starts inside a multi-line string / heredoc
 -- Columns are 1-based byte indices, `e` inclusive. `open`/`close` tell whether the opener/closer is on that row.
 --
 -- opts.inner: re-lex a single line of comment text: markers only count when surrounded by whitespace,
@@ -660,7 +659,7 @@ function M.scan(lines, root, opts)
   opts = opts or {}
   local ctx = { inner = opts.inner }
   local specs = opts.inner and nil or require("smart_comment.specs")
-  local res = { comments = {}, pieces = {}, row_spec = {}, in_string = {} }
+  local res = { comments = {}, pieces = {}, row_spec = {} }
   local stack = { { spec = root } }
   local st = { mode = "code" }
   local last = math.min(opts.stop or #lines, #lines)
@@ -815,10 +814,6 @@ function M.scan(lines, root, opts)
     end
     local fnb = line:find("%S") or (#line + 1)
     res.row_spec[r] = stack[#stack].spec
-    -- the row starts inside a multi-line string / heredoc opened on an earlier row
-    if st.mode == "string" or st.mode == "heredoc" then
-      res.in_string[r] = true
-    end
     if st.mode == "block" or st.mode == "line" then
       st.pstart, st.dstart = 1, st.depth
     end
