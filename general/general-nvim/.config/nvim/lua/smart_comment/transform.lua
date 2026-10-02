@@ -31,7 +31,8 @@ end
 
 -- Remove all comment markers and stray closers described by `pcs` from `line`.
 -- `decor` strips the leading ` * ` decoration of block-comment continuation rows.
-local function strip_pieces(line, pcs, depth, decor)
+-- `noclean` keeps the comment text as is (no redundant inner markers removed).
+local function strip_pieces(line, pcs, depth, decor, noclean)
   local out, pos = {}, 1
   for _, p in ipairs(pcs) do
     local code = line:sub(pos, p.s - 1)
@@ -79,7 +80,7 @@ local function strip_pieces(line, pcs, depth, decor)
         end
       end
       table.insert(out, code)
-      table.insert(out, clean_body(body, c.spec, depth))
+      table.insert(out, noclean and body or clean_body(body, c.spec, depth))
       pos = p.e + 1
     end
   end
@@ -281,6 +282,44 @@ function M.run(ctx)
         new[r] = false
       elseif out ~= L[r] then
         new[r] = out
+      end
+    end
+  end
+
+  -- Q69: a row that is inside a multi-line string / heredoc (python """, lua [[ ]], sh/terraform
+  -- heredocs) loses only its leading marker. gcs never touches string content (`# a` there becomes
+  -- `# # a`), so gcr(gcs(x)) == x for those rows. Everywhere else every marker level goes (spec).
+  -- "Inside a string" is decided on the text with one leading marker removed from each row, i.e.
+  -- the code as it was before gcs; only needed when that differs from the full strip somewhere.
+  if mode == "strip" then
+    local one, differs = {}, false
+    for _, r in ipairs(sel) do
+      local p = pieces(r)[1]
+      if p and p.k == "comment" and p.open and p.close and p.s == L[r]:find("%S") then
+        local t = rtrim(strip_pieces(L[r], { p }, 0, false, true))
+        one[r] = t
+        local full = new[r] == nil and L[r] or new[r]
+        if t ~= "" and t ~= full then
+          differs = true
+        end
+      end
+    end
+    if differs then
+      local hyp = {}
+      for i = 1, sel[#sel] do
+        if one[i] then
+          hyp[i] = one[i]
+        elseif new[i] ~= nil then
+          hyp[i] = new[i] or ""
+        else
+          hyp[i] = L[i]
+        end
+      end
+      local scan = lexer.scan(hyp, ctx.root, { stop = sel[#sel] })
+      for r, t in pairs(one) do
+        if scan.in_string[r] and t ~= "" then
+          new[r] = t ~= L[r] and t or nil
+        end
       end
     end
   end
