@@ -321,14 +321,6 @@ for _, m in ipairs({ { "<A-j>", 1, "down" }, { "<A-k>", -1, "up" } }) do
   end, { silent = true, desc = "move selection " .. word })
 end
 
-
-
--- Replace visual selection with text in register, but not contaminate the register: builtin `P`
--- keeps the register, honours "a and keeps the line intact when the selection starts at col 0.
--- NOT dead: yanky.nvim (which remaps x p) only loads on :YankyRingHistory, so this is the effective
--- visual p in every session until then.
-keymap.set("x", "p", "P", { desc = "paste over selection (keep register)" })
-
 -- Go to a certain buffer
 keymap.set("n", "gb", '<cmd>call buf_utils#GoToBuffer(v:count, "forward")<cr>', { desc = "go to next buffer ({N}gb: buffer N)" })
 keymap.set("n", "gB", '<cmd>call buf_utils#GoToBuffer(v:count, "backward")<cr>', { desc = "go to previous buffer (no count; use {N}gb)" })

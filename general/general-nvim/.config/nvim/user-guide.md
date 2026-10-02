@@ -276,13 +276,13 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 | --- | --- | --- |
 | `p` | n | Paste after the cursor |
 | `P` | n | Paste before the cursor |
-| `p` | x | Replace the selection with the register. Until yanky.nvim has loaded (see below) the register is NOT overwritten, so the next `p` pastes the same text again. After `:YankyRingHistory` was run once, visual `p` is yanky's paste and the replaced text goes into the register |
+| `p` | x | Replace the selection with the register (yanky's paste: the replaced text goes into the register, so a second `p` pastes what was replaced; use `"_` or `<Space>`-free tricks like `"0p` to paste the last yank again) |
 | `<Space>p` | n | Paste on a new line below (custom) |
 | `<Space>P` | n | Paste on a new line above (custom) |
-| `[y` | n | After pasting, cycle to previous yank history entry (only once yanky.nvim is loaded, see below) |
-| `]y` | n | After pasting, cycle to next yank history entry (only once yanky.nvim is loaded) |
+| `[y` | n | After pasting, cycle to previous yank history entry (needs a paste first) |
+| `]y` | n | After pasting, cycle to next yank history entry (needs a paste first) |
 
-yanky.nvim loads the first time you run `:YankyRingHistory` in a session. From then on `p`/`P` (Normal and Visual) are yanky's paste with a 300 ms highlight of the pasted text, and `[y`/`]y` exist. Before that, `p`/`P` are Vim's own paste (and visual `p` keeps the register, see above). <!-- CHECK-USER: yanky (p/P highlight, [y/]y) only works after :YankyRingHistory was run once; intended, or should yanky load on p/P? Once loaded, visual `p` also stops keeping the register (yanky's map replaces the keep-register map); intended? -->
+yanky.nvim loads on the first `p` or `P` (Normal or Visual) of the session, or on `:YankyRingHistory`; the key you pressed is replayed, so the first paste already works. `p`/`P` are then yanky's paste with a 300 ms highlight of the pasted text, and `[y`/`]y` exist (after a paste). The yank history starts when yanky loads: text yanked before the first `p`/`P` is not in the history (it is still in the register and pastes normally).
 
 ## Changing (Delete + Enter Insert)
 
@@ -1640,7 +1640,7 @@ Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, et
 | `[y` | n | After pasting, cycle to previous yank entry |
 | `]y` | n | After pasting, cycle to next yank entry |
 
-Command: `:YankyRingHistory` to browse all yank history. yanky.nvim is loaded by that command: the three rows above only work after `:YankyRingHistory` was run once in the session. Before that `p`/`P` are Vim's own paste, and in Visual mode `p` replaces the selection without overwriting the register. Once yanky has loaded, Visual `p` is yanky's and DOES overwrite the unnamed register with the replaced text.
+Command: `:YankyRingHistory` to browse all yank history. yanky.nvim loads on the first `p`/`P` (Normal or Visual) or on that command; the yank history only contains yanks made after it loaded. In Visual mode `p` is yanky's: it overwrites the unnamed register with the replaced text (there is no separate keep-register map any more).
 
 ---
 
