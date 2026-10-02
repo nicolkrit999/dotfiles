@@ -89,6 +89,236 @@ Most-used keybinds at a glance. Every keymap here is explained in detail later.
 | `<Space>sv` | Restart Neovim (writes all files first) |
 | `n` / `N` | Next / previous search match (count works; the match is centred and folds opened) |
 
+## Day-to-Day Cheat Sheet
+
+The things you do all day, in one place. Details are in the sections named at the end of each table.
+
+### Navigation
+
+| Keys | What it does |
+| --- | --- |
+| `h` `j` `k` `l`, `w` `b`, `H` `L`, `gg` `G` | Move by character, word, line start / end, file start / end |
+| `f` + two characters | Hop to any matching spot on screen (then press the label letter) |
+| `%` | Jump to the matching bracket |
+| `<Ctrl-o>` / `<Ctrl-i>` | Back / forward through your jump history (after `gd`, searches, `gg` ...) |
+| `ma`, then `` `a `` | Set mark `a`, jump back to it later |
+| `gd` | Go to definition (use `<Ctrl-o>` to come back) |
+| `<Space>ff` / `<Space>fg` / `<Space>fr` | Find a file / search text in the project / recent files |
+| `<Space>s` | File tree (follows `:cd`, `:Z`, `:z`) |
+| `gb` / `gB`, `<Space>bp` | Next / previous buffer, pick a buffer by letter |
+| `<Space>t` | Symbol outline of the file |
+| `:Z <word>` | Change the working folder with zoxide |
+
+More: sections 3, 7, 11, 12, 22.
+
+### Copy, delete and move
+
+| Keys | What it does |
+| --- | --- |
+| `yy` then `p` | Copy a line, paste it below |
+| `dd` then `p` | Cut a line, paste it below |
+| `diw` / `ciw` / `yiw` | Delete / change / copy the word under the cursor (`c` does not overwrite your paste register) |
+| `5dd` / `5yy` | Delete / copy 5 lines |
+| `<Alt-j>` / `<Alt-k>` | Move the line (or selection) down / up |
+| `<Space>y` | Copy the whole buffer |
+| `<Space>p` / `<Space>P` | Paste on a new line below / above |
+| `p` in Visual mode | Replace the selection with what you copied |
+| `[y` / `]y` | After a paste, step back / forward through the yank history |
+| `:Rename <name>` / `:Move <path>` / `:Duplicate <name>` / `:Delete` | Rename, move, copy or delete the current FILE |
+| tree: `a` `d` `r` `c` `x` `p` | Create, delete, rename, copy, cut, paste files in the file tree |
+
+More: sections 4, 11, 24, 57.
+
+### Indented blocks
+
+| Keys | What it does |
+| --- | --- |
+| `dii` / `yii` / `cii` / `vii` | Delete / copy / change / select the code block at the cursor's indent level |
+| `dai` / `yai` / `cai` / `vai` | Same, including the lines that open and close the block |
+| `[i` / `]i` | Jump to the top / bottom of the block |
+
+More: section 5 ("ii / ai").
+
+### Macros
+
+| Keys | What it does |
+| --- | --- |
+| `Qa` | Start recording into register `a` (`qa` works too) |
+| `q` | Stop recording |
+| `@a` / `5@a` / `@@` | Play it once / 5 times / repeat the last one |
+| `:%normal @a` | Play it on every line of the file |
+
+More: sections 29 and 60.
+
+### Bulk rename and replace
+
+| Goal | What to do |
+| --- | --- |
+| Rename a code symbol everywhere in the project | `<Space>rn`, type the new name, `<Enter>` (LSP) |
+| Replace text in the current file | `:%s/old/new/g` (add `c` to confirm each one) |
+| Replace text in every file of the project | `:grep "old"` then `:cfdo %s/old/new/g \| update` |
+| Replace one by one, deciding each time | `*`, `ciw` + new word + `<Esc>`, then `n` to skip or `.` to replace |
+| Rename or move one file | `:Rename <name>` / `:Move <path>`, or `r` in the file tree |
+| Undo a multi-file replace | See section 67 |
+
+There is no mass file-renaming tool installed (a file is renamed one at a time). More: sections 10 and 67.
+
+### Undo, redo and repeat
+
+| Keys | What it does |
+| --- | --- |
+| `u` / `<Ctrl-r>` | Undo / redo |
+| `<Space>u` | Show the undo tree in a left panel |
+| `.` | Repeat the last change (e.g. `ciw` + word, then `n` and `.` on the next match) |
+| `[y` / `]y` | After a paste, step through earlier / later yanks |
+
+More: sections 24, 25, 61.
+
+### Visual block (many lines at once)
+
+| Keys | What it does |
+| --- | --- |
+| `<Ctrl-v>` then `j` / `k` | Select a rectangle of text |
+| `I` then text then `<Esc>` | Insert the text at the start of every selected line |
+| `A` then text then `<Esc>` | Append the text at the end of every selected line |
+| `d` / `c` | Delete / change the selected block |
+| `g<Ctrl-a>` | Count up 1, 2, 3 ... down the selected numbers |
+| `<Alt-j>` / `<Alt-k>` | Move the selected lines down / up |
+
+More: section 62.
+
+### Comments and surrounding pairs
+
+| Keys | What it does |
+| --- | --- |
+| `gcc` / `gc` + motion / `gc` in Visual | Toggle a comment on a line / a motion / the selection (`gcip` = paragraph) |
+| `gcss` / `gcs` + motion, `gcr` + motion | Comment / uncomment exactly the rows given (`gcsip`, `gcr200j`) |
+| `gcu` | Uncomment the adjacent commented lines |
+| `saiw"` | Surround the word with `"` |
+| `sd"` | Delete the surrounding `"` |
+| `sr"'` | Change the surrounding `"` into `'` |
+
+More: sections 16 and 17.
+
+### Search in a file
+
+| Keys | What it does |
+| --- | --- |
+| `/text` then `<Enter>`, `n` / `N` | Search forward, next / previous match |
+| `*` / `#` | Search the word under the cursor forward / backward |
+| `;noh<Enter>` | Clear the search highlight |
+| `:%s/old/new/gc` | Replace with a question for each match |
+
+More: sections 10 and 23.
+
+### Buffers, splits, tabs
+
+| Keys | What it does |
+| --- | --- |
+| `gb` / `gB`, `<Space>bp` | Next / previous buffer, pick one by letter |
+| `\d` / `\D` | Close this buffer / close all other buffers |
+| `<Space>-` / `<Space>\|` | Split below / to the right (same file) |
+| `<Ctrl-w>h` `j` `k` `l` | Move between windows |
+| `<Ctrl-w>=` / `<Ctrl-w>o` | Make windows equal / keep only this window |
+| `gt` / `gT`, `\t` / `\T` | Next / previous tab, close this tab / the other tabs |
+
+More: section 7.
+
+### Save and quit
+
+| Keys | What it does |
+| --- | --- |
+| `<Space>w` | Save (only writes if changed) |
+| `<Space>q` | Save and close this window |
+| `<Space>Q` | Quit nvim, asks first (default No), discards unsaved work |
+| `:wa` / `:q!` | Save all buffers / close this window and discard changes |
+
+More: section 72.
+
+### Sessions, dashboard and zoxide
+
+| Keys | What it does |
+| --- | --- |
+| `\h` / `\H` | Open the dashboard / return to the previous buffer |
+| `r` / `L` on the dashboard | Restore the session of this folder / of the last folder |
+| `:Z <word>` / `:z <word>` | Jump to the best zoxide match (the file tree follows) |
+| `:Obsession`, `nvim -S Session.vim` | Keep a `Session.vim` up to date, restore it later |
+| `<Space>sv` | Restart nvim (writes all files first) |
+
+More: sections 30 and 58.
+
+### Code intelligence (LSP)
+
+| Keys | What it does |
+| --- | --- |
+| `gd` / `K` | Go to definition / hover documentation |
+| `<Space>gd` / `<Space>gr` / `<Space>gi` | Peek definitions / references / implementations |
+| `<Space>rn` / `<Space>ca` | Rename symbol / code actions |
+| `<Space>fm` | Format the file |
+| `]d` / `[d` | Next / previous diagnostic |
+| `<Space>dd` | Show the diagnostic under the cursor |
+
+More: sections 13 and 44.
+
+### Git day to day
+
+| Keys | What it does |
+| --- | --- |
+| `<Space>gs` | Git status |
+| `<Space>gw` / `<Space>gc` | Add the current file / commit |
+| `<Space>gpl` / `<Space>gpu` | Pull / push |
+| `]c` / `[c` | Next / previous changed hunk |
+| `<Space>hp` / `<Space>hb` | Preview the hunk / blame the line |
+| `<Space>gl` | Copy a permalink for the line |
+
+More: sections 20 and 48.
+
+### Run code and terminal
+
+| Keys | What it does |
+| --- | --- |
+| `<Space>rr` | Run the current file in a terminal on the left |
+| `<F9>` | Run or compile the file (Python, C++, Lua, Vim script, LaTeX) |
+| `:term` | Open a terminal in this window |
+| `<Esc>` / `i` | Leave terminal mode / go back into it |
+
+More: sections 8 and 19.
+
+### Folding
+
+| Keys | What it does |
+| --- | --- |
+| `za` | Toggle the fold under the cursor |
+| `zR` / `zM` | Open / close all folds |
+| `zr` / `zm` | Open / close one more fold level |
+| `<Space>K` | Preview the folded lines |
+
+More: section 18.
+
+### Text tricks
+
+| Keys | What it does |
+| --- | --- |
+| `gUiw` / `guiw` | Uppercase / lowercase the word |
+| `<Ctrl-a>` / `<Ctrl-x>` | Add 1 to / subtract 1 from the number under the cursor (`10<Ctrl-a>` adds 10) |
+| `:%!sort` | Sort the whole buffer |
+| `:Tabularize /=` | Align the `=` signs |
+| `:g/pattern/d` | Delete every line that matches |
+| `:g/pattern/normal @a` | Run macro `a` on every matching line |
+| `:!cmd` / `:read !cmd` | Run a shell command / insert its output |
+
+More: sections 66, 68 and 71.
+
+### Claude and fuzzy finders
+
+| Keys | What it does |
+| --- | --- |
+| `<Space>cc` | Toggle the Claude Code window |
+| `<Space>ff` / `<Space>fg` | Find a file / search text in the project |
+| `<Space>fb` / `<Space>fr` / `<Space>fh` | Open buffers / recent files / help tags |
+
+More: sections 9 and 12.
+
 ---
 
 # 3. Core Navigation (Moving Without the Mouse)
@@ -872,7 +1102,7 @@ This section explains how to open, navigate, resize, and close split windows ent
 | `gb` | Go to the **next** buffer; `{N}gb` (e.g. `3gb`) goes to buffer number N (an invalid number warns "Invalid bufnr") |
 | `gB` | Go to the **previous** buffer. Do not give it a count: `{N}gB` does nothing (an invalid number warns "Invalid bufnr"); use `{N}gb` to jump to buffer N |
 | `<Space>bp` | **Pick** a buffer: each open buffer shows a letter, press it to switch |
-| `\d` | Close/delete the current buffer (window stays open, shows previous buffer). On the last buffer an empty buffer is left. A named file with changes is saved first by auto-save (BufLeave); a buffer auto-save does not save (unnamed, read-only, Typst/LaTeX) is not deleted: you land in the previous buffer and the unsaved one stays loaded. <!-- CHECK-USER: \d on an unsaved unnamed buffer: with 'confirm' on, do you get a Save changes? dialog or an E89 message? (headless shows neither) --> |
+| `\d` | Close/delete the current buffer (window stays open, shows previous buffer). On the last buffer an empty buffer is left. A named file with changes is saved first by auto-save (BufLeave); a buffer auto-save does not save (unnamed, read-only, Typst/LaTeX) is not deleted: you land in the previous buffer and the unsaved one stays loaded. On the only, unnamed buffer with typed text, Vim's confirm dialog "Save changes?" appears (the unsaved buffer is shown for a moment while it asks); your answer decides whether it is closed (tested in a real terminal). |
 | `\D` | Close all other buffers, but **keep** buffers with unsaved changes and terminals that are still running (one message "kept N buffer(s) (unsaved or running terminal)") |
 | `:ls` or `:buffers` | List all open buffers |
 | `:b <name>` | Switch to a buffer by (partial) name |
@@ -910,7 +1140,7 @@ Some plugins open floating windows (diagnostics, hover docs, etc.):
 | `:vs \| term` | Open terminal in a vertical split to the right |
 | `<Space>rr` | Run code (opens a terminal in a vertical split on the **left** of the code window) |
 
-The terminal automatically starts in insert mode (you can type immediately) and hides line numbers. <!-- CHECK-USER: confirm :term and <Space>rr start in insert mode (not observable headless) -->
+The terminal automatically starts in insert mode (you can type immediately) and hides line numbers. (tested in a real terminal: both start in insert mode).
 
 ## Navigating In and Out of Terminal
 
@@ -929,7 +1159,7 @@ The terminal automatically starts in insert mode (you can type immediately) and 
 | --- | --- |
 | `<Space>q` | While the terminal window is focused (press `<Esc>` first), close the window. A program that is still running keeps running in a hidden buffer (`\D` keeps such buffers) |
 | Type `exit` | In an interactive shell terminal (`:term`), `exit` ends the shell and the window closes. A `<Space>rr` run does NOT close its window when the program ends: the output stays (tested, no exit-code line is shown) until you close it with `<Space>q` |
-| `\d` | Delete the terminal buffer <!-- CHECK-USER: does \d on a terminal whose program is still running ask "Close ...?" first? (headless deleted it silently; with 'confirm' on a real UI may ask first) --> |
+| `\d` | Delete the terminal buffer If the program is still running, Vim asks `Close "term://..."? [Y]es, (N)o, (C)ancel` first (tested in a real terminal). |
 
 ---
 
@@ -3595,7 +3825,7 @@ Two insert-mode abbreviations fix typos: `reqire` -> `require`, `serveral` -> `s
 | --- | --- | --- |
 | Typing random commands instead of text | You're in Normal mode | Press `i` to enter Insert mode first |
 | Text won't stop appearing | You're in Insert mode | Press `<Esc>` to go back to Normal |
-| Screen looks weird / frozen | You pressed `<Ctrl-s>` (terminal freeze) | Press `<Ctrl-q>` to unfreeze <!-- CHECK-USER: does Ctrl-s still freeze the screen in your terminal/tmux while nvim runs? In Insert/Select mode Ctrl-s is LSP signature help --> |
+| Screen looks weird / frozen | You pressed `<Ctrl-s>` (terminal freeze) | Press `<Ctrl-q>` to unfreeze. (In kitty + tmux with this config `<Ctrl-s>` did not freeze the screen: tested. In Insert/Select mode `<Ctrl-s>` is LSP signature help.) |
 | Can't exit Neovim | | Type `<Space>Q` and answer `y` to the confirmation, or `;qa!<Enter>` (no confirmation) |
 | Pasted text looks wrong | Paste from outside with `<Ctrl-v>` in terminal mode | Use `"+p` in Normal mode, or the terminal paste key |
 | Search highlight won't go away | Yellow boxes left over from a search or `*` | Type `;noh<Enter>` (tested). `<Esc>` does **not** clear it in this config |
