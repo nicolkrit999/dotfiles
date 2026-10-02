@@ -252,11 +252,54 @@ local servers = {
 
   -- LaTeX (texlab comes from the LaTeX devShell; enabled only when executable)
   texlab = { cmd = { "texlab" } },
+
+  -- Rust (rust-analyzer: rust devShell). nvim-lspconfig's root_dir also needs `cargo` (silent
+  -- without it)
+  rust_analyzer = { cmd = { "rust-analyzer" } },
+
+  -- Go (gopls + go: go devShell); binaries checked in `needs` below
+  gopls = {
+    cmd = { "gopls" },
+    -- nvim-lspconfig's list also has gotmpl: no filetype detection sets it (:checkhealth vim.lsp
+    -- warns "Unknown filetype 'gotmpl'")
+    filetypes = { "go", "gomod", "gowork" },
+  },
+
+  -- Haskell (haskell-language-server: haskell devShell; nixpkgs ships only the -wrapper binary
+  -- (+ haskell-language-server-<ghc version>), no plain haskell-language-server)
+  hls = { cmd = { "haskell-language-server-wrapper", "--lsp" } },
+
+  -- Swift (sourcekit-lsp: swift devShell, or Xcode on macOS). nvim-lspconfig also lists c/cpp:
+  -- dropped, clangd serves those (no second client next to clangd)
+  sourcekit = { cmd = { "sourcekit-lsp" }, filetypes = { "swift", "objc", "objcpp" } },
+
+  -- JavaScript/TypeScript (typescript-language-server: node devShell). No cmd here: nvim-lspconfig's
+  -- cmd is a function that prefers the project's node_modules/.bin copy; binary checked in `needs`
+  ts_ls = {},
 }
+
+-- binaries a server needs, when that is not just cmd[1]
+local needs = {
+  -- nvim-lspconfig's gopls root_dir runs `go env` (it would fail without `go`)
+  gopls = { "gopls", "go" },
+  ts_ls = { "typescript-language-server" },
+}
+
+--- first binary the server needs that is not on PATH (nil: all present, or nothing known to check)
+---@param name string
+---@return string?
+local function missing_binary(name)
+  local config = vim.lsp.config[name]
+  local cmd = config and config.cmd
+  local bins = needs[name] or (type(cmd) == "table" and { cmd[1] }) or {}
+  return vim.iter(bins):find(function(bin)
+    return not utils.executable(bin)
+  end)
+end
 
 for name, config in pairs(servers) do
   vim.lsp.config(name, config)
-  if utils.executable(config.cmd[1]) then
+  if not missing_binary(name) then
     vim.lsp.enable(name)
   end
 end
@@ -322,13 +365,13 @@ vim.api.nvim_create_user_command("LspStart", function(opts)
   local ft = vim.bo[bufnr].filetype
   for _, name in ipairs(opts.fargs) do
     local config = not name:find("*", 1, true) and vim.lsp.config[name] or nil
-    local cmd = config and config.cmd
+    local missing = config and missing_binary(name)
     if not config then
       vim.notify(("LspStart: no config named '%s'"):format(name), vim.log.levels.WARN)
     elseif config.filetypes and not vim.list_contains(config.filetypes, ft) then
       vim.notify(("LspStart: %s does not handle filetype '%s'"):format(name, ft), vim.log.levels.WARN)
-    elseif type(cmd) == "table" and not utils.executable(cmd[1]) then
-      vim.notify(("LspStart: %s: %s not found on PATH"):format(name, cmd[1]), vim.log.levels.WARN)
+    elseif missing then
+      vim.notify(("LspStart: %s: %s not found on PATH"):format(name, missing), vim.log.levels.WARN)
     else
       config = vim.deepcopy(config)
       local function start(root)
