@@ -28,8 +28,11 @@ diagnostic.config {
 
 -- set quickfix list from diagnostics in a certain buffer, not the whole workspace
 local set_qflist = function(buf_num, severity)
-  local diagnostics = nil
-  diagnostics = diagnostic.get(buf_num, { severity = severity })
+  local diagnostics = diagnostic.get(buf_num, { severity = severity })
+  if #diagnostics == 0 then
+    vim.notify("No diagnostics in this buffer", vim.log.levels.INFO)
+    return
+  end
 
   local qf_items = diagnostic.toqflist(diagnostics)
   vim.fn.setqflist({}, " ", { title = "Diagnostics", items = qf_items })
