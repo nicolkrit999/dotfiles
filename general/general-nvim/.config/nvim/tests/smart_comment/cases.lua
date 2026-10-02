@@ -444,6 +444,8 @@ add("ps1", "double-quote backtick escape", { 'Write-Host "a `" b" # c' }, "u", {
 add("perl", "delimited q() not a comment", { "my $s = q(# no);" }, "u", { "my $s = q(# no);" })
 add("perl", "regex m// not a comment", { "if ($x =~ m/#/) { }" }, "u", { "if ($x =~ m/#/) { }" })
 add("perl", "substitution s/// not a comment", { "$x =~ s/#/x/;" }, "u", { "$x =~ s/#/x/;" })
+both("perl", "last index $#a is not a comment", { "my $n = $#a + $#{$r} + $#$r; # c" },
+  { "# my $n = $#a + $#{$r} + $#$r; c" }, { "my $n = $#a + $#{$r} + $#$r; c" })
 
 add("zig", "doc comment markers", { "/// doc", "//! module doc" }, "u", { "doc", "module doc" })
 

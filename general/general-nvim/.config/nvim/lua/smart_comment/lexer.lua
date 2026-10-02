@@ -326,6 +326,16 @@ specials.perl_quotelike = {
   end,
 }
 
+-- Perl last-index `$#array`, `$#{$ref}`, `$#$ref`: the `#` is not a comment.
+specials.perl_lastidx = {
+  trig = "$",
+  match = function(line, j)
+    if line:find("^%$#[%a_{$:]", j) then
+      return { len = 2, k = "skip" }
+    end
+  end,
+}
+
 -- CMake bracket comment `#[[ ... ]]` / `#[==[ ... ]==]` and bracket argument `[[ ... ]]` (a string).
 -- An escaped `\#[[` is not a comment.
 specials.cmake_bracket = {

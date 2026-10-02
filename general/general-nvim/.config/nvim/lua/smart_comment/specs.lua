@@ -328,7 +328,7 @@ specs.perl = {
   backend = "lexer",
   line = { "#" },
   strings = { { '"', '"', esc = "\\", ml = true }, { "'", "'", ml = true }, { "`", "`", esc = "\\", ml = true } },
-  specials = { "perl_quotelike" },
+  specials = { "perl_quotelike", "perl_lastidx" },
   shebang = true,
 }
 
