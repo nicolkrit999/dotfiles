@@ -4,7 +4,7 @@ local plugin_dir = vim.fs.joinpath(vim.fn.stdpath("data"), "lazy")
 local lazypath = vim.fs.joinpath(plugin_dir, "lazy.nvim")
 
 if not vim.uv.fs_stat(lazypath) then
-  vim.fn.system {
+  local out = vim.fn.system {
     "git",
     "clone",
     "--filter=blob:none",
@@ -12,6 +12,11 @@ if not vim.uv.fs_stat(lazypath) then
     "--branch=stable", -- latest stable release
     lazypath,
   }
+  if vim.v.shell_error ~= 0 then
+    -- one error with git's output, then stop loading the plugin specs (nothing below works without lazy)
+    vim.api.nvim_echo({ { "Failed to clone lazy.nvim:\n" .. out, "ErrorMsg" } }, true, { err = true })
+    return
+  end
 end
 vim.opt.rtp:prepend(lazypath)
 
@@ -117,7 +122,7 @@ local plugin_specs = {
       vim.keymap.set({ "n", "x" }, "gs", "<Plug>(swap-interactive)", { desc = "Swap items interactively (vim-swap)" })
     end,
   },
-{
+  {
     "nvim-treesitter/nvim-treesitter",
     branch = "main",
     build = function()
@@ -160,7 +165,7 @@ local plugin_specs = {
     end,
     event = "VeryLazy",
   },
-{
+  {
     "MeanderingProgrammer/render-markdown.nvim",
     main = "render-markdown",
     ft = { "markdown" },
@@ -172,7 +177,7 @@ local plugin_specs = {
       -- 2. Strict Mode Limits.
       -- Ensures it ONLY renders in Normal ('n') and Command ('c') mode.
       -- When you enter Insert ('i') mode to type, rendering pauses completely.
-      render_modes = { 'n', 'c' },
+      render_modes = { "n", "c" },
 
       -- 3. Limit processing on huge files.
       -- Stops trying to render if a markdown file is over 1.5MB.
@@ -338,9 +343,6 @@ local plugin_specs = {
     init = function()
       vim.g.netrw_nogx = 1 -- disable netrw gx
     end,
-    enabled = function()
-      return vim.g.is_win or vim.g.is_mac or vim.g.is_linux
-    end,
     config = true,      -- default settings
     submodules = false, -- not needed, submodules are required only for tests
   },
@@ -377,7 +379,7 @@ local plugin_specs = {
         let g:UltiSnipsJumpForwardTrigger='<c-j>'
         let g:UltiSnipsJumpBackwardTrigger='<c-k>'
 
-        " Configuration for custom snippets directory, see
+        " Configuration for custom snippets directory
         let g:UltiSnipsSnippetDirectories=['UltiSnips', 'my_snippets']
       ]])
     end,
@@ -526,12 +528,9 @@ local plugin_specs = {
   -- Vim tabular plugin for manipulate tabular, required by markdown plugins
   { "godlygeek/tabular",                ft = { "markdown" } },
 
-  -- Markdown previewing (only for Mac and Windows)
+  -- Markdown previewing in the browser
   {
     "iamcco/markdown-preview.nvim",
-    enabled = function()
-      return vim.g.is_win or vim.g.is_mac or vim.g.is_linux
-    end,
     build = "cd app && npm install && git restore .",
     ft = { "markdown" },
     init = function()
@@ -1081,11 +1080,6 @@ local plugin_specs = {
           -- to avoid re-triggering the watcher process on every auto-save event.
           local ft = vim.api.nvim_get_option_value("filetype", { buf = buf })
           if ft == "typst" or ft == "tex" then
-            return false
-          end
-
-          -- If the LSP lock is active, ABORT the auto-save
-          if vim.b[buf].is_formatting then
             return false
           end
 
