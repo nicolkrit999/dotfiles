@@ -231,6 +231,7 @@ More: sections 10 and 23.
 | Keys | What it does |
 | --- | --- |
 | `gb` / `gB`, `<Space>bp` | Next / previous buffer, pick one by letter |
+| `<Ctrl-^>` (in Neovide also `<Ctrl-6>`) | Jump to the previous buffer and back again, like Alt-Tab for files |
 | `\d` / `\D` | Close this buffer / close all other buffers |
 | `<Space>-` / `<Space>\|` | Split below / to the right (same file) |
 | `<Ctrl-w>h` `j` `k` `l` | Move between windows |
@@ -1185,6 +1186,7 @@ The top line shows one tab per open buffer (bufferline). Click a tab to switch t
 | `<Space>bp` | **Pick** a buffer: each open buffer shows a letter, press it to switch |
 | `\d` | Close/delete the current buffer (window stays open, shows previous buffer). On the last buffer an empty buffer is left. A named file with changes is saved first by auto-save (BufLeave); a buffer auto-save does not save (unnamed, read-only, Typst/LaTeX) is not deleted: you land in the previous buffer and the unsaved one stays loaded. On the only, unnamed buffer with typed text, Vim's confirm dialog "Save changes?" appears (the unsaved buffer is shown for a moment while it asks); your answer decides whether it is closed (tested in a real terminal). |
 | `\D` | Close all other buffers, but **keep** buffers with unsaved changes and terminals that are still running (one message "kept N buffer(s) (unsaved or running terminal)") |
+| `<Ctrl-^>` | Switch to the **alternate buffer**: the buffer you were in before this one. Press it again to come back, so you can flip between two files. It is the same as `:b#` or `:e #`. On a US keyboard `^` is Shift-6, so the keys are Ctrl-Shift-6; many terminals cannot send that, which is why Neovide gets the plain `<Ctrl-6>` as well (see section 77) |
 | `:ls` or `:buffers` | List all open buffers |
 | `:b <name>` | Switch to a buffer by (partial) name |
 | `:b 3` | Switch to buffer number 3 |
