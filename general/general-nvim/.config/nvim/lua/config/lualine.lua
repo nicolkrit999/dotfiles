@@ -1,77 +1,96 @@
 local fn = vim.fn
 local utils = require("utils")
 
--- cache for git states
-local git_status_cache = {
-  fetch_success = false,
-  behind_count = 0,
-  ahead_count = 0,
-}
+--- git repo root of the current buffer (unnamed / special buffers: of the cwd), nil outside a repo
+local function buf_repo_root()
+  return vim.fs.root(0, ".git")
+end
 
-local on_exit_fetch = function(result)
-  if result.code == 0 then
-    git_status_cache.fetch_success = true
+-- ahead/behind state for ONE repo (the current buffer's); reset when the repo changes
+local FETCH_INTERVAL_MS = 60 * 1000 -- at most one `git fetch origin` per repo per minute
+local COUNT_INTERVAL_MS = 5 * 1000 -- local ahead/behind recount (cheap, no network)
+local git_state = { root = nil, ahead = 0, behind = 0, running = false }
+local last_fetch = {} -- root -> vim.uv.now() of the last fetch start
+local last_count = {} -- root -> vim.uv.now() of the last recount start
+
+--- vim.system that never throws and never prompts; on_exit always runs (code -1 on spawn failure)
+local function git_async(root, args, on_exit)
+  local cmd = vim.list_extend({ "git" }, args)
+  local ok = pcall(vim.system, cmd, {
+    cwd = root,
+    text = true,
+    timeout = 30000,
+    env = { GIT_TERMINAL_PROMPT = "0" },
+  }, on_exit)
+  if not ok then
+    on_exit { code = -1, stdout = "", stderr = "" }
   end
 end
 
-local function handle_numeric_result(cache_key)
-  return function(result)
-    if result.code == 0 then
-      git_status_cache[cache_key] = tonumber(result.stdout:match("(%d+)")) or 0
-    else
-      -- git rev-list fails e.g. when the current branch has no upstream;
-      -- reset the count so the previous branch's numbers do not linger
-      git_status_cache[cache_key] = 0
-    end
-  end
-end
-
-local async_cmd = function(cmd_str, on_exit)
-  local cmd = vim.tbl_filter(function(element)
-    return element ~= ""
-  end, vim.split(cmd_str, " "))
-
-  vim.system(cmd, { text = true }, on_exit)
-end
-
-local async_git_status_update = function()
-  -- Fetch the latest changes from the remote repository (replace 'origin' if needed)
-  async_cmd("git fetch origin", on_exit_fetch)
-  if not git_status_cache.fetch_success then
+local function update_ahead_behind(root)
+  local now = vim.uv.now()
+  local want_fetch = not last_fetch[root] or now - last_fetch[root] >= FETCH_INTERVAL_MS
+  local want_count = want_fetch or not last_count[root] or now - last_count[root] >= COUNT_INTERVAL_MS
+  if git_state.running or not want_count then
     return
   end
+  git_state.running = true
+  last_count[root] = now
+  if want_fetch then
+    last_fetch[root] = now
+  end
 
-  -- Get the number of commits behind
-  -- the @{upstream} notation is inspired by post: https://www.reddit.com/r/neovim/comments/t48x5i/git_branch_aheadbehind_info_status_line_component/
-  -- note that here we should use double dots instead of triple dots
-  local behind_cmd_str = "git rev-list --count HEAD..@{upstream}"
-  async_cmd(behind_cmd_str, handle_numeric_result("behind_count"))
+  local function count()
+    -- the @{upstream} notation is inspired by post: https://www.reddit.com/r/neovim/comments/t48x5i/git_branch_aheadbehind_info_status_line_component/
+    -- --left-right with three dots: "<only in upstream>\t<only in HEAD>" = behind, ahead
+    git_async(root, { "rev-list", "--left-right", "--count", "@{upstream}...HEAD" }, function(r)
+      git_state.running = false
+      if git_state.root ~= root then
+        return -- the buffer switched to another repo meanwhile
+      end
+      local behind, ahead = (r.stdout or ""):match("(%d+)%s+(%d+)")
+      -- fails e.g. when the branch has no upstream: show nothing instead of old numbers
+      git_state.behind = r.code == 0 and tonumber(behind) or 0
+      git_state.ahead = r.code == 0 and tonumber(ahead) or 0
+    end)
+  end
 
-  -- Get the number of commits ahead
-  local ahead_cmd_str = "git rev-list --count @{upstream}..HEAD"
-  async_cmd(ahead_cmd_str, handle_numeric_result("ahead_count"))
+  if not want_fetch then
+    return count()
+  end
+  -- fetch only from an existing `origin` remote; otherwise just count against the local refs
+  git_async(root, { "remote" }, function(r)
+    local has_origin = r.code == 0 and vim.list_contains(vim.split(r.stdout or "", "\n", { trimempty = true }), "origin")
+    if not has_origin then
+      return count()
+    end
+    git_async(root, { "fetch", "--quiet", "origin" }, function()
+      count()
+    end)
+  end)
 end
 
 local function get_git_ahead_behind_info()
-  async_git_status_update()
-
-  local status = git_status_cache
-  if not status then
+  if fn.executable("git") == 0 then
     return ""
   end
+  local root = buf_repo_root()
+  if root ~= git_state.root then
+    -- another repo (or none): forget the previous repo's numbers
+    git_state.root, git_state.ahead, git_state.behind = root, 0, 0
+  end
+  if not root then
+    return ""
+  end
+  update_ahead_behind(root)
 
   local msg = ""
-
-  if type(status.ahead_count) == "number" and status.ahead_count > 0 then
-    local ahead_str = string.format("↑[%d] ", status.ahead_count)
-    msg = msg .. ahead_str
+  if git_state.ahead > 0 then
+    msg = msg .. string.format("↑[%d] ", git_state.ahead)
   end
-
-  if type(status.behind_count) == "number" and status.behind_count > 0 then
-    local behind_str = string.format("↓[%d] ", status.behind_count)
-    msg = msg .. behind_str
+  if git_state.behind > 0 then
+    msg = msg .. string.format("↓[%d] ", git_state.behind)
   end
-
   return msg
 end
 
