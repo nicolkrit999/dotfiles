@@ -429,8 +429,9 @@ vim.keymap.set('n', '<leader>rr', function()
   end
 
   -- new empty vsplit + jobstart(term): unlike `:terminal <cmd>`, the command is NOT a cmdline,
-  -- so `%`, `#` and `!` in a path are not expanded by vim (only the shell sees the string)
-  vim.cmd.vnew()
+  -- so `%`, `#` and `!` in a path are not expanded by vim (only the shell sees the string).
+  -- Opened on the LEFT (layout convention: short single-task panels left, persistent panels right).
+  vim.cmd("leftabove vnew")
   vim.fn.jobstart(cmd, { term = true })
 end, { noremap = true, desc = "Run current file" })
 
