@@ -46,10 +46,10 @@ local diagnostics_active = true
 keymap.set("n", "<leader>dt", function()
   diagnostics_active = not diagnostics_active
   if diagnostics_active then
-    if vim.fn.has("nvim-0.10") == 1 then vim.diagnostic.enable(true) else vim.diagnostic.enable() end
+    vim.diagnostic.enable(true)
     vim.notify("Diagnostics Enabled")
   else
-    if vim.fn.has("nvim-0.10") == 1 then vim.diagnostic.enable(false) else vim.diagnostic.enable(false) end
+    vim.diagnostic.enable(false)
     vim.notify("Diagnostics Disabled")
   end
 end, { desc = "Toggle Diagnostics" })

@@ -49,7 +49,6 @@ local plugin_specs = {
     config = function()
       require("mason").setup({
         registries = {
-          "github:nvim-java/mason-registry",
           "github:mason-org/mason-registry",
         },
       })
@@ -74,85 +73,36 @@ local plugin_specs = {
       })
     end,
   },
-{
+  {
     "nvim-java/nvim-java",
+    -- nvim-java's own lazy.lua already declares nui.nvim, nvim-dap and JavaHello/spring-boot.nvim
     dependencies = {
-      "nvim-java/lua-async-await",
-      "nvim-java/nvim-java-core",
-      "nvim-java/nvim-java-test",
-      "nvim-java/nvim-java-dap",
       "MunifTanjim/nui.nvim",
-      "neovim/nvim-lspconfig",
       "mfussenegger/nvim-dap",
     },
     config = function()
-      -- 1. Consistent Nix Check (Same as mason-lspconfig)
       local is_nix_managed = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
 
-      -- 2. Setup nvim-java
-      require('java').setup({
+      require("java").setup({
+        -- nix: never download a JDK (no nix-ld); the devShell provides JAVA_HOME (jdk25) and java on PATH
         jdk = { auto_install = not is_nix_managed },
-
         java_test = { enable = true },
         java_debug_adapter = { enable = true },
         spring_boot_tools = { enable = true },
-        jdtls = {
-          path = vim.env.JDTLS_BIN or vim.fn.exepath('jdtls'),
-          settings = {
-            java = { home = vim.env.JAVA_HOME }
-          },
+        -- jdtls.path intentionally unset: nvim-java uses its own jdtls 1.54.0 from
+        -- ~/.local/share/nvim/nvim-java/packages (the devShell's `jdtls` is a bin/ wrapper, not a jdtls root)
+      })
+
+      -- jdtls settings go through vim.lsp.config (NOT java.setup{jdtls.settings}).
+      -- Only scalar/dict values here: lists would REPLACE nvim-java's values (e.g. init_options.bundles).
+      vim.lsp.config("jdtls", {
+        settings = {
+          java = { home = vim.env.JAVA_HOME },
         },
       })
-
-      -- 3. Helper to find jars (Updated to use is_nix_managed)
-      local function get_bundles()
-        -- On Mac (not managed), we usually let nvim-java handle bundles automatically,
-        -- so we return empty table here.
-        if not is_nix_managed then return {} end
-
-        -- On NixOS, if we have manually installed jars, we try to find them:
-        local bundles = {}
-        local debug_path = vim.fn.expand("~/.local/share/nvim/nvim-java/packages/java-debug-adapter/extension/server")
-        local test_path = vim.fn.expand("~/.local/share/nvim/nvim-java/packages/java-test/extension/server")
-
-        local debug_jar = vim.fn.glob(debug_path .. "/*.jar")
-        if debug_jar ~= "" then table.insert(bundles, debug_jar) end
-
-        local test_jars = vim.fn.glob(test_path .. "/*.jar", true, true)
-        for _, jar in ipairs(test_jars) do table.insert(bundles, jar) end
-
-        return bundles
-      end
-
-      -- 3. Setup JDTLS (Wrapped in Silence)
-      -- We save the original notifier, mute it, run the setup, and restore it.
-      local old_notify = vim.notify
-      vim.notify = function() end -- Total silence
-
-      -- Using pcall ensures we restore notification even if setup crashes
-      pcall(function()
-        require('lspconfig').jdtls.setup({
-          init_options = {
-            bundles = get_bundles()
-          }
-        })
-      end)
-
-      vim.notify = old_notify -- Restore functionality
-
-      -- 4. Force-trigger DAP configuration
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = "java",
-        callback = function()
-          vim.defer_fn(function()
-            pcall(vim.cmd, "JavaDapConfig")
-          end, 1000)
-        end
-      })
+      vim.lsp.enable("jdtls")
     end,
   },
-
-
 
   -- 4. Core LSP Config (Loads your lua/config/lsp.lua)
   {
@@ -533,14 +483,6 @@ local plugin_specs = {
   -- Better git log display
   { "rbong/vim-flog",                   cmd = { "Flog" } },
   {
-    "akinsho/git-conflict.nvim",
-    version = "*",
-    event = "VeryLazy",
-    config = function()
-      require("config.git-conflict")
-    end,
-  },
-  {
     "ruifm/gitlinker.nvim",
     event = "User InGitRepo",
     config = function()
@@ -646,9 +588,6 @@ local plugin_specs = {
     dependencies = {
       "MunifTanjim/nui.nvim",
     },
-    enabled = function()
-      return vim.fn.has("nvim-0.10") == 1
-    end,
     build = function()
       require("dbee").install()
     end,
