@@ -1,15 +1,9 @@
 local M = {}
 
+-- Nvim 0.12's defaults already advertise foldingRange (lineFoldingOnly + foldingRangeKind), which
+-- is what nvim-ufo needs; overriding it would drop the fold kinds that ufo filters on.
 M.get_default_capabilities = function()
-  local capabilities = vim.lsp.protocol.make_client_capabilities()
-
-  -- required by nvim-ufo
-  capabilities.textDocument.foldingRange = {
-    dynamicRegistration = false,
-    lineFoldingOnly = true,
-  }
-
-  return capabilities
+  return vim.lsp.protocol.make_client_capabilities()
 end
 
 --- Get the names of the LSP clients attached to the current buffer (sorted)
