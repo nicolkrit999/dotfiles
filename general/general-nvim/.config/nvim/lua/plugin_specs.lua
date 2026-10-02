@@ -49,8 +49,10 @@ local plugin_specs = {
       require("config.colorful_menu")
     end,
   },
+  -- ASCII art headers for the dashboard; loaded by lua/config/dashboard-nvim.lua (require("ascii"))
   {
     "MaximilianLloyd/ascii.nvim",
+    lazy = true,
     dependencies = {
       "MunifTanjim/nui.nvim",
     },
@@ -252,10 +254,27 @@ local plugin_specs = {
     end,
   },
 
-  -- fancy start screen
+  -- fancy start screen: loaded only for a bare `nvim` (no file/dir argument, no stdin) or by :Dashboard
   {
     "nvimdev/dashboard-nvim",
     cond = firenvim_not_active,
+    -- :Dashboard keeps working after `nvim file` (a cond with argc() would remove the command too)
+    cmd = "Dashboard",
+    init = function()
+      vim.api.nvim_create_autocmd("VimEnter", {
+        group = vim.api.nvim_create_augroup("dashboard_lazy_start", { clear = true }),
+        once = true,
+        desc = "Load dashboard-nvim on a bare start (it then opens itself on UIEnter)",
+        callback = function()
+          -- same test as the plugin's own UIEnter autocmd; stdin is checked here because the
+          -- plugin's VimEnter stdin detector does not run when it is loaded during VimEnter
+          if vim.fn.argc() ~= 0 or vim.api.nvim_buf_get_name(0) ~= "" or vim.tbl_contains(vim.v.argv, "-") then
+            return
+          end
+          require("lazy").load { plugins = { "dashboard-nvim" } }
+        end,
+      })
+    end,
     config = function()
       require("config.dashboard-nvim")
     end,
