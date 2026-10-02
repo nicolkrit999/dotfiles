@@ -370,9 +370,26 @@ vim.keymap.set('n', '<leader>rr', function()
     cmd = 'g++ -Wall -Wextra -std=c++20 ' .. file .. ' -o ' .. binary .. ' && ' .. binary
     need, where = { 'g++' }, 'the c-cpp devShell'
   elseif filetype == 'cs' then
-    cmd = 'dotnet run'
+    -- nearest *.csproj above the file: run that project; else the single file (.NET 10 file-based app)
+    local proj_dir = vim.fs.root(0, function(name) return name:match('%.csproj$') ~= nil end)
+    local csproj
+    if proj_dir then
+      local found = {}
+      for name, type in vim.fs.dir(proj_dir) do
+        if name:match('%.csproj$') and type ~= 'directory' then
+          table.insert(found, name)
+        end
+      end
+      table.sort(found)
+      csproj = found[1] and vim.fs.joinpath(proj_dir, found[1])
+    end
+    if csproj then
+      cmd = 'dotnet run --project ' .. vim.fn.shellescape(csproj)
+      uses_file = false
+    else
+      cmd = 'dotnet run ' .. file
+    end
     need = { 'dotnet' }
-    uses_file = false
   elseif filetype == 'javascript' then
     cmd = 'node ' .. file
     need = { 'node' }
@@ -381,7 +398,8 @@ vim.keymap.set('n', '<leader>rr', function()
     cmd = 'node ' .. file
     need = { 'node' }
   elseif filetype == 'go' then
-    cmd = 'go run ' .. file
+    -- the whole package in the file's directory (works for multi-file packages)
+    cmd = 'cd ' .. vim.fn.shellescape(vim.fn.expand('%:p:h')) .. ' && go run .'
     need, where = { 'go' }, 'the go devShell'
   elseif filetype == 'rust' then
     -- inside a cargo project (Cargo.toml above the file): cargo run; else compile the single file
