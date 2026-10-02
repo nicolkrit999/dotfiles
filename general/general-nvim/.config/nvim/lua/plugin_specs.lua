@@ -290,6 +290,7 @@ local plugin_specs = {
   {
     "nvim-mini/mini.indentscope",
     version = false,
+    event = "VeryLazy", -- the scope line only draws on CursorMoved; ii/ai exist after the first screen
     config = function()
       local mini_indent = require("mini.indentscope")
       mini_indent.setup {

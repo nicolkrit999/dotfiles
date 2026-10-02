@@ -1847,7 +1847,7 @@ Besides the builtin spell checker two language servers report problems as diagno
 | **Colorschemes** | On Nix systems the base16 theme named by `NVIM_BASE16_THEME` (fallback Catppuccin Mocha); on other systems one of 19 themes chosen at random at each start. UI colours (yank flash, hop keys, notifications, float borders) follow the active theme |
 | **dropbar.nvim** | Breadcrumb bar at top showing file > class > function |
 | **nvim-colorizer** | Color codes (hex, rgb) are highlighted with their actual color |
-| **mini.indentscope** | Visual `▏` guide for current indent scope |
+| **mini.indentscope** | Visual `▏` guide for current indent scope (loads right after the first screen; `ii`/`ai` exist from then on) |
 | **fidget.nvim** | LSP progress messages in bottom-right corner |
 | **nvim-lightbulb** | Lightbulb icon when code actions are available |
 | **vim-illuminate** | Highlights the other uses of the word under the cursor (`<Alt-n>` / `<Alt-p>` jump between them) |
