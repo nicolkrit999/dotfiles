@@ -8,10 +8,12 @@ if executable('clang++') || executable('g++')
 endif
 
 function! s:compile_run_cpp() abort
-  let src_path = expand('%:p:~')
-  let src_noext = expand('%:p:~:r')
-  " The building flags
-  let _flag = '-Wall -Wextra -std=c++20 -O2'
+  let src_path = expand('%:p')
+  let src_noext = expand('%:p:r')
+  if src_path ==# ''
+    echohl WarningMsg | echomsg 'Save the buffer to a file first' | echohl None
+    return
+  endif
 
   if executable('clang++')
     let prog = 'clang++'
@@ -24,7 +26,9 @@ function! s:compile_run_cpp() abort
     return
   endif
   call s:create_term_buf('h', 20)
-  execute printf('term %s %s %s -o %s && %s', prog, _flag, src_path, src_noext, src_noext)
+  " Paths are argv entries of sh (never spliced into a command string), so spaces, $, ; and
+  " quotes in file names are safe. $0 is the output binary, "$@" the compile command.
+  call jobstart(['sh', '-c', '"$@" && "$0"', src_noext, prog, '-Wall', '-Wextra', '-std=c++20', '-O2', src_path, '-o', src_noext], {'term': v:true})
   startinsert
 endfunction
 
