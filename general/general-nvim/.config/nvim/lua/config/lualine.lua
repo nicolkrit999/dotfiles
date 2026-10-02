@@ -14,15 +14,16 @@ local last_fetch = {} -- root -> vim.uv.now() of the last fetch start
 local last_count = {} -- root -> vim.uv.now() of the last recount start
 local fetch_ok = {} -- root -> true once `git fetch origin` succeeded there
 
---- vim.system that never throws and never asks in the terminal (GIT_TERMINAL_PROMPT=0);
+--- vim.system that never throws and never asks anywhere (GIT_TERMINAL_PROMPT=0, GIT_ASKPASS/SSH_ASKPASS=true);
 --- on_exit always runs (code -1 on spawn failure)
 local function git_async(root, args, on_exit)
-  local cmd = vim.list_extend({ "git" }, args)
+  -- background-only: never pop up a prompt (terminal, askpass GUI or credential helper dialog)
+  local cmd = vim.list_extend({ "git", "-c", "credential.interactive=never" }, args)
   local ok = pcall(vim.system, cmd, {
     cwd = root,
     text = true,
     timeout = 30000,
-    env = { GIT_TERMINAL_PROMPT = "0" },
+    env = { GIT_TERMINAL_PROMPT = "0", GIT_ASKPASS = "true", SSH_ASKPASS = "true" },
   }, on_exit)
   if not ok then
     on_exit { code = -1, stdout = "", stderr = "" }
@@ -335,7 +336,7 @@ local function git_lines(root, args)
     return vim.system(vim.list_extend({ "git" }, args), {
       cwd = root,
       text = true,
-      env = { GIT_TERMINAL_PROMPT = "0" },
+      env = { GIT_TERMINAL_PROMPT = "0", GIT_ASKPASS = "true", SSH_ASKPASS = "true" },
     }):wait()
   end)
   if not ok then
