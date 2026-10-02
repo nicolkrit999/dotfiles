@@ -1,8 +1,8 @@
 require("bufferline").setup {
   options = {
     numbers = "none",
-    close_command = "bdelete! %d",
-    right_mouse_command = nil,
+    close_command = "bdelete %d", -- refuses buffers with unsaved changes
+    right_mouse_command = false,
     left_mouse_command = "buffer %d",
     middle_mouse_command = nil,
     indicator = {
