@@ -649,16 +649,20 @@ local plugin_specs = {
       -- would run it): cancel it. Instant because nothing longer starts with o-mode `s` (the
       -- o-mode `sa` is unmapped in config() below).
       vim.keymap.set("o", "s", "<Esc>", { remap = true, desc = "Cancel the pending operator (s is the vim-sandwich prefix)" })
+      -- do not let vim-sandwich define its default text-object maps (ib/ab auto, is/as query):
+      -- the builtin sentence objects keep is/as, targets.vim keeps ib/ab, and the query objects
+      -- are mapped below on iS/aS. (Operator maps sa/sd/sr are a separate flag, untouched.)
+      vim.g.textobj_sandwich_no_default_key_mappings = 1
     end,
     config = function()
       -- vim-sandwich's o-mode `sa` (<Plug>(sandwich-add)) has no user-facing use (adding is the
       -- normal/visual `sa`); drop it so o-mode `s` (= cancel) is not a prefix of it and which-key
       -- stops reporting "<s> overlaps with <sa>"
       pcall(vim.keymap.del, "o", "sa")
-      -- let targets.vim own ab/ib (`:checkhealth targets` conflict)
+      -- sandwich's query objects on iS/aS ("S" = Sandwich; capital, so builtin is/as stay sentences)
       for _, mode in ipairs({ "x", "o" }) do
-        pcall(vim.keymap.del, mode, "ab")
-        pcall(vim.keymap.del, mode, "ib")
+        vim.keymap.set(mode, "iS", "<Plug>(textobj-sandwich-query-i)", { desc = "Sandwich: inner surrounding (query)" })
+        vim.keymap.set(mode, "aS", "<Plug>(textobj-sandwich-query-a)", { desc = "Sandwich: around surrounding (query)" })
       end
     end,
   },

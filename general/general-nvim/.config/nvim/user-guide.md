@@ -450,7 +450,9 @@ These are the most powerful selection commands. They work with `v` (select), `d`
 | `vaw` | Select the word + surrounding whitespace |
 | `viW` | Select the WORD under cursor (delimited by whitespace only) |
 | `vaW` | Select the WORD + surrounding whitespace |
-| `vis(` / `vas(` | NOT the sentence here: `is` / `as` are the vim-sandwich "query" objects: type the surrounding character after them (`vis(` selects inside the nearest `(...)`, `vas"` around the nearest `"..."`; `vis` alone just waits for that character). The sentence motions `(` / `)` still work. <!-- CHECK-USER: confirm you want the builtin sentence objects is/as shadowed by vim-sandwich --> |
+| `vis` | Select the sentence (inner: without the trailing whitespace) |
+| `vas` | Select the sentence + trailing whitespace (`das`, `dis`, `cis` work the same; the sentence motions are `(` / `)`) |
+| `viS(` / `vaS(` | vim-sandwich "query" objects: type the surrounding character after them (`viS(` selects inside the nearest `(...)`, `vaS"` around the nearest `"..."`; `viS` alone just waits for that character; `diS(`, `daS"`, `ciS[` work in the same way). `ib` / `ab` stay targets.vim's any-bracket objects |
 | `vip` | Select the paragraph (block of non-empty lines) |
 | `vap` | Select the paragraph + surrounding blank lines |
 
@@ -3662,7 +3664,8 @@ This is the single most important mental model for understanding Vim. Almost eve
 | --- | --- |
 | `iw` / `aw` | Inner word / a word (with whitespace) |
 | `iW` / `aW` | Inner WORD / a WORD |
-| `is` / `as` | vim-sandwich "query" object: type the surrounding character after it, e.g. `dis(`, `cas"`, `vis[` (inside / around that surrounding pair; the builtin sentence objects are shadowed here) |
+| `is` / `as` | Inner sentence / a sentence (with trailing whitespace) |
+| `iS` / `aS` | vim-sandwich "query" object: type the surrounding character after it, e.g. `diS(`, `caS"`, `viS[` (inside / around that surrounding pair) |
 | `ip` / `ap` | Inner paragraph / a paragraph |
 | `i(` / `a(` | Inside / around parentheses |
 | `i{` / `a{` | Inside / around braces |
