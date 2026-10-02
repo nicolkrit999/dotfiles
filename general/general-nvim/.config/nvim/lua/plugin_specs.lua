@@ -1100,6 +1100,7 @@ local plugin_specs = {
   {
     -- maintained fork of the archived Pocco81/auto-save.nvim
     "okuuva/auto-save.nvim",
+    event = "VeryLazy", -- its triggers (BufLeave/FocusLost) cannot happen before the first screen
     config = function()
       require("auto-save").setup {
         -- save when leaving a buffer or when nvim loses focus; no saves while typing

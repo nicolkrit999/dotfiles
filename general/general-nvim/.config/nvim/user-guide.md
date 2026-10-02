@@ -1994,7 +1994,7 @@ URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 
 | Plugin | Trigger | Description |
 | --- | --- | --- |
-| `auto-save.nvim` | Automatic | Saves on `FocusLost` / `BufLeave` (message "AutoSave: saved at HH:MM:SS"); never saves unnamed, read-only or special buffers, nor Typst and LaTeX files |
+| `auto-save.nvim` | Automatic (active from right after the first screen) | Saves on `FocusLost` / `BufLeave` (message "AutoSave: saved at HH:MM:SS"); never saves unnamed, read-only or special buffers, nor Typst and LaTeX files |
 | `better-escape.vim` | `jk` (insert) | Fast escape from insert mode (200ms window) |
 | `vim-repeat` | `.` | Makes plugin actions repeatable with `.` |
 | `vim-swap` | `gs` (n, x) | Interactively swap function arguments / list items |
