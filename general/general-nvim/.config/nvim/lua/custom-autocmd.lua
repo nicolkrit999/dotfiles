@@ -64,12 +64,23 @@ api.nvim_create_augroup("auto_read", { clear = true })
 -- The only notification for this (claude-code's own refresh notification is off, plugin_specs.lua).
 -- v:fcs_reason is not reliable in the Post event (empty for a normal change), so a deleted file is
 -- detected on disk. Never add a FileChangedShell autocmd: it would replace Nvim's builtin reload.
+-- A deletion is reported once per buffer (claude-code's refresh timer runs :checktime every second
+-- while its panel is open); the flag is cleared when the file exists again.
 api.nvim_create_autocmd({ "FileChangedShellPost" }, {
   pattern = "*",
   group = "auto_read",
   callback = function(ev)
     if ev.file ~= "" and vim.uv.fs_stat(ev.file) == nil then
-      vim.notify("File deleted on disk (buffer kept)", vim.log.levels.WARN, { title = "nvim-config" })
+      if not vim.b[ev.buf].deleted_notified then
+        vim.b[ev.buf].deleted_notified = true
+        vim.notify("File deleted on disk (buffer kept)", vim.log.levels.WARN, { title = "nvim-config" })
+      end
+      return
+    end
+    vim.b[ev.buf].deleted_notified = nil
+    if vim.bo[ev.buf].modified then
+      -- W12 conflict answered with [O]K: the buffer was NOT reloaded
+      vim.notify("File changed on disk and in the buffer (buffer kept)", vim.log.levels.WARN, { title = "nvim-config" })
     else
       vim.notify("File changed on disk. Buffer reloaded!", vim.log.levels.WARN, { title = "nvim-config" })
     end
@@ -88,7 +99,7 @@ api.nvim_create_autocmd({ "FocusGained", "CursorHold" }, {
 
 
 -- Resize all windows when we resize the terminal; the Claude Code panel goes back to its
--- 30% width (split_ratio in plugin_specs.lua) instead of an equal share
+-- configured width (claude-code's window.split_ratio, set in plugin_specs.lua) instead of an equal share
 api.nvim_create_autocmd("VimResized", {
   group = api.nvim_create_augroup("win_autoresize", { clear = true }),
   desc = "autoresize windows on resizing operation (Claude Code panel back to 30%)",
@@ -106,7 +117,8 @@ api.nvim_create_autocmd("VimResized", {
     if next(claude_bufs) == nil then
       return
     end
-    local width = math.floor(vim.o.columns * 0.3)
+    local ratio = (cc.config and cc.config.window and cc.config.window.split_ratio) or 0.3
+    local width = math.floor(vim.o.columns * ratio)
     for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
       if claude_bufs[api.nvim_win_get_buf(win)] and api.nvim_win_get_config(win).relative == "" then
         pcall(api.nvim_win_set_width, win, width)
@@ -311,8 +323,7 @@ api.nvim_create_autocmd({ "VimEnter", "DirChanged" }, {
   end,
 })
 
-local git_checked_dirs = {} -- dirs already checked by the file check
-local git_job_running = false
+local git_checked_dirs = {} -- dirs already checked (or being checked) by the file check: one job per dir
 local git_file_au
 git_file_au = api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
   group = git_group,
@@ -321,7 +332,7 @@ git_file_au = api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
     if git_fired then
       return true -- delete this autocmd
     end
-    if git_job_running or vim.bo[ev.buf].buftype ~= "" or fn.executable("git") == 0 then
+    if vim.bo[ev.buf].buftype ~= "" or fn.executable("git") == 0 then
       return
     end
     local name = api.nvim_buf_get_name(ev.buf)
@@ -342,9 +353,7 @@ git_file_au = api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
       return
     end
     git_checked_dirs[dir] = true
-    git_job_running = true
     local ok = pcall(vim.system, { "git", "-C", dir, "rev-parse", "--is-inside-work-tree" }, { text = true }, function(res)
-      git_job_running = false
       if res.code == 0 then
         vim.schedule(function()
           if git_fired then
@@ -357,7 +366,7 @@ git_file_au = api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
       end
     end)
     if not ok then
-      git_job_running = false
+      git_checked_dirs[dir] = nil -- the job did not start: check this dir again next time
     end
   end,
 })
