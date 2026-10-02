@@ -9,9 +9,9 @@ require("yanky").setup {
   },
 }
 
-vim.keymap.set({ "n", "x" }, "p", "<Plug>(YankyPutAfter)")
-vim.keymap.set({ "n", "x" }, "P", "<Plug>(YankyPutBefore)")
+vim.keymap.set({ "n", "x" }, "p", "<Plug>(YankyPutAfter)", { desc = "Paste after (yanky)" })
+vim.keymap.set({ "n", "x" }, "P", "<Plug>(YankyPutBefore)", { desc = "Paste before (yanky)" })
 
 -- cycle through the yank history, only work after paste
-vim.keymap.set("n", "[y", "<Plug>(YankyPreviousEntry)")
-vim.keymap.set("n", "]y", "<Plug>(YankyNextEntry)")
+vim.keymap.set("n", "[y", "<Plug>(YankyPreviousEntry)", { desc = "Yank history: previous entry (after paste)" })
+vim.keymap.set("n", "]y", "<Plug>(YankyNextEntry)", { desc = "Yank history: next entry (after paste)" })
