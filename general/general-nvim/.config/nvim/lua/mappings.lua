@@ -283,8 +283,8 @@ end
 keymap.set("x", "p", "P")
 
 -- Go to a certain buffer
-keymap.set("n", "gb", '<cmd>call buf_utils#GoToBuffer(v:count, "forward")<cr>', { desc = "go to buffer (forward)" })
-keymap.set("n", "gB", '<cmd>call buf_utils#GoToBuffer(v:count, "backward")<cr>', { desc = "go to buffer (backward)" })
+keymap.set("n", "gb", '<cmd>call buf_utils#GoToBuffer(v:count, "forward")<cr>', { desc = "go to next buffer ({N}gb: buffer N)" })
+keymap.set("n", "gB", '<cmd>call buf_utils#GoToBuffer(v:count, "backward")<cr>', { desc = "go to previous buffer (no count; use {N}gb)" })
 
 -- Switch windows
 keymap.set("n", "<left>", "<c-w>h")
