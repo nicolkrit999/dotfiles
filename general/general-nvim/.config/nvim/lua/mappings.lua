@@ -53,23 +53,49 @@ keymap.set("n", "<leader>dt", function()
 end, { desc = "Toggle Diagnostics" })
 
 -- ============================================================================
--- Turn the word under cursor to upper case
-keymap.set("i", "<c-u>", "<Esc>viwUea")
-
--- Toggle the case of the first letter of the current word (Foo <-> foo). The word is the one under
--- the cursor or ending right before it; when only whitespace separates the cursor from the previous
--- word on the same line ("foo |"), that word. A non-letter first char, or a letter whose case change does not round-trip, is left alone.
--- Stays in insert mode, the cursor keeps its place in the text.
-keymap.set("i", "<c-t>", function()
+-- The "current word" for the insert-mode case keys <C-u> and <C-t>: the word under the cursor or
+-- ending right before it; when only whitespace separates the cursor from the previous word on the
+-- same line ("foo |"), that word. Returns row, col (cursor, 0-based byte col), word, s, e (0-based
+-- byte range [s, e) of the word), touching (false in the whitespace case); nil if there is no word.
+local function insert_current_word()
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))
   local line = vim.api.nvim_get_current_line()
   -- leftmost run of keyword chars that touches the cursor column (byte col + 1)
   local word, s, e = unpack(vim.fn.matchstrpos(line, [[\k*\%]] .. (col + 1) .. [[c\k*]]))
-  if word == "" then
+  local touching = word ~= ""
+  if not touching then
     -- fallback: the word before the cursor, separated from it only by whitespace
     word, s, e = unpack(vim.fn.matchstrpos(line, [[\k\+\ze\s\+\%]] .. (col + 1) .. "c"))
   end
   if word == "" then
+    return nil
+  end
+  return row, col, word, s, e, touching
+end
+
+-- Upper-case the current word (see insert_current_word). Stays in insert mode; the cursor goes
+-- after the word's end when the word touches the cursor, else it keeps its place in the text.
+keymap.set("i", "<c-u>", function()
+  local row, col, word, s, e, touching = insert_current_word()
+  if not row then
+    return
+  end
+  local up = vim.fn.toupper(word)
+  vim.api.nvim_buf_set_text(0, row - 1, s, row - 1, e, { up })
+  if touching then
+    col = s + #up
+  else -- the word lies before the cursor: shift by the byte-length change
+    col = col + #up - #word
+  end
+  vim.api.nvim_win_set_cursor(0, { row, col })
+end, { desc = "upper-case the current word" })
+
+-- Toggle the case of the first letter of the current word (Foo <-> foo), see insert_current_word.
+-- A non-letter first char, or a letter whose case change does not round-trip, is left alone.
+-- Stays in insert mode, the cursor keeps its place in the text.
+keymap.set("i", "<c-t>", function()
+  local row, col, word, s = insert_current_word()
+  if not row then
     return
   end
   local first = vim.fn.strcharpart(word, 0, 1)
