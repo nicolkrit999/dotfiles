@@ -5,56 +5,137 @@ vim.lsp.config("*", {
   capabilities = require("lsp_utils").get_default_capabilities(),
 })
 
--- Buffer-local LSP keymaps on attach (formatting is not automatic: <space>fm formats on demand)
-vim.api.nvim_create_autocmd("LspAttach", {
-  group = vim.api.nvim_create_augroup("lsp_buf_conf", { clear = true }),
-  callback = function(event_context)
-    local client = vim.lsp.get_client_by_id(event_context.data.client_id)
-    if not client then return end
+-- LSP keymaps, decided per BUFFER from ALL attached clients (typos_lsp attaches everywhere, often
+-- next to the real server, in any order) and recomputed on every LspAttach / LspDetach. Rule: a key
+-- either works, keeps Vim's builtin, or shows ONE warning; it never falls through to plain keys.
+--   K          hover supported -> LSP hover; else our map is removed -> builtin K ('keywordprg')
+--   gd         definition supported -> unique definition; else removed -> builtin gd
+--   <space>rn  rename supported -> LSP rename; else one warning
+--   <space>ca  codeAction supported -> LSP code action; else one warning
+-- No client attached at all: global one-warning fallbacks for <space>rn / <space>ca (below).
+-- Formatting is not automatic: <space>fm formats on demand.
 
-    local bufnr = event_context.buf
-    local map = function(mode, l, r, opts)
-      opts = vim.tbl_extend("force", { silent = true, buffer = bufnr }, opts or {})
-      vim.keymap.set(mode, l, r, opts)
+-- Go to definition, with duplicate locations (several servers, or one server reporting the same
+-- place twice) removed: one result jumps, several open the location list. Zero results never
+-- reach on_list: Nvim itself shows "No locations found" once.
+local function unique_definition()
+  vim.lsp.buf.definition {
+    on_list = function(options)
+      local unique_defs, def_loc_hash = {}, {}
+      for _, def_location in ipairs(options.items) do
+        -- separators: "a.lua" line 12 and "a.lua1" line 2 must not collide
+        local key = def_location.filename .. ":" .. def_location.lnum .. ":" .. def_location.col
+        if not def_loc_hash[key] then
+          def_loc_hash[key] = true
+          table.insert(unique_defs, def_location)
+        end
+      end
+      options.items = unique_defs
+      if #unique_defs == 0 then
+        vim.notify("No definition found", vim.log.levels.INFO)
+        return
+      end
+      vim.fn.setloclist(0, {}, " ", options)
+      if #options.items > 1 then vim.cmd.lopen() else vim.cmd([[silent! lfirst]]) end
+    end,
+  }
+end
+
+local function hover()
+  vim.lsp.buf.hover {
+    border = "single",
+    max_height = 40,
+    max_width = 100,
+  }
+end
+
+---@param what string
+local function unsupported(what)
+  return function()
+    vim.notify(what .. ": no attached language server supports it", vim.log.levels.WARN)
+  end
+end
+
+-- lhs -> { method, LSP action, desc, action when unsupported (nil = remove our map -> builtin) }
+local lsp_keys = {
+  { "K", "textDocument/hover", hover, "LSP hover" },
+  { "gd", "textDocument/definition", unique_definition, "unique definition" },
+  { "<space>rn", "textDocument/rename", vim.lsp.buf.rename, "rename", unsupported("rename") },
+  { "<space>ca", "textDocument/codeAction", vim.lsp.buf.code_action, "code action", unsupported("code action") },
+}
+
+-- buffer -> lhs -> callback we set (so only OUR maps are ever removed)
+local our_maps = {} ---@type table<integer, table<string, function>>
+
+---@param bufnr integer
+---@param lhs string
+local function del_our_map(bufnr, lhs)
+  local cb = (our_maps[bufnr] or {})[lhs]
+  if not cb then return end
+  our_maps[bufnr][lhs] = nil
+  -- maparg reads the current buffer: look it up from bufnr's side
+  local m = vim.api.nvim_buf_call(bufnr, function() return vim.fn.maparg(lhs, "n", false, true) end)
+  if m.buffer == 1 and m.callback == cb then
+    pcall(vim.keymap.del, "n", lhs, { buffer = bufnr })
+  end
+end
+
+---@param bufnr integer
+---@param detaching_id integer? client that is detaching (still listed during LspDetach)
+local function update_lsp_keys(bufnr, detaching_id)
+  if not vim.api.nvim_buf_is_valid(bufnr) then return end
+  local clients = vim.tbl_filter(function(c)
+    return c.id ~= detaching_id
+  end, vim.lsp.get_clients { bufnr = bufnr })
+  our_maps[bufnr] = our_maps[bufnr] or {}
+  for _, k in ipairs(lsp_keys) do
+    local lhs, method, action, desc, fallback = k[1], k[2], k[3], k[4], k[5]
+    local supported = vim.iter(clients):any(function(c) return c:supports_method(method, bufnr) end)
+    -- no client left: drop the warning maps too, the global fallbacks below take over
+    local cb = supported and action or (#clients > 0 and fallback or nil)
+    if cb then
+      vim.keymap.set("n", lhs, cb, {
+        buffer = bufnr,
+        silent = true,
+        desc = supported and desc or (desc .. " (no attached server supports it)"),
+      })
+      our_maps[bufnr][lhs] = cb
+    else
+      del_our_map(bufnr, lhs)
     end
+  end
+end
 
-    -- Go to definition, with duplicate locations (several servers, or one server reporting the
-    -- same place twice) removed: one result jumps, several open the location list. Zero results
-    -- never reach on_list: Nvim itself shows "No locations found" once.
-    map("n", "gd", function()
-      vim.lsp.buf.definition {
-        on_list = function(options)
-          local unique_defs, def_loc_hash = {}, {}
-          for _, def_location in ipairs(options.items) do
-            -- separators: "a.lua" line 12 and "a.lua1" line 2 must not collide
-            local key = def_location.filename .. ":" .. def_location.lnum .. ":" .. def_location.col
-            if not def_loc_hash[key] then
-              def_loc_hash[key] = true
-              table.insert(unique_defs, def_location)
-            end
-          end
-          options.items = unique_defs
-          if #unique_defs == 0 then
-            vim.notify("No definition found", vim.log.levels.INFO)
-            return
-          end
-          vim.fn.setloclist(0, {}, " ", options)
-          if #options.items > 1 then vim.cmd.lopen() else vim.cmd([[silent! lfirst]]) end
-        end,
-      }
-    end, { desc = "unique definition" })
-
-    map("n", "K", function()
-      vim.lsp.buf.hover {
-        border = "single",
-        max_height = 40,
-        max_width = 100,
-      }
-    end, { desc = "LSP hover" })
-    map("n", "<space>rn", vim.lsp.buf.rename, { desc = "rename" })
-    map("n", "<space>ca", vim.lsp.buf.code_action, { desc = "code action" })
+local lsp_keys_group = vim.api.nvim_create_augroup("lsp_buf_conf", { clear = true })
+vim.api.nvim_create_autocmd("LspAttach", {
+  group = lsp_keys_group,
+  desc = "LSP keymaps per buffer capability",
+  callback = function(ev)
+    update_lsp_keys(ev.buf)
   end,
 })
+vim.api.nvim_create_autocmd("LspDetach", {
+  group = lsp_keys_group,
+  desc = "LSP keymaps per buffer capability",
+  callback = function(ev)
+    update_lsp_keys(ev.buf, ev.data.client_id)
+  end,
+})
+vim.api.nvim_create_autocmd("BufWipeout", {
+  group = lsp_keys_group,
+  desc = "forget LSP keymap bookkeeping",
+  callback = function(ev)
+    our_maps[ev.buf] = nil
+  end,
+})
+
+-- global fallbacks (no client attached): one warning, no fall-through (<Space> = l, then rn would
+-- replace a character); the buffer-local maps above override them
+for _, k in ipairs { { "<space>rn", "rename" }, { "<space>ca", "code action" } } do
+  vim.keymap.set("n", k[1], function()
+    vim.notify(k[2] .. ": no language server attached to this buffer", vim.log.levels.WARN)
+  end, { desc = k[2] .. " (needs LSP)" })
+end
 
 -- Servers: configured here (plus after/lsp/<name>.lua), enabled only when the binary exists
 ---@type table<string, vim.lsp.Config>
