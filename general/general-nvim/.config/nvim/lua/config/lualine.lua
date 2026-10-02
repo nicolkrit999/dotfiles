@@ -12,6 +12,7 @@ local COUNT_INTERVAL_MS = 5 * 1000 -- local ahead/behind recount (cheap, no netw
 local git_state = { root = nil, ahead = 0, behind = 0, running = false }
 local last_fetch = {} -- root -> vim.uv.now() of the last fetch start
 local last_count = {} -- root -> vim.uv.now() of the last recount start
+local fetch_ok = {} -- root -> true once `git fetch origin` succeeded there
 
 --- vim.system that never throws and never asks in the terminal (GIT_TERMINAL_PROMPT=0);
 --- on_exit always runs (code -1 on spawn failure)
@@ -56,17 +57,29 @@ local function update_ahead_behind(root)
     end)
   end
 
-  if not want_fetch then
-    return count()
+  -- as before: numbers only for a repo whose `origin` could be fetched (at least once)
+  local function count_if_fetched()
+    if fetch_ok[root] then
+      return count()
+    end
+    git_state.running = false
   end
-  -- fetch only from an existing `origin` remote; otherwise just count against the local refs
+
+  if not want_fetch then
+    return count_if_fetched()
+  end
+  -- fetch only from an existing `origin` remote
   git_async(root, { "remote" }, function(r)
     local has_origin = r.code == 0 and vim.list_contains(vim.split(r.stdout or "", "\n", { trimempty = true }), "origin")
     if not has_origin then
-      return count()
+      fetch_ok[root] = nil
+      return count_if_fetched()
     end
-    git_async(root, { "fetch", "--quiet", "origin" }, function()
-      count()
+    git_async(root, { "fetch", "--quiet", "origin" }, function(f)
+      if f.code == 0 then
+        fetch_ok[root] = true
+      end
+      count_if_fetched()
     end)
   end)
 end
