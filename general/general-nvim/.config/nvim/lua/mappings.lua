@@ -147,22 +147,25 @@ keymap.set("n", [[\d]], function()
   end
 end, { silent = true, desc = "delete current buffer" })
 
--- Delete all other listed buffers. Buffers with unsaved changes are kept (one message
--- "kept N unsaved buffer(s)"); a delete that fails for another reason also counts as kept.
+-- Delete all other listed buffers. Buffers with unsaved changes and terminal buffers whose job is
+-- still running (Claude panel, :terminal, <Space>rr) are kept (one message "kept N buffer(s)
+-- (unsaved or running terminal)"); a delete that fails for another reason also counts as kept.
 keymap.set("n", [[\D]], function()
   local cur_buf = vim.api.nvim_get_current_buf()
   local kept = 0
   for _, buf_id in ipairs(vim.api.nvim_list_bufs()) do
     if buf_id ~= cur_buf and vim.api.nvim_buf_is_valid(buf_id) and vim.bo[buf_id].buflisted then
-      if vim.bo[buf_id].modified or not pcall(vim.api.nvim_buf_delete, buf_id, {}) then
+      local b = vim.bo[buf_id]
+      local running_term = b.buftype == "terminal" and vim.fn.jobwait({ b.channel }, 0)[1] == -1
+      if b.modified or running_term or not pcall(vim.api.nvim_buf_delete, buf_id, {}) then
         kept = kept + 1
       end
     end
   end
   if kept > 0 then
-    vim.notify(string.format("kept %d unsaved buffer(s)", kept), vim.log.levels.WARN)
+    vim.notify(string.format("kept %d buffer(s) (unsaved or running terminal)", kept), vim.log.levels.WARN)
   end
-end, { desc = "delete other buffers (keeps unsaved ones)" })
+end, { desc = "delete other buffers (keeps unsaved and running terminals)" })
 
 -- Close the current tab / all other tabs
 keymap.set("n", [[\t]], "<cmd>tabclose<cr>", { silent = true, desc = "close current tab" })
