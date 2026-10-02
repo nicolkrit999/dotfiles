@@ -119,8 +119,19 @@ keymap.set("n", "<leader>q", "<cmd>x<cr>", { silent = true, desc = "save if modi
 -- Auto format --
 keymap.set("n", "<space>fm", function() vim.lsp.buf.format({ async = true }) end, { desc = "LSP: format file" })
 
--- Quit all opened buffers
-keymap.set("n", "<leader>Q", "<cmd>qa!<cr>", { silent = true, desc = "quit nvim (discard unsaved changes)" })
+-- Force quit nvim, discarding unsaved changes, but only after an explicit confirmation (default = No)
+keymap.set("n", "<leader>Q", function()
+  -- only real, listed file buffers count (plugin scratch buffers such as fidget's are flagged modified)
+  local modified = #vim.tbl_filter(function(b)
+    return b.listed == 1 and vim.bo[b.bufnr].buftype == ""
+  end, vim.fn.getbufinfo({ bufmodified = 1 }))
+  local msg = modified > 0
+      and ("Discard %d unsaved buffer(s) and quit nvim?"):format(modified)
+      or "Quit nvim?"
+  if vim.fn.confirm(msg, "&Yes\n&No", 2) == 1 then
+    vim.cmd("qa!")
+  end
+end, { silent = true, desc = "force quit nvim (asks confirmation, discards unsaved changes)" })
 
 -- Close location list or quickfix list if they are present, see https://superuser.com/q/355325/736190
 -- (loclists of every window in this tab via nvim_win_call, so the current window stays current)

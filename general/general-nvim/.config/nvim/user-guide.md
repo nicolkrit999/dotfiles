@@ -62,7 +62,7 @@ Most-used keybinds at a glance. Every keymap here is explained in detail later.
 | `f` | Hop: jump to any 2-char match on screen |
 | `<Space>w` | Save buffer |
 | `<Space>q` | Save the buffer if modified and close the window (`:x`) |
-| `<Space>Q` | Quit Neovim and DISCARD all unsaved changes (`:qa!`) |
+| `<Space>Q` | Force quit Neovim and DISCARD unsaved changes, after a Yes/No confirmation (`:qa!`) |
 | `<Space>s` | Toggle file explorer (nvim-tree) |
 | `<Space>ff` | Fuzzy find files |
 | `<Space>fg` | Project-wide text search (live grep) |
@@ -857,7 +857,7 @@ This section explains how to open, navigate, resize, and close split windows ent
 | Keymap / Command | Description |
 | --- | --- |
 | `<Space>q` | Close the current window (saves if modified, `:x`). It fires after a short pause because `<Space>qb` / `<Space>qw` also exist |
-| `<Space>Q` | Quit Neovim at once, **discarding unsaved changes** (`:qa!`, no confirmation) |
+| `<Space>Q` | Force quit Neovim, **discarding unsaved changes**, after a Yes/No confirmation (default No) |
 | `:q` | Close current window |
 | `:q!` | Close current window discarding unsaved changes |
 | `:only` or `<Ctrl-w>o` | Close ALL other windows, keep only the current one |
@@ -3593,7 +3593,7 @@ Two insert-mode abbreviations fix typos: `reqire` -> `require`, `serveral` -> `s
 | Typing random commands instead of text | You're in Normal mode | Press `i` to enter Insert mode first |
 | Text won't stop appearing | You're in Insert mode | Press `<Esc>` to go back to Normal |
 | Screen looks weird / frozen | You pressed `<Ctrl-s>` (terminal freeze) | Press `<Ctrl-q>` to unfreeze <!-- CHECK-USER: does Ctrl-s still freeze the screen in your terminal/tmux while nvim runs? In Insert/Select mode Ctrl-s is LSP signature help --> |
-| Can't exit Neovim | | Type `<Space>Q` or `;qa!<Enter>` |
+| Can't exit Neovim | | Type `<Space>Q` and answer `y` to the confirmation, or `;qa!<Enter>` (no confirmation) |
 | Pasted text looks wrong | Paste from outside with `<Ctrl-v>` in terminal mode | Use `"+p` in Normal mode, or the terminal paste key |
 | Search highlight won't go away | Yellow boxes left over from a search or `*` | Type `;noh<Enter>` (tested). `<Esc>` does **not** clear it in this config |
 | Accidentally opened a macro | Pressed `Q` | Press `q` to stop recording |
@@ -3813,7 +3813,7 @@ Auto-save is also active: files save on `FocusLost` (switching to another app) a
 | Keymap / Command | What it does |
 | --- | --- |
 | `<Space>q` | Save and quit the current window (`:x`) |
-| `<Space>Q` | Quit all windows immediately (`:qa!`) -- no confirmation! |
+| `<Space>Q` | Force quit all windows (`:qa!`) after a Yes/No confirmation |
 | `:q` | Quit current window (fails if unsaved changes) |
 | `:q!` | Quit current window, discard unsaved changes |
 | `:qa` | Quit all windows (fails if any unsaved) |
