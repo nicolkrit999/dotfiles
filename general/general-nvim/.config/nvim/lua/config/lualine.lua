@@ -85,9 +85,13 @@ end
 
 --- show indicator for Chinese IME
 local function ime_state()
-  if vim.g.is_mac then
+  -- needs the xkbswitch library path (vim-xkbswitch's g:XkbSwitchLib); without it there is nothing to ask
+  if vim.g.is_mac and vim.g.XkbSwitchLib then
     -- ref: https://github.com/vim-airline/vim-airline/blob/master/autoload/airline/extensions/xkblayout.vim#L11
-    local layout = fn.libcall(vim.g.XkbSwitchLib, "Xkb_Switch_getXkbLayout", "")
+    local ok, layout = pcall(fn.libcall, vim.g.XkbSwitchLib, "Xkb_Switch_getXkbLayout", "")
+    if not ok or type(layout) ~= "string" then
+      return ""
+    end
 
     -- We can use `xkbswitch -g` on the command line to get current mode.
     -- mode for macOS builtin pinyin IME: com.apple.inputmethod.SCIM.ITABC
