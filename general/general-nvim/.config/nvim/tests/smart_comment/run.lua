@@ -134,6 +134,40 @@ for _, c in ipairs(cases) do
 end
 
 --------------------------------------------------------------------------------------------------
+-- Q73 chain: gcs -> gcs -> gcr over a block holding a multi-line string / heredoc gives the original
+-- back (the string row keeps its own marker), with every backend available for the filetype.
+--------------------------------------------------------------------------------------------------
+local chains = {
+  { "python", { 's = """', "# a", '"""', "x = 1" } },
+  { "python", { "def f():", '    s = """', "    # a  # b", '    """' } },
+  { "lua", { "s = [[", "-- a", "]]" } },
+  { "terraform", { "x = <<EOF", "# a", "EOF" } },
+  { "sh", { "cat <<EOF", "# a", "EOF" } },
+  { "bash", { "cat <<EOF", "# a", "EOF" } },
+}
+for _, ch in ipairs(chains) do
+  local ft, lines = ch[1], ch[2]
+  if (not fft or fft == ft) and (not fname or ("Q73 gcs gcs gcr chain"):find(fname)) then
+    local backends = { "lexer" }
+    if ts_available(ft) then
+      table.insert(backends, 1, "ts")
+    end
+    for _, be in ipairs(backends) do
+      local buf = mkbuf(ft, lines)
+      local okc, err = pcall(function()
+        for _, act in ipairs({ "comment", "comment", "uncomment" }) do
+          sc.apply(buf, 1, vim.api.nvim_buf_line_count(buf), act, { backend = be })
+        end
+      end)
+      local got = lines_of(buf)
+      record(okc and vim.deep_equal(got, lines), "Q73 gcs gcs gcr chain", { ft = ft }, be, "gcr(gcs(gcs(x))) == x",
+        lines, 1, #lines, "c", lines, okc and got or ("ERROR: " .. tostring(err)))
+      cleanup(buf)
+    end
+  end
+end
+
+--------------------------------------------------------------------------------------------------
 -- Keymap tests (real keys through feedkeys)
 --------------------------------------------------------------------------------------------------
 local function keys(k)

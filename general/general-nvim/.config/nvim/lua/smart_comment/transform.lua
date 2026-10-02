@@ -158,6 +158,43 @@ local function normalize_row(line, pcs)
   return rtrim(table.concat(out))
 end
 
+-- Rows of `sel` that start with a comment (at their first non-blank) -> that row with only this
+-- leading marker removed (noclean), i.e. the code as it was before one gcs.
+local function one_marker_rows(L, sel, pieces)
+  local one = {}
+  for _, r in ipairs(sel) do
+    local p = pieces(r)[1]
+    if p and p.k == "comment" and p.open and p.close and p.s == L[r]:find("%S") then
+      one[r] = rtrim(strip_pieces(L[r], { p }, 0, false, true))
+    end
+  end
+  return one
+end
+
+-- Q69 / Q73: which rows of `one` would be inside a multi-line string / heredoc once one marker is
+-- removed from each selected row (rows above / between: `new` when changed, else the buffer text).
+-- Returns a set { [row] = true } (rows whose one-marker text is empty are left out).
+local function string_rows(L, sel, one, new, root)
+  local hyp = {}
+  for i = 1, sel[#sel] do
+    if one[i] then
+      hyp[i] = one[i]
+    elseif new[i] ~= nil then
+      hyp[i] = new[i] or ""
+    else
+      hyp[i] = L[i]
+    end
+  end
+  local scan = lexer.scan(hyp, root, { stop = sel[#sel] })
+  local res = {}
+  for r, t in pairs(one) do
+    if scan.in_string[r] and t ~= "" then
+      res[r] = true
+    end
+  end
+  return res
+end
+
 -- byte offset after the leading whitespace whose display width is <= col
 local function insert_at(text, col, width)
   local k = 0
@@ -270,6 +307,13 @@ function M.run(ctx)
         new[r] = normalize_row(L[r], pcs)
       end
     end
+    -- Q73: the inner-marker clean-up never touches a row whose uncommented text is inside a
+    -- multi-line string (`# # a` there is gcs'd string content `# a`), same check as gcr (Q69).
+    if next(new) then
+      for r in pairs(string_rows(L, sel, one_marker_rows(L, sel, pieces), {}, ctx.root)) do
+        new[r] = nil
+      end
+    end
     return { new = new, before = before, after = after }
   end
 
@@ -289,37 +333,19 @@ function M.run(ctx)
   -- Q69: a row that is inside a multi-line string / heredoc (python """, lua [[ ]], sh/terraform
   -- heredocs) loses only its leading marker. gcs never touches string content (`# a` there becomes
   -- `# # a`), so gcr(gcs(x)) == x for those rows. Everywhere else every marker level goes (spec).
-  -- "Inside a string" is decided on the text with one leading marker removed from each row, i.e.
-  -- the code as it was before gcs; only needed when that differs from the full strip somewhere.
+  -- Only needed when the one-marker text differs from the full strip somewhere.
   if mode == "strip" then
-    local one, differs = {}, false
-    for _, r in ipairs(sel) do
-      local p = pieces(r)[1]
-      if p and p.k == "comment" and p.open and p.close and p.s == L[r]:find("%S") then
-        local t = rtrim(strip_pieces(L[r], { p }, 0, false, true))
-        one[r] = t
-        local full = new[r] == nil and L[r] or new[r]
-        if t ~= "" and t ~= full then
-          differs = true
-        end
+    local one, differs = one_marker_rows(L, sel, pieces), false
+    for r, t in pairs(one) do
+      local full = new[r] == nil and L[r] or new[r]
+      if t ~= "" and t ~= full then
+        differs = true
       end
     end
     if differs then
-      local hyp = {}
-      for i = 1, sel[#sel] do
-        if one[i] then
-          hyp[i] = one[i]
-        elseif new[i] ~= nil then
-          hyp[i] = new[i] or ""
-        else
-          hyp[i] = L[i]
-        end
-      end
-      local scan = lexer.scan(hyp, ctx.root, { stop = sel[#sel] })
-      for r, t in pairs(one) do
-        if scan.in_string[r] and t ~= "" then
-          new[r] = t ~= L[r] and t or nil
-        end
+      for r in pairs(string_rows(L, sel, one, new, ctx.root)) do
+        local t = one[r]
+        new[r] = t ~= L[r] and t or nil
       end
     end
   end

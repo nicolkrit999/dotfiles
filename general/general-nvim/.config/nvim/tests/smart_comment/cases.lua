@@ -305,30 +305,49 @@ both("python", "f-string", { 'f"{x}#no"' }, { '# f"{x}#no"' }, { 'f"{x}#no"' })
 
 --------------------------------------------------------------------------------------------------
 -- Q69: rows inside a multi-line string / heredoc keep their own marker through gcs + gcr: gcs adds
--- one marker (`# a` -> `# # a`), gcr removes only that one there, so gcr(gcs(x)) == x. (gcs on the
--- result again cleans `# # a` to `# a`, so those gcs cases are not idempotent: noidem.)
+-- one marker (`# a` -> `# # a`), gcr removes only that one there, so gcr(gcs(x)) == x. Since Q73
+-- gcs on the result again keeps `# # a` (string content), so these gcs cases are idempotent too.
 --------------------------------------------------------------------------------------------------
 add("python", "Q69 gcs over a string holding a # row", { 's = """', "# a", '"""', "x = 1" }, "c",
-  { '# s = """', "# # a", '# """', "# x = 1" }, { rt = true, noidem = true })
+  { '# s = """', "# # a", '# """', "# x = 1" }, { rt = true })
 add("python", "Q69 gcr keeps the # of a row inside a string", { '# s = """', "# # a", '# """', "# x = 1" }, "u",
   { 's = """', "# a", '"""', "x = 1" })
 add("python", "Q69 indented string rows", { "def f():", '    s = """', "    # a  # b", '    """' }, "c",
-  { "# def f():", '#     s = """', "#     # a  # b", '#     """' }, { rt = true, noidem = true })
+  { "# def f():", '#     s = """', "#     # a  # b", '#     """' }, { rt = true })
 add("python", "Q69 rows outside the string still lose every marker", { "# # a", '# s = """', "# # b", '# """', "# # c" },
   "u", { "a", 's = """', "# b", '"""', "c" })
 add("lua", "Q69 gcs over a long string holding a -- row", { "s = [[", "-- a", "]]" }, "c",
-  { "-- s = [[", "-- -- a", "-- ]]" }, { rt = true, noidem = true })
+  { "-- s = [[", "-- -- a", "-- ]]" }, { rt = true })
 add("lua", "Q69 gcr keeps the -- of a row inside a long string", { "-- s = [[", "-- -- a", "-- ]]" }, "u",
   { "s = [[", "-- a", "]]" })
 add("terraform", "Q69 gcs over a heredoc holding a # row", { "x = <<EOF", "# a", "EOF" }, "c",
-  { "# x = <<EOF", "# # a", "# EOF" }, { rt = true, noidem = true })
+  { "# x = <<EOF", "# # a", "# EOF" }, { rt = true })
 add("terraform", "Q69 gcr keeps the # of a heredoc row", { "# x = <<EOF", "# # a", "# EOF" }, "u",
   { "x = <<EOF", "# a", "EOF" })
+
+--------------------------------------------------------------------------------------------------
+-- Q73: gcs on rows that are already comments never cleans an inner marker from a row whose
+-- uncommented text is inside a multi-line string, so gcs -> gcs -> gcr == the original there.
+--------------------------------------------------------------------------------------------------
+add("python", "Q73 gcs again keeps the # of a string row", { '# s = """', "# # a", '# """' }, "c",
+  { '# s = """', "# # a", '# """' })
+add("python", "Q73 gcs again on an indented string row", { "# def f():", '#     s = """', "#     # a  # b", '#     """' },
+  "c", { "# def f():", '#     s = """', "#     # a  # b", '#     """' })
+add("python", "Q73 gcs again still cleans rows outside the string", { "# # a", '# s = """', "# # b", '# """', "# # c" },
+  "c", { "# a", '# s = """', "# # b", '# """', "# c" })
+add("lua", "Q73 gcs again keeps the -- of a long-string row", { "-- s = [[", "-- -- a", "-- ]]" }, "c",
+  { "-- s = [[", "-- -- a", "-- ]]" })
+add("terraform", "Q73 gcs again keeps the # of a heredoc row", { "# x = <<EOF", "# # a", "# EOF" }, "c",
+  { "# x = <<EOF", "# # a", "# EOF" })
+for _, ft in ipairs({ "sh", "bash" }) do
+  add(ft, "Q73 gcs again keeps the # of a heredoc row", { "# cat <<EOF", "# # a", "# EOF" }, "c",
+    { "# cat <<EOF", "# # a", "# EOF" })
+end
 
 -- sh / bash
 for _, ft in ipairs({ "sh", "bash" }) do
   add(ft, "Q69 gcs over a heredoc holding a # row", { "cat <<EOF", "# a", "EOF" }, "c",
-    { "# cat <<EOF", "# # a", "# EOF" }, { rt = true, noidem = true })
+    { "# cat <<EOF", "# # a", "# EOF" }, { rt = true })
   add(ft, "Q69 gcr keeps the # of a heredoc row", { "# cat <<EOF", "# # a", "# EOF" }, "u",
     { "cat <<EOF", "# a", "EOF" })
   both(ft, "$# is not a comment", { "echo $#" }, { "# echo $#" }, { "echo $#" })

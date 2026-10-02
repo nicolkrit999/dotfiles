@@ -2,7 +2,8 @@
 --
 -- gcs: rows with code become comments (one marker per row, aligned at the minimum indent); misplaced
 --      or redundant markers are removed first. Rows that are already comments are left as they are,
---      apart from dropping redundant inner markers.
+--      apart from dropping redundant inner markers (never on a row whose uncommented text is inside
+--      a multi-line string / heredoc: Q73).
 -- gcr: every comment marker in the rows is removed, turning them back into code. Exception (Q69):
 --      a row inside a multi-line string / heredoc loses only its leading marker, so gcr(gcs(x)) == x.
 --
