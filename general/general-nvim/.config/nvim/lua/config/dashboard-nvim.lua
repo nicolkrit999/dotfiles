@@ -299,3 +299,11 @@ dashboard.setup {
   shortcut_type = "number",
   config = conf,
 }
+
+-- mini.indentscope would draw its scope guide over the indented menu (a column of "▏" on every row)
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup("dashboard_no_indentscope", { clear = true }),
+  pattern = "dashboard",
+  desc = "dashboard: no indent-scope guide on the menu",
+  callback = function(ev) vim.b[ev.buf].miniindentscope_disable = true end,
+})
