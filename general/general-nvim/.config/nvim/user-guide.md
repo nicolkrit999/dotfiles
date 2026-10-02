@@ -3537,7 +3537,7 @@ e          d
 
 ## Align Text
 
-Plugin: **tabular**. Aligns text around a character. It loads with the first Markdown file of the session; in other filetypes run `:Lazy load tabular` first. <!-- CHECK-USER: should tabular get cmd = {"Tabularize"} so it works in every filetype? (config change, not guide) -->
+Plugin: **tabular**. Aligns text around a character. `:Tabularize` works in every filetype from a fresh start (it loads on the first `:Tabularize`, and with the first Markdown file).
 
 | Command | What it does |
 | --- | --- |

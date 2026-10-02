@@ -555,7 +555,7 @@ local plugin_specs = {
   { "vim-pandoc/vim-markdownfootnotes", ft = { "markdown" } },
 
   -- Vim tabular plugin for manipulate tabular, required by markdown plugins
-  { "godlygeek/tabular",                ft = { "markdown" } },
+  { "godlygeek/tabular",                ft = { "markdown" }, cmd = { "Tabularize" } },
 
   -- Markdown previewing in the browser
   {
