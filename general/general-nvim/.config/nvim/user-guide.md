@@ -158,7 +158,7 @@ The same objects work after `c`, `y` and `v`. More: sections 5, 6, 17 and 70.
 | --- | --- |
 | `Qa` | Start recording into register `a` (`qa` works too) |
 | `q` | Stop recording |
-| `@a` / `5@a` / `@@` | Play it once / 5 times / repeat the last one |
+| `@a` / `5@a` / `@@` | Play it once / 5 times / repeat the last one (in Markdown buffers `@@` returns from a footnote instead: use `@a` again) |
 | `:%normal @a` | Play it on every line of the file |
 
 More: sections 29 and 60.
@@ -249,7 +249,7 @@ More: section 7.
 | `<Space>q` | Save and close this window |
 | `<Space>Q` | Quit nvim, asks first (default No), discards unsaved work |
 | `:wa` / `:q!` | Save all buffers / close this window and discard changes |
-| (automatic) | Auto-save: a changed file saves itself when you switch buffer or leave the nvim window; a message "AutoSave: saved at ..." appears |
+| (automatic) | Auto-save: a changed file saves itself when you switch buffer or leave the nvim window; a message "AutoSave: saved at ..." appears (not for unnamed or read-only buffers, terminals, LaTeX and Typst files) |
 
 More: section 72.
 
@@ -358,7 +358,7 @@ More: sections 26 and 51.
 | `<Space>rr` | Run the current file in a terminal on the left |
 | `<F9>` | Run or compile the file (Python, C++, Lua, Vim script, LaTeX) |
 | `:term` | Open a terminal in this window |
-| `<Esc>` / `i` | Leave terminal mode / go back into it (`<Esc>` works differently in the Claude panel, see section 8) |
+| `<Esc>` / `i` | Leave terminal mode / go back into it (`<Esc>` works differently in the Claude panel, see sections 8 and 9) |
 
 More: sections 8 and 19.
 
@@ -502,7 +502,7 @@ Every time you use a jump command (like `gg`, `G`, `/search`, `gd`, etc.), your 
 
 ## Word References (vim-illuminate)
 
-Other uses of the word under the cursor are highlighted when there are at least 2 (from the LSP server, else from Treesitter).
+Other uses of the word under the cursor are highlighted when there are at least 2 (from the LSP server, else from Treesitter). It only runs in these file types: bash, c, cpp, go, java, javascript, json, lua, markdown, nix, python, rust, sh, tex (also plain TeX), toml, typescript, typst, yaml (and the React variants of javascript and typescript).
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -662,6 +662,7 @@ yanky.nvim loads right after the first screen (VeryLazy), so every yank of the s
 | `<Ctrl-t>` | TOGGLE the case of the FIRST letter of that same word (`foo` -> `Foo`, press again -> `foo`); letters whose case does not round-trip (`ß`, `ı`) and non-letters are left alone; the cursor keeps its place |
 | `<Alt-;>` | Insert a semicolon at the end of the line (without moving cursor) |
 | `<Ctrl-a>` | Jump to the beginning of the line |
+| `<Ctrl-a>` on the `:` command line | Jump to the start of the command line (the same key as in insert mode) |
 | `<Ctrl-e>` | Jump to the end of the line (while the completion menu is open it closes the menu instead) |
 | `<Ctrl-d>` | Delete the character to the right of the cursor |
 | `<Ctrl-w>` | Delete the word before the cursor |
@@ -818,8 +819,8 @@ In markdown files only:
 
 | Keymap | Description |
 | --- | --- |
-| `vic` | Select inside a fenced code block |
-| `vac` | Select the code block including the fences |
+| `vic` | Select inside a fenced code block (the object is `ic`, so `dic`, `yic` and `cic` work too) |
+| `vac` | Select the code block including the fences (the object is `ac`: `dac`, `yac`, `cac`) |
 
 ## Precision Selection: From the Cursor to an Exact Spot
 
@@ -1292,7 +1293,7 @@ This is one of the most important sections in the guide. It covers searching wit
 | --- | --- | --- | --- |
 | `\c` | Anywhere in pattern | Force **case-insensitive** | `/\chello` finds `Hello`, `HELLO`, `hello` |
 | `\C` | Anywhere in pattern | Force **case-sensitive** | `/\Chello` only finds `hello` |
-| `\v` | At start of pattern | **Very magic**: regex works like Perl/Python (no need to escape `()`, `|`, `+`, etc.) | `/\vfunction\(.*\)` |
+| `\v` | At start of pattern | **Very magic**: regex works like Perl/Python (no need to escape `()`, `\|`, `+`, etc.) | `/\vfunction\(.*\)` |
 | `\<` and `\>` | Around pattern | **Whole word** match only | `/\<count\>` finds `count` but not `counter` |
 
 By default, search is case-insensitive but becomes case-sensitive if you type any uppercase letter (smart case). This is for `/` and `?` only: while you type a `:` command, smart case is off, so `:s` and `:g` ignore case completely (use `\C` or the `I` flag of `:s` for an exact match).
@@ -1304,7 +1305,7 @@ By default, search is case-insensitive but becomes case-sensitive if you type an
 | `/hello` | `hello`, `Hello`, `HELLO` (smart case: all lowercase = case-insensitive) |
 | `/Hello` | Only `Hello` (smart case: has uppercase = case-sensitive) |
 | `/\vdef \w+\(` | All Python function definitions (very magic regex) |
-| `/\v(TODO\|FIXME\|HACK)` | Any of these three words (very magic `|` for alternation) |
+| `/\v(TODO\|FIXME\|HACK)` | Any of these three words (very magic `\|` for alternation) |
 | `/\<user\>` | Only the word `user`, not `username` or `superuser` |
 | `/error\c` | `error`, `Error`, `ERROR` (forced case-insensitive) |
 
@@ -1511,7 +1512,7 @@ The same `<Ctrl-n>` / `<Ctrl-p>` also move through the completion menu (section 
 | `<Space>fb` | Search currently open buffers |
 | `<Space>fr` | Search recently opened files |
 | `<Space>gbl` | Fuzzy-search git branches (`<Enter>` checks the branch out) |
-| `<Space>gB` | n | Branch menu (the same menu as clicking the branch name in the statusline): choose a branch and Neovim switches to it. Move with `<Ctrl-n>` / `<Ctrl-p>`, see "Moving Inside Any Picker" |
+| `<Space>gB` | Branch menu (the same menu as clicking the branch name in the statusline): choose a branch and Neovim switches to it. Move with `<Ctrl-n>` / `<Ctrl-p>`, see "Moving Inside Any Picker" |
 
 `<Space>ff` has no preview window and shows git status icons next to modified/untracked files; `.gitignore` is respected.
 
@@ -1609,7 +1610,7 @@ Plugin: nvim-lspconfig (default server definitions; Neovim's builtin `vim.lsp` d
 | `nixd` | Nix | `nixd` |
 | `jdtls` | Java (via nvim-java) | `java` (Java devShell) |
 | `clangd` | C/C++ | `clangd` (c-cpp devShell) |
-| `ltex_plus` | Grammar and spelling (LanguageTool) for markdown, tex, typst, gitcommit, text | `ltex-ls-plus` |
+| `ltex_plus` | Grammar and spelling (LanguageTool) for markdown, tex, plain TeX, typst, gitcommit, text | `ltex-ls-plus` |
 | `typos_lsp` | Typos in identifiers and comments, every real file | `typos-lsp` |
 | `tinymist` | Typst | `tinymist` |
 | `texlab` | LaTeX | `texlab` (LaTeX devShell) |
@@ -1631,7 +1632,7 @@ A server is enabled only when ALL its programs are on PATH; otherwise it is skip
 | `K` | **Hover**: show documentation in a floating window |
 | `<Space>rn` | **Rename**: rename the symbol everywhere it's used |
 | `<Space>ca` | **Code action**: show available fixes/refactors |
-| `<Space>fm` | **Format** the file on demand (LSP formatter, async). Lua: stylua. Markdown: prettier. Python and JSON have `<Space>f` (black / `:JSONFormat`) |
+| `<Space>fm` | **Format** the file on demand (LSP formatter, async). Lua: stylua. Markdown: prettier. Lua, Python and JSON have `<Space>f` (stylua / black / `:JSONFormat`) |
 
 ### Built-in Neovim LSP and Diagnostic Keys
 
@@ -2019,7 +2020,8 @@ quicker.nvim formats the list (grouped by file, file-name column at most 40 char
 | `zn` / `zN` | New list from the marked / unmarked items |
 | `zf` | Fuzzy filter the list (fzf) |
 | `<` / `>` | Go to the older / newer quickfix list |
-| `o` / `O` | Open the item and close the quickfix window |
+| `o` | Open the item and close the quickfix window |
+| `O` | Open the item in a window that already shows the buffer (otherwise open it); the list stays open |
 | `t` / `T` | Open in a new tab (`T` stays in the quickfix window) |
 | `<Ctrl-x>` / `<Ctrl-v>` / `<Ctrl-t>` | Open in a horizontal split / vertical split / new tab |
 
@@ -2046,7 +2048,7 @@ quicker.nvim formats the list (grouped by file, file-name column at most 40 char
 | --- | --- | --- |
 | `<Space>mf` | n | Add footnote (markdown buffers only; elsewhere one warning) |
 | `<Space>mr` | n | Return from footnote (markdown buffers only) |
-| `^^` | n, i | Insert footnote number (markdown files only) |
+| `^^` | n, i | Insert footnote number (markdown files only). Because of this map, a single `^` or `@` typed in insert mode appears after a short pause (500 ms), since Neovim waits for a possible second key |
 | `@@` | n, i | Return from footnote (markdown files only; it shadows the macro replay `@@` in Markdown buffers) |
 
 ## Text Objects & Operators (Markdown Only)
@@ -2189,7 +2191,7 @@ Besides the builtin spell checker two language servers report problems as diagno
 | **nvim-lightbulb** | Lightbulb icon when code actions are available |
 | **vim-illuminate** | Highlights the other uses of the word under the cursor (`<Alt-n>` / `<Alt-p>` jump between them) |
 | **vimade** | Dims inactive windows |
-| **Borders** | Every floating window and the completion menu have a single-line border |
+| **Borders** | Floating windows and the completion menu have a single-line border (exceptions: `:Lazy` and the DevDocs float use rounded corners) |
 
 ## Dashboard (Start Screen)
 
@@ -2341,7 +2343,7 @@ URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 | `firenvim` | Browser | Neovim in browser text areas |
 | `aerial.nvim` | `<Space>t` | Symbol outline (section 37) |
 | `treesj` | `gS` | Split / join code blocks |
-| `vim-illuminate` | `<Alt-n>`, `<Alt-p>`, `<Alt-i>` | Word references |
+| `vim-illuminate` | `<Alt-n>`, `<Alt-p>`, `<Alt-i>` | Word references: `<Alt-n>` / `<Alt-p>` jump to the next / previous one, `<Alt-i>` selects the reference (Visual and operator-pending mode) |
 | `vimade` | Automatic | Dims inactive windows |
 | `persistence.nvim` | Dashboard `r` / `L` | Saves a session per folder when you quit (see Session Management) |
 | `snacks.nvim` | Automatic | Nicer input / select popups; light mode for big files |
@@ -2622,7 +2624,7 @@ Plugin: **nvim-treesitter**. It parses your code into a syntax tree (like an AST
 
 ## Installed Parsers
 
-On NixOS the parsers come from the nix store (home-manager); Neovim installs nothing. On other systems Neovim installs this fixed set at startup: cpp, diff, dockerfile, git_config, git_rebase, gitcommit, html, json, lua, python, toml, vim. Other languages get no tree-sitter highlighting there until you run `:TSInstall <lang>`. <!-- CHECK-USER: the non-nix install behaviour cannot be tested on this machine -->
+On Nix-managed systems (a folder `/etc/nixos` or `/etc/nix` exists) the parsers come from the nix store (home-manager); Neovim installs nothing. On other systems Neovim installs this fixed set at startup: cpp, diff, dockerfile, git_config, git_rebase, gitcommit, html, json, lua, python, toml, vim. Neovim itself bundles the parsers for c, lua, vim, vimdoc, query and markdown, so those highlight everywhere. Other languages get no tree-sitter highlighting there until you run `:TSInstall <lang>`. <!-- CHECK-USER: the non-nix install behaviour cannot be tested on this machine -->
 
 ---
 
@@ -2927,7 +2929,7 @@ On Nix systems the JDK comes from the Java devShell (`JAVA_HOME`) and nvim-java 
 | `<Space>jbc` | `:JavaBuildCleanWorkspace` | Clear the jdtls workspace cache (close and reopen Neovim afterwards) |
 | `<Space>jrr` | `:JavaRunnerRunMain` | Run the main class |
 | `<Space>jrs` | `:JavaRunnerStopMain` | Stop the running program |
-| `<Space>jrl` | `:JavaRunnerToggleLogs` | Show/hide the runner log window <!-- CHECK-USER: where does the runner log window open (bottom?) --> |
+| `<Space>jrl` | `:JavaRunnerToggleLogs` | Show/hide the runner log window (it opens as a full-width, 15-line split at the bottom) |
 | `<Space>jrp` | `:JavaProfile` | Profiles UI |
 
 ## Testing
@@ -2959,7 +2961,7 @@ DAP is configured automatically when jdtls starts. Debugging uses the nvim-dap c
 | `<Space>jef` | `:JavaRefactorExtractField` | Extract a field |
 | `<Space>jj` | `:JavaSettingsChangeRuntime` | Switch the JDK version |
 
-The `:Java*` commands (except `:JavaRunnerRunMain` and `:JavaProfile`) exist only while jdtls is attached.
+Only the `:JavaBuild*` and `:JavaRefactor*` commands exist after jdtls has attached; the other `:Java*` commands exist as soon as nvim-java is loaded but do nothing useful without jdtls.
 
 ---
 
@@ -4426,7 +4428,7 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `Qa` ... `q` then `@a` | Record and replay any sequence of actions |
 | `V` select then `:norm @a` | Run a macro on selected lines |
 | `:g/pattern/command` | Run a command on every matching line |
-| `:grep "text"` then `:cfdo ...` | Project-wide search and replace (the substitute + `| update` recipe is in section 67) |
+| `:grep "text"` then `:cfdo ...` | Project-wide search and replace (the substitute + `\| update` recipe is in section 67) |
 | `<Space>rn` | Intelligent rename across project |
 | `qf` list + `:cnext`/`:cprev` | Jump through search results or errors |
 | `.` | Repeat last change (combine with `n` for find-and-repeat) |
@@ -4462,7 +4464,7 @@ Change a value by editing that block; the `neovide_...` names are the standard N
 
 ## Keys that only exist in a GUI
 
-A terminal swallows some key combinations, so `ginit.vim` adds them for GUIs (they show with the description "(GUI)" in `:nmap`):
+A terminal swallows some key combinations, so `ginit.vim` adds them for GUIs (`:imap`, `:cmap` and `:nmap` show them with a description ending in "(GUI)"):
 
 | Keys | Mode | What it does |
 | --- | --- | --- |
