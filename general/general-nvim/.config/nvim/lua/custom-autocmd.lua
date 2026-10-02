@@ -293,11 +293,25 @@ api.nvim_create_autocmd("BufWritePost", {
     local cmd = vim.deepcopy(base)
     table.insert(cmd, ev.file)
     vim.system(cmd, { text = true }, function(result)
-      if result.code ~= 0 then
-        vim.schedule(function()
-          vim.notify(string.format("%s: file is not formatted (%s)", vim.fs.basename(ev.file), base[1]), vim.log.levels.WARN)
-        end)
+      if result.code == 0 then
+        return
       end
+      local name = vim.fs.basename(ev.file)
+      local msg
+      if result.code == 1 then
+        -- exit 1 = the check ran and found formatting differences (stylua and black)
+        msg = string.format("%s: file is not formatted (%s)", name, base[1])
+      else
+        -- other codes = the tool could not check the file (syntax error, crash, ...)
+        local first = vim.split(vim.trim(result.stderr or ""), "\n", { plain = true })[1] or ""
+        msg = string.format("%s: %s could not check the file (syntax error?)", name, base[1])
+        if first ~= "" then
+          msg = msg .. "\n" .. first
+        end
+      end
+      vim.schedule(function()
+        vim.notify(msg, vim.log.levels.WARN)
+      end)
     end)
   end,
 })
