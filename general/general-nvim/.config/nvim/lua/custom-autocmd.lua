@@ -227,25 +227,39 @@ api.nvim_create_autocmd("ColorScheme", {
 api.nvim_create_autocmd("BufEnter", {
   pattern = "*",
   group = api.nvim_create_augroup("auto_close_win", { clear = true }),
-  desc = "Quit Nvim if we have only one window, and its filetype match our pattern",
-  ---@diagnostic disable-next-line: unused-local
-  callback = function(context)
-    local quit_filetypes = { "qf", "aerial", "NvimTree" }
+  desc = "Close the tab (quit Nvim on the last tab) when only qf/aerial/NvimTree windows are left in it",
+  callback = function()
+    local quit_filetypes = { qf = true, aerial = true, NvimTree = true }
 
-    local should_quit = true
-    local tabwins = api.nvim_tabpage_list_wins(0)
-
-    for _, win in pairs(tabwins) do
-      local buf = api.nvim_win_get_buf(win)
-      local buf_type = vim.api.nvim_get_option_value("filetype", { buf = buf })
-
-      if not vim.tbl_contains(quit_filetypes, buf_type) then
-        should_quit = false
+    for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
+      -- floating windows (notifications, popups) do not keep the tab alive
+      if api.nvim_win_get_config(win).relative == "" then
+        local buf = api.nvim_win_get_buf(win)
+        if not quit_filetypes[vim.bo[buf].filetype] then
+          return
+        end
       end
     end
 
-    if should_quit then
-      vim.cmd("qall")
+    if #api.nvim_list_tabpages() == 1 then
+      -- scheduled: a :qall run inside this autocmd would skip the (non-nested) VimLeavePre
+      -- autocmds, e.g. persistence.nvim's session save
+      vim.schedule(function()
+        vim.cmd("qall")
+      end)
+      return
+    end
+
+    -- other tabs exist: close only this one
+    local tab = api.nvim_get_current_tabpage()
+    local ok = pcall(vim.cmd.tabclose)
+    if not ok then
+      -- e.g. E1312 (window layout locked during this autocmd): retry once the event is done
+      vim.schedule(function()
+        if api.nvim_tabpage_is_valid(tab) and #api.nvim_list_tabpages() > 1 then
+          vim.cmd.tabclose(api.nvim_tabpage_get_number(tab))
+        end
+      end)
     end
   end,
 })
