@@ -461,7 +461,8 @@ require("lualine").setup {
         "diagnostics",
         sources = { "nvim_diagnostic" },
         color = { gui = "bold" },
-        symbols = { error = "🆇 ", warn = "⚠️ ", info = "ℹ️ ", hint = " " },
+        -- same glyphs as the sign column (lua/diagnostic-conf.lua)
+        symbols = { error = "\u{F015A} ", warn = "\u{F002A} ", info = "\u{F02FD} ", hint = "\u{F0336} " },
       },
       {
         virtual_env,
