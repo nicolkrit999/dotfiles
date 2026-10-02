@@ -172,6 +172,10 @@ end
 function M.apply(buf, s, e, action, opts)
   opts = opts or {}
   buf = (buf == nil or buf == 0) and vim.api.nvim_get_current_buf() or buf
+  if not vim.bo[buf].modifiable then
+    vim.notify("smart_comment: buffer is not modifiable", vim.log.levels.WARN)
+    return false
+  end
   local root = specs.for_buf(buf)
   if not root then
     vim.notify("smart_comment: no comment syntax for filetype '" .. vim.bo[buf].filetype .. "'", vim.log.levels.WARN)
