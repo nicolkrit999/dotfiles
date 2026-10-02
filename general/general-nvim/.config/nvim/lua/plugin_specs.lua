@@ -932,7 +932,14 @@ local plugin_specs = {
     },
   },
   -- show and trim trailing whitespaces
-  { "nvim-zh/whitespace.nvim", event = "VeryLazy" },
+  {
+    "nvim-zh/whitespace.nvim",
+    event = "VeryLazy",
+    init = function()
+      -- plugin default list + markdown: trailing spaces there are hard line breaks, not errors
+      vim.g.trailing_whitespace_exclude_filetypes = { "alpha", "git", "floggraph", "dashboard", "markdown" }
+    end,
+  },
 
   -- file explorer
   {
