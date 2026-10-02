@@ -79,7 +79,17 @@ function M.setup(ctx)
   -- :NoMatchParen is vim-matchup's global switch and would stay off in every buffer)
   vim.b[buf].matchup_matchparen_enabled = 0
   vim.b[buf].matchup_matchparen_fallback = 0
-  Snacks.util.wo(0, { foldmethod = "manual", statuscolumn = "", conceallevel = 0 })
+  -- remember the window options per window (restored by the `:set ft=` escape hatch)
+  local orig = {}
+  local win_opts = { "statuscolumn", "foldmethod", "conceallevel", "foldcolumn" }
+  local wins = vim.fn.win_findbuf(buf)
+  local cur = vim.api.nvim_get_current_win()
+  if vim.api.nvim_win_get_buf(cur) == buf and not vim.tbl_contains(wins, cur) then table.insert(wins, cur) end
+  for _, win in ipairs(wins) do
+    orig[win] = {}
+    for _, o in ipairs(win_opts) do orig[win][o] = vim.wo[win][o] end
+  end
+  Snacks.util.wo(0, { foldmethod = "manual", statuscolumn = "", conceallevel = 0, foldcolumn = "0" })
   vim.b[buf].completion = false -- read by the nvim-cmp `enabled` function
   vim.b[buf].minianimate_disable = true
   vim.b[buf].minihipatterns_disable = true
@@ -98,6 +108,11 @@ function M.setup(ctx)
         vim.b[ev.buf][var] = nil
       end
       vim.lsp.semantic_tokens.enable(true, { bufnr = ev.buf })
+      for win, o in pairs(orig) do
+        if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == ev.buf then
+          for name, val in pairs(o) do vim.wo[win][name] = val end
+        end
+      end
       pcall(vim.api.nvim_del_augroup_by_id, group)
     end,
   })
