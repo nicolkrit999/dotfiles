@@ -444,7 +444,14 @@ local plugin_specs = {
   },
 
   -- Handy unix command inside Vim (Rename, Move etc.)
-  { "tpope/vim-eunuch",          cmd = { "Rename", "Delete" } },
+  -- (every command plugin/eunuch.vim defines, so each one works from a fresh start)
+  {
+    "tpope/vim-eunuch",
+    cmd = {
+      "Mkdir", "Unlink", "Remove", "Delete", "Copy", "Move", "Duplicate", "Rename", "Chmod",
+      "Cfind", "Clocate", "Lfind", "Llocate", "SudoEdit", "SudoWrite", "Wall", "W",
+    },
+  },
 
   -- Repeat vim motions
   { "tpope/vim-repeat",          event = "VeryLazy" },

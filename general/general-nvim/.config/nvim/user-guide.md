@@ -2694,7 +2694,7 @@ Plugin: **nvim-gdb**. For C/C++ debugging with GDB. Available on Linux and Windo
 | Plugin / Feature | What it does |
 | --- | --- |
 | **nvim-tree** (`<Space>s`) | Visual file browser. Create (`a`), delete (`d`), rename (`r`), copy (`c`), cut (`x`), paste (`p`). |
-| **vim-eunuch** | Unix file commands: `:Rename <newname>`, `:Delete` (deletes current file and buffer); once eunuch is loaded (by the first `:Rename` or `:Delete`) also `:Move`, `:Mkdir`. <!-- CHECK-USER: :Move and :Mkdir only exist after vim-eunuch is loaded; add them to its lazy cmd list, or keep documenting it like this? --> |
+| **vim-eunuch** | Unix file commands, all available from a fresh start (lazy `cmd` list): `:Rename <newname>`, `:Move <path>` (move the file, creating directories), `:Duplicate <name>`, `:Copy <path>`, `:Delete` / `:Remove` / `:Unlink` (delete the file; `:Delete` also the buffer), `:Mkdir[!] <dir>` (`!` = with parents), `:Chmod <mode>`, `:Cfind` / `:Lfind` / `:Clocate` / `:Llocate` (find / locate into the quickfix / location list), `:SudoEdit`, `:SudoWrite`, `:Wall` (write all) and `:W` (= `:Wall`). |
 | **gx.nvim** (`gx`) | Open the URL or file path under cursor in a browser. |
 | `:CopyPath absolute` | Copy the full file path to clipboard. |
 | `:CopyPath relative` | Copy path relative to project root. |
