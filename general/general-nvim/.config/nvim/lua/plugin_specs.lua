@@ -997,6 +997,8 @@ local plugin_specs = {
   {
     "nvim-tree/nvim-tree.lua",
     keys = { { "<space>s", desc = "toggle nvim-tree" } },
+    -- the :NvimTree* commands (e.g. :NvimTreeFindFile) also load it
+    cmd = { "NvimTreeToggle", "NvimTreeOpen", "NvimTreeFocus", "NvimTreeFindFile", "NvimTreeFindFileToggle" },
     config = function()
       require("config.nvim-tree")
     end,

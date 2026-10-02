@@ -1135,7 +1135,7 @@ This is the **most practical replacement method** for everyday use. It gives you
 
 # 11. File Explorer (`nvim-tree`)
 
-Plugin: nvim-tree.lua. A sidebar file tree.
+Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or the first `:NvimTreeToggle`, `:NvimTreeOpen`, `:NvimTreeFocus`, `:NvimTreeFindFile` or `:NvimTreeFindFileToggle`; `nvim <dir>` and the dashboard entry open it too.
 
 | Keymap | Context | Description |
 | --- | --- | --- |
