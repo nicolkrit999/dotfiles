@@ -141,32 +141,4 @@ function M.get_py_env()
   return ""
 end
 
----@param is_local boolean
----@return string[]
-function M._get_branch(is_local)
-  local git_cmd
-  if is_local then
-    git_cmd = { "git", "branch", "--list", "--format=%(refname:short)" }
-  else
-    git_cmd = { "git", "for-each-ref", "--exclude=refs/remotes/*/HEAD", "--format=%(refname:short)", "refs/remotes/" }
-  end
-  if fn.executable("git") ~= 1 then
-    return {}
-  end
-  local ok, result = pcall(function()
-    return vim.system(git_cmd, { text = true }):wait()
-  end)
-  if not ok or result.code ~= 0 then
-    vim.notify("error fetching git branch", vim.log.levels.WARN)
-    return {}
-  end
-  return vim.split(result.stdout, "\n", { trimempty = true })
-end
-
---- Get local and remote branches
----@return {local: string[], remote: string[]}
-function M.get_git_branches()
-  return { ["local"] = M._get_branch(true), remote = M._get_branch(false) }
-end
-
 return M
