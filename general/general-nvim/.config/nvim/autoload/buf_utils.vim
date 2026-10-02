@@ -5,7 +5,7 @@ function! buf_utils#GoToBuffer(count, direction) abort
     elseif a:direction ==# 'backward'
       bprevious
     else
-      echoerr 'Bad argument ' a:direction
+      echoerr 'Bad argument ' . a:direction
     endif
     return
   endif
