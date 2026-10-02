@@ -166,7 +166,13 @@ conf.center = {
     desc = "Restore session (this folder)",
     action = function()
       require("lazy").load { plugins = { "persistence.nvim" } }
-      require("persistence").load()
+      local ps = require("persistence")
+      -- same lookup as persistence.load(): branch session first, then the plain folder session
+      if vim.fn.filereadable(ps.current()) == 0 and vim.fn.filereadable(ps.current { branch = false }) == 0 then
+        vim.notify("no saved session for this folder", vim.log.levels.WARN)
+        return
+      end
+      ps.load()
     end,
     key = "r",
     key_format = "[%s]",
@@ -176,7 +182,12 @@ conf.center = {
     desc = "Restore last session",
     action = function()
       require("lazy").load { plugins = { "persistence.nvim" } }
-      require("persistence").load { last = true }
+      local ps = require("persistence")
+      if not ps.last() then
+        vim.notify("no saved session", vim.log.levels.WARN)
+        return
+      end
+      ps.load { last = true }
     end,
     key = "L",
     key_format = "[%s]",

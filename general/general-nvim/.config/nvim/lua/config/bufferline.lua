@@ -7,7 +7,12 @@ require("bufferline").setup {
       -- Closing the last buffer leaves a listed, unmodified empty buffer behind: that is a success.
       local ok = pcall(vim.cmd.bdelete, bufnr)
       if not ok or (vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].buflisted and vim.bo[bufnr].modified) then
-        vim.notify("unsaved changes, buffer kept", vim.log.levels.WARN)
+        local running = false
+        if vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].buftype == "terminal" then
+          local job = vim.b[bufnr].terminal_job_id
+          running = job ~= nil and vim.fn.jobwait({ job }, 0)[1] == -1
+        end
+        vim.notify(running and "running terminal, buffer kept" or "unsaved changes, buffer kept", vim.log.levels.WARN)
       end
     end,
     right_mouse_command = false,
