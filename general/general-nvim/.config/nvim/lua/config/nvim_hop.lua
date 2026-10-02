@@ -3,7 +3,6 @@ local hop = require("hop")
 hop.setup {
   case_insensitive = true,
   quit_key = "<Esc>",
-  match_mappings = { "zh_sc" },
 }
 
 keymap.set({ "n", "x", "o" }, "f", "", {
