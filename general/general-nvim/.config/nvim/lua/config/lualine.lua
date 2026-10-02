@@ -13,7 +13,8 @@ local git_state = { root = nil, ahead = 0, behind = 0, running = false }
 local last_fetch = {} -- root -> vim.uv.now() of the last fetch start
 local last_count = {} -- root -> vim.uv.now() of the last recount start
 
---- vim.system that never throws and never prompts; on_exit always runs (code -1 on spawn failure)
+--- vim.system that never throws and never asks in the terminal (GIT_TERMINAL_PROMPT=0);
+--- on_exit always runs (code -1 on spawn failure)
 local function git_async(root, args, on_exit)
   local cmd = vim.list_extend({ "git" }, args)
   local ok = pcall(vim.system, cmd, {
