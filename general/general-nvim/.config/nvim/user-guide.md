@@ -304,6 +304,14 @@ More: sections 20 and 48.
 
 More: sections 7 and 32.
 
+### Neovide (Neovim in its own window)
+
+| Command | What it does |
+| --- | --- |
+| `neovide` | Open Neovim in a normal desktop window instead of the terminal, with smooth cursor animation. Same config, same keys. |
+
+Full explanation: [section 77](#77-neovide-graphical-neovim).
+
 ### Lists with a search bar (pickers)
 
 | Keys | What it does |
@@ -4420,3 +4428,43 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `<Space>rn` | Intelligent rename across project |
 | `qf` list + `:cnext`/`:cprev` | Jump through search results or errors |
 | `.` | Repeat last change (combine with `n` for find-and-repeat) |
+
+---
+
+# 77. Neovide (Graphical Neovim)
+
+Neovide is a graphical program that runs Neovim in its own desktop window, instead of inside a terminal such as kitty and tmux. It is the same Neovim and the same configuration (`~/.config/nvim`); only the window around it changes. Nothing in this guide depends on it: everything works in the terminal.
+
+## Starting it
+
+| Command | What it does |
+| --- | --- |
+| `neovide` | Open an empty Neovim window |
+| `neovide file.txt` | Open a file in a Neovide window |
+
+You start it from a terminal (or your application launcher). A Neovide window has no tmux and no terminal around it, so tmux keys do nothing there; the editor itself, `:terminal` and the Claude panel work as usual.
+
+## What this configuration sets for Neovide
+
+The settings live in the Neovide block of `ginit.vim` in the nvim config (they apply only when Neovide runs):
+
+| Setting | Value | Effect |
+| --- | --- | --- |
+| `guifont` | Hack NF, size 10 | The font of the window |
+| `neovide_transparency` | 1.0 | Opaque window (no see-through background) |
+| `neovide_cursor_animation_length` | 0.1 | The cursor glides to its new place in 0.1 seconds |
+| `neovide_cursor_trail_size` | 0.3 | A short trail behind the moving cursor |
+| `neovide_cursor_vfx_mode` | empty | No particle effects around the cursor |
+
+Change a value by editing that block; the `neovide_...` names are the standard Neovide options.
+
+## Keys that only exist in a GUI
+
+A terminal swallows some key combinations, so `ginit.vim` adds them for GUIs (they show with the description "(GUI)" in `:nmap`):
+
+| Keys | Mode | What it does |
+| --- | --- | --- |
+| `<Shift-Insert>` | Insert, command line | Paste the system clipboard |
+| `<Ctrl-6>` | Normal | Jump to the alternate (previously open) buffer, like `<Ctrl-^>` |
+
+`ginit.vim` also has small blocks for other graphical frontends (nvim-qt and fvim); they do nothing in Neovide.
