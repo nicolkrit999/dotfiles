@@ -122,6 +122,7 @@ api.nvim_create_autocmd({ "VimEnter" }, {
 })
 
 -- Do not use smart case in command line mode, extracted from https://vi.stackexchange.com/a/16511/15292.
+-- :s / :g ignore case completely (like their live preview); / and ? keep smartcase.
 api.nvim_create_augroup("dynamic_smartcase", { clear = true })
 api.nvim_create_autocmd("CmdlineEnter", {
   group = "dynamic_smartcase",
@@ -135,7 +136,10 @@ api.nvim_create_autocmd("CmdlineLeave", {
   group = "dynamic_smartcase",
   pattern = ":",
   callback = function()
-    vim.o.smartcase = true
+    -- CmdlineLeave fires BEFORE the command runs: restore smartcase only after it has executed
+    vim.schedule(function()
+      vim.o.smartcase = true
+    end)
   end,
 })
 
