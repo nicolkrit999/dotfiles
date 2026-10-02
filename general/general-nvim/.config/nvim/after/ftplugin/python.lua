@@ -5,7 +5,6 @@ local opt = vim.opt_local
 opt.wrap = false
 opt.sidescroll = 5 -- global-only option
 opt.sidescrolloff = 2
-opt.colorcolumn = "100"
 
 opt.tabstop = 4
 opt.softtabstop = 4

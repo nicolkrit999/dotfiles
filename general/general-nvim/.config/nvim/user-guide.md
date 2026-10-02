@@ -2065,6 +2065,7 @@ Connections come from the environment (set them in an untracked shell file, dire
 | JSON | `<Space>f` runs `:JSONFormat` on the buffer (in Visual mode on the selection) |
 | Typst | `<Space>tw` TypstWatch, `textwidth=100`, wrap |
 | Vim script | `<F9>` sources the file |
+| Line-length marker | The coloured column marker (`colorcolumn`) sits at 100 by default and, per language, exactly at that language's convention: 80 for C, C++, shell, YAML, Vim script, Haskell, R, JavaScript and TypeScript (also jsx/tsx); 88 for Python (black); 100 for Java, Rust, Swift, Nix, Typst; 120 for Lua, PHP, TeX; plain `.txt` files show none. A line touching the marker is over that language's limit. Nothing wraps or reflows. |
 
 ---
 
