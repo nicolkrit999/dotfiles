@@ -96,7 +96,7 @@ end
 
 local function spell()
   if vim.o.spell then
-    return string.format("[SPELL]")
+    return "[SPELL]"
   end
 
   return ""
@@ -246,9 +246,7 @@ local diff = function()
   local remove_num = git_status.removed
   local add_num = git_status.added
 
-  local info = { added = add_num, modified = modify_num, removed = remove_num }
-  -- vim.print(info)
-  return info
+  return { added = add_num, modified = modify_num, removed = remove_num }
 end
 
 local virtual_env = function()
@@ -387,7 +385,6 @@ require("lualine").setup {
     theme = "auto",
     component_separators = { left = "\\", right = "/" },
     section_separators = { left = "\u{e0b8}", right = "\u{e0ba}" },
-    disabled_filetypes = {},
     always_divide_middle = false,
     refresh = {
       statusline = 1000,
