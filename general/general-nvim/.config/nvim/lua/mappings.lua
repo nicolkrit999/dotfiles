@@ -149,18 +149,21 @@ keymap.set("x", ">", ">gv")
 
 -- Edit and reload nvim config file quickly
 keymap.set("n", "<leader>ev", "<cmd>tabnew $MYVIMRC <bar> tcd %:h<cr>", { silent = true, desc = "open init.lua" })
--- Restart nvim (0.12 `:restart`) after writing all buffers, and reopen the current file.
--- Re-sourcing $MYVIMRC is not supported with lazy.nvim. The builtin `ZR` also restarts,
--- but does not write all buffers nor reopen the current file.
+-- Restart nvim (0.12 `:restart`) after writing all buffers. `:restart` saves a session and
+-- restores it in the new instance, so windows/tabs/files come back by themselves. 'terminal' is
+-- removed from 'sessionoptions' first (only in this dying instance), so terminals such as the
+-- Claude panel are NOT re-launched. Re-sourcing $MYVIMRC is not supported with lazy.nvim.
+-- The builtin `ZR` also restarts, but does not write the buffers.
 keymap.set("n", "<leader>sv", function()
-  local cur = vim.fn.expand("%:p")
   vim.cmd("silent! wall")
-  if cur ~= "" then
-    vim.cmd("restart edit " .. vim.fn.fnameescape(cur))
-  else
-    vim.cmd("restart")
+  local ssop = vim.o.sessionoptions
+  vim.opt.sessionoptions:remove("terminal")
+  local ok, err = pcall(vim.cmd, "restart")
+  if not ok then -- e.g. no UI attached: this instance lives on, so put the option back
+    vim.o.sessionoptions = ssop
+    vim.notify(tostring(err), vim.log.levels.ERROR)
   end
-end, { silent = true, desc = "restart nvim (write all, reopen current file)" })
+end, { silent = true, desc = "restart nvim (write all, restore windows, no terminals)" })
 
 -- Reselect the text that has just been pasted, see also https://stackoverflow.com/a/4317090/6064933
 keymap.set("n", "<leader>v", "printf('`[%s`]', getregtype()[0])", { expr = true, desc = "reselect last pasted area" })
