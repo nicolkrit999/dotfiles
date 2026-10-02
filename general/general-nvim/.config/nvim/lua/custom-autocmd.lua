@@ -87,11 +87,32 @@ api.nvim_create_autocmd({ "FocusGained", "CursorHold" }, {
 })
 
 
--- Resize all windows when we resize the terminal
+-- Resize all windows when we resize the terminal; the Claude Code panel goes back to its
+-- 30% width (split_ratio in plugin_specs.lua) instead of an equal share
 api.nvim_create_autocmd("VimResized", {
   group = api.nvim_create_augroup("win_autoresize", { clear = true }),
-  desc = "autoresize windows on resizing operation",
-  command = "wincmd =",
+  desc = "autoresize windows on resizing operation (Claude Code panel back to 30%)",
+  callback = function()
+    vim.cmd("wincmd =")
+
+    local ok, cc = pcall(require, "claude-code")
+    if not ok or type(cc) ~= "table" or not cc.claude_code then
+      return
+    end
+    local claude_bufs = {}
+    for _, b in pairs(cc.claude_code.instances or {}) do
+      claude_bufs[b] = true
+    end
+    if next(claude_bufs) == nil then
+      return
+    end
+    local width = math.floor(vim.o.columns * 0.3)
+    for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
+      if claude_bufs[api.nvim_win_get_buf(win)] and api.nvim_win_get_config(win).relative == "" then
+        pcall(api.nvim_win_set_width, win, width)
+      end
+    end
+  end,
 })
 
 -- `nvim <dir>`: cd into the directory, then show the tree there
