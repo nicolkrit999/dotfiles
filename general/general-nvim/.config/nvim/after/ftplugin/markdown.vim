@@ -1,16 +1,17 @@
-set concealcursor=c
-set synmaxcol=3000  " For long Chinese paragraphs
+setlocal concealcursor=c
+setlocal synmaxcol=3000  " For long Chinese paragraphs
 
-set wrap
+setlocal wrap
 
 " Fix minor issue with footnote, see https://github.com/vim-pandoc/vim-markdownfootnotes/issues/22
 " Also remove the plugin's default <Leader>f insert-mode mapping which
 " hijacks Space+f when typed quickly (since leader = space).
 if exists(':FootnoteNumber')
-  silent! iunmap <buffer> <Leader>f
-  silent! nunmap <buffer> <Leader>f
-  silent! iunmap <buffer> <Leader>r
-  silent! nunmap <buffer> <Leader>r
+  for [s:mode, s:lhs] in [['i', '<Leader>f'], ['n', '<Leader>f'], ['i', '<Leader>r'], ['n', '<Leader>r']]
+    if get(maparg(s:lhs, s:mode, 0, 1), 'buffer', 0)
+      execute 'silent! ' . s:mode . 'unmap <buffer> ' . s:lhs
+    endif
+  endfor
 
   nnoremap <buffer><silent> ^^ :<C-U>call markdownfootnotes#VimFootnotes('i')<CR>
   inoremap <buffer><silent> ^^ <C-O>:<C-U>call markdownfootnotes#VimFootnotes('i')<CR>

@@ -2,8 +2,8 @@
 -- Loaded automatically for *.typ buffers by Neovim's after/ftplugin mechanism.
 
 -- Reasonable defaults for prose-heavy markup files.
-vim.o.textwidth = 100
-vim.o.wrap      = true
+vim.opt_local.textwidth = 100
+vim.opt_local.wrap      = true
 
 -- <leader>tw  — launch typst watch (recompile + open PDF) in background.
 -- TypstWatch is provided by kaarmu/typst.vim.
