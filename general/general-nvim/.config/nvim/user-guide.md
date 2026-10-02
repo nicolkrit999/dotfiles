@@ -77,11 +77,9 @@ Most-used keybinds at a glance. Every keymap here is explained in detail later.
 | `gcc` | Toggle comment on current line |
 | `gc` | Toggle comment on selection |
 | `<Alt-j>` / `<Alt-k>` | Move line(s) down / up |
-| `<Space>o` / `<Space>O` | Insert blank line below / above |
 | `<Space>rr` | Run current file |
 | `<Space>gs` | Git status |
 | `<Space>cc` | Toggle Claude Code |
-| `<Space>cpc` | Toggle Copilot Chat |
 | `u` / `<Ctrl-r>` | Undo / redo |
 | `n` / `N` | Next / previous search match (with count) |
 
@@ -308,8 +306,6 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 | `<Alt-k>` | n | Move current line up one position |
 | `<Alt-j>` | v | Move selected lines down |
 | `<Alt-k>` | v | Move selected lines up |
-| `<Space>o` | n | Insert a blank line below (cursor stays in place) |
-| `<Space>O` | n | Insert a blank line above (cursor stays in place) |
 | `J` | n | Join the current line with the next line (cursor stays in place) |
 | `gJ` | n | Join lines without inserting a space (cursor stays in place) |
 
@@ -454,19 +450,6 @@ All the `vi` and `va` patterns above work with any operator, not just `v`:
 | `dit` | Delete everything inside HTML tags |
 | `ci'` | Change text inside single quotes |
 | `dip` | Delete the entire paragraph |
-
-### Treesitter Text Objects (Plugin)
-
-These select code structures intelligently:
-
-| Keymap | Mode | Description |
-| --- | --- | --- |
-| `vaf` | x | Select around the entire function |
-| `vif` | x | Select inside the function body |
-| `vac` | x | Select around the entire class |
-| `vic` | x | Select inside the class body |
-| `daf` | n | Delete the entire function |
-| `cif` | n | Change the function body |
 
 ### Markdown Code Block Text Objects
 
@@ -890,35 +873,13 @@ The terminal automatically starts in insert mode (you can type immediately) and 
 
 ---
 
-# 9. AI Assistant Windows (Copilot Chat & Claude Code)
-
-## Copilot Chat
-
-| Keymap | Mode | Description |
-| --- | --- | --- |
-| `<Space>cpc` | n | **Toggle** Copilot Chat window (opens/closes it) |
-| `<Space>cpe` | v | Send selected code to Copilot with "Explain" prompt |
-| `<Space>cpo` | v | Send selected code to Copilot with "Optimize" prompt |
-
-The Copilot Chat window opens as a split. Navigate to/from it with `<Ctrl-w>h/j/k/l` or arrow keys. Close it with `<Space>cpc` (toggle) or `<Space>q`.
-
-### Copilot Inline Suggestions
-
-Ghost text (grey text) appears as you type in insert mode:
-
-| Keymap | Description |
-| --- | --- |
-| `<Tab>` | Accept the suggestion (when completion menu is NOT open) |
-| `<Alt-]>` | Cycle to the next suggestion |
-| `<Alt-[>` | Cycle to the previous suggestion |
-| `<Ctrl-]>` | Dismiss the current suggestion |
+# 9. AI Assistant Window (Claude Code)
 
 ## Claude Code
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
 | `<Space>cc` | n | **Toggle** Claude Code terminal (opens/closes it) |
-| `<Space>ct` | t | Toggle Claude Code while in terminal mode |
 | `<Space>cR` | n | Resume/continue the last Claude conversation |
 | `<Space>cV` | n | Start Claude in verbose mode |
 
@@ -1284,7 +1245,7 @@ Plugin: nvim-cmp. Sources: LSP, UltiSnips snippets, file paths, buffer words.
 
 | Keymap | Description |
 | --- | --- |
-| `<Tab>` | If menu is open: select next item. If Copilot ghost text visible: accept it. Otherwise: normal tab. |
+| `<Tab>` | If menu is open: select next item. Otherwise: normal tab. |
 | `<CR>` (Enter) | Confirm the selected completion |
 | `<Ctrl-e>` | Dismiss / close the completion menu |
 | `<Esc>` | Close the completion menu |
@@ -1457,7 +1418,6 @@ Shows `+` `~` `_` signs in the gutter for added/changed/deleted lines.
 | Plugin | Command / Trigger | Description |
 | --- | --- | --- |
 | neogit | `:Neogit` | Full git UI (magit-like) |
-| git-conflict.nvim | Automatic | Highlights and resolves merge conflicts |
 | diffview.nvim | `:DiffviewOpen` | Side-by-side diff viewer |
 | vim-flog | `:Flog` | Visual git log graph |
 
@@ -1468,13 +1428,6 @@ Shows `+` `~` `_` signs in the gutter for added/changed/deleted lines.
 ## Treesitter (Plugin)
 
 Provides improved syntax highlighting and code understanding. Auto-installs parsers for Python, C++, Lua, Vim, JSON, TOML, HTML.
-
-## Treesitter Text Objects (Plugin)
-
-| Keymap | Mode | Description |
-| --- | --- | --- |
-| `af` / `if` | x, o | Select around / inside function (linewise) |
-| `ac` / `ic` | x, o | Select around / inside class (linewise) |
 
 ## targets.vim (Plugin)
 
@@ -1519,13 +1472,11 @@ Command: `:YankyRingHistory` to browse all yank history.
 
 ---
 
-# 25. Undo History (`vim-mundo`)
+# 25. Undo History
 
 | Keymap | Description |
 | --- | --- |
 | `<Space>u` | Toggle undo tree panel |
-
-Inside the panel: `j`/`k` to navigate, `<Enter>` to revert, `p` to diff, `q` to quit.
 
 ---
 
@@ -1560,7 +1511,6 @@ Inside the panel: `j`/`k` to navigate, `<Enter>` to revert, `p` to diff, `q` to 
 | Keymap | Description |
 | --- | --- |
 | `<Alt-m>` | Toggle markdown preview in browser |
-| `<Shift-Alt-m>` | Stop markdown preview (macOS/Windows) |
 
 ## Footnotes
 
@@ -1584,7 +1534,6 @@ Inside the panel: `j`/`k` to navigate, `<Enter>` to revert, `p` to diff, `q` to 
 
 - **render-markdown.nvim**: In-editor rendering (pauses in insert mode). Max file: 1.5MB.
 - **tabular**: Table alignment. Command: `:Tabularize`
-- **vim-grammarous**: Grammar check (macOS only). `<Ctrl-n>`/`<Ctrl-p>` for next/prev error.
 
 ---
 
@@ -1794,7 +1743,6 @@ URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 | `vim-obsession` | `:Obsession` | Session save/restore |
 | `instant.nvim` | Automatic | Collaborative editing (localhost:8081) |
 | `firenvim` | Browser | Neovim in browser text areas |
-| `vlime` | Lisp files | Common Lisp REPL (requires `sbcl`) |
 
 ---
 
@@ -1864,9 +1812,6 @@ LSP server starts (e.g., pyright for Python) --> diagnostics, go-to-definition, 
 Completion engine (nvim-cmp) connects to LSP --> autocomplete suggestions as you type
   |
   v
-Copilot connects --> AI ghost text suggestions
-  |
-  v
 Gitsigns reads git status --> change markers in gutter
   |
   v
@@ -1896,15 +1841,9 @@ LSP is a protocol that lets Neovim communicate with language-specific servers (p
 
 ## How LSP Is Managed
 
-Three plugins work together:
-
 | Plugin | What it does |
 | --- | --- |
-| **mason.nvim** | Downloads and installs LSP servers, linters, and formatters. Open with `:Mason`. |
-| **mason-lspconfig.nvim** | Bridges Mason with nvim-lspconfig. Auto-installs servers when needed. |
 | **nvim-lspconfig** | Configures how Neovim talks to each LSP server. |
-
-On NixOS, servers are managed by the system package manager instead of Mason.
 
 ## Configured Servers and What They Provide
 
@@ -1996,19 +1935,16 @@ For LaTeX files, there's also an **omni** source for BibTeX and citation complet
 
 ## The Smart Tab Behavior
 
-`<Tab>` has three behaviors depending on context:
+`<Tab>` has two behaviors depending on context:
 
 1. **Completion menu is visible**: Selects the next item in the menu
-2. **Copilot ghost text is visible** (but no completion menu): Accepts the Copilot suggestion
-3. **Neither**: Inserts a normal tab character
-
-This means you can use Tab for both autocompletion and Copilot without conflicts.
+2. **Otherwise**: Inserts a normal tab character
 
 ## Completion Keymaps
 
 | Keymap | In completion menu | Outside menu |
 | --- | --- | --- |
-| `<Tab>` | Select next item | Accept Copilot / insert tab |
+| `<Tab>` | Select next item | Insert tab |
 | `<CR>` (Enter) | Confirm selection | Insert newline |
 | `<Ctrl-e>` | Close menu | (nothing) |
 | `<Esc>` | Close menu | Exit insert mode |
@@ -2030,32 +1966,11 @@ This means you can use Tab for both autocompletion and Copilot without conflicts
 Plugin: **nvim-treesitter**. It parses your code into a syntax tree (like an AST) and uses that for:
 
 - **Syntax highlighting**: More accurate than regex-based highlighting. Understands the actual structure of the code.
-- **Indentation**: Smarter auto-indentation that understands code structure.
-- **Text objects**: Code-aware selections like "select this function" or "select this class".
 - **Folding**: nvim-ufo uses Treesitter to know where to fold code.
 
 ## Installed Parsers
 
 Auto-installed: Python, C++, Lua, Vim, JSON, TOML, HTML. Additional parsers install automatically when you open a file of that type (on non-NixOS systems).
-
-## Treesitter Text Objects
-
-Plugin: **nvim-treesitter-textobjects**. These let you select code structures intelligently:
-
-| Text Object | What it selects | Example use |
-| --- | --- | --- |
-| `af` | Around function (entire function including signature) | `daf` deletes the entire function |
-| `if` | Inside function (body only) | `vif` selects only the function body |
-| `ac` | Around class (entire class) | `yac` yanks the whole class |
-| `ic` | Inside class (body only) | `cic` changes the class body |
-
-These are linewise (V mode), so they select entire lines.
-
-**Examples**:
-- Delete a function: Place cursor anywhere inside it, press `daf`
-- Copy a class: Place cursor anywhere inside it, press `yac`
-- Change a function body: `cif` deletes the body and puts you in insert mode
-- Select a function to move it: `vaf` then cut with `d`, navigate, paste with `p`
 
 ---
 
@@ -2100,7 +2015,6 @@ This config includes 7 git-related plugins that each handle a different aspect:
 | **gitsigns.nvim** | Shows which lines changed in the gutter. Navigate between changes. | `]c` / `[c` to jump between hunks, `<Space>hp` to preview. |
 | **gitlinker.nvim** | Generate shareable URLs to specific lines of code. | `<Space>gl` to copy a permalink. |
 | **neogit** | A full git UI inside Neovim (like Magit for Emacs). | `:Neogit` to open. |
-| **git-conflict.nvim** | Highlights merge conflict markers and provides resolution commands. | Activates automatically when conflicts exist. |
 | **diffview.nvim** | Side-by-side diff viewer for comparing branches, commits, etc. | `:DiffviewOpen` to open. |
 | **vim-flog** | Visual git log/graph showing branch history. | `:Flog` to open. |
 
@@ -2133,38 +2047,6 @@ The gutter signs mean:
 
 # 49. AI-Assisted Development In Depth
 
-## GitHub Copilot
-
-Plugin: **copilot.lua** + **copilot-cmp** + **CopilotChat.nvim**
-
-### How Copilot Suggestions Work
-
-As you type in insert mode, Copilot generates "ghost text" (grey, transparent text) showing a suggestion for what you might type next. This is NOT the completion menu -- it's an overlay.
-
-| Keymap | What it does |
-| --- | --- |
-| `<Tab>` | Accept the suggestion (only when the completion menu is closed) |
-| `<Alt-]>` | See the next alternative suggestion |
-| `<Alt-[>` | See the previous alternative suggestion |
-| `<Ctrl-]>` | Dismiss the current suggestion |
-
-**How Tab priority works**: The completion menu (nvim-cmp) takes priority over Copilot. So:
-1. If the autocomplete menu is showing: Tab selects the next menu item
-2. If no menu but Copilot ghost text is visible: Tab accepts the Copilot suggestion
-3. If neither: Tab inserts a tab character
-
-### Copilot Chat
-
-A separate window where you can have conversations with Copilot about your code:
-
-| Keymap | Mode | What it does |
-| --- | --- | --- |
-| `<Space>cpc` | n | Toggle the chat window open/closed |
-| `<Space>cpe` | v | Select code in visual mode, then this sends it to Copilot with "Explain this code" |
-| `<Space>cpo` | v | Select code in visual mode, then this sends it to Copilot with "Optimize this code" |
-
-The chat window opens as a split. Navigate to/from it with `<Ctrl-w>` movements.
-
 ## Claude Code
 
 Plugin: **claude-code.nvim**
@@ -2174,7 +2056,6 @@ Claude Code is an AI coding assistant that runs in a terminal inside Neovim.
 | Keymap | Mode | What it does |
 | --- | --- | --- |
 | `<Space>cc` | n | Toggle Claude Code terminal. Opens at the bottom (30% height). |
-| `<Space>ct` | t | Toggle while already in terminal mode |
 | `<Space>cR` | n | Resume/continue the last Claude conversation |
 | `<Space>cV` | n | Start Claude in verbose mode |
 
@@ -2362,23 +2243,7 @@ Press `K` on any symbol to see its documentation in a floating window. This pull
 
 ---
 
-# 54. REPL Integration
-
-Plugin: **iron.nvim**. Send code to an interactive REPL (Read-Eval-Print Loop).
-
-**Configuration**: Uses `ipython` for Python. Opens in a vertical split (120 columns wide).
-
-| Command | What it does |
-| --- | --- |
-| `:IronRepl` | Start a REPL for the current filetype |
-| `:IronSend` | Send the current line or selection to the REPL |
-| `:IronFocus` | Focus the REPL window |
-
-This is useful for interactive development where you want to test code snippets without running the entire file.
-
----
-
-# 55. Java Development In Depth
+# 54. Java Development In Depth
 
 Plugin: **nvim-java** (with nvim-java-core, nvim-java-test, nvim-java-dap).
 
@@ -2432,11 +2297,9 @@ DAP is auto-configured when you open a Java file (with a 1-second delay). It ena
 | `<Space>jj` | `ChangeRuntime` | Switch JDK version | | |
 | `<Space>jf` | `JavaProfile` | Profiles UI | | |
 
-**Note on overlapping keymaps**: Some Java keymaps share keys (`<Space>jc` is both clean workspace and extract constant; `<Space>jm` is both test method and extract method). The last definition in mappings.lua wins. In practice, the test commands take priority.
-
 ---
 
-# 56. Code Running In Depth
+# 55. Code Running In Depth
 
 ## The Universal Runner
 
@@ -2486,7 +2349,7 @@ Some filetypes have an additional `<F9>` runner:
 
 ---
 
-# 57. Debugging In Depth
+# 56. Debugging In Depth
 
 ## Debug Adapter Protocol (DAP)
 
@@ -2502,7 +2365,7 @@ Plugin: **nvim-gdb**. For C/C++ debugging with GDB. Available on Linux and Windo
 
 ---
 
-# 58. File Management for Developers
+# 57. File Management for Developers
 
 ## File Operations
 
@@ -2527,7 +2390,7 @@ Plugin: **nvim-gdb**. For C/C++ debugging with GDB. Available on Linux and Windo
 
 ---
 
-# 59. Session and Productivity
+# 58. Session and Productivity
 
 ## Auto-Save
 
@@ -2556,11 +2419,10 @@ Plugin: **instant.nvim**. Real-time collaborative editing.
 
 ---
 
-# 60. Useful Developer Commands
+# 59. Useful Developer Commands
 
 | Command | What it does |
 | --- | --- |
-| `:Mason` | Open Mason package manager to install/manage LSP servers, linters, formatters |
 | `:LspInfo` | Show which LSP servers are attached to the current buffer |
 | `:Lazy` | Open plugin manager |
 | `:Lazy update` | Update all plugins |
@@ -2573,9 +2435,6 @@ Plugin: **instant.nvim**. Real-time collaborative editing.
 | `:DiffviewOpen` | Side-by-side diff view |
 | `:Neogit` | Full git UI |
 | `:DevdocsOpen` | Browse programming documentation |
-| `:IronRepl` | Start an interactive REPL |
-| `:Vista!!` | Toggle code outline |
-| `:MundoToggle` | Toggle undo tree |
 | `:YankyRingHistory` | Browse yank history |
 
 ---
@@ -2587,7 +2446,7 @@ Practical, step-by-step walkthroughs for common tasks.
 
 ---
 
-# 61. Macros In Depth
+# 60. Macros In Depth
 
 Macros record a sequence of keystrokes and replay them. They are one of the most powerful features in Vim for repetitive editing.
 
@@ -2710,7 +2569,7 @@ You can apply a macro to every line in a visual selection:
 
 ---
 
-# 62. The Dot Command (`.`) -- Repeating Actions
+# 61. The Dot Command (`.`) -- Repeating Actions
 
 The `.` key repeats the last change. This is arguably the most important efficiency tool in Vim.
 
@@ -2761,7 +2620,7 @@ This gives you manual control over each replacement, unlike `:%s` which replaces
 
 ---
 
-# 63. Visual Block Editing (Multi-Cursor-Like)
+# 62. Visual Block Editing (Multi-Cursor-Like)
 
 Visual block mode (`<Ctrl-v>`) lets you edit rectangular columns of text. This is the closest thing to multi-cursor editing.
 
@@ -2825,7 +2684,7 @@ If you have aligned text and want to remove a column:
 
 ---
 
-# 64. Working with Multiple Files
+# 63. Working with Multiple Files
 
 ## Opening Several Files
 
@@ -2875,7 +2734,7 @@ Use the quickfix list:
 
 ---
 
-# 65. Everyday Editing Scenarios
+# 64. Everyday Editing Scenarios
 
 ## Swap Two Lines
 
@@ -2908,17 +2767,6 @@ Or: `Yyp` (same thing).
 3. Navigate to destination
 4. `p` -- paste
 
-## Delete Everything Inside a Function
-
-1. Place cursor anywhere inside the function
-2. `dif` -- delete inside function (treesitter text object)
-
-## Select and Replace a Function Body
-
-1. `cif` -- change inside function (deletes body, enters insert mode)
-2. Type the new body
-3. `<Esc>`
-
 ## Fix Indentation of Entire File
 
 1. `gg=G` -- go to top, auto-indent everything to bottom
@@ -2950,7 +2798,7 @@ Or: `Yyp` (same thing).
 
 ---
 
-# 66. Swapping Function Arguments (`vim-swap`)
+# 65. Swapping Function Arguments (`vim-swap`)
 
 Plugin: **vim-swap**. Swap delimited items (function arguments, list elements, etc.) without cutting and pasting.
 
@@ -2958,19 +2806,13 @@ Place your cursor on one of the arguments inside parentheses:
 
 | Keymap | What it does |
 | --- | --- |
-| `g<` | Swap current item with the **previous** one |
-| `g>` | Swap current item with the **next** one |
 | `gs` | Enter interactive swap mode (shows labels, press to pick target) |
-
-**Example**: Given `func(a, b, c)` with cursor on `b`:
-- `g<` produces `func(b, a, c)`
-- `g>` produces `func(a, c, b)`
 
 Works with any comma-separated list: function arguments, array literals, dictionary entries, etc.
 
 ---
 
-# 67. Shell Commands from Inside Neovim
+# 66. Shell Commands from Inside Neovim
 
 ## Running a Shell Command
 
@@ -3010,7 +2852,7 @@ The quickfix window auto-opens (6 lines tall) when AsyncRun starts.
 
 ---
 
-# 68. Multi-File Search and Replace (Complete Guide)
+# 67. Multi-File Search and Replace (Complete Guide)
 
 This is the section you need when you want to find or replace text across your entire project -- not just the current file.
 
@@ -3218,7 +3060,7 @@ Or use `:cdo earlier 1f` to go back one save-state in each file.
 
 ---
 
-# 69. Useful Vim Tricks
+# 68. Useful Vim Tricks
 
 ## Run a Normal-Mode Command on Every Line
 
@@ -3393,7 +3235,7 @@ This config sets some command abbreviations (type the short form, press space):
 
 ---
 
-# 70. Tips for Vim Beginners
+# 69. Tips for Vim Beginners
 
 ## The Most Important Habits
 
@@ -3437,7 +3279,7 @@ Some layouts (for example US International, used on the main machine) treat cert
 
 ---
 
-# 71. The Verb + Noun System (How Vim Commands Work)
+# 70. The Verb + Noun System (How Vim Commands Work)
 
 This is the single most important mental model for understanding Vim. Almost every command follows this pattern:
 
@@ -3445,7 +3287,7 @@ This is the single most important mental model for understanding Vim. Almost eve
 
 - **Operator** (verb): What you want to do (`d` delete, `c` change, `y` yank, `>` indent, `gU` uppercase, etc.)
 - **Motion** (noun): Where to do it (`w` word, `$` end of line, `gg` top of file, `}` next paragraph, etc.)
-- **Text object** (noun): A structural unit to act on (`iw` inner word, `i(` inside parentheses, `af` around function, etc.)
+- **Text object** (noun): A structural unit to act on (`iw` inner word, `i(` inside parentheses, `at` around an HTML tag, etc.)
 - **Count**: How many times (optional)
 
 ## Operators (Verbs)
@@ -3496,8 +3338,6 @@ This is the single most important mental model for understanding Vim. Almost eve
 | `i"` / `a"` | Inside / around double quotes |
 | `i'` / `a'` | Inside / around single quotes |
 | `it` / `at` | Inside / around HTML tags |
-| `if` / `af` | Inside / around function (treesitter) |
-| `ic` / `ac` | Inside / around class (treesitter) |
 
 ## Combining Verbs and Nouns
 
@@ -3546,7 +3386,7 @@ Once you learn a few operators and a few motions/text-objects, you can combine t
 
 ---
 
-# 72. The Global Command (`:g`)
+# 71. The Global Command (`:g`)
 
 The global command runs an Ex command on every line matching a pattern. It's one of the most powerful built-in features.
 
@@ -3610,7 +3450,7 @@ The inverse (`:v`) runs on lines that do NOT match: `:v/pattern/command`
 
 ---
 
-# 73. Saving, Quitting, and File State
+# 72. Saving, Quitting, and File State
 
 All the ways to save and quit, consolidated in one place.
 
@@ -3650,7 +3490,7 @@ Auto-save is also active: files save on `FocusLost` (switching to another app) a
 
 ---
 
-# 74. Recovering from Mistakes
+# 73. Recovering from Mistakes
 
 ## Undo and Redo
 
@@ -3667,8 +3507,6 @@ Vim's undo history is a tree, not a linear stack. If you undo several times and 
 | Keymap | What it does |
 | --- | --- |
 | `<Space>u` | Open the undo tree panel |
-
-Inside the panel: `j`/`k` to move, `<Enter>` to restore a state, `p` to preview diff, `q` to close.
 
 ## Time-Based Undo
 
@@ -3688,7 +3526,7 @@ The `auto-save.nvim` plugin saves frequently, and Neovim creates backups in `~/.
 
 ---
 
-# 75. Discovering Keymaps and Getting Help
+# 74. Discovering Keymaps and Getting Help
 
 ## Which-Key: See Available Keybindings
 
@@ -3727,13 +3565,12 @@ You can also press any partial key sequence and wait:
 | --- | --- |
 | `:checkhealth` | Diagnose installation issues (LSP servers, providers, etc.) |
 | `:LspInfo` | Show which LSP servers are attached to the current buffer |
-| `:Mason` | Open the package manager to see installed/available LSP servers |
 | `:Lazy` | Open the plugin manager |
 | `:messages` | Show recent notification messages |
 
 ---
 
-# 76. Real-World Developer Workflows
+# 75. Real-World Developer Workflows
 
 Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 
@@ -3829,7 +3666,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 
 ---
 
-# 77. Common Editing Power Combos
+# 76. Common Editing Power Combos
 
 Quick-reference card of the most powerful editing combinations for daily use.
 
@@ -3842,7 +3679,6 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `ci(` | Change text in parentheses | `func(old)` -> type `new` -> `func(new)` |
 | `ci{` | Change text in braces | `{old}` -> type `new` -> `{new}` |
 | `cit` | Change text in HTML tag | `<p>old</p>` -> type `new` -> `<p>new</p>` |
-| `cif` | Change function body | Empties the function, puts you in insert mode |
 | `cc` | Change entire line | Clears line, insert mode |
 | `C` | Change from cursor to end of line | Deletes rest of line, insert mode |
 | `c$` | Same as `C` | |
@@ -3859,8 +3695,6 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `da"` | Delete the entire quoted string including quotes |
 | `di(` | Empty out parentheses |
 | `da(` | Delete parentheses and their contents |
-| `dif` | Delete function body |
-| `daf` | Delete entire function |
 | `dip` | Delete paragraph |
 | `dd` | Delete line |
 | `D` | Delete from cursor to end of line |
@@ -3873,7 +3707,6 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `yiw` | Copy word under cursor |
 | `yi"` | Copy text inside double quotes |
 | `yi(` | Copy text inside parentheses |
-| `yaf` | Copy entire function |
 | `yap` | Copy paragraph |
 | `yy` | Copy line |
 | `y$` | Copy from cursor to end of line |
@@ -3885,7 +3718,6 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `viw` | Select word |
 | `vi"` | Select inside quotes |
 | `vi(` | Select inside parentheses |
-| `vaf` | Select entire function |
 | `vip` | Select paragraph |
 | `V5j` | Select 5 lines down |
 | `ggVG` | Select entire file |
