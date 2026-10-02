@@ -294,12 +294,71 @@ api.nvim_create_autocmd("BufEnter", {
   end,
 })
 
+-- Git plugins (fugitive, neogit, gitlinker) load on `User InGitRepo`. It fires when the cwd is in a
+-- repo (VimEnter / DirChanged) or when an opened file is in a repo (async check below, cwd may be
+-- outside any repo).
+local git_group = api.nvim_create_augroup("git_repo_check", { clear = true })
+local git_fired = false -- User InGitRepo has fired at least once
+
 api.nvim_create_autocmd({ "VimEnter", "DirChanged" }, {
-  group = api.nvim_create_augroup("git_repo_check", { clear = true }),
+  group = git_group,
   pattern = "*",
   desc = "check if we are inside Git repo",
   callback = function()
-    utils.inside_git_repo()
+    if utils.inside_git_repo() then
+      git_fired = true
+    end
+  end,
+})
+
+local git_checked_dirs = {} -- dirs already checked by the file check
+local git_job_running = false
+local git_file_au
+git_file_au = api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
+  group = git_group,
+  desc = "check if the opened file is inside a Git repo (non-blocking, until it fires once)",
+  callback = function(ev)
+    if git_fired then
+      return true -- delete this autocmd
+    end
+    if git_job_running or vim.bo[ev.buf].buftype ~= "" or fn.executable("git") == 0 then
+      return
+    end
+    local name = api.nvim_buf_get_name(ev.buf)
+    if name == "" or name:match("^%a[%w+.-]*://") then
+      return
+    end
+    -- directory of the file; for a new file in a directory that does not exist yet, the nearest
+    -- existing parent
+    local dir = vim.fs.dirname(vim.fs.normalize(fn.fnamemodify(name, ":p")))
+    while not vim.uv.fs_stat(dir) do
+      local parent = vim.fs.dirname(dir)
+      if parent == dir then
+        return
+      end
+      dir = parent
+    end
+    if git_checked_dirs[dir] then
+      return
+    end
+    git_checked_dirs[dir] = true
+    git_job_running = true
+    local ok = pcall(vim.system, { "git", "-C", dir, "rev-parse", "--is-inside-work-tree" }, { text = true }, function(res)
+      git_job_running = false
+      if res.code == 0 then
+        vim.schedule(function()
+          if git_fired then
+            return
+          end
+          git_fired = true
+          vim.cmd("doautocmd <nomodeline> User InGitRepo")
+          pcall(api.nvim_del_autocmd, git_file_au)
+        end)
+      end
+    end)
+    if not ok then
+      git_job_running = false
+    end
   end,
 })
 
