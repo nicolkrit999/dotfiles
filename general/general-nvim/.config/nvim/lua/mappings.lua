@@ -403,8 +403,12 @@ for _, ch in ipairs(undo_ch) do
   keymap.set("i", ch, ch .. "<c-g>u")
 end
 
--- insert semicolon in the end
-keymap.set("i", "<A-;>", "<Esc>miA;<Esc>`ii")
+-- insert semicolon in the end (cursor stays where it is, no marks touched)
+keymap.set("i", "<A-;>", function()
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local len = #vim.api.nvim_get_current_line()
+  vim.api.nvim_buf_set_text(0, row - 1, len, row - 1, len, { ";" })
+end, { desc = "append ; at line end" })
 
 -- Go to the beginning and end of current line in insert mode quickly
 keymap.set("i", "<C-A>", "<HOME>")
