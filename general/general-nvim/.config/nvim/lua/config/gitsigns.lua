@@ -45,13 +45,19 @@ gs.setup {
   end,
 }
 
+local function apply_inline_hl()
+  vim.cmd([[
+    hi GitSignsChangeInline gui=reverse
+    hi GitSignsAddInline gui=reverse
+    hi GitSignsDeleteInline gui=reverse
+  ]])
+end
+
+-- the colorscheme is already loaded when this file runs, so apply once now
+-- and again after every later :colorscheme
+apply_inline_hl()
 vim.api.nvim_create_autocmd("ColorScheme", {
+  group = vim.api.nvim_create_augroup("gitsigns_inline_hl", { clear = true }),
   pattern = "*",
-  callback = function()
-    vim.cmd([[
-      hi GitSignsChangeInline gui=reverse
-      hi GitSignsAddInline gui=reverse
-      hi GitSignsDeleteInline gui=reverse
-    ]])
-  end,
+  callback = apply_inline_hl,
 })
