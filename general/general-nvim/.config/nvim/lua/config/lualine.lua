@@ -263,14 +263,58 @@ local get_active_lsp = function()
 end
 
 -- statusline click handlers (upstream 7b30596, adapted: vim.ui.select / snacks picker for branches)
+--- run git synchronously in `root`; returns the output lines, or nil + error text
+local function git_lines(root, args)
+  local ok, r = pcall(function()
+    return vim.system(vim.list_extend({ "git" }, args), {
+      cwd = root,
+      text = true,
+      env = { GIT_TERMINAL_PROMPT = "0" },
+    }):wait()
+  end)
+  if not ok then
+    return nil, tostring(r)
+  end
+  if r.code ~= 0 then
+    return nil, r.stderr or ""
+  end
+  return vim.split(r.stdout or "", "\n", { trimempty = true })
+end
+
 local show_branch_menu = function()
-  local info = utils.get_git_branches()
+  if fn.executable("git") == 0 then
+    vim.notify("git not found", vim.log.levels.WARN)
+    return
+  end
+  -- the repo of the current buffer, not nvim's cwd
+  local root = buf_repo_root()
+  if not root then
+    vim.notify("not in a git repository", vim.log.levels.WARN)
+    return
+  end
+  local locals = git_lines(root, { "for-each-ref", "--format=%(refname:short)", "refs/heads/" })
+  -- "<remote>/<branch>\t<branch>" (lstrip=3 drops refs/remotes/<remote>/, keeps slashes in the branch)
+  local remotes = git_lines(root, {
+    "for-each-ref",
+    "--exclude=refs/remotes/*/HEAD",
+    "--format=%(refname:short)%09%(refname:lstrip=3)",
+    "refs/remotes/",
+  })
+  if not locals or not remotes then
+    vim.notify("error fetching git branch", vim.log.levels.WARN)
+    return
+  end
+  local is_local_branch = {}
   local items = {}
-  for _, b in ipairs(info["local"]) do
+  for _, b in ipairs(locals) do
+    is_local_branch[b] = true
     table.insert(items, { name = b, is_local = true })
   end
-  for _, b in ipairs(info.remote) do
-    table.insert(items, { name = b, is_local = false })
+  for _, line in ipairs(remotes) do
+    local name, branch = line:match("^(.-)\t(.*)$")
+    if name then
+      table.insert(items, { name = name, is_local = false, branch = branch })
+    end
   end
   if #items == 0 then
     return
@@ -284,10 +328,18 @@ local show_branch_menu = function()
     if not item then
       return
     end
-    local cmd = item.is_local and { "git", "checkout", item.name } or { "git", "checkout", "--track", item.name }
-    local r = vim.system(cmd, { text = true }):wait()
-    if r.code ~= 0 then
-      vim.notify("failed to switch branch:\n" .. (r.stderr or ""), vim.log.levels.ERROR)
+    local args
+    if item.is_local then
+      args = { "checkout", item.name }
+    elseif is_local_branch[item.branch] then
+      -- remote branch that already exists locally (origin/main -> main): switch to the local one
+      args = { "checkout", item.branch }
+    else
+      args = { "checkout", "--track", item.name }
+    end
+    local out, err = git_lines(root, args)
+    if not out then
+      vim.notify("failed to switch branch:\n" .. (err or ""), vim.log.levels.ERROR)
     else
       vim.cmd("checktime")
     end
