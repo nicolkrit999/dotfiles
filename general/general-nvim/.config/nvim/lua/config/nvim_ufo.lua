@@ -20,6 +20,8 @@ local handler = function(virtText, lnum, endLnum, width, truncate, ctx)
       if curWidth + chunkWidth < targetWidth then
         suffix = suffix .. (" "):rep(targetWidth - curWidth - chunkWidth)
       end
+      -- the text (plus padding) now fills targetWidth: no extra right-align padding below
+      curWidth = targetWidth
       break
     end
     curWidth = curWidth + chunkWidth
