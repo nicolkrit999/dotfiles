@@ -265,7 +265,13 @@ keymap.set("n", "C", '"_C', { desc = "Change to end of line without yanking" })
 keymap.set("x", "c", '"_c', { desc = "Change selection without yanking" })
 
 -- Remove trailing whitespace characters
-keymap.set("n", "<leader><space>", "<cmd>StripTrailingWhitespace<cr>", { desc = "remove trailing space" })
+keymap.set("n", "<leader><space>", function()
+  if vim.bo.filetype == "markdown" then
+    vim.notify("markdown: trailing spaces are hard line breaks, not stripped", vim.log.levels.WARN)
+    return
+  end
+  vim.cmd.StripTrailingWhitespace()
+end, { desc = "remove trailing space (not markdown)" })
 
 -- Copy entire buffer.
 keymap.set("n", "<leader>y", "<cmd>%yank<cr>", { desc = "yank entire buffer" })
