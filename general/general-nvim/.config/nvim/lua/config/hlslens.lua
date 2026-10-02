@@ -25,12 +25,14 @@ local activate_hlslens = function(direction)
 end
 
 keymap.set("n", "n", "", {
+  desc = "Search: next match (with lens)",
   callback = function()
     activate_hlslens("n")
   end,
 })
 
 keymap.set("n", "N", "", {
+  desc = "Search: previous match (with lens)",
   callback = function()
     activate_hlslens("N")
   end,
@@ -47,37 +49,37 @@ local check_cursor_word = function()
   return result, cursor_word
 end
 
-keymap.set("n", "*", "", {
-  callback = function()
-    local cursor_word_empty, cursor_word = check_cursor_word()
-    if cursor_word_empty then
-      return
-    end
+-- Search the word under the cursor as a literal whole word (\V\<word\>), so
+-- keyword chars like `?`, `$`, `/` or `\` cannot break the pattern.
+-- count 1: keep the cursor in place (N after the jump); count > 1: jump to the count-th match.
+local function star_search(dir_char)
+  local cursor_word_empty, cursor_word = check_cursor_word()
+  if cursor_word_empty then
+    return
+  end
 
-    local cmd = string.format([[normal! /\v<%s>]], cursor_word)
+  local count = vim.v.count1
+  local pattern = [[\V\<]] .. vim.fn.escape(cursor_word, "\\" .. dir_char) .. [[\>]]
+  -- special notation must be replaced by its internal representation to act as a real Enter
+  local enter = vim.api.nvim_replace_termcodes("<CR>", true, false, true)
+  local cmd = string.format("normal! %s%s%s%s", count > 1 and count or "", dir_char, pattern, enter)
+  if count == 1 then
+    -- N keeps the cursor where it was
+    cmd = cmd .. "N"
+  end
 
-    -- In order to say that we are pressing Enter key, instead of typing literally the character,
-    -- we need to replace special notation with their internal representation.
-    local escaped_enter = vim.api.nvim_replace_termcodes("<CR>", true, false, true)
+  local ok, err = pcall(vim.fn.execute, cmd)
+  if not ok then
+    api.nvim_echo({ { tostring(err):match("E%d+:.*") or tostring(err) } }, true, { err = true })
+    return
+  end
+  hlslens.start()
+end
 
-    -- character `N` is used to keep the cursor when pressing `*`
-    local full_cmd = cmd .. escaped_enter .. "N"
-    vim.fn.execute(full_cmd)
-    hlslens.start()
-  end,
-})
-keymap.set("n", "#", "", {
-  callback = function()
-    local cursor_word_empty, cursor_word = check_cursor_word()
-    if cursor_word_empty then
-      return
-    end
+keymap.set("n", "*", function()
+  star_search("/")
+end, { desc = "Search: word under cursor forward (with lens)" })
 
-    local cmd = string.format([[normal! ?\v<%s>]], cursor_word)
-    local escaped_enter = vim.api.nvim_replace_termcodes("<CR>", true, false, true)
-
-    local full_cmd = cmd .. escaped_enter .. "N"
-    vim.fn.execute(full_cmd)
-    hlslens.start()
-  end,
-})
+keymap.set("n", "#", function()
+  star_search("?")
+end, { desc = "Search: word under cursor backward (with lens)" })
