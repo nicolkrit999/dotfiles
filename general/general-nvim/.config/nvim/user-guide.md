@@ -235,6 +235,9 @@ More: sections 10 and 23.
 | `\d` / `\D` | Close this buffer / close all other buffers |
 | `<Space>-` / `<Space>\|` | Split below / to the right (same file) |
 | `<Ctrl-w>h` `j` `k` `l` | Move between windows |
+| `<Left>` `<Down>` `<Up>` `<Right>` | The same, with the arrow keys (normal mode) |
+| From a terminal window (run output, `:term`) | `<Esc>`, then `<Ctrl-w>h` (or an arrow key) to go to the code; `i` to type in the terminal again |
+| From the Claude panel | `<Ctrl-h>` goes back to the code on the left (`<Esc>` is sent to Claude); `<Ctrl-w>l` or `<Right>` from the code goes back in |
 | `<Ctrl-w>=` / `<Ctrl-w>o` | Make windows equal / keep only this window |
 | `gt` / `gT`, `\t` / `\T` | Next / previous tab, close this tab / the other tabs |
 | `:sp <file>` / `:vs <file>` | Open a file in a new horizontal / vertical split (`;` works like `:`, so `;vs <file>` too) |
@@ -259,6 +262,7 @@ More: section 72.
 | --- | --- |
 | `\h` / `\H` | Open the dashboard / return to the previous buffer |
 | `r` / `L` on the dashboard | Restore the session of this folder / of the last folder |
+| `u` on the dashboard | Open the user guide |
 | `:Z <word>` / `:z <word>` | Jump to the best zoxide match (the file tree follows) |
 | `:Obsession`, `nvim -S Session.vim` | Keep a `Session.vim` up to date, restore it later |
 | `<Space>sv` | Restart nvim (writes all files first) |
