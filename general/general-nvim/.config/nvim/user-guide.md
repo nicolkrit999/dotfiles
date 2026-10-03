@@ -1890,7 +1890,7 @@ Custom function in `lua/mappings.lua`. Opens the output in a vertical split term
 | --- | --- |
 | `<Space>rr` | Run current file (auto-detects language) |
 
-Supported: Python, Java, C, C++, C#, JavaScript, TypeScript, Go, Rust, Bash, Lua, Ruby, PHP. Special cases: Java with jdtls attached runs `:JavaRunnerRunMain` (no terminal); Rust inside a cargo project runs `cargo run`; C# with a `.csproj` runs `dotnet run --project`; Go runs `go run .` for the whole package.
+Supported: Python, Java, C, C++, C#, JavaScript, TypeScript, Go, Rust, Bash, Lua, Ruby, PHP. Special cases: Java with jdtls attached runs `:JavaRunnerRunMain` (nvim-java's own runner split at the bottom, not the `<Space>rr` terminal on the left); Rust inside a cargo project runs `cargo run`; C# with a `.csproj` runs `dotnet run --project`; Go runs `go run .` for the whole package.
 
 After running, the terminal output appears in a split. See [Terminal Integration](#8-terminal-integration) for how to navigate to/from it and close it.
 
@@ -2973,7 +2973,7 @@ On Nix systems the JDK comes from the Java devShell (`JAVA_HOME`) and nvim-java 
 | Keymap | Command | What it does |
 | --- | --- | --- |
 | `<Space>jbb` | `:JavaBuildBuildWorkspace` | Compile the entire workspace |
-| `<Space>jbc` | `:JavaBuildCleanWorkspace` | Clear the jdtls workspace cache (close and reopen Neovim afterwards) |
+| `<Space>jbc` | `:JavaBuildCleanWorkspace` | Clear the jdtls workspace cache (after a Yes/No question; jdtls is restarted automatically) |
 | `<Space>jrr` | `:JavaRunnerRunMain` | Run the main class |
 | `<Space>jrs` | `:JavaRunnerStopMain` | Stop the running program |
 | `<Space>jrl` | `:JavaRunnerToggleLogs` | Show/hide the runner log window (it opens as a full-width, 15-line split at the bottom) |
@@ -3037,7 +3037,7 @@ The `<Space>rr` keymap detects the current filetype and runs the appropriate com
 | Language | Command used | Notes |
 | --- | --- | --- |
 | Python | `python3 <file>` | |
-| Java | `:JavaRunnerRunMain` when jdtls (nvim-java) is attached; otherwise `java <file>` | With jdtls no terminal is used |
+| Java | `:JavaRunnerRunMain` when jdtls (nvim-java) is attached; otherwise `java <file>` | With jdtls nvim-java opens its own runner split at the bottom (not the `<Space>rr` terminal on the left) |
 | C | `gcc -Wall -Wextra -std=c11 <file> -o <binary> && <binary>` | Compiles and runs; the binary sits next to the source; needs gcc (c-cpp devShell) |
 | C++ | `g++ -Wall -Wextra -std=c++20 <file> -o <binary> && <binary>` | Compiles and runs; needs g++ (c-cpp devShell) |
 | C# | `dotnet run --project <nearest .csproj>` | Without a project file: `dotnet run <file>` |
@@ -4980,7 +4980,7 @@ This section is one walk-through for everything Python in your config: what star
 3. Type a small program, save with `:w`, then run it with `<Space>rf` (or `<F9>`). A 6-line quickfix window opens at the bottom and shows the output.
 4. Run it again as a full terminal with `<Space>rr`. A terminal split opens on the LEFT of the code.
 5. Format with `<Space>f` (black). The file on disk is rewritten and the buffer reloads (`File changed on disk. Buffer reloaded!`).
-6. Debug with `<Space>dp`. The code gets a `▶` marker and a pdb pane opens below it. Step with `<Space>dn` (or `<F10>`), quit with `:GdbDebugStop`. (Afterwards `<F9>` is gone in that buffer until `:e!`; `<Space>rf` is not affected.)
+6. Debug with `<Space>dp`. The code gets a `▶` marker and a pdb pane opens below it. Step with `<Space>dn` (or `<F10>`), quit with `:GdbDebugStop`. (`<F9>` and `<Space>rf` keep working afterwards; tested.)
 
 ## Why Each Tool Exists
 
@@ -5284,7 +5284,7 @@ You can also type plain pdb commands in the terminal pane (`n`, `s`, `c`, `p var
 
 **Quit:** `:GdbDebugStop`. The debug layout was in the same tab here (tested: one tab, two windows during the session, one after). Closing the debug windows also ends it.
 
-**Known quirk (tested):** after a debug session nvim-gdb removes its mapped keys from the code buffer, and that **also removes your `<F9>` run key** in that buffer. `<F9>` stays gone until you reload the buffer with `:e!`. `<Space>rf`, `<Space>f` and `<Space>dp` are not affected.
+**History (fixed, tested):** nvim-gdb used to bind `<F9>` itself (evaluate) and removed it from the code buffer after a session, which also removed your `<F9>` run key until `:e!`. Its evaluate key is now `<Space>dv`, so `<F9>`, `<Space>rf`, `<Space>f` and `<Space>dp` work before, during and after a debug session.
 
 Notes:
 
@@ -5375,7 +5375,6 @@ The snippet menu may also offer vim-snippets entries (`def`, `class`, `ifmain`, 
 | `<Space>f` says `black not found on PATH` | Not in the python devShell, or `uv` missing in a uv project | Start nvim in the python devShell; for uv projects make sure `uv` is on PATH (and `uv add --dev black`) |
 | No "not formatted" warning after save, although the file is untidy | `black` is not on PATH (check is silent), or the file type is not detected as `python` | `:!which black`; `:set ft?` |
 | `<Space>rf` / `<F9>` prints `ModuleNotFoundError` | Wrong interpreter: plain `python` was used (environment not active when the file was opened) | Activate the environment, reopen the file with `:e` so the uv/venv choice is re-evaluated |
-| `<F9>` does nothing at all (no quickfix window) after a debug session | nvim-gdb removed the `<F9>` map from this buffer | `:e!` |
 | `<Space>rf` / `<F9>` does nothing visible | Quickfix window closed or scrolled, or `AsyncRun` not loaded | `:copen`; check `:AsyncRun echo hi` works |
 | `<Space>rr` opens nothing | Unnamed buffer (one warning: save the file first) or an unsupported file type | `:w file.py`; check `:set ft?` |
 | `<Space>rr` terminal flashes and closes, or shows `command not found` | `python3` is not on PATH | Start nvim in the devShell |
