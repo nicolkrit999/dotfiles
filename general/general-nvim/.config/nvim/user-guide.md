@@ -2377,7 +2377,18 @@ Connections come from the environment (set them in an untracked shell file, dire
 - nvim-dbee: `$DBEE_CONNECTIONS`, a JSON array such as `[{"name":"local","type":"postgres","url":"postgres://user:pw@localhost:5432/db"}]`. Connections added inside the UI are not saved.
 - vim-dadbod-ui: `$DADBOD_CONNECTIONS`, a JSON object `{"name":"url"}`. Saved queries go to `~/.local/share/nvim/db_ui`.
 
-`:checkhealth` shows a known, accepted `vim.validate{}` deprecation warning from nvim-dbee. <!-- CHECK-USER: the keys inside the dbee / dadbod panels were not tested (needs a database) -->
+`:checkhealth` shows a known, accepted `vim.validate{}` deprecation warning from nvim-dbee. Connections come from the environment, never from the config: `$DBEE_CONNECTIONS` (JSON list, dbee) and `$DADBOD_CONNECTIONS` (JSON object name -> URL, dadbod), for example `export DBEE_CONNECTIONS='[{"name":"test","type":"sqlite","url":"/path/test.sqlite"}]'`. Tested keys:
+
+| Where | Keys | What it does |
+| --- | --- | --- |
+| dbee (`<Space>Do`) | opens four windows: drawer, SQL editor, result, call log | `<Space>Dt` toggles, `<Space>Dc` closes |
+| dbee drawer | `<CR>` select / expand, `o` toggle, `r` refresh, `cw` rename, `dd` delete | the drawer's own help is listed inside it |
+| dbee editor | `BB` run the whole file (Visual: the selection), `<CR>` run the statement under the cursor | the rows appear in the result window |
+| dbee result | `L` / `H` next / previous page, `E` / `F` last / first page, `yaj` / `yac` yank the row as JSON / CSV, `<C-c>` cancel | |
+| dadbod (`<Space>Du`) | drawer: `o` open/toggle, `S` open in a vertical split, `R` redraw, `A` add a connection, `H` toggle details, `d` delete, `r` rename, `q` close, `?` help | the drawer tree: connection, New query, Saved queries, Tables |
+| dadbod SQL buffer | `<Space>S` run, `<Space>W` save, `<Space>E` edit bind parameters | `:DB sqlite:/path select ...` runs one query and shows the rows (tested) |
+
+In an automated test the dadbod result window opened after `<Space>S` but stayed empty, so check that step in a real terminal.
 
 ---
 
