@@ -138,7 +138,7 @@ Rule of thumb the owner uses: if a behaviour is wanted AND default, keep it; if 
 
 ## 9. Guide and documentation
 
-- The guide is the `user-guide/` folder: README.md (contents with GitHub-slug anchors + Day-to-Day Cheat Sheet of 16+ topics, Quick Reference merged into it), 10 chapters, 5 language guides; the dashboard `u` key opens README.md. Every change updates the guide and runs applicable verification.
+- The guide is the `user-guide/` folder: README.md (contents with GitHub-slug anchors + Day-to-Day Cheat Sheet of 16+ topics, Quick Reference merged into it), 10 chapters, 5 language guides; `<Space>?` (and the dashboard item) opens `neovim-user-guide.pdf`, built from the markdown by `user-guide/build-pdf.py`; `<Space>a` starts a Claude session with the `answering-neovim-usage-questions` skill (vertical split; own tab on the dashboard). Both keys are deliberate and verified clash-free (no longer `<Space>a...`/`<Space>?...` map exists). Every change updates the guide and runs applicable verification.
 - Never add examples to the guide that the owner did not approve; the built-in `gr*` LSP keys get a one-line "built-in alternatives" note; `an`/`in` treesitter node selection example in the pair-programming step was approved.
 - Every own (non-third-party) keymap that can easily have a desc has one; descs follow the "Area: text" style ("Git: get permalink", "LSP: hover"); which-key desc consistency is checked, key conflicts must be zero except the allowlisted overlaps.
 - Manual check lists: exact command alone on its line, no trailing punctuation, expectation after each, batches of 8, quickest first.

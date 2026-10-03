@@ -257,10 +257,13 @@ vim.list_extend(conf.center, {
   },
   {
     icon = icon(0xf00ba),
-    desc = "Open user guide",
-    action = function() vim.cmd("tabnew " .. vim.fn.fnameescape(vim.fn.stdpath("config") .. "/user-guide/README.md")) end,
-    key = "u",
-    key_format = "[%s]",
+    desc = with_hint("Open user guide (PDF)", "<Leader> ?"),
+    action = function() require("config.user-guide-tools").open_guide() end,
+  },
+  {
+    icon = icon(0xf06a9),
+    desc = with_hint("Ask Claude how to do something", "<Leader> a"),
+    action = function() require("config.user-guide-tools").ask_claude() end,
   },
   {
     icon = icon(0xf0493),

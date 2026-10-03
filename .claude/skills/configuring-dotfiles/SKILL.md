@@ -28,6 +28,10 @@ The orchestrator (this chat) is the only one that dispatches agents and loops be
 4. **FIX** - Any linter findings go back to the authoring specialist (or `dotfiles-architect` if it's a placement issue). Loop 3→4 until the linter passes. Safeguard: ~4 rounds, then stop and report what's still failing.
 5. **DEPLOY HANDOFF** - For new files, end the turn by giving the user the exact `ext-dotfiles.nix` mapping line(s) to add in the `~/nix` repo - both `nixos` and `darwin` platform files if the config is cross-platform - and note that a rebuild is required to create the symlink.
 
+## Neovim user guide
+
+Any change under `general/general-nvim/.config/nvim/user-guide/**/*.md` ends with a mandatory rebuild: run `user-guide/build-pdf.py` (regenerates the README table of contents and the committed `neovim-user-guide.pdf`), then `build-pdf.py --check` must print OK. `<Space>?` and the dashboard item open that PDF, so a stale PDF means the user reads wrong information. Include the PDF and its `.stamp` file in the change.
+
 ## Exit condition
 
 `dotfiles-linter` reports clean AND the mapping line(s) have been delivered to the user. Report the files written and the mapping line(s) verbatim.

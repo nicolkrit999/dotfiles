@@ -216,7 +216,7 @@ Plugin: **instant.nvim**. Real-time collaborative editing.
 
 ## Dashboard (Start Screen)
 
-The dashboard opens for a bare `nvim` (no file, no directory, no stdin) or with `:Dashboard`. `<Enter>` runs the item under the cursor. These single-letter keys work only inside the dashboard:
+The dashboard opens for a bare `nvim` (no file, no directory, no stdin) or with `:Dashboard`. `<Enter>` runs the item under the cursor. These single-letter keys work only inside the dashboard (the items that show `[<Leader> ...]` on the right are the global keys, they work everywhere, see "Help keys" below):
 
 | Key | Item |
 | --- | --- |
@@ -225,7 +225,6 @@ The dashboard opens for a bare `nvim` (no file, no directory, no stdin) or with 
 | `o` | Recent files here (only files under the current directory) |
 | `d` | Recent directories (zoxide picker; the item is shown only when `zoxide` is installed) |
 | `m` | Search keymaps |
-| `u` | Open this user guide in a new tab |
 | `e` | New file |
 | `q` | Quit Neovim |
 
@@ -235,6 +234,17 @@ The other items show their normal key: Find File `<Space>ff`, Recently opened fi
 | --- | --- |
 | `\h` | Open the dashboard in the current window (the previous buffer stays open in the background; inside the dashboard it only says "already in the dashboard") |
 | `\H` | Close the dashboard and return to the previous buffer (the dashboard buffer is deleted so it does not pile up); outside the dashboard it only warns "not in the dashboard", with no previous buffer "no previous buffer to resume" |
+
+### Help keys: the user guide and Claude (any buffer, and the dashboard)
+
+The same two keys work in every normal buffer and as dashboard items (shown as `[<Leader> ?]` and `[<Leader> a]`), so you learn them once.
+
+| Keys | What it does |
+| --- | --- |
+| `<Space>?` | Open this user guide as a PDF (`user-guide/neovim-user-guide.pdf`, built from the markdown files) in its own zathura window next to Neovim, always at page 2, the table of contents (zathura's remembered last page is ignored); close it with `q` in zathura. Pressing the key again while it is open only shows a notice. Without zathura the system viewer opens the PDF |
+| `<Space>a` | Ask Claude how to do something in Neovim: a fresh `claude` session with the `answering-neovim-usage-questions` skill loaded, started in the nvim config folder with permissions bypassed (`--dangerously-skip-permissions`: it reads the guide and config, and can run commands or edit files, without asking). In a normal buffer it opens in a vertical split on the right (40% of the screen); on the dashboard it opens in its own tab. Type your question; `/exit` ends the session and closes the split or tab |
+
+In the Claude split, `<Esc>` goes to Claude (it interrupts a running answer). To leave terminal mode use `<Ctrl-\><Ctrl-n>`, then move to the editor window with `<Ctrl-w>h`. To edit the guide itself open the `.md` files directly (`<A-m>` previews one in the browser).
 
 `:Dashboard` does the same as `\h`. To close the current buffer and get the dashboard instead: `:Dashboard | bdelete #` (a buffer with unsaved changes refuses with E89). `\d` deletes the buffer but shows the previous one, not the dashboard.
 

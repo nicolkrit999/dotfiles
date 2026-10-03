@@ -1,0 +1,12 @@
+#set page(numbering: "1", footer: context align(center, text(size: 8pt, fill: gray)[Neovim User Guide · page #counter(page).display()]))
+#show link: set text(fill: rgb("#1e66f5"))
+#show raw: set text(font: "DejaVu Sans Mono", size: 0.9em)
+#show raw.where(block: true): it => block(fill: rgb("#f3f4f8"), inset: 8pt, radius: 3pt, width: 100%, it)
+#show raw.where(block: false): it => box(fill: rgb("#eceef4"), inset: (x: 2pt), outset: (y: 2pt), radius: 2pt, it)
+#show heading.where(level: 1): it => { pagebreak(weak: true); v(0.5em); it; v(0.3em) }
+#set table(stroke: 0.4pt + rgb("#c5c8d4"), inset: 5pt)
+#show table: set text(size: 0.92em)
+#show outline.entry.where(level: 1): set text(weight: "bold")
+#set par(justify: false)
+#set table(align: left)
+#show table.cell: set align(left)
