@@ -35,17 +35,19 @@ abbr -a lt "eza --icons=auto --tree"
 abbr -a c "clear"
 abbr -a h "history"
 abbr -a grep "grep --color=auto"
-abbr -a fgrep "fgrep --color=auto"
-abbr -a egrep "egrep --color=auto"
 abbr -a untar "tar -xvzf"
 abbr -a fishrc "source ~/.config/fish/config.fish"
-abbr -a reb "reboot"
-abbr -a shut "shutdown -h now"
+if test (uname) = Linux
+    abbr -a reb "reboot"
+    abbr -a shut "shutdown -h now"
+else
+    abbr -a reb "sudo reboot"
+    abbr -a shut "sudo shutdown -h now"
+end
 abbr -a del "sudo rm -r"
 abbr -a cp "cp -i"
 abbr -a mkdir "mkdir -p"
 # Complex abbr -aes with arguments often need quotes in Fish
-abbr -a delete "find . -type l -print -delete"
 abbr -a zoxide-add-recursive "zoxide add **/"
 
 # Navigation
@@ -60,16 +62,28 @@ abbr -a down "cd ~/Downloads"
 abbr -a config "cd ~/.config"
 abbr -a share "cd ~/.local/share/"
 abbr -a opt "cd /opt/"
-abbr -a home "cd /home/"
+if test (uname) = Linux
+    abbr -a home "cd /home/"
+else
+    abbr -a home "cd /Users"
+end
 abbr -a tmp "cd /tmp/"
 abbr -a bin "cd /bin/"
-abbr -a lib "cd /lib/"
+if test (uname) = Linux
+    abbr -a lib "cd /lib/"
+end
 abbr -a etc "cd /etc/"
 abbr -a usr "cd /usr/"
 abbr -a pictures "cd ~/Pictures/"
-abbr -a videos "cd ~/Videos/"
+if test (uname) = Linux
+    abbr -a videos "cd ~/Videos/"
+else
+    abbr -a videos "cd ~/Movies/"
+end
 abbr -a doc "cd ~/Documents/"
-abbr -a temp "cd ~/Templates/"
+if test (uname) = Linux
+    abbr -a temp "cd ~/Templates/"
+end
 abbr -a dot "cd ~/dotfiles"
 abbr -a dev-projects "cd ~/developing-projects/"
 abbr -a dev-java "cd ~/developing-projects/java-projects/"
@@ -93,11 +107,12 @@ abbr -a gaall "git add -A"
 abbr -a sshtailscale "ssh krit@nicol-nas"
 abbr -a sshnasip "ssh krit@192.168.1.98"
 abbr -a sshos "ssh -l kritpio.nicol@supsi.ch linux1-didattica.supsi.ch"
-abbr -a nas-ssh "cloudflared access ssh --hostname ssh.nicolkrit.ch"
 
 # Developing
-abbr -a rebuildmvn "cd ~/developing-projects/java-projects && mvn clean install"
-abbr -a dbx "DBX_CONTAINER_MANAGER=podman distrobox"
+abbr -a rebuildmvn "mvn clean install"
+if test (uname) = Linux
+    abbr -a dbx "DBX_CONTAINER_MANAGER=podman distrobox"
+end
 abbr -a drva "direnv allow ."
 abbr -a drvr "direnv reload ."
 abbr -a nixdev "nix develop"
@@ -115,18 +130,24 @@ abbr -a pipes9 "pipes.sh -t 9"
 abbr -a bonsailive "cbonsai -l"
 
 # Borgmatic backup to nas
-abbr -a borg-status "journalctl -fu borgmatic"
-abbr -a borg-manual "sudo borgmatic --verbosity 1 --stats --progress"
-abbr -a borg-unlock "sudo borgmatic break-lock"
+if test (uname) = Linux
+    abbr -a borg-status "journalctl -fu borgmatic"
+    abbr -a borg-manual "sudo borgmatic --verbosity 1 --stats --progress"
+    abbr -a borg-unlock "sudo borgmatic break-lock"
+end
 
 # Virtualization
-abbr -a win-start "docker start WinBoat && echo 'Winboat-windows-vm started'"
-abbr -a win-stop "docker stop WinBoat && echo 'Winboat-windows-vm stopped'"
+if test (uname) = Linux
+    abbr -a win-start "docker start WinBoat && echo 'Winboat-windows-vm started'"
+    abbr -a win-stop "docker stop WinBoat && echo 'Winboat-windows-vm stopped'"
+end
 
 
 # System maintenance
 abbr -a nvim-recent-files-clean "rm ~/.local/state/nvim/shada/main.shada && echo 'Neovim recent files cleaned'"
-abbr -a boot-windows "sudo efibootmgr --bootnext 0000 && echo 'Next boot set to Windows'"
+if test (uname) = Linux
+    abbr -a boot-windows "sudo efibootmgr --bootnext 0000 && echo 'Next boot set to Windows'"
+end
 
 # Fish-specific
 abbr -a nd "nextd"

@@ -57,18 +57,19 @@ alias ld="eza -lhD --icons=auto"
 alias lt="eza --icons=auto --tree"
 alias c="clear"
 alias h="history"
-alias which="type -a"
 alias grep="grep --color=auto"
-alias fgrep="fgrep --color=auto"
-alias egrep="egrep --color=auto"
 alias untar="tar -xvzf"
 alias zshrc="source ~/.zshrc"
-alias reb="reboot"
-alias shut="shutdown -h now"
+if [[ "$(uname)" == Linux ]]; then
+    alias reb="reboot"
+    alias shut="shutdown -h now"
+else
+    alias reb="sudo reboot"
+    alias shut="sudo shutdown -h now"
+fi
 alias del="sudo rm -r"
 alias cp="cp -i"
 alias mkdir="mkdir -p"
-alias delete="find . -type l -print -delete"
 alias .1="cd .."
 alias .2="cd ../.."
 alias .3="cd ../../.."
@@ -82,16 +83,28 @@ alias down="cd ~/Downloads"
 alias config="cd ~/.config"
 alias share="cd ~/.local/share/"
 alias opt="cd /opt/"
-alias home="cd /home/"
+if [[ "$(uname)" == Linux ]]; then
+    alias home="cd /home/"
+else
+    alias home="cd /Users"
+fi
 alias tmp="cd /tmp/"
 alias bin="cd /bin/"
-alias lib="cd /lib/"
+if [[ "$(uname)" == Linux ]]; then
+    alias lib="cd /lib/"
+fi
 alias etc="cd /etc/"
 alias usr="cd /usr/"
 alias pictures="cd ~/Pictures/"
-alias videos="cd ~/Videos/"
+if [[ "$(uname)" == Linux ]]; then
+    alias videos="cd ~/Videos/"
+else
+    alias videos="cd ~/Movies/"
+fi
 alias doc="cd ~/Documents/"
-alias temp="cd ~/Templates/"
+if [[ "$(uname)" == Linux ]]; then
+    alias temp="cd ~/Templates/"
+fi
 alias dot="cd ~/dotfiles"
 alias dev-projects="cd ~/developing-projects/"
 alias dev-java="cd ~/developing-projects/java-projects/"
@@ -115,11 +128,12 @@ alias gaall="git add -A"
 alias sshtailscale="ssh krit@nicol-nas"
 alias sshnasip="ssh krit@192.168.1.98"
 alias sshos="ssh -l kritpio.nicol@supsi.ch linux1-didattica.supsi.ch"
-alias nas-ssh="cloudflared access ssh --hostname ssh.nicolkrit.ch"
 
 # Developing
-alias rebuildmvn="cd ~/developing-projects/java-projects && mvn clean install"
-alias dbx="DBX_CONTAINER_MANAGER=podman distrobox"
+alias rebuildmvn="mvn clean install"
+if [[ "$(uname)" == Linux ]]; then
+    alias dbx="DBX_CONTAINER_MANAGER=podman distrobox"
+fi
 alias drva="direnv allow ."
 alias drvr="direnv reload ."
 alias nixdev="nix develop"
@@ -142,18 +156,24 @@ cowask() {
 }
 
 # Borgmatic nas backup
-alias borg-status="journalctl -fu borgmatic"
-alias borg-manual="sudo borgmatic --verbosity 1 --stats --progress"
-alias borg-unlock="sudo borgmatic break-lock"
+if [[ "$(uname)" == Linux ]]; then
+    alias borg-status="journalctl -fu borgmatic"
+    alias borg-manual="sudo borgmatic --verbosity 1 --stats --progress"
+    alias borg-unlock="sudo borgmatic break-lock"
+fi
 
 # Virtualization
-alias win-start="docker start WinBoat && echo 'Winboat-windows-vm started'"
-alias win-stop="docker stop WinBoat && echo 'Winboat-windows-vm stopped'"
+if [[ "$(uname)" == Linux ]]; then
+    alias win-start="docker start WinBoat && echo 'Winboat-windows-vm started'"
+    alias win-stop="docker stop WinBoat && echo 'Winboat-windows-vm stopped'"
+fi
 
 
 # System maintenance
 alias nvim-recent-files-clean="rm ~/.local/state/nvim/shada/main.shada && echo 'Neovim recent files cleaned'"
-alias boot-windows="sudo efibootmgr --bootnext 0000 && echo 'Next boot set to Windows'"
+if [[ "$(uname)" == Linux ]]; then
+    alias boot-windows="sudo efibootmgr --bootnext 0000 && echo 'Next boot set to Windows'"
+fi
 
 # ----------------------------------------------
 # --- Git Auto Commit Functions (Current Folder Only) ---
