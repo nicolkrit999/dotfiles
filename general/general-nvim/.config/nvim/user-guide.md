@@ -309,6 +309,16 @@ More: sections 20 and 48.
 
 More: sections 7 and 32.
 
+### Language guides (tools that exist only for one language)
+
+| Language | What the guide covers | Section |
+| --- | --- | --- |
+| Java | nvim-java, jdtls, running, JUnit tests, debugging, refactoring, profiles | 78 |
+| Python | pyright, ruff, black, uv, `<F9>` and `<Space>rr`, pdb debugging | 79 |
+| LaTeX | vimtex, texlab, ltex, compiling, the PDF viewer | 80 |
+| Markdown | marksman, rendering, preview, footnotes, `:ToPDF` | 81 |
+| Typst | tinymist, `<Space>tw` watch, the PDF viewer | 82 |
+
 ### Neovide (Neovim in its own window)
 
 | Command | What it does |
@@ -4487,3 +4497,1808 @@ A terminal swallows some key combinations, so `ginit.vim` adds them for GUIs (`:
 | `<Ctrl-6>` | Normal | Jump to the alternate (previously open) buffer, like `<Ctrl-^>` |
 
 `ginit.vim` also has small blocks for other graphical frontends (nvim-qt and fvim); they do nothing in Neovide.
+
+---
+
+# 78. Java (nvim-java, jdtls, tests, debugging)
+
+This section is one complete walk through everything that is specific to Java in this config: the tools, why each one is there, how it works, how to use it, and what to do when it does not work. It covers only Java-only things (nvim-java and its parts, the language servers, the test runner, the debugger, the Java keys, commands and snippets). Global tools with global keys (`gd`, `K`, `<Space>rn`, git, fzf, ...) get only a pointer to their own section. Sections 35 and 54 hold the short key lists and section 56 the debugging basics; this section puts everything in one order.
+
+Everything marked "tested" below was tried with real keys in a Maven test project (JDK 25 devShell, `Main`, `Calc`, `CalcTest`).
+
+## 1. What You Get And Why
+
+| Part | Why it is in the setup | What it does | Where it comes from |
+| --- | --- | --- | --- |
+| **nvim-java** | One plugin that wires all the Java pieces together | Starts jdtls, finds the debugger and test extensions, adds the `:Java*` commands | lazy plugin `nvim-java/nvim-java`, loaded on `ft = "java"` |
+| **jdtls** | Java has no useful editing without a real compiler front end | Completion, diagnostics (compile errors while you type), go to definition, rename, code actions, formatting, refactoring | nvim-java's own jdtls 1.54.0, in `~/.local/share/nvim/nvim-java/packages/jdtls` |
+| **spring-boot** | Understands Spring annotations and `application.properties` | A second language server that attaches next to jdtls | nvim-java, only started when `java` is on PATH |
+| **java-debug** (DAP adapter) | Without it the debugger cannot talk to the JVM | Lets nvim-dap debug Java | VS Code extension `vscjava.vscode-java-debug`, linked by the devShell |
+| **java-test** | Runs JUnit tests and reports per-test results | `<Space>jt...` keys | VS Code extension `vscjava.vscode-java-test`, linked by the devShell |
+| **nvim-dap** | The general debugger client (breakpoints, stepping) | `:Dap*` commands | plugin `mfussenegger/nvim-dap`, a dependency of nvim-java |
+| **Lombok** | Many Java projects use it; jdtls must load it as an agent | Annotations like `@Getter` compile | `lombok` package of nvim-java, and `JAVA_TOOL_OPTIONS` of the devShell |
+| **typos_lsp** | Spell checker for code (global tool, not Java-only) | Underlines misspelled words in identifiers and comments, also in Java | `typos-lsp` from the Nix system |
+| **Snippets** | Typing the same loops and switches over and over | See part 9 below | `my_snippets/java.snippets` |
+
+Tools you get only through the devShell: the JDK (25), `mvn`, `gradle`, `lombok`, `jdtls` wrapper, and the two VS Code extensions. The Neovim config itself never installs them.
+
+### How nvim-java is loaded
+
+The real spec (`lua/plugin_specs.lua`):
+
+```lua
+{
+  "nvim-java/nvim-java",
+  ft = "java",
+  dependencies = { "MunifTanjim/nui.nvim", "mfussenegger/nvim-dap" },
+  config = function()
+    local is_nix_managed = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
+    local has_java = vim.fn.executable("java") == 1
+    require("java").setup({
+      jdk = { auto_install = not is_nix_managed },
+      java_test = { enable = true },
+      java_debug_adapter = { enable = true },
+      spring_boot_tools = { enable = has_java },
+    })
+    vim.lsp.config("jdtls", { settings = { java = { home = vim.env.JAVA_HOME } } })
+    if has_java then vim.lsp.enable("jdtls") end
+  end,
+}
+```
+
+In plain words:
+
+- `ft = "java"`: nvim-java loads when you open the first Java file of the session, not at startup. Non-Java sessions pay nothing. The very first Java file of a session opens a little slower.
+- On a Nix system `jdk.auto_install` is false: nvim-java never downloads a JDK. The JDK comes from the devShell (`JAVA_HOME`).
+- jdtls and spring-boot start only if `java` is on PATH. That is how the config stays silent outside the devShell.
+- `java.home = $JAVA_HOME` tells jdtls which JDK to compile with.
+- jdtls itself is NOT taken from the devShell (the devShell `jdtls` is only a wrapper script); nvim-java uses its own jdtls 1.54.0.
+
+### The Java devShell (`use_dev_env java`)
+
+A Java project has a `.envrc` with one line:
+
+```
+use_dev_env java
+```
+
+direnv loads the devShell when you `cd` into the folder. The devShell (template `dev-environments/language-specific/java/flake.nix`) gives you `JAVA_HOME` (JDK 25), `mvn`, `gradle`, Lombok (`JAVA_TOOL_OPTIONS` has a `-javaagent:` for it) and, in its shell hook, links the extensions for Neovim:
+
+```
+~/.local/share/nvim/nvim-java/packages/java-debug-adapter/extension -> vscode-java-debug
+~/.local/share/nvim/nvim-java/packages/java-test/extension          -> vscode-java-test
+./.direnv/tools/jdtls                                               -> jdt-language-server
+```
+
+`.direnv/` is ignored by git, so nothing shows up in `git status`. First time in a new folder: `direnv allow`.
+
+### Outside the devShell
+
+`java` is not on PATH, so jdtls and spring-boot do not start. `.java` files still open with syntax highlighting, snippets and typos_lsp, but without Java language features. Every `<Space>j...` key shows ONE warning, `Java: jdtls not attached (open nvim inside the Java devShell)`. These global keys are fallbacks: without them `<Space>jrr` would fall through to plain Vim keys (`<Space>`, `j`, `rr`). The universal run key `<Space>rr` (section 19) then runs plain `java <file>` if `java` exists, otherwise gives one warning.
+
+## 2. Quick Start
+
+1. In a terminal: `cd` into the project folder (the one with `pom.xml`). direnv loads the devShell and prints `Java Environment Active (JDK 25)`. First time: `direnv allow`.
+2. `nvim src/main/java/demo/Main.java`
+3. Wait about 10 seconds. The statusline shows `jdtls (+2)` (jdtls, spring-boot, typos_lsp). Tested: all three attach: `jdtls,spring-boot,typos_lsp`. Before that the `<Space>j` keys only show the warning. A big project's first start is slower.
+4. Run: `<Space>jrr`. A full-width, 15-line terminal split opens at the bottom with the program output.
+5. Test: open `CalcTest.java` and press `<Space>jtc`, then `<Space>jtr` for the result tree.
+6. Debug: `:DapToggleBreakpoint` on a line, then `<Space>jtC`. The window stops at the line with a `→` sign.
+
+## 3. Project Layout Rules
+
+### The root folder
+
+jdtls needs one root folder per project. nvim-java decides it with these markers (`lua/java-core/ls/servers/jdtls/root.lua`), two groups, the first group that matches wins:
+
+| Group | Markers | Meaning |
+| --- | --- | --- |
+| 1 | `mvnw`, `gradlew`, `settings.gradle`, `settings.gradle.kts`, `.git` | multi-module projects; the git root is the last resort on purpose |
+| 2 | `build.xml`, `pom.xml`, `build.gradle`, `build.gradle.kts` | single-module projects |
+
+Consequences:
+
+- The git root wins over a `pom.xml` below it, by design: in a multi-module Maven project you cannot tell the parent from a submodule, and jdtls does not break when the root is higher than the real parent `pom.xml`.
+- A Maven project nested in a bigger git repository (`repo/java/pom.xml`) still works: the root is the git root and jdtls finds the `pom.xml` below it. `<Space>jrr` works in this layout (tested by the user's real layout).
+- No git folder: the folder with `pom.xml` is the root. A loose `.java` file with neither: jdtls has no project (create a `pom.xml` or run `git init`).
+- Maven and Gradle projects are both imported by jdtls.
+- Expected layout: code in `src/main/java/...`, tests in `src/test/java/...`.
+
+### First start and where files appear
+
+- The first start of a project is slower: jdtls imports the project, runs Maven or Gradle and builds an index. The statusline and notifications show progress.
+- Compiled classes go to `target/` (Maven) next to `pom.xml`. jdtls also writes Eclipse files into the project (`.project`, `.classpath`, `.settings/`). In the test project `.gitignore` contains only `target/` and `.direnv/`, so `.project`, `.classpath` and `.settings/` show up in `git status`; add them to the project's `.gitignore` if you do not want them in git.
+- jdtls workspace data goes to `~/.cache/nvim/jdtls/` (`config_<hash>` and `workspace/proj_<hash>`), never into the project. The workspace folder name is a hash of the folder where Neovim was STARTED (`vim.fn.getcwd()` at startup), not of the jdtls root. Always start Neovim from the same project folder, otherwise jdtls builds a second workspace.
+- Saving: the auto-save plugin saves a buffer when you leave it or when Neovim loses focus. Refactor results and edits are therefore written to disk without `:w` once you switch windows (tested: a refactor was saved this way).
+
+## 4. Keys And Commands
+
+All `<Space>j` keys are normal mode only. The real maps are created per buffer when jdtls attaches and removed when it detaches (`LspAttach` / `LspDetach` in `lua/mappings.lua`); before that, the global fallback shows the warning. which-key shows the groups `j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
+
+### Build (`<Space>jb`)
+
+| Key | Command | What it does | Mode |
+| --- | --- | --- | --- |
+| `<Space>jbb` | `:JavaBuildBuildWorkspace` | Compile the whole workspace; a "Background task" notification shows while it runs (tested) | n |
+| `<Space>jbc` | `:JavaBuildCleanWorkspace` | Delete the jdtls workspace cache of the project after a Yes/No question, then restart jdtls (see below) | n |
+
+### Runner (`<Space>jr`)
+
+| Key | Command | What it does | Mode |
+| --- | --- | --- | --- |
+| `<Space>jrr` | `:JavaRunnerRunMain` | Run the main class | n |
+| `<Space>jrs` | `:JavaRunnerStopMain` | Stop the running program (tested: the java process is gone and the runner shows `Process finished with exit code::129`); with nothing running it does nothing visible | n |
+| `<Space>jrl` | `:JavaRunnerToggleLogs` | Show or hide the runner log window (tested: toggles between 1 and 2 windows) | n |
+| `<Space>jrp` | `:JavaProfile` | Run profiles window (main class and arguments), see below | n |
+
+### Test (`<Space>jt`)
+
+| Key | Command | What it does | Mode |
+| --- | --- | --- | --- |
+| `<Space>jtc` | `:JavaTestRunCurrentClass` | Run all tests of the class in the buffer | n |
+| `<Space>jtm` | `:JavaTestRunCurrentMethod` | Run only the test method under the cursor | n |
+| `<Space>jtr` | `:JavaTestViewLastReport` | Show the result tree of the last run | n |
+| `<Space>jtC` | `:JavaTestDebugCurrentClass` | Debug the class (breakpoints stop) | n |
+| `<Space>jtM` | `:JavaTestDebugCurrentMethod` | Debug the test method under the cursor | n |
+
+### Refactor / extract (`<Space>je`)
+
+| Key | Command | What it does | Mode |
+| --- | --- | --- | --- |
+| `<Space>jev` | `:JavaRefactorExtractVariable` | Extract the expression to a local variable | n |
+| `<Space>jeo` | `:JavaRefactorExtractVariableAllOccurrence` | Same, and replace ALL occurrences | n |
+| `<Space>jec` | `:JavaRefactorExtractConstant` | Extract a constant | n |
+| `<Space>jem` | `:JavaRefactorExtractMethod` | Extract a method | n |
+| `<Space>jef` | `:JavaRefactorExtractField` | Extract a field | n |
+
+### Settings and debugger setup
+
+| Key | Command | What it does | Mode |
+| --- | --- | --- | --- |
+| `<Space>jd` | `:JavaDapConfig` | Configure the debug adapter again (it is done automatically when jdtls starts) | n |
+| `<Space>jj` | `:JavaSettingsChangeRuntime` | Pick another JDK runtime for jdtls; only works if runtimes are configured, see below | n |
+
+### The `:Java*` commands
+
+Tested with `:command Java` after jdtls attached:
+
+- Existing at that point: `JavaBuildBuildWorkspace`, `JavaBuildCleanWorkspace`, `JavaRefactorExtract...` (five), `JavaRunnerRunMain`, `JavaRunnerStopMain`, `JavaRunnerToggleLogs`, `JavaRunnerSwitchLogs`, `JavaTestRunCurrentClass`, `JavaTestRunCurrentMethod`, `JavaTestRunAllTests`, `JavaTestDebugCurrentClass`, `JavaTestDebugCurrentMethod`, `JavaTestDebugAllTests`, `JavaTestViewLastReport`, `JavaDapConfig`, `JavaProfile`, `JavaSettingsChangeRuntime`.
+- Three have no key: `:JavaRunnerSwitchLogs`, `:JavaTestRunAllTests` (all tests of the project) and `:JavaTestDebugAllTests`.
+- Only `:JavaBuild*` and `:JavaRefactor*` appear after jdtls attached; the other `:Java*` commands exist as soon as nvim-java is loaded but do nothing useful without jdtls.
+- `:JavaRefactor...` commands accept a range, so `:'<,'>JavaRefactorExtractMethod` is valid.
+
+### The runner window
+
+`<Space>jrr` opens the runner as a full-width terminal split at the bottom (tested: 14 text rows plus the status line, 200 columns wide at 200 columns). It prints the real command, then the program output, then the exit code. Tested output for `Main`:
+
+```
+/nix/store/...-openjdk-25.0.2+10/lib/openjdk/bin/java -cp .../target/classes demo.Main Picked up JAVA_TOOL_OPTIONS: -javaagent:.../lombok.jar
+result: 20
+Process finished with exit code::0
+```
+
+(The `Picked up JAVA_TOOL_OPTIONS` line comes from the devShell's Lombok setting; it is harmless.) `<Space>jrl` hides and shows this window again. To go back to the code: `<Esc>`, then `<Ctrl-w>k` or `<Up>`.
+
+### Profiles window (`<Space>jrp`)
+
+A profile stores VM arguments and program arguments for the runner of one main class. Tested flow:
+
+1. `<Space>jrp` opens a window `Profiles` with the entry `New Profile` and the hint `[a]ctivate [d]elete [b]ack [q]uit`.
+2. `<Enter>` on `New Profile` opens a form with three boxes: `Name`, `VM arguments`, `Program arguments`, and the hint `[s]ave [b]ack [q]uit`.
+3. In the form (normal mode): `i` types in the box, `<Esc>` leaves it, `<Tab>` or `j` goes to the next box, `k` to the previous one, `s` saves.
+4. Saved example: name `prof1`, program arguments `hello`. The profile is stored in `~/.local/share/nvim/nvim-java-profiles.json`, keyed by project folder and main class, and marked active:
+
+```json
+{"/path/to/project": {"nvim-java-test -> demo.Main": [{"name": "prof1", "is_active": true, "prog_args": "hello", "vm_args": ""}]}}
+```
+
+5. The next `<Space>jrr` uses it. Tested: the runner printed `... demo.Main hello`.
+6. To switch or remove profiles: `<Space>jrp`, choose the profile, `a` activates it, `d` deletes it, `q` closes.
+
+### Clean workspace (`<Space>jbc`)
+
+1. `<Space>jbc` opens a Yes/No list with the question `Do you want to delete ".../.cache/nvim/jdtls/workspace/proj_<hash>"`.
+2. `<Enter>` on `1. Yes` deletes that folder and restarts jdtls (tested: the folder was recreated fresh a moment later with a new timestamp, jdtls came back). `No` does nothing.
+3. Your source files and `target/` are not touched.
+4. The folder named in the question is computed from jdtls's root folder, while jdtls really uses a folder named from the folder where Neovim was started. They are the same when you start Neovim in the project root (the case of a project that is its own git root). If your git root is above the folder where you start Neovim, the question may name a folder that does not exist; then delete the real one by hand: `rm -r ~/.cache/nvim/jdtls/workspace` (from the nvim-java source, not tested in a nested layout).
+
+### Change runtime (`<Space>jj`)
+
+Tested: in the test project it only shows a notification: `No configured runtimes available` plus a link to the nvim-java README. The list of JDKs comes from jdtls setting `java.configuration.runtimes`, which this config does not set (only `java.home = $JAVA_HOME`). So `<Space>jj` is a no-op here; the JDK in use is the devShell JDK.
+
+## 5. Language Server Features In A Java Buffer
+
+All need jdtls attached. The general keys are described elsewhere (section 13 for LSP); here is what they do in Java.
+
+| Key / command | What it does in Java |
+| --- | --- |
+| `gd` | Go to definition; several results open the location list |
+| `K` | Hover: type and Javadoc. Tested: a hover float shows a "java" progress bar while loading |
+| `<Space>rn` | Rename a class, method or variable in all files |
+| `<Space>ca` | Code actions: quick fix, organize imports, generate getters, constructors, `toString`; also the way to extract with a selection (see Refactoring) |
+| `<Space>fm` | Format the file with the jdtls formatter (Eclipse style). Tested: `calc.add(2,3)*4` became `calc.add(2, 3) * 4`. Formatting is never automatic |
+| `:LspInlayHints enable` / `disable` | Inlay hints (parameter names, types); off by default (tested: enable turns hints on) |
+| `<Space>t` | Symbol outline (aerial); tested in Java: shows `Main` and `main` |
+| diagnostics | Compile errors and warnings appear while you type, without running anything |
+
+Other notes:
+
+- **illuminate**: other uses of the word under the cursor are highlighted (Java is in its filetype list).
+- **typos_lsp**: attaches to Java buffers too (root markers include `.gitignore`), also outside the devShell. If `<Space>rn` or `<Space>ca` only warn "no attached language server supports it", only typos_lsp is attached and jdtls is missing.
+- **Completion** and **snippets** work as in other languages (sections 14 and 15).
+- The coloured line marker (`colorcolumn`) is at 100 for Java.
+- spring-boot attaches next to jdtls in every Java buffer, even in a project without Spring; it is harmless.
+
+## 6. Tests (JUnit)
+
+### Why and how
+
+java-test knows JUnit 4 and 5 and TestNG. nvim-java asks jdtls for the test classes and methods, then starts the tests through the debug adapter machinery. That is why the test terminal is called `[dap-terminal]` and why debugging a test works with the same keys.
+
+### Using it
+
+Example test (`src/test/java/demo/CalcTest.java`):
+
+```java
+class CalcTest {
+    @Test
+    void addWorks() {
+        assertEquals(5, new Calc().add(2, 3));
+    }
+
+    @Test
+    void multiplyWorks() {
+        assertEquals(6, new Calc().multiply(2, 3));
+    }
+}
+```
+
+1. `<Space>jtc` anywhere in the class runs both tests; with the cursor inside one method, `<Space>jtm` runs only that one.
+2. A terminal window named `[dap-terminal] Launch All Java Tests` opens at the bottom (the tab line also shows it). Tested content: only the start lines (`Picked up JAVA_TOOL_OPTIONS...`) and `[Process exited 0]`. The terminal does NOT print pass or fail text.
+3. The results are in the report: `<Space>jtr` opens a floating window with a tree. Tested, all passing:
+
+```
+ demo.CalcTest
+   addWorks(demo.CalcTest)
+   multiplyWorks(demo.CalcTest)
+```
+
+Each line has a status icon in front (a different icon for pass and fail). Tested with a wrong expected value (`assertEquals(7, ...)`): the failing method gets the failure message and stack below it:
+
+```
+   multiplyWorks(demo.CalcTest)
+     org.opentest4j.AssertionFailedError: expected: <7> but was: <6>
+     at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+     at demo.CalcTest.multiplyWorks(CalcTest.java:15)
+```
+
+4. Close the report with `<Esc>` or `q` (both tested). `<Space>jtr` again after a new run shows the new result. The exit code in the terminal is 0 even when tests fail; trust the report.
+
+### Needs
+
+- A JUnit dependency in `pom.xml` (the test project: `junit-jupiter` 5.10.2 and `maven-surefire-plugin` 3.2.5, release 21).
+- jdtls attached and the `java-test` extension linked by the devShell (see section 1).
+- Network the first time Maven has to download the JUnit jars into `~/.m2`.
+
+## 7. Debugging
+
+### Why and how
+
+nvim-dap is the debugger client; java-debug is the adapter that talks to the JVM; nvim-java registers the Java configurations for you. This config has NO dap keymaps and NO dap-ui panel (no variables or stack window). You work with `:Dap*` commands, the sign column and small floating windows. Tested end to end:
+
+| Step | How | Tested result |
+| --- | --- | --- |
+| Breakpoint on / off | `:DapToggleBreakpoint` on the line (put it on a line with code, e.g. the `assertEquals` line, not on the `void addWorks() {` line) | A `B` sign in the sign column |
+| Debug a test class | `:DapToggleBreakpoint`, then `<Space>jtC` | After a few seconds the window shows a `→` sign on the breakpoint line; the program is paused |
+| Debug one test method | `<Space>jtM` with the cursor in the method | same, only that method |
+| Debug the program (`main`) | `:DapToggleBreakpoint` in `Main.java`, then `:DapContinue` | A picker "Configuration" opens (tested: 5 identical entries `nvim-java-test -> demo.Main`); press `<Enter>` on the first: the program stops at the breakpoint with `→` |
+| Step over | `:DapStepOver` | `→` moves to the next line |
+| Step into | `:DapStepInto` | On a call to your own method it opens that file (tested: `calc.add(2, 3)` opens `Calc.java` at `int sum = a + b;`). On a line without a call, or into library code, it opens an empty `unknown` buffer and a DAP warning "Adapter reported frame ... Invalid cursor line" |
+| Step out | `:DapStepOut` | Back to the caller |
+| Look at a value | put the cursor on the variable, `:lua require("dap.ui.widgets").hover()` | A small float with the value (tested: `sum` shows `5`). `<Esc>` closes it |
+| Continue | `:DapContinue` while paused | Runs to the next breakpoint or to the end (tested: the test terminal shows `[Process exited 0]`) |
+| Debug console | `:DapToggleRepl` | A `[dap-repl-N]` window; run again to hide |
+| Stop | `:DapTerminate` | The session ends (tested: no session afterwards) |
+
+Notes:
+
+- Without a breakpoint, `<Space>jtC` simply runs the tests to the end.
+- The debugged program's output goes to the `[dap-terminal]` window.
+- `<Space>jrr` runs without a debugger; to debug `main` use `:DapContinue` as above.
+- If a debug window stays open after `:DapTerminate`, close it with `<Space>q` in that window.
+- See section 36 and section 56 for the general DAP notes.
+
+## 8. Refactoring (Extract)
+
+How it works: each `<Space>je...` key runs `vim.lsp.buf.code_action` filtered to one kind (`refactor.extract.variable`, `.constant`, `.function`, `.field`). So `<Space>je...` and `<Space>ca` use the same jdtls actions; the keys just pick the right one for you.
+
+The cursor or selection decides what is extracted. After the action a small `New Name` window opens with a proposed name (tested: `i`, `_4`, `extracted`). The change is ALREADY applied; the window renames it:
+
+- `<Enter>` accepts the name in the box (to rename, delete the text with `<BS>` first, then type the new name; it must be a valid Java identifier or you get "is not a valid Java identifier").
+- `<Esc>` closes the window and keeps the proposed name.
+
+Undo needs `u` twice (once for the rename step, once for the extraction; tested).
+
+Try-it code (`Main.java`), tested results with the cursor on the shown part:
+
+```java
+Calc calc = new Calc();
+int total = calc.add(2, 3) * 4;
+String label = "result";
+System.out.println(label + ": " + total);
+```
+
+| Key | Cursor | Tested result |
+| --- | --- | --- |
+| `<Space>jev` | on `calc.add(2, 3)` | `int i = calc.add(2, 3);` and `int total = i * 4;` (the `New Name` box proposes `i`) |
+| `<Space>jeo` | on an expression that appears several times | same, but every identical occurrence uses the new variable |
+| `<Space>jec` | on the `4` | `private static final int _4 = 4;` above the method and `... * _4;` (rename to `FACTOR` gives `private static final int FACTOR = 4;`) |
+| `<Space>jem` | on the identifier `calc` (no selection) | extracts only that identifier: `extracted(calc).add(2, 3)` and `private static Calc extracted(Calc calc) { return calc; }` |
+| `<Space>jem` | selection, see below | extracts the selected statements into a method |
+| `<Space>jef` | on an expression | extracts to a field (same flow, not tested separately) |
+
+Extracting a whole statement or block into a method needs a selection, and the key is normal mode only:
+
+1. Select with `v` (characterwise), for example `v$` on the `System.out.println(...)` line (tested; `V` linewise gave a worse result: only `System.out` was extracted).
+2. Press `<Esc>` (the selection marks stay).
+3. `<Space>jem`
+
+Tested result:
+
+```java
+        extracted(total, label);
+    }
+
+    private static void extracted(int total, String label) {
+        System.out.println(label + ": " + total);
+    }
+```
+
+Pressing `<Space>jem` while the selection is still active does NOT work (visual mode has no such key; `<Space>ca` there would even run `c`, change, on the selection).
+
+## 9. Snippets
+
+Source: `my_snippets/java.snippets`. Type the trigger in insert mode in a Java buffer and expand it (section 15); `<Tab>` jumps between the placeholders.
+
+| Trigger | Result |
+| --- | --- |
+| `fdijscanner` | `package fondamentidiinformatica.X;`, the Scanner import and a class with `main` reading one line from `System.in` |
+| `jarr` | `int[] arrayName = new int[size];` |
+| `jarrlit` | `int[] arrayName = {value1, value2, value3};` |
+| `jdict` | `HashMap<String, Integer> mapName = new HashMap<>();` |
+| `jdictfull` | The same with `import java.util.HashMap;` and a `put(key, value)` line |
+| `jfor` | `for (int i = 0; i < length; i++) { }` |
+| `jforeach` | `for (String item : collection) { }` |
+| `jwhile` | `while (condition) { }` |
+| `jdowhile` | `do { } while (condition);` |
+| `jif` | `if (condition) { }` |
+| `jifelse` | `if ... else ...` |
+| `jifelif` | `if ... else if ... else ...` |
+| `jswitchtraditional` | Classic `switch` with `case`, `break`, `default` |
+| `jswitchmulti` | Classic `switch`, several `case` labels per result (months to seasons) |
+| `jswitcharrow` | `switch` with `case x -> result;` |
+| `jswitcharrowmulti` | Arrow `switch`, several values per case |
+| `jswitchyield` | Switch expression assigned to a variable |
+| `jswitchyieldblock` | Switch expression with a `default -> { ...; yield ...; }` block |
+| `jtrycatch` | `try { } catch (Exception e) { }` |
+| `jtryfinally` | `try / catch / finally` |
+| `jwhilescannerbreak` | `Scanner` loop that reads values until a stop value, then closes the scanner |
+
+## 10. Windows While Running, Testing And Debugging
+
+| Keys | What it does |
+| --- | --- |
+| `<Ctrl-w>h` `j` `k` `l` | Move between windows: code, the runner or test terminal at the bottom, the report |
+| `<Left>` `<Down>` `<Up>` `<Right>` | The same with arrow keys (normal mode) |
+| `<Esc>` first | In a terminal window press `<Esc>` to get to normal mode, then use a window key. `i` types in the terminal again |
+| `<Space>q` | Save if modified and close the current window (use it in a runner, test or debug terminal) |
+| `<Ctrl-w>o` | Keep only the current window |
+| `<Esc>` in a float | Closes the report float, the Profiles window, `New Name` box and hover floats (section 2 lists `<Esc>` closing floats) |
+
+See section 7 (windows) and the cheat sheet in section 2 for the same rows.
+
+## 11. Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `<Space>j...` shows `Java: jdtls not attached (open nvim inside the Java devShell)` | `java` is not on PATH (not in the devShell) or jdtls has not finished starting | Quit, `cd` into the project, check `direnv allow` and `which java`, start nvim again; inside the devShell wait about 10 s and check `:LspAttached` |
+| jdtls never attaches | Neovim started before direnv loaded; jdtls crashed | `:LspLog`, `:checkhealth vim.lsp`, `:edit` the file; check `which java` |
+| Tests or debugger do not start, adapter not found | The devShell was not entered since the extensions were linked, or the links broke | Enter the project with direnv once (the shell hook relinks `~/.local/share/nvim/nvim-java/packages/java-debug-adapter/extension` and `java-test/extension`), restart nvim |
+| `<Space>jrr` prints nothing | jdtls not finished importing, or the file is not under `src/main/java`, or no `main` method | Wait for the first import, `<Space>jbb`, then `<Space>jrr` again; a project that is its own git root and one nested in a bigger git repo both work |
+| Old errors or deleted classes still shown | Stale jdtls workspace | `<Space>jbc` then Yes (jdtls restarts); if it stays wrong: `rm -r ~/.cache/nvim/jdtls/workspace` |
+| A different, empty workspace appears after starting from another folder | The workspace folder name is a hash of the START folder of Neovim | Always start nvim in the same project folder |
+| Test terminal shows no pass/fail | By design: results are in the report | `<Space>jtr` |
+| First test run fails with a download error | Maven offline: JUnit jars not in `~/.m2`. Tested in a shell with an empty repo: `mvn -o test` stops with `Cannot access central (https://repo.maven.apache.org/maven2) in offline mode and the artifact org.apache.maven.plugins:maven-resources-plugin:jar:3.3.1 has not been downloaded from it before` | Connect once, run `<Space>jtc` again (or `mvn test` in a shell) |
+| `Java version mismatch: JDTLS ... requires Java ...` | The JDK on PATH is too old or too new for jdtls 1.54.0 | Use the devShell JDK (25) |
+| "release version N not supported" when compiling | `maven.compiler.release` in `pom.xml` is higher than the JDK | Lower it (the test project uses 21 on JDK 25) |
+| `.java` file in a scratch folder: no Java features | No project root (no `pom.xml`, `.git`) | Create `pom.xml` or `git init` |
+| Debugger does not stop | No breakpoint, or the breakpoint is on a line without code | `:DapToggleBreakpoint` on a code line, then `<Space>jtC` |
+| `:DapStepInto` opens an empty `unknown` buffer | The step went into library code without source | `:DapStepOut`; step into your own methods only |
+| `<Space>rn` or `<Space>ca` warn "no attached language server supports it" | Only typos_lsp attached, jdtls missing | Same as "jdtls never attaches" |
+| Spelling squiggles on valid names | typos_lsp does not know the word | Put a `typos.toml` with `[default.extend-words]` in the project root |
+| `.project`, `.classpath`, `.settings/` in `git status` | jdtls writes Eclipse files into the project | Add them to the project's `.gitignore` |
+| Refactor made a mess | The edit was applied before the rename step | `u` twice, then redo |
+| `<Space>jj` says `No configured runtimes available` | No `java.configuration.runtimes` set | Expected here; nothing to fix |
+
+
+## Related Sections
+
+Section 35 (Java keys), 54 (Java in depth), 36 and 56 (debugging), 19 and 55 (running code, `<Space>rr`), 13 (LSP), 14 (completion), 15 (snippets), 7 (windows), 8 (terminal), 20 (git; the git root decides the jdtls root), 2 (quick reference and cheat sheet).
+
+
+---
+
+# 79. Python (pyright, ruff, black, uv, running and debugging)
+
+This section is one walk-through for everything Python in your config: what starts by itself, how to run, format and debug a file, how virtual environments are detected, and what to check when something does not work. Deeper background on the shared parts lives in the sections named in "Related sections" at the end.
+
+## What You Get
+
+| Feature | What it does | Needs |
+| --- | --- | --- |
+| **pyright** (language server) | Type checking, import resolution, hover (`K`), go to definition (`gd`), rename (`<Space>rn`), references. Mode is `standard`, whole workspace is checked. Its own import sorting is turned off (ruff does that) | `pyright-langserver` on PATH (installed globally by `neovim.nix`, also in the python devShell) |
+| **ruff** (language server, `ruff server`) | Fast linting (diagnostics), quick fixes and "organise imports" through `<Space>ca`. It is the server that offers formatting for `<Space>fm` | `ruff` on PATH (python and jupyter devShells; NOT global) |
+| **black** (formatter) | `<Space>f` formats the file; after every save a background check warns when the file is not formatted | `black` on PATH (python devShell), or a uv project that has black (see Running) |
+| **typos_lsp** | Spell checker for identifiers and comments, attaches to every file type (also Python) | `typos-lsp` on PATH (installed globally by `neovim.nix`) |
+| **tree-sitter** | Syntax highlighting (the `python` parser) | Nothing on Nix systems (parsers come from the nix store) |
+| **Snippets** | `print`, `impa`, `main`, `sol` (see Snippets below) | Nothing |
+| **uv awareness** | In a project with `uv.lock` and no active virtual environment, `<F9>` and `<Space>f` go through `uv run` | `uv` on PATH (it is: `/run/current-system/sw/bin/uv`, tested) |
+| **Statusline label** | Shows the active environment as `name (venv)` or `name (conda)` in Python buffers | An activated environment |
+| **Format check** | After saving, `black --check` runs in the background and warns `<file>: file is not formatted (black)` | `black` on PATH, otherwise silent |
+| **Run** | `<F9>` (output in the quickfix window) and `<Space>rr` (output in a terminal split) | `python` / `python3` on PATH |
+| **Debug** | `<Space>dp` starts `python -m pdb` inside nvim-gdb | Linux or Windows |
+| **vim-illuminate** | Other uses of the word under the cursor are highlighted (Python is in its file type list) | Nothing |
+| **aerial** | Symbol outline of classes, functions and methods (`<Space>t`) | Nothing |
+| **Indentation** | 4 spaces, no wrapping, `colorcolumn` marker at 88 | Nothing |
+
+## Quick Start
+
+1. Start nvim **inside the Python devShell** (a project folder with `.envrc` containing `use_dev_env python`, see "Devshell and Tools"). Outside it, only pyright and typos_lsp exist.
+2. Open a file: `nvim hello.py`. Wait a second or two. `:LspAttached` lists the running servers; tested in the python devShell: `pyright`, `ruff`, `typos_lsp`. The statusline shows `pyright (+2)` (the first server and two more).
+3. Type a small program, save with `:w`, then run it with `<F9>`. A 6-line quickfix window opens at the bottom and shows the output.
+4. Run it again as a full terminal with `<Space>rr`. A terminal split opens on the LEFT of the code.
+5. Format with `<Space>f` (black). The file on disk is rewritten and the buffer reloads (`File changed on disk. Buffer reloaded!`).
+6. Debug with `<Space>dp`. The code gets a `▶` marker and a pdb pane opens below it. Step with `<F10>`, quit with `:GdbDebugStop`. (Afterwards `<F9>` is gone in that buffer until `:e!`.)
+
+## Why Each Tool Exists
+
+| Tool | Why it is in your setup | How it works |
+| --- | --- | --- |
+| pyright | Python does not check types by itself. Pyright finds wrong argument types, missing imports and typos in attribute names before you run the file | A language server (`pyright-langserver --stdio`). Neovim starts it when you open a `.py` file and it answers questions: errors, hover, definition, rename. Installed globally, so it also works outside a devShell |
+| ruff | Fast linter (unused imports, undefined names, style problems) with automatic fixes and import sorting | `ruff server` is a second language server in the same buffer. Its diagnostics appear next to pyright's, and `<Space>ca` lists its fixes |
+| black | One fixed code style, so you never decide about spaces or quotes | A command-line formatter. `<Space>f` runs it on the file, and a background check runs after each save |
+| uv | Fast Python project and package manager. Projects managed by uv have a `uv.lock` file | The config checks for `uv.lock` and then runs `<F9>` and `<Space>f` through `uv run`, so they use the project's own environment |
+| venv / conda label | Tells you which environment nvim (and so pyright) was started with | Reads `$VIRTUAL_ENV` / `$CONDA_DEFAULT_ENV` |
+| direnv + devShell | Gives each project its own tools without installing them globally | `.envrc` with `use_dev_env python` loads the nix devShell; start nvim from that folder |
+| nvim-gdb | Step through a script with pdb (Python's built-in debugger) with the current line marked in your code | Starts `python -m pdb file.py` in a terminal pane and talks to it |
+| AsyncRun | Run a script without leaving the editor and read the output in the quickfix window | `<F9>` runs a shell command as a background job and streams its output into quickfix |
+| typos_lsp | Catches misspelt words inside names and comments | A language server for every file type |
+| tree-sitter, aerial, illuminate, treesj, ufo | General tools that also work for Python (highlighting, outline, word highlight, split/join, folding) | See the sections in "Related Sections" |
+
+Python-specific configuration lives in only a few places:
+
+| File | What it holds |
+| --- | --- |
+| `after/ftplugin/python.lua` | indentation, no wrapping, `<F9>`, `<Space>f`, `<Space>dp` |
+| `after/lsp/pyright.lua`, `after/lsp/ruff.lua` | server settings |
+| `lua/config/lsp.lua` | which servers exist and when they are enabled |
+| `my_snippets/python.snippets` | snippets |
+| `lua/custom-autocmd.lua` | the after-save format check (`black --check`) |
+| `lua/options.lua` | `colorcolumn` 88 for Python |
+
+## Devshell and Tools
+
+Python tools are not installed globally except two. Open nvim in a devShell to get the rest.
+
+| Tool | Global (`neovim.nix`) | python devShell | jupyter devShell |
+| --- | --- | --- | --- |
+| `pyright` | yes | yes | no (uses the global one) |
+| `typos-lsp` | yes | no (uses the global one) | no (uses the global one) |
+| `ruff` | no | yes | yes |
+| `black` | no | yes | no |
+| `uv` | yes, system-wide (`which uv` shows `/run/current-system/sw/bin/uv`; `python3` is also on the system PATH) | not added | not added |
+| `python` / `python3` | system `python3` exists | yes (version depends on the variant) | python 3.13 |
+
+Templates live in `~/nix/templates/krit/dev-environments/language-specific/`:
+
+| Template | What it gives you |
+| --- | --- |
+| `python` | Python, black, flake8, isort, pip, matplotlib, pylint, setuptools, numpy, pyright, ruff, and `venvShellHook` which creates `.venv` in the project folder (`venvDir = ".venv"`). It warns when `.venv` was built with a different Python version than the shell (delete `.venv` and reload) |
+| `jupyter` | poetry, Python 3.13, ruff, ipykernel, pip, `venvShellHook` (also `.venv`). No black, no pyright of its own |
+
+Variants of the `python` template (flake outputs): `default` = Python 3.15, `py-stable` = 3.13, `py-lts` = 3.12, `py311` = 3.11.
+
+How direnv picks one: the `direnv.nix` helper defines `use_dev_env() { use flake <dev-environments>/language-specific/$1 }`. So the `.envrc` line decides the variant:
+
+| `.envrc` content | Result |
+| --- | --- |
+| `use_dev_env python` | `python` template, default output (latest Python) |
+| `use_dev_env "python#python-lts"` | same template, output named after `#` |
+| `use_dev_env "python#py-stable"` | same template, output `py-stable` |
+
+Your folders in `~/github-repos/personal/developing-projects/python-projects/`: `python-latest` (`use_dev_env python`), `python-lts` (`use_dev_env "python#python-lts"`), `python-stable` (`use_dev_env "python#py-stable"`). After a new or changed `.envrc` run `direnv allow` once. Then start nvim from that folder so nvim inherits the environment.
+
+**When a tool is missing** the config does not complain:
+
+| Tool missing | What happens |
+| --- | --- |
+| `pyright` or `ruff` | That server is silently not enabled (no warning when opening the file). `:LspStart pyright` or `:LspStart ruff` names the missing program |
+| `black` | `<Space>f` shows ONE warning: `Python: black not found on PATH (open nvim inside the python devShell)`. The after-save format check stays silent |
+| `uv` (in a uv project) | Not a real case here (uv is installed system-wide). If it were missing, `<Space>f` would show the same black warning and `<F9>` would fail inside the quickfix window |
+| `python` / `python3` | `<F9>` shows the shell error in the quickfix window. `<Space>rr` has no PATH check for Python: tested with an empty PATH, the terminal shows `bash: line 1: python3: command not found` and no nvim warning appears |
+| `typos-lsp` | Silent |
+
+
+## Running Code
+
+Two ways, for different purposes.
+
+| Key | Command it runs | Where output goes |
+| --- | --- | --- |
+| `<F9>` | `python -u "<file>"`, or `uv run python -u "<file>"` in a uv project (see below) | Quickfix window, 6 lines tall at the bottom (AsyncRun opens it by itself). The last line says `[Finished in N seconds with code C]` |
+| `<Space>rr` | `python3 <file>` (shell-escaped) | A new terminal in a vertical split on the LEFT of your code, titled like `term://...:python3 'file.py'`; Claude's panel stays on the right. When the program ends it shows `[Process exited 0]` |
+
+Facts that differ between the two (all tested):
+
+- `<F9>` is **buffer-local**: it exists only in Python buffers. `-u` means unbuffered, so `print` output appears while the program runs.
+- `<Space>rr` is global and detects the file type. For Python it is always plain `python3 <file>`: **it never uses `uv run`, and has no `-u`**. In a uv project without an active environment use `<F9>`.
+- Both run the file as saved on disk. Save first (`:w`).
+- `<Space>rr` on an unnamed buffer shows one warning (`save the file first`).
+- Paths with spaces or special characters are safe in `<Space>rr` (the name is shell-escaped). `<F9>` wraps the name in double quotes, so a double quote or `$` inside a file name would break it.
+
+Example to try both. Save as `hello.py`:
+
+```python
+import sys, os
+
+def add(a: int, b: int) -> int:
+    return a + b
+
+print(add(1, 2))
+print(sys.version_info[:2], os.environ.get("VIRTUAL_ENV"), sys.executable)
+```
+
+Press `<F9>`. Expect in the quickfix window: `3`, then the Python version, the venv path (or `None`) and the interpreter path, then `[Finished in 0 seconds with code 0]`. A program that crashes ends with `code 1` and the traceback, as in the tested example `add(1, "two")`:
+
+```
+TypeError: unsupported operand type(s) for +: 'int' and 'str'
+[Finished in 0 seconds with code 1]
+```
+
+### When `<F9>` uses uv
+
+The choice is made when the Python file is opened (`after/ftplugin/python.lua`), from the project root (nearest `.git` or `pyproject.toml`):
+
+```lua
+local py_env = utils.get_py_env()
+local py_cmd = (py_env == "uv") and "uv run python" or "python"
+vim.keymap.set("n", "<F9>", string.format(':<C-U>AsyncRun %s -u "%%"<CR>', py_cmd), ...)
+```
+
+| Situation | `<F9>` runs | `<Space>f` runs |
+| --- | --- | --- |
+| No project root (no `.git`, no `pyproject.toml`) | `python -u` | `black` |
+| An environment is active (`$VIRTUAL_ENV` or `$CONDA_DEFAULT_ENV` set) | `python -u` | `black` |
+| `uv.lock` in the project root and no active environment | `uv run python -u` (tested: quickfix title `:AsyncRun uv run python -u "hello.py"`) | `uv run black` |
+| Project root without `uv.lock`, no active environment | `python -u` | `black` |
+
+Tested: in a folder with `pyproject.toml` + `uv.lock` and a plain shell, the quickfix title showed `uv run python -u`; inside the python devShell (where `$VIRTUAL_ENV` is the project's `.venv`) it showed plain `python -u`.
+
+Because the check runs at file open, activate the environment (or create `uv.lock`) before opening the file, or reload with `:e!`.
+
+Create a uv test project like this:
+
+```sh
+mkdir uvp && cd uvp
+git init
+uv init --bare        # creates pyproject.toml
+uv lock               # creates uv.lock
+nvim hello.py
+```
+
+### Stopping a running program
+
+| Started with | How to stop |
+| --- | --- |
+| `<F9>` | `:AsyncStop` (tested with a 60-second `time.sleep`: `ps` showed `python -u slow.py` before and nothing after; stronger kill: `:AsyncStop!`) |
+| `<Space>rr` | In the terminal press `<Ctrl-c>`, or delete the terminal buffer with `:bd!` (tested: `ps` showed `python3 slow.py` before `:bd!` and nothing after) |
+
+Warning, tested earlier: `<Space>q` on a terminal window only **closes the window**; the running program keeps running hidden. Stop it first. See section 55 and section 8 for terminal navigation.
+
+## Formatting and Linting
+
+| Key / command | What it does |
+| --- | --- |
+| `<Space>f` (Python buffers) | Runs `black` on the file **on disk** (`:silent !black %`); in a uv project `uv run black %`. Nvim then reloads the buffer and shows `File changed on disk. Buffer reloaded!` (tested) |
+| `<Space>fm` | LSP format, async, **in the buffer** (not saved). In Python the formatter is ruff's server, so it is `ruff format`, not black (tested: the buffer became modified, `●` in the tab, and `{"a":1,\n "b":2}` became `{"a": 1, "b": 2}`) |
+
+Try it. Save as `messy.py`:
+
+```python
+import os, sys
+def f( a,b ):
+  return a+b
+print(f(1,2))
+```
+
+Press `:w`. Expect the warning `messy.py: file is not formatted (black)`. Press `<Space>f`. Expect the file to become:
+
+```python
+import os, sys
+
+
+def f(a, b):
+    return a + b
+
+
+print(f(1, 2))
+```
+
+Save again: no warning. (`os` and `sys` stay; ruff still shows `E401` and `F401` hints. See "Code actions from ruff".)
+
+Key points:
+
+- Both formatters give almost the same result on normal code, but they are different programs. `<Space>f` (black) matches the after-save check; `<Space>fm` does not need black installed.
+- Nothing formats automatically on save.
+- **Format check after save:** every `:w` of a Python file runs `black --check --quiet <file>` in the background. If the file would change you get `<file>: file is not formatted (black)`. If black fails (for example a syntax error) you get `<file>: black could not check the file (syntax error?)` plus the first error line. Nothing is changed. If `black` is not on PATH the check is silent. It uses plain `black`, even in uv projects.
+- **Without black:** tested outside the devShell, `<Space>f` shows ONE warning `Python: black not found on PATH (open nvim inside the python devShell)`, and saving shows nothing. In a uv project (uv is on PATH) the key stays silent and changes nothing when the project has no black: the command fails inside `:silent`. When the project has black (tested with `uv add --dev black` in a scratch project), `<Space>f` runs `uv run black` and reformats the file, with the same `Buffer reloaded!` message.
+- **Line length:** black's default is 88, and the `colorcolumn` marker for Python is also 88 (default for other files: 100). A line touching the marker is too long for black. Black does not wrap long strings or comments.
+- **Indentation:** `tabstop`, `softtabstop`, `shiftwidth` = 4, `expandtab` on. No wrapping (`wrap` off, `sidescroll` 5, `sidescrolloff` 2).
+
+### Code actions from ruff
+
+Put the cursor on the first line of `messy.py` and press `<Space>ca`. Tested result, a list of four ruff actions:
+
+```
+1. Ruff (E401): Split imports [ruff]
+2. Ruff (E401): Disable for this line [ruff]
+3. Ruff: Fix all auto-fixable problems [ruff]
+4. Ruff: Organize imports [ruff]
+```
+
+Pick a number with `<CR>`. "Organize imports" sorts and groups the imports (pyright's own version is disabled in `after/lsp/pyright.lua` so there is no conflict). "Fix all" applies every automatic fix, such as removing unused imports.
+
+### Linting from the command line (`:compiler ruff`)
+
+The ftplugin sets `vim.g.ruff_makeprg_params = ""` so that Neovim's built-in ruff compiler plugin works without `--preview`. Tested:
+
+```vim
+:compiler ruff
+:make %
+```
+
+runs `ruff check --output-format=concise nav.py` and puts every finding in the quickfix list (then `:copen`, `]q`, `[q`; see section 26). Needs `ruff` on PATH (devShell).
+
+## LSP Keys
+
+Active in a Python buffer once pyright (and ruff) have attached. Maps are set per buffer and show ONE warning instead of falling through when no server supports the action.
+
+| Key | What it does | Server |
+| --- | --- | --- |
+| `gd` | Go to definition (one result jumps, several open the location list) | pyright |
+| `K` | Hover: type and docstring in a floating window (plain text format) | pyright |
+| `<Space>rn` | Rename symbol everywhere | pyright |
+| `<Space>ca` | Code action: quick fixes, organise imports, fix all | ruff (and pyright) |
+| `<Space>gd` / `<Space>gr` / `<Space>gi` | Glance popups: definitions / references / implementations | pyright |
+| `<Space>de` / `<Space>dE` | Next / previous error | diagnostics from pyright and ruff |
+| `<Space>dd` | Show diagnostic detail under the cursor | any |
+| `]d` / `[d` | Next / previous diagnostic (`]D` / `[D` last / first) | any |
+| `<Space>db` / `<Space>dw` | Buffer / whole workspace diagnostics list | any |
+| `<Space>dt` | Toggle diagnostics on and off | any |
+| `<Space>qb` / `<Space>qw` | Put buffer / all diagnostics in the quickfix list | any |
+| `<Ctrl-w>d` | Diagnostics under the cursor in a float | any |
+| `<Space>fm` | Format the buffer (see above) | ruff |
+
+Commands:
+
+| Command | Use |
+| --- | --- |
+| `:LspAttached` | Popup with the servers attached to this buffer |
+| `:LspInfo` | `checkhealth vim.lsp` (configs, enabled servers, problems) |
+| `:LspRestart` | Restart the servers of this buffer (needed after changing a venv or installing a package in some cases) |
+| `:LspStop` / `:LspStart [name]` | Stop / start; `:LspStart` explains a missing program |
+| `:LspLog` | Open the LSP log file |
+| `:LspInlayHints enable` / `disable` | Switch inlay hints globally (off by default) |
+
+Who does what:
+
+| Task | Server |
+| --- | --- |
+| Type errors, wrong arguments, unknown imports, hover, definitions, rename | pyright (`standard` mode; `deprecateTypingAliases` hint off; `useLibraryCodeForTypes` on) |
+| Style and lint diagnostics, unused imports, fixes | ruff |
+| Import sorting | ruff (`organizeImports = true`); pyright's is disabled |
+| Spelling mistakes in names and comments | typos_lsp |
+
+Tested: after `:LspInlayHints enable` no inline hints appeared in a small Python file (pyright sends none for this code), so expect little or nothing in Python.
+
+Ruff reads its rules from `pyproject.toml` / `ruff.toml` in the project. Pyright reads `pyrightconfig.json` or `[tool.pyright]` in `pyproject.toml`. See section 13 and section 44 for the LSP basics.
+
+## Debugging with pdb
+
+`<Space>dp` (Python buffers only) runs `:GdbStartPDB python -m pdb %` through the nvim-gdb plugin. Linux and Windows only; on macOS you get one warning. In any other file type `<Space>dp` shows one warning (`only in python buffers`). It always uses plain `python -m pdb`, never `uv run`.
+
+Why pdb and not a "real" DAP debugger: nvim-dap is installed only for Java. For Python you use pdb (in the standard library, nothing to install) and nvim-gdb adds the visual part: it marks the current line in your code and gives you function keys.
+
+Example to try. Save as `dbg.py`:
+
+```python
+def square(n):
+    r = n * n
+    return r
+
+
+total = 0
+for i in range(3):
+    total += square(i)
+print("total", total)
+```
+
+Press `<Space>dp` in this file. Tested result: the source window shows the file with a `▶` mark in the sign column on line 1, and below it a terminal pane shows
+
+```
+> .../dbg.py(1)<module>()
+-> def square(n):
+(Pdb)
+```
+
+Press `<F10>` twice. The `▶` moves to line 6, then line 7, and the terminal shows `n` typed for you each time (tested). `<F5>` continues; this small program finished and printed `total 5`, then pdb says `The program finished and will be restarted` and starts again at line 1.
+
+Keys during the session (all tested except `<F4>`; run them from the code window, go there with `<Ctrl-\><Ctrl-n>` then `<Ctrl-w>k` if you are in the pdb pane):
+
+| Key | Action | Command |
+| --- | --- | --- |
+| `<F8>` | Toggle breakpoint on the current line (a `●` appears in the sign column) | `:GdbBreakpointToggle` |
+| `<F5>` | Continue (stops at the next breakpoint: `▶` lands on the `●` line) | `:GdbContinue` |
+| `<F10>` | Next (step over) | `:GdbNext` |
+| `<F11>` | Step (into a call): from `total += square(i)` the `▶` jumped to `def square(n):` | `:GdbStep` |
+| `<F12>` | Finish (run until the function returns): the `▶` stopped on `return r` | `:GdbFinish` |
+| `<F4>` | Until (pdb: continue until the next line greater than the current one) | `:GdbUntil` |
+| `<Ctrl-p>` / `<Ctrl-n>` | Frame up / down (`<Ctrl-p>` typed `up` in pdb and the `▶` went to the caller line) | `:GdbFrameUp` / `:GdbFrameDown` |
+| `<F9>` | Evaluate the word under the cursor (visual mode: the selection); with the cursor on `square` pdb printed `<function square at 0x...>` | `:GdbEvalWord` / `:GdbEvalRange` |
+
+Other commands: `:GdbBreakpointClearAll`, `:GdbFrame` (jump to the current line), `:GdbInterrupt`, `:GdbLopenBacktrace`, `:GdbLopenBreakpoints`, `:GdbCreateWatch`.
+
+You can also type plain pdb commands in the terminal pane (`n`, `s`, `c`, `p var`, `l`, `bt`, `q`): go there with `<Ctrl-w>j`, press `i`, type, press `<Enter>`. Leave terminal mode with `<Ctrl-\><Ctrl-n>`.
+
+**Quit:** `:GdbDebugStop`. The debug layout was in the same tab here (tested: one tab, two windows during the session, one after). Closing the debug windows also ends it.
+
+**Known quirk (tested):** after a debug session nvim-gdb removes its mapped keys from the code buffer, and that **also removes your `<F9>` run key** in that buffer. `<F9>` stays gone until you reload the buffer with `:e!`. `<Space>f` and `<Space>dp` are not affected.
+
+Notes:
+
+- During the session `<F9>` means "evaluate", not "run".
+- nvim-gdb loads the first time you use a `:GdbStart*` command. Its default start keys `<Space>dd/dl/dp/db/dr` are turned off (`vim.g.nvimgdb_disable_start_keymaps = true`) so they do not replace your own `<Space>dd` and `<Space>db`; `<Space>dp` is yours, set in the ftplugin.
+- A quick alternative without any plugin: add `breakpoint()` in the code and run it with `<Space>rr`; the terminal stops there with a `(Pdb)` prompt.
+- Section 56 has the wider debugging picture.
+
+## Virtual Environments
+
+**Statusline label.** In Python buffers only, the statusline shows the environment (section B of the lualine bar, section 32):
+
+| Environment variable set | Label |
+| --- | --- |
+| `$VIRTUAL_ENV` (any venv, `.venv`, devShell's `venvShellHook`, uv `source .venv/bin/activate`) | `<folder name> (venv)`, for example `.venv (venv)` |
+| only `$CONDA_DEFAULT_ENV` | `<env name> (conda)` |
+| neither | nothing shown |
+
+`$VIRTUAL_ENV` wins when both are set. In a uv project with `uv.lock` and no active environment the label stays empty (tested), even though `uv run` will use the project's `.venv`. Tested in the python devShell: the label read `.venv (venv)` (the folder name of `$VIRTUAL_ENV`, with its dot).
+
+**How to activate an environment.**
+
+| Goal | Do this |
+| --- | --- |
+| Use the devShell tools and the project's `.venv` | Enter the project folder (direnv loads the devShell and the `venvShellHook` `.venv`), then start nvim there |
+| Plain venv | `python -m venv .venv`, `source .venv/bin/activate` (fish: `source .venv/bin/activate.fish`), then start nvim in that shell |
+| uv project | Either `source .venv/bin/activate` before starting nvim, or leave it inactive and use `<F9>` / `<Space>f`, which run through `uv run` |
+| Switch environment | Close nvim, change environment, start nvim again (the shell environment is inherited at start) |
+
+**How pyright finds packages (tested).** In a uv project (`.venv` with packages) opened from the python devShell (whose own `python` lacks them), `import pytokens` gave the error `Import "pytokens" could not be resolved`. After adding a `pyrightconfig.json` with `{"venvPath": ".", "venv": ".venv"}` the error was gone. So the `.venv` folder alone is not enough: pyright uses the `python` on PATH, unless `venvPath` / `venv` say otherwise. Background: Pyright runs as a child of nvim and uses the `python` on PATH. If `VIRTUAL_ENV` was set when nvim started, it resolves imports from that environment. With `autoSearchPaths` it also searches `src/`. To point pyright explicitly, put `venvPath` and `venv` in `pyrightconfig.json` or `[tool.pyright]` in `pyproject.toml`, then `:LspRestart`.
+
+
+## Testing
+
+There is **no test runner support** for Python in this config: no neotest, no vim-test, no pytest or unittest keys. What you can do:
+
+| Goal | How |
+| --- | --- |
+| Run all tests | In the terminal split: `:terminal pytest`, or run `pytest` in a shell next to nvim (pytest comes from the project environment; it is not in the python devShell list) |
+| Run a test file | `<F9>` or `<Space>rr` on a file that ends with `unittest.main()`, or `:!pytest %` |
+| Debug a failing test | Put `breakpoint()` in the test and run `<Space>rr`, or `pytest --pdb` in a terminal |
+| See failures in quickfix | `:AsyncRun pytest -q` (output opens in the 6-line quickfix window, section 26) |
+
+The only plugin that knows about tests is nvim-java (Java only, `<Space>jt...`).
+
+## Navigation and Text Objects
+
+All keys below exist in the keymap dump for Python buffers (or globally).
+
+| Key | Mode | What it does |
+| --- | --- | --- |
+| `]]` / `[[` | n, x, o | Next / previous top-level `class` or `def` (Neovim's runtime Python ftplugin; not mapped by your config) |
+| `][` / `[]` | n, x, o | End of the next / previous top-level function or class |
+| `]m` / `[m` | n, x, o | Next / previous `def` or `class`, any nesting (method start) |
+| `]M` / `[M` | n, x, o | Next / previous end of a method |
+| `<Space>t` | n | Toggle the aerial outline (classes, functions, methods) |
+| `]t` / `[t` | n | Next / previous symbol (aerial) |
+| `gS` | n | treesj: toggle split / join of the construct under the cursor (a long call or list to one item per line, and back) |
+| `ii` / `ai` | x, o | Indent scope inside / with its border lines (mini.indentscope): `dii` deletes the body of the block you are in, `vai` selects a whole `if` or `def` |
+| `za`, `zc`, `zo`, `zR`, `zM`, `zr`, `zm` | n | Folds (nvim-ufo: LSP folding ranges, else indent); `<Space>K` previews a closed fold |
+| `gd` then `<Ctrl-o>` | n | Jump to a definition and back |
+| `<Space>gr` | n | References in a Glance popup |
+
+Operators combine with the motions: `d]]` deletes up to the next top-level definition, `v]m` selects up to the next method. `ii` depends on indentation, so it works well in Python. Section 21, 37, 47 and 50 have more.
+
+## Snippets
+
+Snippets come from `my_snippets/python.snippets` (UltiSnips) and the shared vim-snippets collection. Type the trigger and press `<Ctrl-j>` to expand; `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder.
+
+| Trigger | Expands to | Only at line start |
+| --- | --- | --- |
+| `print` | `print("$1".format($2))` | no |
+| `impa` | `import FOO as BAR` (two placeholders) | yes |
+| `main` | `def main():` with an empty body and `if __name__ == "__main__": main()` | yes |
+| `sol` | `solution = Solution()` (coding-challenge helper) | yes |
+
+The snippet menu may also offer vim-snippets entries (`def`, `class`, `ifmain`, ...). Section 15 and section 52 explain the engine.
+
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| Nothing highlights errors, `:LspAttached` shows no `pyright` | nvim was not started in a shell where `pyright-langserver` is on PATH | Check `which pyright-langserver`; start nvim in the python devShell or after `direnv allow`; `:LspStart pyright` names the missing program |
+| No `ruff` diagnostics | `ruff` is not global | Start nvim inside the python or jupyter devShell |
+| `Import "xyz" could not be resolved` | Package is not in the Python that pyright sees (no active venv when nvim started, or packages not installed) | Activate the environment BEFORE starting nvim, install the package, then `:LspRestart`; or set `venvPath` / `venv` in `pyrightconfig.json` |
+| Statusline shows no environment | No `$VIRTUAL_ENV` or `$CONDA_DEFAULT_ENV`, or it is a uv project that is not activated | Activate the environment before starting nvim; label only appears in Python buffers |
+| `<Space>f` says `black not found on PATH` | Not in the python devShell, or `uv` missing in a uv project | Start nvim in the python devShell; for uv projects make sure `uv` is on PATH (and `uv add --dev black`) |
+| No "not formatted" warning after save, although the file is untidy | `black` is not on PATH (check is silent), or the file type is not detected as `python` | `:!which black`; `:set ft?` |
+| `<F9>` prints `ModuleNotFoundError` | Wrong interpreter: plain `python` was used (environment not active when the file was opened) | Activate the environment, reopen the file with `:e` so the uv/venv choice is re-evaluated |
+| `<F9>` does nothing at all (no quickfix window) after a debug session | nvim-gdb removed the `<F9>` map from this buffer | `:e!` |
+| `<F9>` does nothing visible | Quickfix window closed or scrolled, or `AsyncRun` not loaded | `:copen`; check `:AsyncRun echo hi` works |
+| `<Space>rr` opens nothing | Unnamed buffer (one warning: save the file first) or an unsupported file type | `:w file.py`; check `:set ft?` |
+| `<Space>rr` terminal flashes and closes, or shows `command not found` | `python3` is not on PATH | Start nvim in the devShell |
+| `<Space>rr` output is late | Python buffers stdout when not attached to a tty | Use `<F9>` (it uses `-u`) or `print(..., flush=True)` |
+| `<Space>dp` shows one warning | Not a Python buffer, or macOS | Open a `.py` file; on macOS pdb is not available through this key |
+| Pyright hover looks plain | Hover is set to plain text on purpose | None needed |
+| Program keeps running after closing its terminal | `<Space>q` only closes the window | Reopen the buffer with `:ls`, `:b <n>`, `<Ctrl-c>`, or `:bd!` |
+| Spelling squiggles on names | typos_lsp | Add the word to a `typos.toml` or `_typos.toml` at the project root |
+
+## Related Sections
+
+Section 8 (terminal integration), section 13 (LSP), section 15 (snippets), section 18 (folding), section 19 (code running), section 21 (text objects), section 26 (quickfix), section 32 (statusline), section 36 (debugging), section 37 (aerial), section 41 (filetype settings), section 42 (automatic behaviours), section 43 (toolchain), section 44 (LSP in depth), section 52 (snippets for developers), section 55 (running in depth), section 56 (debugging in depth).
+
+
+---
+
+# 80. LaTeX (vimtex, texlab, ltex, PDF viewer)
+
+This section covers everything that is specific to LaTeX in this config: what each tool is for, how it works, the keys, and what to do when something fails. Global things (LSP keys, completion menu, windows, spell checking) are only mentioned with a pointer to their own section. Typst and Markdown have their own sections.
+
+Everything marked "(tested)" was run in a real Neovim inside the LaTeX devShell with a scratch project (October 2026).
+
+## The big picture
+
+Writing LaTeX means: a `.tex` source file, a compiler (`latexmk` runs `pdflatex` as many times as needed and runs BibTeX/biber), and a PDF viewer. Each tool in the config covers one part:
+
+| Tool | Why it is in the setup | What you use it for |
+| --- | --- | --- |
+| **vimtex** (plugin) | Knows LaTeX syntax and the compile chain | Compile (`<F9>`), view PDF, jump between sections/environments, text objects, change/delete/toggle environments and commands, table of contents, error list |
+| **texlab** (language server) | Understands the whole project (labels, citations, includes) | Completion of `\ref{` / `\cite{` / commands, diagnostics, hover (`K`), symbols, rename, `:LspTexlabBuild` |
+| **ltex_plus** (language server) | Grammar and spelling for prose | Underlines mistakes in the text (not in commands) as diagnostics |
+| **typos_lsp** (language server) | Catches common typos in any file | Same diagnostics channel; it attaches to every file type |
+| **UltiSnips snippets** | Typing shortcuts | `use`, `eqa` (file `my_snippets/tex.snippets`) |
+| **zathura** (PDF viewer) | Light viewer that reloads when the PDF changes and supports forward/inverse search | Shows the result |
+| **LaTeX devShell** | Provides all the programs | `latex`, `latexmk`, `texlab`, `zathura`, `pandoc` |
+
+In a `.tex` buffer the config also sets `textwidth = 120`, `wrap` on and a column marker at 120 (`after/ftplugin/tex.lua`, `lua/options.lua`). The statusline shows `texlab (+2)` when texlab, ltex_plus and typos_lsp are attached (tested).
+
+## What it needs (the devShell)
+
+vimtex is **enabled only when `latex` is on PATH**:
+
+```lua
+-- lua/plugin_specs.lua
+"lervag/vimtex",
+enabled = function() return utils.executable("latex") end,
+ft = { "tex" },
+```
+
+Outside a LaTeX environment the plugin does not load: no `<F9>`, no `\ll`, no `:Vimtex*` commands. The environment comes from the flake `~/nix/templates/krit/dev-environments/language-specific/latex/flake.nix`. Its packages: `texlive.combined.scheme-full` (gives `latex`, `latexmk`, all packages), `texlab`, `zathura`, `pandoc`, `tectonic`, `latex2html`, `latex2mathml`.
+
+| How you enter it | Details |
+| --- | --- |
+| direnv (normal) | The project folder has an `.envrc` with one line: `use_dev_env latex` (see `~/github-repos/personal/developing-projects/latex-projects/.envrc`). Run `direnv allow` once. Then `cd` in and start `nvim` there. |
+| By hand | `nix develop <path-to-flake>` and then `nvim` |
+
+Check inside the folder: `which latex latexmk texlab zathura` must print four paths.
+
+**Start Neovim from inside the devShell.** The tools are looked up when Neovim starts; entering the shell afterwards does not enable vimtex in the already running Neovim.
+
+Outside the devShell a `.tex` file still gets syntax colours, `ltex_plus`, `typos_lsp`, snippets and buffer/path completion. It gets no vimtex, no texlab, no PDF.
+
+## Quick start
+
+1. `cd` into the project folder (direnv loads the devShell).
+2. Create and open `main.tex`:
+   ```latex
+   \documentclass{article}
+   \begin{document}
+   \section{Test}
+   Hello \LaTeX.
+   \end{document}
+   ```
+3. Wait until the statusline shows `texlab (+2)`. `:LspAttached` lists the clients.
+4. `<F9>` starts continuous compiling. After the first successful compile **zathura opens by itself** with the PDF (see "The viewer").
+5. Edit, then `:w`. The compiler notices the saved file, recompiles, zathura reloads. (Auto-save never saves `.tex`; save yourself.)
+6. `\lv` shows or re-opens the PDF at the cursor position.
+7. `<F9>` again stops compiling; `\lc` removes the auxiliary files.
+
+## Compiling
+
+`<F9>` (buffer-local, set by an autocommand for `tex` files; description "LaTeX: start/stop compiling (vimtex)") and `\ll` are the same command, `<Plug>(vimtex-compile)` (tested). It starts `latexmk` in the background in **continuous mode** (recompiles whenever a source file changes); pressing it again stops it. `\` is the local leader: the config sets only `mapleader = <Space>`, so vimtex keeps the backslash.
+
+**Where the output goes.** Tested: `main.pdf`, `main.aux`, `main.log`, `main.bbl` and the other files are written **next to `main.tex`**, not into a `build/` folder. The config contains
+
+```vim
+let g:vimtex_compiler_latexmk = { 'build_dir' : 'build' }
+```
+
+but the installed vimtex has no `build_dir` option (its documentation does not mention it; the current name is `out_dir`), so this line has no effect. `:LspTexlabBuild` (texlab's own one-shot build) also writes `main.pdf` next to the source (tested). If you want a `build/` folder, the option to set is `out_dir`.
+
+| Command / key | What it does |
+| --- | --- |
+| `<F9>` or `\ll` (`:VimtexCompile`) | Start or stop continuous compiling (tested) |
+| `\lk` (`:VimtexStop`) | Stop. Message "VimTeX: Compiler stopped (name.tex)" (tested) |
+| `\lc` (`:VimtexClean`) | Remove auxiliary files; keeps `main.pdf`, `main.bbl`, `main.synctex.gz`. Message "VimTeX: Compiler clean finished" (tested) |
+| `\lC` | Clean everything including the PDF |
+| `\lo` | Show the compiler output |
+| `\lg` / `\lG` | Status of this / all compilers |
+| `\lL` | Compile only the selected lines (visual mode too) |
+| `\lq` | Show the vimtex log |
+| `\li` / `\lI` | Info about the vimtex state of this document (short / full) |
+| `\lx` / `\lX` | Reload vimtex / reload its state (use after changing the document structure) |
+| `\ls` | Toggle the main file (`:VimtexToggleMain`) |
+| `\la` | Context menu for the item under the cursor |
+| `:LspTexlabBuild` | texlab's own build, once (tested: produces `main.pdf`). For daily work use `<F9>`: it keeps recompiling. |
+
+All `\l...` keys above were checked in the live buffer; each points at the `<Plug>(vimtex-...)` map named in the vimtex documentation (tested).
+
+### Errors
+
+When a compile fails vimtex opens the **quickfix list** by itself, titled "VimTeX errors (LaTeX logfile)", and shows "VimTeX: Compilation failed!" (tested with a file containing `\foobar`; the entry was `Undefined control sequence. \foobar`, with the line number). texlab also puts the problem in the text as a diagnostic (`]d` / `[d`, `<Space>dd`; see the LSP section).
+
+| Key / command | What it does |
+| --- | --- |
+| `\le` (`:VimtexErrors`) | Open the error list again |
+| `:cnext` / `:cprev` | Next / previous error; `:cclose` closes the list |
+| `\lo` | Read the raw compiler output |
+
+If an error stops the compile, fix it, `:w`: the continuous compiler retries by itself (it does not have to be restarted).
+
+Common messages: "Undefined control sequence" (a command is misspelled or its `\usepackage` is missing), "File `x.sty' not found" (a package is not in texlive; in the full scheme this should not happen), "Missing $ inserted" (maths outside `$...$`), "Runaway argument" (a `{` without `}`).
+
+### Several files (a project with chapters)
+
+Compile always starts from the **main file** (the one with `\documentclass`). When you open a chapter that is loaded with `\input` or `\include`, vimtex has to know the main file. The reliable way is a magic comment on the first lines of the chapter:
+
+```latex
+%! TEX root = ../main.tex
+Chapter text.
+```
+
+Tested: opening `chap/c1.tex` with this comment gives `b:vimtex.tex` = the full path of `main.tex`, and `<F9>` in the chapter built `main.pdf`. Without the comment vimtex tries to find the main file itself, but in my test it picked a different `main.tex` from a neighbouring folder, so always add the comment in chapters. `\ls` toggles between the file and the main file.
+
+## The viewer
+
+`vim.g.vimtex_view_method` is `zathura` when `zathura` is on PATH, otherwise `general` (the system default PDF program). Windows uses SumatraPDF and macOS Skim (config lines for those platforms exist in the same spec).
+
+- **A zathura window opens by itself after the first successful compile.** This is vimtex's default (`g:vimtex_view_automatic = 1`), not a bug. Later compiles only refresh the open window. If you do not want it: `:let g:vimtex_view_automatic = 0` (until you quit); you then open the PDF yourself with `\lv`. For a permanent change the line has to go into the config. (Tested both ways: without the option a zathura window titled with the full path of `main.pdf` opened about 14 seconds after `<F9>` in a fresh Neovim; with `view_automatic=0` nothing opened until `\lv`.)
+- `\lv` (`:VimtexView`) opens the viewer or, if open, jumps to the place of the cursor (forward search). Tested from a chapter file with `%! TEX root`: zathura opened the PDF of the **main** file (`main.pdf`), and the process got `--synctex-forward 1:1:<path>/chap/c1.tex`, i.e. the cursor position of the chapter.
+- **Inverse search** (Ctrl+click in the PDF jumps back to the source): the config writes the address of the running Neovim into `/tmp/vimtexserver.txt` every time a `tex` file is opened (`v:servername`). It is only a helper file; never edit it. With two Neovims open, the last one wins (the file is shared in `/tmp`). Tested prerequisites: the file exists and holds the same address as the running Neovim (`:echo v:servername`); the zathura process was started by vimtex with the inverse-search callback `-x "nvim --headless -c \"VimtexInverseSearch %{line}:%{column} '%{input}'\""`. Only the actual Ctrl+click needs a human (see "Manual test").
+
+## Table of contents
+
+`\lT` toggles, `\lt` opens the vimtex table of contents (`:VimtexTocToggle`, `:VimtexTocOpen`) (tested). It is a 30-column window on the left called TOC; the help lines are shown on top (config: `split_width = 30`, `show_help = 1`, layers content, todo, include). It lists sections, labelled equations, `\input` files and `TODO`/`FIXME` comments of the whole project.
+
+| Key in the TOC | Action |
+| --- | --- |
+| `<Space>` | Jump to the entry, keep the TOC open |
+| `<Enter>` | Jump and close the TOC |
+| `<Esc>` / `q` | Close |
+| `r` | Refresh |
+| `h` | Toggle the help text |
+| `t` | Toggle sorted TODO list |
+| `s` | Hide / show numbers |
+| `-` / `+` | Show fewer / more section levels |
+| `f` / `F` | Apply / clear a filter |
+| `L`, `I`, ... | Switch layers (label, include, ...) |
+
+Move between the TOC and the text with `<Ctrl-w>h` / `<Ctrl-w>l` or `<Left>` / `<Right>`; the same keys move to the quickfix window (`<Ctrl-w>j` / `<Ctrl-w>k`, `<Down>` / `<Up>`). `<Ctrl-w>c` closes the window you are in.
+
+## Moving and editing (vimtex)
+
+Example text for the tests below (all keys tested in this exact file):
+
+```latex
+\section{One}
+Text with $a+b$ and \textbf{bold} here. See \cite{knuth}.
+\begin{equation}
+x = 1
+\end{equation}
+\section{Two}
+```
+
+### Motions
+
+| Key | Action |
+| --- | --- |
+| `]]` / `[[` | Next / previous section start (`\section`, `\begin{document}`, ...). From line 1 `]]` went to `\begin{document}`; from the text of One it went to `\section{Two}` |
+| `][` / `[]` | Next / previous section end |
+| `]m` / `[m` | Next / previous `\begin` of an environment |
+| `]M` / `[M` | Next / previous `\end` of an environment |
+| `]n` / `[n`, `]N` / `[N` | Next / previous start / end of a maths zone |
+| `]r` / `[r`, `]R` / `[R` | Frames (beamer) |
+| `]/` / `[/`, `]*` / `[*` | Comment blocks |
+| `K` | In this config **LSP hover** (texlab), not vimtex's package-documentation lookup |
+| `%` | Jumps between `\begin` and `\end` and brackets, but here the map belongs to **matchup** (`<Plug>(matchup-%)`), not vimtex (tested: from `\begin{equation}` it went to the `\end`) |
+
+### Text objects (use after `d`, `y`, `c`, `v`)
+
+| Keys | Object | Result in the example |
+| --- | --- | --- |
+| `ie` / `ae` | Environment: inside / with `\begin..\end` | cursor on `x = 1`: `yie` = `x = 1`, `yae` = whole equation (tested) |
+| `ic` / `ac` | Command: name only / whole command | cursor on `textbf`: `yic` = `textbf`, `yac` = `\textbf{bold}` (tested) |
+| `id` / `ad` | Delimiter pair: inside / with delimiters | cursor in `{bold}`: `yid` = `bold`, `yad` = `{bold}` (tested) |
+| `i$` / `a$` | Maths | **works for display maths** (tested again: on `$a+b$`, `yi$` gave `x = 1` of the equation below, `ya$` the whole equation) (`yi$` in the equation gives `x = 1`). On inline `$a+b$` it picked the equation instead (tested), see the note below |
+| `iP` / `aP` | Section | `yaP` on the heading line = from `\section{One}` up to before `\section{Two}` (tested) |
+| `im` / `am` | List item | needs an `itemize`/`enumerate` item |
+
+`ic` / `ac` also exist in Markdown buffers with a different meaning (a config map for Markdown only); in `.tex` they are vimtex's.
+
+**Note on maths detection.** Tree-sitter colours `.tex` files here, so Vim's own syntax is off, and vimtex shows a hint at start ("For more info, see :help vimtex-faq-treesitter"). Features that need the syntax groups to know "this is maths" are therefore unreliable for inline maths: `i$` / `a$`, `]n`, and the math insert maps. Environments, commands, delimiters and sections work (tested).
+
+### Change, delete, toggle
+
+| Keys | Action | Tested result |
+| --- | --- | --- |
+| `dse` | Delete the surrounding environment | the `\begin..\end` lines vanish, the body stays |
+| `cse` | Change the environment name (prompt "Change surrounding environment: equation", type the new name, Enter) | `equation` became `align` in both places |
+| `tss` | Toggle star of the environment | `equation` became `equation*` |
+| `tse` | Toggle between two environments; default pair only `itemize` / `enumerate` (`g:vimtex_env_toggle_map`) | no change on `equation` |
+| `dsc` / `csc` | Delete / change the surrounding command | `\textbf{bold}` became `bold` |
+| `tsc` | Toggle star of a command | `\section{One}` became `\section*{One}` |
+| `ds$` / `cs$` / `ts$` | Delete / change / toggle maths delimiters (`$..$`, `\[..\]`, `equation`) | not tested |
+| `tsd` / `tsD` | Toggle `\left..\right` modifiers | not tested |
+| `tsf` | Toggle fraction `a/b` and `\frac{a}{b}` | not tested |
+| `<F6>` | Surround the line (or visual selection) with an environment | map exists |
+| `<F7>` | Create a command from the word (insert and normal mode) | map exists |
+| `<F8>` | Add `\left`/`\right` to delimiters | map exists |
+| `]]` in insert mode | Close the open environment/delimiter | map exists |
+| `` ` `` + letter in insert mode | Maths shortcuts (`` `a `` = `\alpha`), made by `vimtex#imaps#wrap_math`. `\lm` (`:VimtexImapsList`) opens a "VimTeX imaps" window that lists all of them; close it with `:close` | The maps exist but **did not expand** in the test, even inside `equation`: they only fire when `vimtex#syntax#in_mathzone()` is true, and it returned 0 there (tree-sitter note below). `\lm` itself was tested |
+
+These do not clash with the vim-sandwich keys of the config (`sa`, `sd`, `sr`).
+
+## Language server (texlab)
+
+texlab attaches to `tex` files when `texlab` is on PATH. It reads the whole project, so it also knows labels and citations of other files.
+
+- **Completion**: commands, environments, `\ref{` labels, `\cite{` keys. The menu opens while you type; `<Ctrl-n>` opens it manually, `<Tab>` / `<Ctrl-n>` move down, `<CR>` confirms only an item you picked, `<Ctrl-e>` or `<Esc>` closes it (see section Completion).
+- **Diagnostics** (including errors from the build log), hover (`K`), symbols, rename, code actions (`<Space>ca`): the global LSP keys, see the LSP section.
+- `:LspTexlabBuild`: one build (tested).
+
+Sources for `tex` files (`lua/config/nvim-cmp.lua`):
+
+```lua
+cmp.setup.filetype("tex", { sources = {
+  { name = "omni" },        -- vimtex
+  { name = "nvim_lsp" },    -- texlab
+  { name = "ultisnips" },
+  { name = "buffer", keyword_length = 2 },
+  { name = "path" },
+}})
+```
+
+**Duplicates are normal**: typing `\sec` and `<Ctrl-n>` shows entries from vimtex (omni) and texlab (nvim_lsp), 26 entries with several "section" (tested). Either inserts the same text.
+
+## Citations (bibliography)
+
+Put references in a `.bib` file and load it in the document:
+
+```latex
+See \cite{knuth}.
+\bibliographystyle{plain}
+\bibliography{refs}      % refs.bib next to main.tex
+```
+
+with `refs.bib`:
+
+```bibtex
+@book{knuth, author={Knuth}, title={TAOCP}, year={1968}, publisher={AW}}
+```
+
+Typing `\cite{kn` and `<Ctrl-n>` shows `knuth [book] Knuth (1968), "TAOCP"` in the menu (tested). `latexmk` runs BibTeX itself during compile; the first compile after adding a `\cite` may show `[?]` and the next automatic run fixes it (tested: `main.bbl` was created). With biblatex use `\usepackage{biblatex}` and `\addbibresource{refs.bib}`; `latexmk` then runs biber (not tested here).
+
+## Grammar and spelling (ltex_plus)
+
+LanguageTool as a language server. Config (`after/lsp/ltex_plus.lua`):
+
+```lua
+filetypes = { "markdown", "tex", "plaintex", "typst", "gitcommit", "text" },
+settings = { ltex = { language = "en-US", ... } },
+```
+
+- **One language per document: `en-US`**, although `spelllang` is `en,it,de,fr`. LaTeX commands are skipped; only the prose is checked.
+- Problems are diagnostics. In my test a misspelled word got **two** underlines, one from `typos` and one from `LTeX`; this is normal.
+- **Fix**: `<Space>ca` on the word opens the list (tested):
+
+  | Entry | Result |
+  | --- | --- |
+  | `Use 'sentence'` | Replaces the word. Works (tested) |
+  | `Use 'sen tense'` | Other suggestion |
+  | `Add 'sentense' to dictionary` | **Had no effect in my test**: the LTeX diagnostic stayed (the config has no handler for ltex's client commands). Do not rely on it |
+  | `Hide false positive`, `Disable rule` | Same kind of ltex command; not working the same way, expect no effect |
+  | `sentence`, `Ignore ... in the project` (typos_lsp) | typos fix; "Ignore" is a typos command |
+
+- **What works for false positives**: ltex magic comments in the file (tested). `% LTeX: enabled=false` on a line of its own switches ltex off for the file (the LTeX underlines disappeared, typos stayed). `% LTeX: language=de-DE` makes the file checked as German (tested: German messages). Remove the line to undo.
+- **Built-in spell checker** (different thing): `<Space>cz` toggles, `]s` / `[s`, `z=`, `zg` (adds to `spell/en.utf-8.add`, a file in the public repo). More in section 31.
+
+## Snippets
+
+UltiSnips, file `my_snippets/tex.snippets`. Both are start-of-line snippets (`b`): type the trigger at the beginning of a line, `<Ctrl-j>` expands and jumps forward, `<Ctrl-k>` jumps back. They also appear in the completion menu (tested: `use` + `<Ctrl-j>` gave `\usepackage{}` with the cursor inside; `eqa` + `<Ctrl-j>` gave the equation environment with the cursor in `\label{}`).
+
+| Trigger | Result |
+| --- | --- |
+| `use` | `\usepackage{package}`, name selected |
+| `eqa` | `\begin{equation}\label{}` / body / `\end{equation}`; first stop in the label, second in the body |
+
+## Troubleshooting
+
+| Problem | Cause and fix |
+| --- | --- |
+| `<F9>` and `\ll` do nothing, `:VimtexCompile` unknown | vimtex not loaded: `latex` not on PATH. Start Neovim inside the devShell (`which latex`, `direnv allow`). Check `:set ft?` is `tex` |
+| Compile fails, quickfix opened | Read the first entry (`\le`), fix that line, `:w`; the compiler retries. Raw output: `\lo` |
+| No PDF | Look next to `main.tex` (not in `build/`), see "Where the output goes". A fatal error stops the PDF |
+| Viewer did not open | `zathura` not on PATH, or the compile failed, or `g:vimtex_view_automatic` is 0. Try `\lv` |
+| A viewer opened that I did not expect | Normal after the first successful compile; `:let g:vimtex_view_automatic = 0` |
+| "Undefined control sequence" | Misspelled command or missing package: add `\usepackage{...}` (snippet `use`) |
+| Chapter file compiles the wrong document or errors | Add `%! TEX root = ../main.tex` at the top of the chapter |
+| Citation shows `[?]` | `.bib` file not found or first run: compile again; check `\bibliography{refs}` |
+| texlab not in the statusline | `texlab` not on PATH, or still starting. `:LspAttached`, `:checkhealth vim.lsp` |
+| Same completion twice | Normal (vimtex omni and texlab) |
+| `i$` / `]n` / `` ` `` shortcuts do not find inline maths | Tree-sitter highlighting replaces vim syntax, see the note above |
+| Real word marked wrong by ltex | Magic comment, or fix the spelling; "Add to dictionary" does not work here |
+| German/other language text full of errors | `% LTeX: language=de-DE` on its own line |
+| Edits not in the PDF | Auto-save does not save `.tex`: `:w`. Check the compiler is running (`\lg`) |
+| First compile is slow | `latexmk` builds everything once (bibliography, references); later runs are fast. Stop with `<F9>` when not needed |
+| Inverse search from zathura jumps nowhere | `/tmp/vimtexserver.txt` has the address of the last Neovim that opened a `tex` file; reopen the file in the Neovim you want |
+
+## Related sections
+
+Typst (`<Space>tw`), Markdown, 28 (LaTeX and Typst, older summary), 31 (spell checking), the LSP and completion sections (diagnostic and completion keys), snippets (UltiSnips), windows (`<Ctrl-w>` moves).
+
+
+---
+
+# 81. Markdown (writing, preview, footnotes, PDF)
+
+This section covers everything your config does that is specific to `.md` files: what each tool is for, how it works, the exact keys, and what to do when it fails. Global things (diagnostics keys, code actions, the spell keys, `gc` comments) are only mentioned briefly with a pointer. Section 27 is the short key list; this one is the full story.
+
+Most results below were checked in a real Neovim session today (marked "tested"). The few things that could not be tested are in "Claims to verify" and "Manual tests for the user" at the end.
+
+## The tools and why they exist
+
+| Tool | Why it is in your setup | What it gives you |
+| --- | --- | --- |
+| marksman (LSP) | Markdown has links and headings that point to each other | Link and heading completion, jump to a heading, symbols. Only for plain `markdown` files |
+| ltex_plus (LSP, LanguageTool) | Prose needs grammar checking, not only spelling | Grammar and spelling problems as diagnostics. Language fixed to `en-US` |
+| typos_lsp | Catches common typos in every file type | Diagnostics like `recieve` to `receive` |
+| render-markdown.nvim | Raw Markdown is hard to read | Headings, lists, code blocks, tables, checkboxes drawn nicely inside the buffer |
+| markdown-preview.nvim | See the final look in a browser | Live preview, `<Alt-m>` toggles it |
+| vim-markdownfootnotes | Footnotes need numbering and a jump back | `^^` / `<Space>mf` create a footnote, `@@` / `<Space>mr` return |
+| `:AddRef` (your own command) | Reference-style links keep the text readable | Adds `[label]: url` at the end of the file |
+| prettier (via `<Space>fm`) | marksman cannot format | Tidies lists, tables, spacing |
+| tabular | Align table columns | `:Tabularize /\|` |
+| `ic` / `ac` (your own text objects) | Work on fenced code blocks quickly | `dic`, `yac`, `vic` ... |
+| `+` (your own operator) | Make a list from plain lines | `+ip` |
+| `<Space>mb` (your own operator) | Hard line breaks in Markdown | Adds a trailing `\` |
+| `:ToPDF` (your own command) | Share a document as PDF | pandoc plus xelatex, PDF next to the file |
+| smart_comment | Comments in Markdown are HTML comments | `gc` writes `<!-- ... -->`, inside a fenced block it uses the language of the fence |
+
+Settings for the Markdown filetype (`after/ftplugin/markdown.vim`):
+
+```vim
+setlocal concealcursor=c
+setlocal synmaxcol=3000  " For long Chinese paragraphs
+setlocal wrap
+```
+
+Tested in a Markdown buffer: `wrap` is on (the global default is off), `textwidth` is 0, `colorcolumn` is 100, `synmaxcol` is 3000, `conceallevel` is 3. `concealcursor` shows as empty: render-markdown.nvim sets its own conceal options on the window after the ftplugin, so the `concealcursor=c` line in the file has no visible effect. Facts that follow from this:
+
+- Long lines wrap at word boundaries (`linebreak` is on globally). Neovim never hard-wraps while you type (no `textwidth`), and prettier keeps your line breaks.
+- Syntax colours stop after column 3000 of a very long line.
+
+## Quick start
+
+1. Open a file, for example `nvim "my notes.md"`. In normal mode headings, lists, code blocks and tables are drawn nicely. While you type in insert mode the drawing pauses (`render_modes`), and returns after about half a second in normal mode.
+2. Press `<Alt-m>`. The browser opens with a live preview. Press `<Alt-m>` again to stop it.
+3. Press `<Space>fm`. Prettier tidies the file as one undo step (`u` undoes it). The file is not saved to disk.
+4. Footnote: put the cursor on the last letter of a sentence, press `<Space>mf`. A `[^1]` appears and the cursor jumps to the new `[^1]: ` line at the end of the file (in normal mode: press `A` to type the note). Press `@@` to jump back.
+5. PDF: save (`:w`) and run `:ToPDF` from a Neovim that was started inside the latex dev shell. Wait 30 seconds or more the first time. `my notes.pdf` appears next to the file.
+
+## Requirements
+
+| Tool | Where it comes from | Needed for |
+| --- | --- | --- |
+| marksman, prettier, ltex-ls-plus, typos-lsp | Global nix profile (`~/nix/users/krit/common/programs/cli-programs/neovim.nix`) | LSP features, `<Space>fm`, grammar, typos |
+| node and npm | Needed once by lazy.nvim to build the preview server (`cd app && npm install`) | `<Alt-m>` |
+| A web browser | Your system default | `<Alt-m>` |
+| pandoc, xelatex | Only in the latex dev shell (`~/nix/templates/krit/dev-environments/language-specific/latex/flake.nix`: `pandoc` and `texlive.combined.scheme-full`) | `:ToPDF` |
+
+Tested: inside the latex dev shell `prettier`, `pandoc`, `xelatex` and `marksman` are all found by Neovim, and the attached LSP clients on a `.md` file are `ltex_plus`, `marksman`, `typos_lsp`. Note that `pandoc` is also found on this system outside the dev shell (it is on the system PATH), but `xelatex` and `prettier` are not found by a plain shell: Neovim must be started from a shell where they are on PATH (the dev shell, or the nix profile that provides them).
+
+If a tool is missing, nothing falls back to a plain Vim key:
+
+- No prettier: `<Space>fm` shows one warning `Markdown: prettier not found on PATH`.
+- No pandoc: `:ToPDF` shows the error `pandoc not found`.
+- No xelatex: pandoc runs and fails, one warning `ToPDF: pandoc failed (exit N)`.
+- No marksman or ltex-ls-plus: that LSP simply does not start (check with `:checkhealth vim.lsp`).
+
+## Try the keys: an example file
+
+Create a scratch file and paste this text. All the examples below refer to it.
+
+````markdown
+# Title
+
+Some text here.
+
+```python
+x = 1
+y = 2
+```
+
+* item a
+* item b
+
+
+plain one
+plain two
+
+| a | b |
+|---|---|
+| longer cell | x |
+
+A sentence.
+````
+
+## Keys
+
+All keys work only in Markdown buffers unless stated. `<Space>` is the leader key.
+
+| Keymap | Mode | What it does |
+| --- | --- | --- |
+| `<Alt-m>` | n | Toggle the browser preview. In another file type: one warning `Markdown preview: only in markdown buffers` |
+| `<Space>mf` | n | Add a footnote after the character under the cursor (see Footnotes). Elsewhere: one warning |
+| `<Space>mr` | n | Return from the footnote to the text. Elsewhere: one warning |
+| `^^` | n, i | Add a footnote before the character under the cursor (see the off-by-one note below) |
+| `@@` | n, i | Return from the footnote (replaces the macro replay `@@` in Markdown) |
+| `<Space>fm` | n | Format the file with prettier |
+| `<Space>mb` + motion | n | Add a trailing `\` (hard line break) to the lines of the motion, e.g. `<Space>mbip` |
+| `<Space>mb` | x | Same on a Visual selection |
+| `+` + motion | n | Put `+ ` in front of the lines of the motion: `+ip` |
+| `+` | x | Same on a Visual selection |
+| `ic`, `ac` | o, x | Fenced code block, without or with the fence lines: `vic`, `dic`, `yac`, `cic` |
+| `]]` / `[[` | n, x | Next / previous heading (levels 1 to 5) |
+| `gO` | n | Outline: opens a location list window with one line per heading, indented by level (tested: `Heading One`, `  Heading Two`, `    Heading Three`). `<CR>` jumps to the heading, `:lclose` closes it |
+| `<Space>t` | n | Aerial symbol outline panel; `]t` / `[t` next / previous symbol |
+| `<Space>cz` | n | Toggle spell checking (global key, see Writing quality) |
+| `<Space><Space>` | n | Trailing-space remover, but in Markdown it only warns `markdown: trailing spaces are hard line breaks, not stripped` (tested) |
+| `:AddRef <label> <url>` | cmd | Add a reference link at the end of the file |
+| `:Tabularize /\|` | cmd | Align table columns |
+| `:ToPDF` | cmd | Export a PDF |
+| `:RenderMarkdown toggle` | cmd | Turn the rendering off / on |
+
+Global keys that also work here: `<Space>ca` (code action, for example a ltex_plus fix), `<Space>dd`, `]d`, `[d` (diagnostics), `<Space>rn` is mapped but no Markdown server renames.
+
+Accepted effects of the footnote maps:
+
+- A single `^` or `@` typed in insert mode appears after 500 ms, because Neovim waits for a possible second key. `^` followed by any other key comes out at once.
+- In normal mode `@@` is not "repeat last macro" in Markdown (tested: it is `<Plug>ReturnFromFootnote`). Use `@a` with the register name instead.
+
+## Text objects and operators
+
+These live in `after/ftplugin/markdown.vim`. Tested on the example file:
+
+| You do (cursor on a line inside the code block) | Result |
+| --- | --- |
+| `dic` | The two code lines are deleted, the lines with the fences stay (an empty block) |
+| `dac` | The whole block with both fences is deleted |
+| `yac` then `p` | The block, fences included, is copied and pasted |
+| `dic` then `u` | Everything is back (one undo step) |
+
+| You do | Result |
+| --- | --- |
+| `+ip` on `plain one` | Both lines become `+ plain one` and `+ plain two` |
+| `V`, `j`, `+` | The same on the Visual selection |
+| `<Space>mbip` on `plain one` | The lines become `plain one\` and `plain two\` |
+
+Notes: `+` keeps existing indentation (`  + text`). `<Space>mb` skips blank lines and lines that already end in `\`. `+` is also a normal Vim key (next line start) that is replaced here in Markdown buffers.
+
+The `+` map is built so a count works (`3+j`): the file explains that a plain `:set` style map would turn the count into a range and give error E481.
+
+## Footnotes
+
+Why: you write the sentence, press a key, write the note, jump back, without scrolling to the end and counting numbers.
+
+How it works: vim-markdownfootnotes inserts `[^N]` in the text and a line `[^N]: ` at the end of the file, numbering them in order. Your config adds the keys `^^` and `@@` and removes the plugin's own `<Space>f` and `<Space>r` maps in Markdown, because with Space as leader they swallowed `<Space>f...` typed quickly.
+
+Tested flow (normal mode):
+
+1. Cursor on the last letter of `Some text here.` (`$` puts it on the period).
+2. `<Space>mf`. The line becomes `Some text here.[^1]` (the mark is inserted after the character under the cursor) and the cursor sits on the new last line `[^1]: ` in normal mode.
+3. Press `A`, type `My note`, press `<Esc>`.
+4. Press `@@` (or `<Space>mr`). The cursor is back at the `[^1]` in the sentence.
+
+Tested flow (insert mode, the `^^` variant):
+
+```text
+Mid word done.   (cursor before "word", in insert mode, type ^^)
+```
+
+The result is `Mid [^1]word done.` and you are still in insert mode on the note line: type the note, then `<Esc>`, then `@@` to go back. A second footnote becomes `[^2]` and its note is added under `[^1]: ...`.
+
+The off-by-one at the end of a line (tested): in insert mode with the cursor at the very end of a line, `^^` puts the mark one character too early (`Neovim is fas[^1]t`). The reason is that the `<C-O>` command inside the map first moves the cursor onto the last character, and `^^` inserts before that character. Typing `^^` in the middle of a line is exact. At the end of a line, end the sentence in normal mode instead: `<Esc>`, `<Space>mf` (inserts after the last character). In normal mode `^^` inserts before the character under the cursor, `<Space>mf` after it.
+
+## Reference links and tables
+
+```text
+:AddRef docs https://neovim.io/doc
+```
+
+Tested result at the end of the buffer (a blank line, a comment line once, then the definition):
+
+```markdown
+<!-- Reference links -->
+[docs]: https://neovim.io/doc
+```
+
+A second `:AddRef two https://a.b` adds only `[two]: https://a.b` under it (the comment line is not repeated). In the text you write `[the docs][docs]`. The first argument completes from labels already used as `[text][label]` in the file. Label and URL cannot contain spaces; there is no title argument.
+
+Tables (tested): select the table lines and run `:'<,'>Tabularize /|`:
+
+```markdown
+| a           | b   |
+| ---         | --- |
+| longer cell | x   |
+```
+
+Tabularize pads the separator row with spaces. `<Space>fm` is the better table aligner: prettier makes the separator row `| ----------- | --- |` (tested).
+
+Checkboxes (`- [ ]`): render-markdown draws them; no key toggles them.
+
+## Preview (markdown-preview.nvim)
+
+Why: render-markdown shows structure in the editor, the browser preview shows the final look (fonts, images, math, diagrams).
+
+How: the plugin starts a small node server and opens your default browser. The server follows the text and the cursor while you edit.
+
+Config (from `lua/plugin_specs.lua`):
+
+```lua
+{
+  "iamcco/markdown-preview.nvim",
+  build = "cd app && npm install && git restore .",
+  ft = { "markdown" },
+  init = function()
+    -- Do not close the preview tab when switching to other buffers (all platforms)
+    vim.g.mkdp_auto_close = 0
+  end,
+},
+```
+
+| Command | What it does |
+| --- | --- |
+| `:MarkdownPreview` | Start the preview and open the browser |
+| `:MarkdownPreviewStop` | Stop it |
+| `:MarkdownPreviewToggle` | Start or stop (what `<Alt-m>` runs) |
+
+- Tested: the three commands exist in a Markdown buffer and `vim.g.mkdp_auto_close` is `0`.
+- Tested server life cycle (browser launch replaced by a no-op function, port fixed to 18765): before `<Alt-m>` nothing listens; after `<Alt-m>` a server listens on `127.0.0.1:18765` and the plugin reports `Preview page: http://localhost:18765/page/1`; after the second `<Alt-m>` the port is closed. By default the port is random and only the local machine can connect (`mkdp_open_to_the_world = 0`).
+- To try this yourself without a browser tab: `:let g:mkdp_browserfunc = 'NoBrowser'` after defining `function! NoBrowser(url)` that does nothing, and `:let g:mkdp_echo_preview_url = 1` to see the address.
+- `mkdp_auto_close = 0`: the browser tab stays open when you switch to another buffer. It ends when you press `<Alt-m>` again or leave Neovim.
+- No browser, port or theme is set, so the plugin defaults and your system default browser are used.
+- Outside Markdown buffers `<Alt-m>` shows one warning (the real map is buffer-local in `after/ftplugin/markdown.lua`).
+- After a fresh install the server may not be built: `:Lazy build markdown-preview.nvim` (needs `npm`).
+
+## Rendering inside the buffer (render-markdown.nvim)
+
+Why: you read Markdown all day; rendered headings and tables are easier on the eyes, and the raw text is one `<Esc>`-then-`i` away.
+
+Config (from `lua/plugin_specs.lua`):
+
+```lua
+opts = {
+  debounce = 500,
+  render_modes = { "n", "c" },
+  max_file_size = 1.5,
+  anti_conceal = { enabled = true },
+},
+```
+
+| Setting | Meaning |
+| --- | --- |
+| `render_modes = n, c` | Rendered only in normal and command mode; insert mode shows the raw text |
+| `debounce = 500` | Waits 0.5 s after typing stops before redrawing |
+| `max_file_size = 1.5` | Files over 1.5 MB are not rendered (and the big-file mode takes over, see below) |
+| `anti_conceal` | The line under the cursor shows raw text so you can edit it |
+
+Commands (all tested to run without error; the global state changed `true`, `false`, `true` with two `toggle` calls):
+
+| Command | Effect |
+| --- | --- |
+| `:RenderMarkdown toggle` | Rendering off / on in all buffers |
+| `:RenderMarkdown buf_toggle` | Same, this buffer only |
+| `:RenderMarkdown enable` / `disable` | Explicit on / off |
+| `:RenderMarkdown buf_enable` / `buf_disable` | Explicit on / off, this buffer only |
+
+An unknown name (for example `:RenderMarkdown bogus`) gives the plugin's error `invalid command - bogus`. `:checkhealth render-markdown` shows the setup.
+
+Big files: above 1.5 MB (or lines averaging over 5000 characters) the file gets the filetype `bigfile`: no tree-sitter, no ftplugin keys (so no `<Alt-m>`, `<Space>fm`, `^^`), and ltex_plus and typos_lsp are not attached. `:set ft=markdown` brings the full mode back (can be slow on huge files).
+
+## Formatting with prettier
+
+Why: marksman has no formatting. Without this key `<Space>fm` (the global format key) would do nothing in Markdown.
+
+How: the key runs `prettier --parser markdown --stdin-filepath <file>` on the buffer text (so a project `.prettierrc` is honoured) and writes back only the changed hunks. Tested result on the example file:
+
+```text
+* item a            ->  - item a
+* item b                - item b
+(two blank lines)   ->  (one blank line)
+| a | b |           ->  | a           | b   |
+|---|---|               | ----------- | --- |
+```
+
+The code block and the `plain one` / `plain two` lines (two lines, no blank between) stayed as they were. Also `*emphasis*` becomes `_emphasis_` and a final newline is added (prettier defaults, not shown in the test).
+
+Why not `:%!prettier --parser markdown`? It would replace the whole buffer: one giant change, all marks lost, and the cursor jumps. The key changes only the differing lines, in one undo step (tested: `u` restores everything), keeps marks and puts the cursor back on the same text. Nothing is written to disk. If you type while prettier runs, the result is discarded with a warning (`prettier: buffer changed while formatting, result discarded`): press the key again. A prettier error appears as `prettier failed: ...`.
+
+Trailing spaces: two spaces at the end of a line are a Markdown hard line break, so they are never stripped here. The whitespace plugin excludes `markdown` (`trailing_whitespace_exclude_filetypes`), and `<Space><Space>` only warns. The other hard-break form is a trailing backslash; `<Space>mb` adds it. For rewrapping long paragraphs use `gq` after `:set textwidth=80` yourself.
+
+## PDF export (`:ToPDF`)
+
+Why: a Markdown note you can send to someone.
+
+How: `plugin/command.vim` starts pandoc as a background job:
+
+```text
+pandoc --pdf-engine=xelatex --highlight-style=zenburn --table-of-content
+  --include-in-header=<config>/resources/head.tex -V fontsize=10pt -V colorlinks
+  ... -s "<file>.md" -o "<file>.pdf"
+```
+
+- The output is `<same name>.pdf` next to the file; an old PDF is overwritten.
+- You get a table of contents, coloured links, zenburn code colours, and your LaTeX header `resources/head.tex`.
+- Spaces and special characters in the file name are safe (an argument list, no shell). Tested on `my notes.md`: a valid PDF, no error.
+- Save first. An unnamed buffer gives `ToPDF: save the buffer to a file first`, and unsaved edits are not in the PDF.
+- The first run took more than 25 seconds. Neovim stays usable. There is no message when it finishes.
+- Success is silent and on Linux no viewer opens (a viewer is started only on macOS and Windows): open the PDF yourself.
+- Failure: one warning `ToPDF: pandoc failed (exit N)`. The usual reason is that xelatex is missing because Neovim was not started in the latex dev shell. To see the real LaTeX error, run the pandoc command in a terminal.
+
+To use it: `cd` into a folder with the latex shell (direnv), run `nvim "my notes.md"`, then `:ToPDF`.
+
+## Writing quality
+
+### ltex_plus (grammar, LanguageTool)
+
+Why: spell checkers do not see "their" vs "there". ltex_plus checks grammar in prose files: `markdown`, `tex`, `plaintex`, `typst`, `gitcommit`, `text`.
+
+How: it is a Java language server that sends problems as diagnostics.
+
+Config (`after/lsp/ltex_plus.lua`):
+
+```lua
+settings = { ltex = {
+  language = "en-US",
+  enabled = { "markdown", "latex", "tex", "plaintex", "typst", "gitcommit", "git-commit", "plaintext", "text" },
+  ["ltex-ls"] = { logLevel = "warning" },
+} },
+```
+
+- The language is fixed to `en-US`: LanguageTool checks one language per file. Italian, German or French text is flagged; change `language` in that file (`"auto"` detects the language, less reliable on short texts) or run `:lsp stop` for the buffer.
+- Tested: the status line shows `Completed Checking document` and `ltex_plus` after opening a file. The first start is slow.
+- Use the diagnostics: `]d` / `[d`, `<Space>dd` (message), `<Space>ca` (fixes).
+- No personal dictionary or disabled-rule list is configured in the repo.
+- Tested code actions on an unknown word (`Zorblat`, `<Space>ca`): `Use 'Format'`, `Use 'Combat'`, `Use 'Orbit'`, `Use 'Cobalt'`, `Use 'Oblast'`, `Add 'Zorblat' to dictionary`, `Hide false positive`, `Disable rule`, and `Create a Table of Contents` (from marksman). Choosing a replacement works: the word changes and `u` undoes it.
+- `Add ... to dictionary`, `Hide false positive` and `Disable rule` do NOT work in this setup (tested). They are client-side commands (`_ltex.addToDictionary` ...) that Neovim must implement, and your config has no handler; the server answers `Unknown command '_ltex.addToDictionary', ignoring`, nothing is saved, the warning stays. To silence a word use Vim's `zg` (see below), which only affects the Vim spell checker, not ltex_plus; to silence ltex_plus for a word, add it to the `ltex.dictionary` setting in `after/lsp/ltex_plus.lua` yourself.
+
+### Vim spell checking
+
+| Key | What it does |
+| --- | --- |
+| `<Space>cz` | Toggle `spell` |
+| `]s` / `[s` | Next / previous misspelled word |
+| `z=` | Up to 9 suggestions |
+| `zg` | Add the word to the allowed list |
+| `zw` | Mark the word as wrong |
+
+`spelllang` is `en,it,de,fr` together, so a word correct in any of them is fine. `zg` writes to the first list `spell/en.utf-8.add`; `2zg` writes to the second (`it`), `3zg` to `de`, `4zg` to `fr`. The `spell/` folder is in a public repo: do not add private words (see `spell/README.md`).
+
+### typos_lsp
+
+Checks common typos in every normal buffer (not help, terminal, quickfix, or start screens). Diagnostics and fixes work as for ltex_plus.
+
+## Troubleshooting
+
+| Problem | Cause and fix |
+| --- | --- |
+| No rendering, raw `#` and `**` visible | Insert mode (press `<Esc>`), file over 1.5 MB, or rendering toggled off: `:RenderMarkdown enable`. Check `:set ft?` is `markdown` |
+| `<Alt-m>` says "only in markdown buffers" | The buffer is not `markdown`: `:set ft=markdown` |
+| Preview does not open | Server not built or no browser: `:Lazy build markdown-preview.nvim` (needs `node` and `npm`) |
+| Preview tab stays open after I left the file | Intended (`mkdp_auto_close = 0`). Stop it with `<Alt-m>` in the Markdown buffer |
+| `<Space>fm` warns "prettier not found on PATH" | Start Neovim from a shell that has prettier (nix profile or dev shell) |
+| `<Space>fm`: "buffer changed while formatting" | You typed during the run. Press the key again |
+| `:ToPDF`: "pandoc not found" / "pandoc failed (exit N)" | Start Neovim inside the latex dev shell. Run the pandoc command in a terminal to see the error |
+| `:ToPDF` does nothing visible | Normal: silent, 30 s or more the first time, no viewer on Linux. Look for the PDF next to the file |
+| `@@` does not replay my macro | In Markdown it means "return from footnote". Use `@a` (register name) |
+| Typing `^` or `@` has a delay | The `^^` / `@@` insert maps wait 500 ms for a second key. Accepted |
+| `^^` puts the mark one letter early | At the end of a line in insert mode (see Footnotes). Use `<Space>mf` in normal mode |
+| `<Space><Space>` does not remove trailing spaces | Intended in Markdown (hard line breaks) |
+| Grammar warnings on Italian or German text | ltex_plus is `en-US` only |
+| `^^` does nothing | The footnote plugin is not loaded: `:echo exists(':FootnoteNumber')` must give `2` (tested) |
+| Maps do nothing in a huge file | Big-file mode: `:set ft=markdown` |
+
+## Related sections
+
+Section 16 (Code Commenting: `gc` in Markdown writes `<!-- -->`, inside a fenced block the comment style of the fence language), section 27 (short Markdown key list), section 28 (LaTeX and Typst: same latex dev shell and ltex_plus), and the sections on spelling, LSP diagnostics and big-file mode.
+
+
+---
+
+# 82. Typst (typst.vim, tinymist, watch and preview)
+
+Typst is a modern markup language that compiles to PDF (like LaTeX, but much faster and simpler). This section covers everything that is specific to Typst files (`*.typ`): the plugin, the language server, the compile-and-preview workflow, prose checking and the files that make it work. Global tools (completion, folding, quickfix, spell keys) are only mentioned with a pointer to their own section.
+
+## What you get
+
+| Piece | What it does | Where it comes from |
+| --- | --- | --- |
+| `kaarmu/typst.vim` | `:TypstWatch`, `:Toc`/`:Toch`/`:Tocv`/`:Toct`, `:make` (compiles once), indentation, `//` comments, Typst syntax colours | plugin, loaded only when `typst` is on PATH |
+| `<Space>tw` | Starts `typst watch` for the current file (recompile on every save, open the PDF) | `after/ftplugin/typst.lua` |
+| `tinymist` | Language server: diagnostics, completion, hover, go to definition, rename, symbols, formatter | typst devShell |
+| `typstyle` | The formatter that `tinymist` uses (`<Space>fm`) | typst devShell |
+| `zathura` | PDF viewer that reloads by itself when the PDF changes | typst devShell |
+| `ltex_plus` and `typos_lsp` | Grammar, spelling and typo diagnostics in the prose | global (see "Prose checking") |
+| Buffer settings | `textwidth=100`, wrap on, colour marker at column 100, indent of 2 spaces | `after/ftplugin/typst.lua`, `lua/options.lua`, typst.vim |
+
+There are no Typst snippets (`my_snippets/` has no `typst.snippets`) and no Typst-specific completion source: completion comes from the language server (section 14).
+
+## Requirements: the Typst devShell
+
+The programs `typst`, `tinymist`, `typstyle` and `zathura` come from a Nix devShell, not from the system. The template is `~/nix/templates/krit/dev-environments/language-specific/typst/flake.nix`; its package list is:
+
+```nix
+packages = with pkgs; [ typst typstyle typstwriter tinymist prettypst utpm zathura ]
+```
+
+A project enters it through direnv. The `.envrc` of a Typst project contains one line:
+
+```
+use_dev_env typst
+```
+
+Then `cd` into the project (run `direnv allow` once per project). Start Neovim from that shell, so it sees the programs. Check:
+
+```bash
+which typst tinymist typstyle zathura
+```
+
+### Outside the devShell
+
+| What | Result |
+| --- | --- |
+| `typst` not on PATH | The plugin `typst.vim` does not load: no `:TypstWatch`, no `:Toc`. Tested: `exists(':TypstWatch')` is 0 |
+| `<Space>tw` | Still mapped (buffer-local); it shows ONE warning: "Typst: typst not found on PATH (open nvim inside the typst devShell)". Nothing starts |
+| `tinymist` not on PATH | No Typst language server. Tested: only `ltex_plus` and `typos_lsp` attach |
+| Filetype | `*.typ` is still recognised as `typst`; prose checking (`ltex_plus`, `typos_lsp`) still works |
+
+## Quick start
+
+1. In a terminal, enter the project folder (the devShell loads through direnv).
+2. Open a file: `nvim main.typ`.
+3. Wait a few seconds until the statusline on the right shows `tinymist` (it is the main server; `(+2)` means two more servers: `ltex_plus` and `typos_lsp`).
+4. Press `<Space>tw`. The command line shows `Starting: typst watch  --diagnostic-format short 'main.typ' --open zathura` and the PDF opens in zathura.
+5. Edit the text and save with `:w` (Typst files are never saved automatically, see "Auto-save" below). The PDF is rebuilt and zathura reloads it.
+6. If the document has an error, a quickfix window opens at the bottom with the message. Fix it and save again: the window closes by itself.
+7. To stop: quit Neovim (`:qa`). The watcher is a child job and ends with Neovim (tested: no `typst watch` process was left). Closing the zathura window alone does not stop the watcher.
+
+## Keys and commands
+
+| Key / command | Where | Description |
+| --- | --- | --- |
+| `<Space>tw` | Typst buffers only | Runs `:TypstWatch`: `typst watch --diagnostic-format short <file> --open <viewer>` as a background job. Pressing it again stops the old job and starts a new one (tested: new process id) |
+| `:TypstWatch {args}` | needs typst.vim | Same, with extra `typst` options, e.g. `:TypstWatch --root ..` |
+| `:make` | needs typst.vim | Compiles the file once (`typst compile --diagnostic-format short %`); errors go to the quickfix list (section 26) |
+| `:Toc` / `:Tocv` | needs typst.vim | Table of contents of the `=` headings in a vertical location list on the right; `:Toch` horizontal, `:Toct` in a new tab. Press `Enter` on a line to jump |
+| `<Space>fm` | global | Format the whole file with the language server (typstyle). Tested: `#greet(   "x"  )   #let   y=3` became `#greet("x")   #let y = 3` |
+| `gq` | global | Reformats prose lines to `textwidth` (100); not the Typst formatter |
+| `K` | LSP | Hover: signature and parameters of a function (tested on `greet` and `text`) |
+| `gd` | LSP | Go to definition: from a function call to its `#let`, from `@intro` to the `<intro>` label (tested) |
+| `<Space>rn` | LSP | Rename symbol (`tinymist` supports rename) |
+| `<Space>ca` | LSP | Code action menu at the cursor |
+| `]d` / `[d`, `<Space>dd` | global | Next / previous diagnostic, diagnostics list (section 13) |
+| `gcc` | global | Comment line with `//` (typst.vim sets `commentstring` to `// %s`) |
+| `<Space>t` | global | Symbol outline (aerial, section 37); in Typst buffers see the note below |
+| `[t` / `]t` | aerial | Previous / next symbol (heading or `#let`) |
+
+Note on `<Space>t`: in Typst buffers `<Space>tw` exists next to the global `<Space>t` (outline). When you press `<Space>t` alone, Neovim waits `timeoutlen` (500 ms) for a possible `w` before it opens the outline. This is expected; press `<Space>t` and wait half a second.
+
+The tinymist server also advertises extra commands (`tinymist.exportPdf`, `tinymist.startDefaultPreview`, `tinymist.exportSvg`, `tinymist.pinMain`, ...). No key is bound to them; this setup uses `typst watch` instead (see next part). The setting `exportPdf = "never"` stops tinymist from writing PDFs on its own.
+
+## The language server: tinymist
+
+Why: it understands Typst while you type, without compiling to a PDF. Config (`lua/config/lsp.lua`):
+
+```lua
+tinymist = {
+  cmd = { "tinymist" },
+  filetypes = { "typst" },
+  root_dir = function(bufnr, on_dir)
+    local fname = vim.api.nvim_buf_get_name(bufnr)
+    local root = vim.fs.dirname(vim.fs.find({ "typst.toml", ".git" }, { path = fname, upward = true })[1])
+      or vim.fs.dirname(fname)
+    on_dir(root)
+  end,
+  settings = {
+    exportPdf = "never",
+    outputPath = "$root/out/$name",
+    formatterMode = "typstyle",
+  },
+},
+```
+
+| Setting | Meaning |
+| --- | --- |
+| `root_dir` | The project root is the nearest folder above the file with `typst.toml` (a Typst package) or `.git`; with neither, the folder of the file. Tested: a file in a folder without `.git` got that folder as root |
+| `exportPdf = "never"` | The server does not export PDFs; only `typst watch` does. So there is one PDF writer, not two |
+| `outputPath` | Only used when the server exports (it does not here); it is a leftover default |
+| `formatterMode = "typstyle"` | `<Space>fm` formats with typstyle |
+
+What it provides, as tested in a real session:
+
+| Feature | How to see it |
+| --- | --- |
+| Diagnostics | A broken line (`#greet( 1 ,  2 )` with too many arguments) showed `typst:18:unexpected argument` in `vim.diagnostic.get()` and the error sign in the gutter. Source name: `typst` |
+| Completion | 38 items for `#set te...` (`array literal`, `cite`, `context expression`, ...) in the completion menu (section 14) |
+| Hover | `K` on a function shows its signature, e.g. `let greet(name: str) = str` |
+| Definition | `gd` on a call or on a `@label` |
+| Symbols | The outline (`<Space>t`) and the winbar path (`main.typ > Introduction > greet`) list headings and `#let` definitions |
+| Formatter | `<Space>fm` (typstyle) |
+
+Check which servers are attached: `:LspAttached` (popup) or the statusline (right side, first name is the main server `tinymist`, `(+2)` the others). `:LspInfo` shows details; `:LspLog` opens the log (section 13).
+
+## Watch, compile and the PDF
+
+`<Space>tw` is defined like this (`after/ftplugin/typst.lua`):
+
+```lua
+if vim.fn.executable("typst") == 1 then
+  vim.keymap.set("n", "<leader>tw", "<cmd>TypstWatch<cr>",
+    { buffer = true, desc = "Typst: watch & recompile" })
+else
+  vim.keymap.set("n", "<leader>tw", function()
+    vim.notify("Typst: typst not found on PATH (open nvim inside the typst devShell)", vim.log.levels.WARN)
+  end, { buffer = true, desc = "Typst: watch & recompile (needs typst)" })
+end
+```
+
+The plugin settings (`lua/plugin_specs.lua`):
+
+```lua
+vim.g.typst_auto_open_quickfix = 1
+vim.g.typst_pdf_viewer = vim.env.TYPST_PDF_VIEWER or (utils.executable("zathura") and "zathura") or ""
+```
+
+| Question | Answer |
+| --- | --- |
+| What runs? | `typst watch  --diagnostic-format short '<file>' --open <viewer>` in a background job, started from the current folder of Neovim |
+| Which viewer? | `$TYPST_PDF_VIEWER` if set, else `zathura` if installed, else (empty value) `--open` alone, i.e. the system default PDF program |
+| Where is the PDF? | Next to the `.typ` file with the same name (`main.typ` gives `main.pdf`). Tested. (`g:typst_output_to_tmp` is not set, so `/tmp/typst_out` is not used) |
+| When does it recompile? | Every time the `.typ` file (or a file it imports) is saved |
+| Why is auto-save off for Typst? | A recompile on every focus change would restart the watcher over and over; save with `:w` (section 42) |
+| Where are compile errors? | In the quickfix list (opens at the bottom, cursor stays in your window). Lines look like `main.typ\|19 col 13\| error: unexpected argument`. `]q`-style quickfix keys are in section 26 |
+| What happens to the PDF on an error? | The old PDF stays (tested: file time unchanged) until the error is fixed |
+| Does a fixed error clear the window? | Yes: the next successful compile empties the list and closes the window (tested) |
+| How to stop? | Quit Neovim. A second `<Space>tw` replaces the running watcher. There is no stop command |
+| One watcher only | The plugin keeps one watcher job; watching another file with `<Space>tw` stops the first |
+
+To test the viewer by hand without Neovim: `zathura main.pdf` (reloads on change).
+
+## Prose checking in Typst
+
+| Tool | Result in a `.typ` file |
+| --- | --- |
+| `ltex_plus` | LanguageTool (English, `en-US`) on the text: `'smal': Possible spelling mistake found.`, `Don't put a space before the full stop.`. Source name `LTeX`. Needs `ltex-ls-plus` installed globally |
+| `typos_lsp` | Common typos: `` `smal` should be `small` ``. Source name `typos` |
+| `<Space>cz` | Toggles Vim's own spell checker (section 31); `zg` adds a word to your English list, `2zg`/`3zg`/`4zg` Italian/German/French |
+| `<Space>ca` on a warning | Offers the fix (replace the word) |
+
+All three appear as diagnostics together with the `tinymist` ones (use `]d`, `<Space>dd`). Typst code is not skipped: LanguageTool may complain about markup such as `#link(...)`. Both tools never attach to files that are too big (section 41).
+
+## Filetype settings
+
+| Setting | Value | From |
+| --- | --- | --- |
+| `textwidth` | 100 | `after/ftplugin/typst.lua` |
+| `wrap` | on | `after/ftplugin/typst.lua` |
+| `colorcolumn` | 100 | `lua/options.lua` (per-language table) |
+| `expandtab`, `shiftwidth` | spaces, 2 | typst.vim |
+| `commentstring` | `// %s` | typst.vim |
+| `iskeyword` | letters, digits, `_`, `-` and accents | typst.vim: `ciw` on `my-label` takes the whole word |
+| Folding | off (`typst_folding = 0`; `foldmethod=manual`); folds in general come from nvim-ufo (section 18) | `plugin_specs.lua` |
+| Concealing | off (`typst_conceal*` all 0): you see the raw source | `plugin_specs.lua` |
+| Auto-save | never for Typst files | `plugin_specs.lua` (auto-save condition) |
+
+## Example document
+
+Save as `main.typ` in a folder with the devShell:
+
+```typst
+#set page(paper: "a5")
+#set text(size: 11pt)
+#set heading(numbering: "1.")
+
+= Introduction <intro>
+
+This is a smal test document with a typo. See @intro and #link("https://typst.app")[Typst].
+
+#let greet(name) = [Hello, #name!]
+
+#greet("World")
+
+== Math
+
+$ E = m c^2 $
+
+- first item
+- second item
+```
+
+### What to try
+
+| Do | Expected result |
+| --- | --- |
+| Open the file, wait 5 seconds | Statusline shows `tinymist (+2)`; signs for line 7 (`smal`) |
+| `<Space>tw` | Message `Starting: typst watch ... --open zathura`; `main.pdf` appears; zathura opens it (tested) |
+| Change `a5` to `a4`, `:w` | The PDF is recompiled and zathura shows the bigger page |
+| Add a line `#greet( 1 ,  2 )` at the end, `:w` | Quickfix window with `error: unexpected argument`; the error sign on the line; PDF unchanged |
+| Delete that line, `:w` | Quickfix window closes; PDF updated |
+| `gd` on `@intro` | Cursor jumps to the heading line `= Introduction <intro>` |
+| `gd` on `greet` in `#greet("World")` | Cursor jumps to `#let greet(name) = ...` |
+| `K` on `greet` | Floating window with `let greet(name: str) = str` |
+| Type `#set te` and wait | Completion menu with `text` and others |
+| Type `#greet(   "x"  )   #let   y=3` then `<Space>fm` | `#greet("x")   #let y = 3` |
+| `:Tocv` | Location list at the right with `Introduction` and `Math` |
+| `<Space>t` and wait | Symbol outline (aerial): `Introduction`, `Math`, `greet` |
+| `:make` | Compiles once; empty quickfix when everything is fine |
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `<Space>tw` shows "Typst: typst not found on PATH" | Neovim was not started inside the devShell | `cd` into the project (direnv), check `which typst`, restart Neovim |
+| `E492: Not an editor command: TypstWatch` | Same: typst.vim did not load without `typst` | Same fix |
+| No `tinymist` in the statusline | `tinymist` not on PATH, or file is not `typst` filetype | `which tinymist`; `:set ft?` must say `typst`; `:LspAttached` |
+| `direnv: error ... .envrc is blocked` | The project's `.envrc` is not approved | `direnv allow` once in the project |
+| Watch starts but the PDF does not change | The file has a compile error (old PDF stays), or you did not save | Look at the quickfix window or `:copen`; save with `:w` |
+| Watch compiles the wrong file or cannot find imports | Watcher started from another current folder than the file's | `:cd %:p:h`, then `<Space>tw` again |
+| Viewer does not open | `zathura` missing, or `$TYPST_PDF_VIEWER` points to a missing program | `which zathura`; unset or fix `TYPST_PDF_VIEWER`; open `main.pdf` by hand |
+| Two PDFs or a PDF in `out/` | A server export was enabled by hand | Keep `exportPdf = "never"` in `lua/config/lsp.lua` |
+| Quickfix window did not open | The error has no `file:line:col` (e.g. a missing font warning) | Run `:!typst compile --diagnostic-format short %` and read the output |
+| `<Space>t` feels slow in Typst files | It waits for a possible `w` (`<Space>tw`) | Expected; wait 500 ms, or use `:AerialToggle` |
+| Warnings about prose inside markup | LanguageTool reads Typst source as text | Ignore, or `<Space>cz`/`zg` for words; see section 31 |
+| File not saved automatically | By design, Typst files are excluded from auto-save | `:w` |
+
+## Related sections
+
+Section 13 (LSP), 14 (autocompletion), 18 (folding), 26 (quickfix and location list), 27 (Markdown), 28 (LaTeX and Typst overview), 31 (spell checking), 32 (statusline), 37 (symbol outline), 41 (filetype settings), 42 (automatic behaviours), 44 (LSP in depth).
