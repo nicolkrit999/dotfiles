@@ -11,6 +11,7 @@ The fugitive keys (and the gitlinker keys below) exist only inside a git reposit
 | --- | --- | --- |
 | `<Space>gs` | n | Git status window |
 | `<Space>gw` | n | Git add current file |
+| `<Space>ga` | n | Git add all changes (whole repository: new, modified and deleted files, `git add -A`) |
 | `<Space>gc` | n | Git commit |
 | `<Space>gpl` | n | Git pull |
 | `<Space>gpu` | n | Git push (opens terminal split) |
@@ -88,7 +89,7 @@ Merge conflicts: `:DiffviewOpen` is the merge tool (keys in section 20, "Resolvi
 A typical workflow entirely from within Neovim:
 
 1. **Check status**: `<Space>gs` opens the fugitive status window
-2. **Stage a file**: `<Space>gw` stages the current file (or use `s` in the status window)
+2. **Stage**: `<Space>gw` stages the current file, `<Space>ga` stages everything in the repository (or use `s` in the status window)
 3. **Review changes**: `<Space>hp` to preview hunks, or `]c`/`[c` to navigate between them
 4. **Commit**: `<Space>gc` opens a commit message buffer. Write message, then `:wq`
 5. **Push**: `<Space>gpu` pushes (opens a terminal split showing progress)
