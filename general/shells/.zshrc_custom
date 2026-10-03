@@ -209,21 +209,3 @@ if command -v pay-respects >/dev/null 2>&1; then
     eval "$(pay-respects zsh)"
 fi
 
-# ----------------------------------------------
-# Startup Splash (Fastfetch + Pokemon)
-# Changed *l* to *i* (interactive) because zsh does not use 'l' flag in $-
-case "$-" in
-  (*i*)
-    if command -v fastfetch >/dev/null 2>&1 && command -v pokemon-colorscripts >/dev/null 2>&1; then
-      # Run fastfetch using the pokemon output as the raw logo
-      fastfetch --data-raw "$(pokemon-colorscripts --no-title -r 1,3,6)"
-    elif command -v pokemon-colorscripts >/dev/null 2>&1; then
-      # Fallback: run just pokemon if fastfetch is missing
-      pokemon-colorscripts --no-title -r 1,3,6
-    elif command -v fastfetch >/dev/null 2>&1; then
-      # Fallback: run just fastfetch
-      fastfetch
-    fi
-    ;;
-esac
-# ----------------------------------------------
