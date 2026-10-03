@@ -1,6 +1,6 @@
 ---
 name: answering-neovim-usage-questions
-description: Use this skill whenever the user asks how to do something in Neovim or Vim with their own config ("how do I select...", "how do I go to...", "how do I delete/copy/change...", "what key does...", "is it possible to...", "why did this key do that"). It answers from the user's neovim-guide (user-guide.md), verifies every key against the real keymaps (lua/mappings.lua and plugin configs), states clearly when an answer is only an assumption, and keeps the guide correct and complete without ever adding examples the user did not approve.
+description: Use this skill whenever the user asks how to do something in Neovim or Vim with their own config ("how do I select...", "how do I go to...", "how do I delete/copy/change...", "what key does...", "is it possible to...", "why did this key do that"). It answers from the user's neovim-guide (the user-guide/ folder), verifies every key against the real keymaps (lua/mappings.lua and plugin configs), states clearly when an answer is only an assumption, and keeps the guide correct and complete without ever adding examples the user did not approve.
 ---
 
 # Answering Neovim usage questions
