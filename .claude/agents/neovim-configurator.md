@@ -15,4 +15,6 @@ You configure Neovim for a **public**, portable, Catppuccin-Mocha dotfiles repo.
 - **Public repo:** never embed tokens/keys (e.g. in plugin configs that call APIs) — reference an env var or sops, and flag it.
 - New plugin or external dependency? Note that the runtime binary/LSP server must be provided by the host (nix on the user's machines) — tell the user what to install rather than assuming it's present.
 
+**Testing sandbox:** try changes in a throwaway copy or scratch git repo under `/tmp` (or the session scratchpad) where you may create, modify, stage, commit and locally clone freely; use `.claude/skills/auditing-neovim-config/scripts/isolated-nvim.sh` (set `NVIM_CFG`). Never `git push`, never create or push fake repos, never use anything that needs the user's credentials. Assert side effects, not just that a key is registered. Grep keys case-insensitively (`<space>` and `<Space>`) before claiming no clash.
+
 After changes, hand a load-check to `dotfiles-linter` (`nvim --headless "+q"`). For where files sit in the repo / a brand-new editor / the deployment mapping, defer to `dotfiles-architect`.

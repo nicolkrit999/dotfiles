@@ -42,6 +42,31 @@ gs.setup {
     map("n", "<leader>hb", function()
       gs.blame_line { full = true }
     end, { desc = "blame line (full)" })
+
+    local function confirm_then(msg, fn)
+      return function()
+        if vim.fn.confirm(msg, "&Yes\n&No", 2) == 1 then
+          fn()
+        end
+      end
+    end
+    local function visual_range()
+      return { vim.fn.line("."), vim.fn.line("v") }
+    end
+
+    map("n", "<leader>hs", gs.stage_hunk, { desc = "Git: stage hunk" })
+    map("x", "<leader>hs", function()
+      gs.stage_hunk(visual_range())
+    end, { desc = "Git: stage selected lines" })
+    map("n", "<leader>hr", confirm_then("Reset this hunk (discard the change)?", gs.reset_hunk), { desc = "Git: reset hunk (confirm)" })
+    map("x", "<leader>hr", confirm_then("Reset the selected lines (discard the change)?", function()
+      gs.reset_hunk(visual_range())
+    end), { desc = "Git: reset selected lines (confirm)" })
+    map("n", "<leader>hu", gs.undo_stage_hunk, { desc = "Git: unstage last staged hunk" })
+    map("n", "<leader>hS", gs.stage_buffer, { desc = "Git: stage whole buffer" })
+    map("n", "<leader>hR", confirm_then("Reset the whole buffer (discard all changes in this file)?", gs.reset_buffer), { desc = "Git: reset whole buffer (confirm)" })
+    map("n", "<leader>hd", gs.diffthis, { desc = "Git: diff file against index" })
+    map("n", "<leader>ht", gs.toggle_deleted, { desc = "Git: toggle deleted lines" })
   end,
 }
 

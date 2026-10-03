@@ -46,6 +46,7 @@ Never trust the guide alone, and never answer from generic Vim knowledge alone. 
 - Is the key remapped? Read `lua/mappings.lua` and grep `lua/config/` and `lua/plugin_specs.lua`. Known traps in this config: `f` is hop.nvim (2 characters plus a label), `;` is `:`, `$` is `g_` in visual mode only, `H`/`L` are remapped, `0` is `g0`, `c`/`C`/`cc` use the black-hole register, `s` is disabled (vim-sandwich), `j`/`k` follow wrapped lines only without a count.
 - **Which modes does the mapping cover?** A mapping for `{ "n", "x" }` does NOT apply after an operator (`d`, `y`, `c`). `dL` therefore uses the built-in `L` (bottom of screen, linewise) and deletes whole lines.
 - Is the plugin actually enabled, or commented out in `plugin_specs.lua`? (for example vim-visual-multi is commented out, so there is no multi-cursor.)
+- When a quick test is needed, run it yourself in a throwaway copy under `/tmp` or the scratchpad (scratch git repo, `isolated-nvim.sh`, private `tmux -L`): creating, editing, staging and committing there is allowed; `git push`, fake remotes and anything needing the user's credentials never. See the auditing skill's verification doc, section 1 rule 4.
 - Options that change behaviour: `nowrap`, `ignorecase smartcase`, `relativenumber`. Check `lua/options.lua` when they matter.
 
 If a check is not possible (for example a plugin default not visible in the config), say which part could not be verified.

@@ -21,6 +21,9 @@ A config only deploys if it has a mapping in `ext-dotfiles.nix`. For a new/chang
 - Optionally confirm the live symlink resolves: `readlink -f ~/<target>` should point back into `~/dotfiles/`.
 - If a file was added with no mapping, flag it: it won't appear on the hosts until a mapping line is added to `ext-dotfiles.nix` (route that to `dotfiles-architect`). There is no `stow` here.
 
+### Test sandbox
+Runtime checks (nvim, git behaviour) run in a throwaway directory under `/tmp` or the session scratchpad, never in the live checkout: there you may create, modify, stage, commit and locally clone freely. Never `git push`, never create or push fake repos, never use anything needing the user's credentials. A "key is registered" check is not a behaviour test: assert the effect.
+
 ### 🔑 Public-repo secret scan (do this before any commit)
 Grep the repo (or the changed files) for likely secrets and flag every hit with `file:line`:
 `api[_-]?key`, `secret`, `token`, `password`, `passwd`, `BEGIN .*PRIVATE KEY`, `Bearer `, `xox[baprs]-` (Slack), `ghp_`/`gho_` (GitHub), AWS `AKIA…`, hardcoded emails, private IPs/hosts, `.env`-style `KEY=value` with real-looking values. Treat any hit as **blocking** — report it; the user/author must remove or move it to sops before committing.

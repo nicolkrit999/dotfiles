@@ -748,11 +748,14 @@ More: sections 13 and 44.
 | --- | --- |
 | `<Space>gs` | Git status |
 | `<Space>gw` / `<Space>ga` | Add the current file / add all changes |
-| `<Space>gc` | Commit |
+| `<Space>gu` | Unstage the current file |
+| `<Space>gv` | Vertical diff of the file against the index |
+| `<Space>gc` / `<Space>gA` | Commit / amend the last commit |
 | `<Space>gpl` / `<Space>gpu` | Pull / push |
 | `<Space>gB` | Branch menu: pick a branch to switch to (same as clicking the branch in the statusline) |
 | `]c` / `[c` | Next / previous changed hunk |
 | `<Space>hp` / `<Space>hb` | Preview the hunk / blame the line |
+| `<Space>hs` / `<Space>hr` | Stage / reset the hunk (reset asks Yes/No; works on selected lines in visual mode) |
 | `<Space>gl` | Copy a permalink for the line |
 | `:Neogit` / `:NeogitLogCurrent` | Open the Neogit status window / the log of the current file (`q` closes) |
 
