@@ -27,4 +27,10 @@ require("illuminate").configure {
     "yaml",
   },
   min_count_to_highlight = 2,
+  -- nixd answers documentHighlight with every package of a `with pkgs; [ ... ]`
+  -- list, so in nix buffers skip the LSP and use tree-sitter, then plain text
+  -- matching (only the identical word is highlighted)
+  filetype_overrides = {
+    nix = { providers = { "treesitter", "regex" } },
+  },
 }
