@@ -125,7 +125,7 @@ Tested: opening `chap/c1.tex` with this comment gives `b:vimtex.tex` = the full 
 
 - **A zathura window opens by itself after the first successful compile.** This is vimtex's default (`g:vimtex_view_automatic = 1`), not a bug. Later compiles only refresh the open window. If you do not want it: `:let g:vimtex_view_automatic = 0` (until you quit); you then open the PDF yourself with `\lv`. For a permanent change the line has to go into the config. (Tested both ways: without the option a zathura window titled with the full path of `main.pdf` opened about 14 seconds after `<Space>rf` in a fresh Neovim; with `view_automatic=0` nothing opened until `\lv`.)
 - `\lv` (`:VimtexView`) opens the viewer or, if open, jumps to the place of the cursor (forward search). Tested from a chapter file with `%! TEX root`: zathura opened the PDF of the **main** file (`main.pdf`), and the process got `--synctex-forward 1:1:<path>/chap/c1.tex`, i.e. the cursor position of the chapter.
-- **Inverse search** (Ctrl+click in the PDF jumps back to the source): the config writes the address of the running Neovim into `/tmp/vimtexserver.txt` every time a `tex` file is opened (`v:servername`). It is only a helper file; never edit it. With two Neovims open, the last one wins (the file is shared in `/tmp`). Tested prerequisites: the file exists and holds the same address as the running Neovim (`:echo v:servername`); the zathura process was started by vimtex with the inverse-search callback `-x "nvim --headless -c \"VimtexInverseSearch %{line}:%{column} '%{input}'\""`. Only the actual Ctrl+click cannot be tested without a mouse.
+- **Inverse search** (Ctrl+click in the PDF jumps back to the source): the config writes the address of the running Neovim into `/tmp/vimtexserver.txt` every time a `tex` file is opened (`v:servername`). It is only a helper file; never edit it. With two Neovims open, the last one wins (the file is shared in `/tmp`). Tested prerequisites: the file exists and holds the same address as the running Neovim (`:echo v:servername`); the zathura process was started by vimtex with the inverse-search callback `-x "nvim --headless -c \"VimtexInverseSearch %{line}:%{column} '%{input}'\""`. The jump itself is tested by running that same callback in a second Neovim: the first Neovim jumped to the clicked line and column. This only works because vimtex is loaded at startup (not only for `tex` files): the callback Neovim has no `tex` file open and needs the `:VimtexInverseSearch` command (found and fixed 2026-10-03; before, the click did nothing and showed no error).
 
 ## Table of contents
 
@@ -301,7 +301,7 @@ UltiSnips, file `my_snippets/tex.snippets`. Both are start-of-line snippets (`b`
 | German/other language text full of errors | `% LTeX: language=de-DE` on its own line |
 | Edits not in the PDF | Auto-save does not save `.tex`: `:w`. Check the compiler is running (`\lg`) |
 | First compile is slow | `latexmk` builds everything once (bibliography, references); later runs are fast. Stop with `<Space>rf` when not needed |
-| Inverse search from zathura jumps nowhere | `/tmp/vimtexserver.txt` has the address of the last Neovim that opened a `tex` file; reopen the file in the Neovim you want |
+| Inverse search from zathura jumps nowhere | Quit and restart Neovim (an old session may still have vimtex lazy-loaded); `/tmp/vimtexserver.txt` has the address of the last Neovim that opened a `tex` file, so reopen the file in the Neovim you want |
 
 ## Related sections
 

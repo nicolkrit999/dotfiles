@@ -678,7 +678,9 @@ local plugin_specs = {
     enabled = function()
       return utils.executable("latex")
     end,
-    ft = { "tex" },
+    -- not lazy on purpose: the PDF viewer's Ctrl+click starts a separate headless nvim (no tex file) that
+    -- needs the :VimtexInverseSearch command, which only exists once vimtex is loaded
+    lazy = false,
     init = function()
       vim.g.vimtex_view_method = (utils.executable("zathura") and "zathura") or "general"
       vim.cmd([[
