@@ -117,6 +117,13 @@ keymap.set("n", "<leader>w", "<cmd>update<cr>", { silent = true, desc = "save bu
 keymap.set("n", "<leader>-", "<cmd>split<cr>", { silent = true, desc = "split window horizontally" })
 keymap.set("n", "<leader>|", "<cmd>vsplit<cr>", { silent = true, desc = "split window vertically" })
 
+-- <Space>rf: run the current file the editor's own way (Lua: luafile, Vim script: source, Python: AsyncRun,
+-- C++: compile and run, LaTeX: vimtex compile). Those file types define it buffer-locally; elsewhere ONE
+-- warning (an unmapped key would fall through to <Space> + r + f)
+keymap.set("n", "<leader>rf", function()
+  vim.notify("<Space>rf: no editor-run for this file type (use <Space>rr for a terminal run)", vim.log.levels.WARN)
+end, { silent = true, desc = "run file the editor's own way (needs lua, vim, python, c++ or tex)" })
+
 -- Saves the file if modified and quit
 keymap.set("n", "<leader>q", "<cmd>x<cr>", { silent = true, desc = "save if modified and quit window" })
 

@@ -4,8 +4,10 @@ setlocal formatoptions-=r
 
 " <F9> compile & run: only when a C++ compiler is on PATH (e.g. g++ from the c-cpp devShell)
 if executable('clang++') || executable('g++')
-  call v:lua.vim.keymap.set('n', '<F9>', ':call ' . expand('<SID>') . 'compile_run_cpp()<CR>',
-        \ {'buffer': v:true, 'silent': v:true, 'desc': 'C++: compile and run'})
+  for s:lhs in ['<F9>', '<leader>rf']
+    call v:lua.vim.keymap.set('n', s:lhs, ':call ' . expand('<SID>') . 'compile_run_cpp()<CR>',
+          \ {'buffer': v:true, 'silent': v:true, 'desc': 'C++: compile and run'})
+  endfor
 endif
 
 function! s:compile_run_cpp() abort

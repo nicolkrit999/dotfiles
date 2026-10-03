@@ -13,4 +13,4 @@ setlocal foldmethod=expr foldexpr=utils#VimFolds(v:lnum) foldtext=utils#MyFoldTe
 setlocal keywordprg=:help
 
 " set from Lua so the map has a desc
-lua vim.keymap.set("n", "<F9>", ":source %<CR>", { buffer = true, silent = true, desc = "vim: source current file" })
+lua for _, lhs in ipairs({ "<F9>", "<leader>rf" }) do vim.keymap.set("n", lhs, ":source %<CR>", { buffer = true, silent = true, desc = "vim: source current file" }) end
