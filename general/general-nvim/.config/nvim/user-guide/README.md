@@ -747,7 +747,8 @@ More: sections 13 and 44.
 | Keys | What it does |
 | --- | --- |
 | `<Space>gs` | Git status |
-| `<Space>gw` / `<Space>gc` | Add the current file / commit |
+| `<Space>gw` / `<Space>ga` | Add the current file / add all changes |
+| `<Space>gc` | Commit |
 | `<Space>gpl` / `<Space>gpu` | Pull / push |
 | `<Space>gB` | Branch menu: pick a branch to switch to (same as clicking the branch in the statusline) |
 | `]c` / `[c` | Next / previous changed hunk |
