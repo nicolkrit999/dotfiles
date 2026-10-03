@@ -119,9 +119,19 @@ api.nvim_create_autocmd("VimResized", {
     end
     local ratio = (cc.config and cc.config.window and cc.config.window.split_ratio) or 0.3
     local width = math.floor(vim.o.columns * ratio)
+    local pinned = {}
     for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
       if claude_bufs[api.nvim_win_get_buf(win)] and api.nvim_win_get_config(win).relative == "" then
         pcall(api.nvim_win_set_width, win, width)
+        pinned[win] = vim.wo[win].winfixwidth
+        vim.wo[win].winfixwidth = true
+      end
+    end
+    -- equalise the other windows around the pinned Claude panel (they share what is left exactly)
+    vim.cmd("wincmd =")
+    for win, was_fixed in pairs(pinned) do
+      if api.nvim_win_is_valid(win) then
+        vim.wo[win].winfixwidth = was_fixed
       end
     end
   end,

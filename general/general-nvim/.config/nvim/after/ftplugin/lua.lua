@@ -1,7 +1,9 @@
 -- Disable inserting comment leader after hitting o/O/<Enter>
 vim.opt_local.formatoptions:remove { "o", "r" }
 
-vim.keymap.set("n", "<F9>", "<cmd>luafile %<CR>", { buffer = true, silent = true, desc = "run lua file" })
+for _, lhs in ipairs({ "<F9>", "<leader>rf" }) do -- <leader>rf: the same without function keys
+  vim.keymap.set("n", lhs, "<cmd>luafile %<CR>", { buffer = true, silent = true, desc = "run lua file" })
+end
 
 --- New cursor row for an old row after the hunks (vim.text.diff indices) were applied.
 ---@param hunks integer[][] { a_start, a_count, b_start, b_count }

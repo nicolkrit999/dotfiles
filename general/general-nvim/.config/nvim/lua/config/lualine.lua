@@ -413,6 +413,9 @@ local show_branch_menu = function()
   end)
 end
 
+-- same menu as the click on the branch name in the statusline
+vim.keymap.set("n", "<leader>gB", show_branch_menu, { silent = true, desc = "Git: branch menu (switch branch)" })
+
 -- same popup as :LspAttached
 local show_lsp_menu = function()
   vim.cmd("LspAttached")

@@ -693,7 +693,7 @@ local plugin_specs = {
             autocmd!
             autocmd FileType tex call s:write_server_name()
             " buffer-local like the old nmap, via Lua so the map can carry a desc
-            autocmd FileType tex lua vim.keymap.set("n", "<F9>", "<Plug>(vimtex-compile)", { buffer = true, remap = true, desc = "LaTeX: start/stop compiling (vimtex)" })
+            autocmd FileType tex lua for _, lhs in ipairs({ "<F9>", "<leader>rf" }) do vim.keymap.set("n", lhs, "<Plug>(vimtex-compile)", { buffer = true, remap = true, desc = "LaTeX: start/stop compiling (vimtex)" }) end
           augroup END
 
           let g:vimtex_compiler_latexmk = {
@@ -891,6 +891,9 @@ local plugin_specs = {
       -- do not let nvim-gdb create its global <leader>dd/dl/dp/db/dr start maps
       -- (they would overwrite the user's <leader>dd / <leader>db / <leader>dp)
       vim.g.nvimgdb_disable_start_keymaps = true
+      -- nvim-gdb's eval key is <F9> by default and, at the end of a session, it removed our <F9> run key in
+      -- the buffer: use <leader>dv (Normal: word under cursor, Visual: selection) instead
+      vim.g.nvimgdb_config_override = { key_eval = "<space>dv" }
       -- <leader>dp (pdb on the current file) is python buffer-local: after/ftplugin/python.lua
     end,
     config = function()

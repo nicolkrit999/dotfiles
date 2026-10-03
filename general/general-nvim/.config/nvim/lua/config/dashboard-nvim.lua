@@ -258,7 +258,7 @@ vim.list_extend(conf.center, {
   {
     icon = icon(0xf00ba),
     desc = "Open user guide",
-    action = function() vim.cmd("tabnew " .. vim.fn.fnameescape(vim.fn.stdpath("config") .. "/user-guide.md")) end,
+    action = function() vim.cmd("tabnew " .. vim.fn.fnameescape(vim.fn.stdpath("config") .. "/user-guide/README.md")) end,
     key = "u",
     key_format = "[%s]",
   },

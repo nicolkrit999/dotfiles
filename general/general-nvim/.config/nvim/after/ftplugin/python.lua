@@ -5,7 +5,6 @@ local opt = vim.opt_local
 opt.wrap = false
 opt.sidescroll = 5 -- global-only option
 opt.sidescrolloff = 2
-opt.colorcolumn = "100"
 
 opt.tabstop = 4
 opt.softtabstop = 4
@@ -20,7 +19,9 @@ local py_env = utils.get_py_env()
 
 if vim.fn.exists(":AsyncRun") == 2 then
   local py_cmd = (py_env == "uv") and "uv run python" or "python"
-  vim.keymap.set("n", "<F9>", string.format(':<C-U>AsyncRun %s -u "%%"<CR>', py_cmd), { buffer = true, silent = true, desc = "run python file" })
+  for _, lhs in ipairs({ "<F9>", "<leader>rf" }) do -- <leader>rf: the same without function keys
+    vim.keymap.set("n", lhs, string.format(':<C-U>AsyncRun %s -u "%%"<CR>', py_cmd), { buffer = true, silent = true, desc = "run python file" })
+  end
 end
 
 -- <Space>f black: only when the formatter can run (black e.g. from the python devShell;
@@ -40,6 +41,26 @@ end
 -- python stdlib module). nvim-gdb is disabled on macOS -> one warning instead.
 if vim.fn.exists(":GdbStartPDB") == 2 then
   vim.keymap.set("n", "<leader>dp", [[:<C-U>GdbStartPDB python -m pdb %<CR>]], { buffer = true, desc = "start pdb on current file (nvim-gdb)" })
+  -- debug-session keys without function keys (nvim-gdb's own keys are F4 until, F5 continue, F8 breakpoint,
+  -- F10 next, F11 step, F12 finish; they keep working). <leader>dv (eval) is nvim-gdb's key_eval, see plugin_specs.lua.
+  local function gdb(cmd)
+    return function()
+      local ok = pcall(vim.cmd, cmd)
+      if not ok then
+        vim.notify("pdb: no debug session here (start one with <Space>dp)", vim.log.levels.WARN)
+      end
+    end
+  end
+  for lhs, spec in pairs({
+    ["<leader>dc"] = { "GdbContinue", "pdb: continue" },
+    ["<leader>dn"] = { "GdbNext", "pdb: next line (step over)" },
+    ["<leader>ds"] = { "GdbStep", "pdb: step into" },
+    ["<leader>df"] = { "GdbFinish", "pdb: finish (run until the function returns)" },
+    ["<leader>dB"] = { "GdbBreakpointToggle", "pdb: toggle breakpoint on this line" },
+    ["<leader>du"] = { "GdbUntil", "pdb: run until this line" },
+  }) do
+    vim.keymap.set("n", lhs, gdb(spec[1]), { buffer = true, desc = spec[2] })
+  end
 else
   vim.keymap.set("n", "<leader>dp", function()
     vim.notify("<leader>dp: nvim-gdb is not available on this platform", vim.log.levels.WARN)

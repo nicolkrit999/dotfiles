@@ -113,14 +113,36 @@ keymap.set("n", "<leader>P", "m`O<ESC>p``", { desc = "paste above current line" 
 -- Shortcut for faster save and quit
 keymap.set("n", "<leader>w", "<cmd>update<cr>", { silent = true, desc = "save buffer" })
 
+-- Split the window (the new window shows the same buffer; below / to the right, see splitbelow, splitright)
+keymap.set("n", "<leader>-", "<cmd>split<cr>", { silent = true, desc = "split window horizontally" })
+keymap.set("n", "<leader>|", "<cmd>vsplit<cr>", { silent = true, desc = "split window vertically" })
+
+-- <Space>rf: run the current file the editor's own way (Lua: luafile, Vim script: source, Python: AsyncRun,
+-- C++: compile and run, LaTeX: vimtex compile). Those file types define it buffer-locally; elsewhere ONE
+-- warning (an unmapped key would fall through to <Space> + r + f)
+keymap.set("n", "<leader>rf", function()
+  vim.notify("<Space>rf: no editor-run for this file type (use <Space>rr for a terminal run)", vim.log.levels.WARN)
+end, { silent = true, desc = "run file the editor's own way (needs lua, vim, python, c++ or tex)" })
+
 -- Saves the file if modified and quit
 keymap.set("n", "<leader>q", "<cmd>x<cr>", { silent = true, desc = "save if modified and quit window" })
 
 -- Auto format --
 keymap.set("n", "<space>fm", function() vim.lsp.buf.format({ async = true }) end, { desc = "LSP: format file" })
 
--- Quit all opened buffers
-keymap.set("n", "<leader>Q", "<cmd>qa!<cr>", { silent = true, desc = "quit nvim (discard unsaved changes)" })
+-- Force quit nvim, discarding unsaved changes, but only after an explicit confirmation (default = No)
+keymap.set("n", "<leader>Q", function()
+  -- only real, listed file buffers count (plugin scratch buffers such as fidget's are flagged modified)
+  local modified = #vim.tbl_filter(function(b)
+    return b.listed == 1 and vim.bo[b.bufnr].buftype == ""
+  end, vim.fn.getbufinfo({ bufmodified = 1 }))
+  local msg = modified > 0
+      and ("Discard %d unsaved buffer(s) and quit nvim?"):format(modified)
+      or "Quit nvim?"
+  if vim.fn.confirm(msg, "&Yes\n&No", 2) == 1 then
+    vim.cmd("qa!")
+  end
+end, { silent = true, desc = "force quit nvim (asks confirmation, discards unsaved changes)" })
 
 -- Close location list or quickfix list if they are present, see https://superuser.com/q/355325/736190
 -- (loclists of every window in this tab via nvim_win_call, so the current window stays current)

@@ -7,7 +7,7 @@ description: Use this skill whenever the user asks how to do something in Neovim
 
 Paths are relative to the dotfiles repo root (`/home/krit/dotfiles`):
 
-- Guide: `general/general-nvim/.config/nvim/user-guide.md` (large; never read it whole, grep first)
+- Guide: the folder `general/general-nvim/.config/nvim/user-guide/` (entry `README.md` = contents + day-to-day cheat sheet; chapters `01-basics.md` … `10-various.md`; `languages/{java,python,latex,markdown,typst}.md`). Large; never read it whole, grep the folder first (`grep -rn "<pattern>" user-guide/`)
 - Keymaps: `general/general-nvim/.config/nvim/lua/mappings.lua`
 - Plugin keymaps and settings: `.../nvim/lua/config/*.lua`, `.../nvim/lua/plugin_specs.lua`
 - Options and other mappings: `.../nvim/lua/options.lua`, `.../nvim/plugin/`, `.../nvim/after/`, `.../nvim/lua/custom-autocmd.lua`
@@ -27,7 +27,7 @@ The guide may be stale, and the mappings may have changed since it was written o
 - **Source of truth order.** The mappings are the authority on what a key is bound to, because the keys are hardcoded in the config. The guide is only a description of them and is the one that can be wrong or stale. When they disagree, the mapping wins and the guide is what gets corrected.
 - **Mappings can still mislead in three ways, so check them:** the same key bound twice (the later definition wins; grep for every definition of the key), an override in a plugin config, `after/ftplugin` file or buffer-local mapping, and the running Neovim not having reloaded the file. A mapping also says nothing about what a built-in motion does, so label that part as an assumption until the user confirms.
 - **Read fresh on every question.** Re-read the relevant guide section and the relevant mapping lines each time, even if you read them earlier in the conversation. The user may have edited them in the meantime. Never answer from memory of an earlier read or from a previous answer.
-- **Check recency when it matters.** Run `git log -3 --format='%h %ad %s' --date=short -- <file>` (and `git status --short`) on `user-guide.md`, `lua/mappings.lua` and the plugin config involved, to see whether the mappings changed after the guide text was written. If the mapping changed later than the guide, treat the guide's text as suspect.
+- **Check recency when it matters.** Run `git log -3 --format='%h %ad %s' --date=short -- <file>` (and `git status --short`) on `user-guide/`, `lua/mappings.lua` and the plugin config involved, to see whether the mappings changed after the guide text was written. If the mapping changed later than the guide, treat the guide's text as suspect.
 - **Cross-check the two sources against each other.** If the guide says a key does X, find the mapping that actually does X. A guide entry with no matching mapping, or a mapping the guide describes differently, is a discrepancy.
 - **Report discrepancies instead of smoothing them over.** Tell the user which file says what (with `file:line`), which one you trust and why (the real mapping wins over the guide), and offer to correct the guide. Fixing wrong guide text follows the same rule as step 5 of the workflow: correct it and say what changed.
 - **Matching sources are still not proof.** Both can be right about the keys and wrong about the behaviour (which mode, what is included in a selection, what a plugin does). If you did not see the behaviour confirmed by the user, label it as an assumption.
@@ -100,7 +100,7 @@ If the guide already covers it, do not propose anything.
 - Include the things that surprised the user: remaps, which modes, counts, what is included in a selection.
 - State the status honestly: mark as tested only if the user confirmed the exact keys; otherwise write that it was not tested yet.
 - Never duplicate: if a nearly identical entry exists, edit that one.
-- Touch only `user-guide.md` unless the user asks otherwise. Do not commit unless asked; this repo is public, so never put secrets or private paths in examples.
+- Touch only the files in `user-guide/` unless the user asks otherwise. Do not commit unless asked; this repo is public, so never put secrets or private paths in examples.
 
 ## Quick checklist before sending an answer
 
