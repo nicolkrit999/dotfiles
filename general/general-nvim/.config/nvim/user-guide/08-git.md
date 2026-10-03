@@ -12,7 +12,16 @@ The fugitive keys (and the gitlinker keys below) exist only inside a git reposit
 | `<Space>gs` | n | Git status window |
 | `<Space>gw` | n | Git add current file |
 | `<Space>ga` | n | Git add all changes (whole repository: new, modified and deleted files, `git add -A`) |
+| `<Space>gu` | n | Unstage the current file (`git restore --staged`) |
+| `<Space>gx` | n | Discard the changes in the current file (`git restore`). Asks Yes/No first, the default is No |
+| `<Space>gv` | n | Vertical diff of the current file against the index (`:Gvdiffsplit`) |
+| `<Space>gL` | n | Git log of the current file (`:Git log --oneline -- %`) |
 | `<Space>gc` | n | Git commit |
+| `<Space>gA` | n | Amend the last commit (`:Git commit --amend`) |
+| `<Space>gz` / `<Space>gZ` | n | Stash the changes / pop the stash (`:Git stash`, `:Git stash pop`) |
+| `<Space>gm` / `<Space>gR` | n | Puts `:Git merge ` / `:Git rebase ` on the command line: type the rest and press Enter |
+| `<Space>gn` | n | Open Neogit (`:Neogit`) |
+| `<Space>gD` | n | Open Diffview (`:DiffviewOpen`) |
 | `<Space>gpl` | n | Git pull |
 | `<Space>gpu` | n | Git push (opens terminal split) |
 | `<Space>gb` | x | Git blame selected lines |
@@ -21,18 +30,31 @@ The fugitive keys (and the gitlinker keys below) exist only inside a git reposit
 | `<Space>gf` | n | Puts `:Git fetch ` on the command line (add arguments, then Enter) |
 | `<Space>gbl` | n | Fuzzy-search git branches and check one out (fzf-lua) |
 
+`<Space>gd`, `<Space>gr` and `<Space>gi` are not git keys: they are Glance (peek at definitions, references, implementations, see "Peeking Without Jumping (Glance)" in the code chapter). For a git diff use `<Space>gv`, for restoring use `<Space>gx`.
+
 Clicking the branch name in the statusline also opens a branch picker (`git checkout` of the chosen local or remote branch).
 
 ## gitsigns.nvim (Plugin)
 
 Shows `+` `~` `_` signs in the gutter for added/changed/deleted lines.
 
-| Keymap | Description |
-| --- | --- |
-| `]c` | Jump to next git change (hunk) |
-| `[c` | Jump to previous git change |
-| `<Space>hp` | Preview the hunk in a floating window |
-| `<Space>hb` | Show git blame for current line |
+The gitsigns keys exist only in buffers of git-tracked files. In any other buffer they are not mapped.
+
+A **hunk** is a contiguous block of changed lines. With the hunk keys you can stage (or discard) just one part of a file instead of the whole file.
+
+| Keymap | Mode | Description |
+| --- | --- | --- |
+| `]c` | n | Jump to next git change (hunk) |
+| `[c` | n | Jump to previous git change |
+| `<Space>hp` | n | Preview the hunk in a floating window |
+| `<Space>hb` | n | Show git blame for current line |
+| `<Space>hs` | n, x | Stage the hunk; in visual mode stages the selected lines |
+| `<Space>hr` | n, x | Reset the hunk (discards the change). Asks Yes/No first, the default is No; in visual mode resets the selected lines |
+| `<Space>hu` | n | Unstage the last staged hunk |
+| `<Space>hS` | n | Stage the whole buffer |
+| `<Space>hR` | n | Reset the whole buffer (discards all changes in the file). Asks Yes/No first |
+| `<Space>hd` | n | Diff the file against the index |
+| `<Space>ht` | n | Toggle showing deleted lines |
 
 ## gitlinker.nvim (Plugin)
 
@@ -89,11 +111,12 @@ Merge conflicts: `:DiffviewOpen` is the merge tool (keys in section 20, "Resolvi
 A typical workflow entirely from within Neovim:
 
 1. **Check status**: `<Space>gs` opens the fugitive status window
-2. **Stage**: `<Space>gw` stages the current file, `<Space>ga` stages everything in the repository (or use `s` in the status window)
+2. **Stage**: `<Space>gw` stages the current file, `<Space>ga` stages everything in the repository, `<Space>hs` stages only the hunk under the cursor (or use `s` in the status window); `<Space>gu` unstages the current file
 3. **Review changes**: `<Space>hp` to preview hunks, or `]c`/`[c` to navigate between them
 4. **Commit**: `<Space>gc` opens a commit message buffer. Write message, then `:wq`
 5. **Push**: `<Space>gpu` pushes (opens a terminal split showing progress)
 6. **Pull**: `<Space>gpl` pulls latest changes
+   (`<Space>gz` stashes your changes first, `<Space>gZ` pops the stash)
 7. **Blame**: Select lines in visual mode, then `<Space>gb` to see who wrote them
 8. **Create branch**: `<Space>gbn` prompts for a branch name
 9. **Share code**: `<Space>gl` copies a permalink to the current line

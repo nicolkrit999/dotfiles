@@ -68,6 +68,7 @@ The dotfiles repo is PUBLIC. Never commit API keys, access credentials, private 
 - NEVER use the user's clipboard in tests (one verifier overwrote it once). Disable the provider or use `:set clipboard=` first.
 - Never touch the user's own tmux sessions; use a private tmux server (`tmux -L <name>`) and always `kill-server` at the end.
 - Order for manual checks: first the ones only the user can do; automated devShell checks only after. Before automated devShell checks, give the user the exact list of `direnv allow` commands so devShells install while they do manual ones.
+- Test sandbox: in a scratch dir under `/tmp`/`$AUDIT_OUT`/the session scratchpad you may freely create, modify, stage, commit and locally clone repos (details and pitfalls: verification doc section 1 rule 4 and section 8). Never `git push`, never create or push fake repos, never use anything needing the user's credentials or account.
 - Fake git repos in tests use LOCAL remotes only, with `GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=true` (a fake https remote once caused credential popups on the desktop).
 - Test with the live checkout never run against plugin-affecting nvim directly: lazy.nvim rewrites `lazy-lock.json` inside the config dir on any plugin operation. Use an isolated copy (section 5).
 
