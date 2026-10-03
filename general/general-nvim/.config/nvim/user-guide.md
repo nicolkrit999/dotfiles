@@ -2331,7 +2331,7 @@ The Java keys work only in a Java buffer with the Java language server (jdtls) a
 | Plugin | Keymap / Command | Description |
 | --- | --- | --- |
 | nvim-dap | (lazy-loaded) | Debug Adapter Protocol client. Java debugging auto-configured via nvim-java. |
-| nvim-gdb | `<Space>dp` | Python buffers only: start pdb on the current file (Linux/Windows only; elsewhere one warning). `:GdbStart` (gdb) works inside the c-cpp / rust devShells |
+| nvim-gdb | `<Space>dp` | Python buffers only: start pdb on the current file (Linux/Windows only; elsewhere one warning); during the session `<Space>dc` `dn` `ds` `df` `dB` `du` `dv` step and inspect (table in section 2). `:GdbStart` (gdb) works inside the c-cpp / rust devShells |
 
 ---
 
@@ -2357,7 +2357,7 @@ Commands: `:AerialToggle`, `:AerialOpen`, `:AerialNavToggle`.
 | `<Ctrl-x><Ctrl-z>` | i | Complete a Unicode character by name or `U+code` |
 | `<Ctrl-x><Ctrl-g>` | i | Complete a digraph |
 | `<Space>cu` | n | Swap `<Ctrl-x><Ctrl-z>` between completing the character and completing its name |
-| `<F4>` + motion (no F4: see below) | n, x | Turn 2-character digraph pairs in the text into their characters |
+| `<F4>` + motion (needs a function key; alternatives below) | n, x | Turn 2-character digraph pairs in the text into their characters |
 
 Commands: `:UnicodeSearch {name or U+hex}`, `:UnicodeName`, `:UnicodeTable`. The plugin loads on the first `ga`, `<Space>cu` or `:UnicodeSearch`; the insert keys, `<F4>` and `:UnicodeName` / `:UnicodeTable` exist only after that. Without function keys use `<Ctrl-k>` + two letters in Insert mode (built-in Vim digraph input, outside a snippet; `<Ctrl-k>` `a` `:` gives `ä`) or `<Ctrl-x><Ctrl-g>`. Example: `<F4>$` on `a:e:o:u:` gives the umlauts (per the plugin doc).
 
@@ -3070,7 +3070,7 @@ Plugin: **nvim-dap**. DAP is a standardized protocol (created by Microsoft) for 
 
 **Java**: Debugging is auto-configured via nvim-java (only inside the Java devShell, where `java` is on PATH). Open a Java file, set breakpoints, and use `<Space>jtC` (debug the current test class) or `<Space>jtM` (debug the current test method).
 
-**Python**: In Python buffers `<Space>dp` starts `python -m pdb` on the current file through nvim-gdb. Only available on Linux/Windows.
+**Python**: In Python buffers `<Space>dp` starts `python -m pdb` on the current file through nvim-gdb. Only available on Linux/Windows. During the session use `<Space>dc` (continue), `dn` (next), `ds` (step), `df` (finish), `dB` (breakpoint), `du` (until) and `dv` (evaluate); the full table is in section 2 ("Python debugger keys").
 
 ## GDB Integration
 
@@ -5604,7 +5604,7 @@ These do not clash with the vim-sandwich keys of the config (`sa`, `sd`, `sr`).
 
 texlab attaches to `tex` files when `texlab` is on PATH. It reads the whole project, so it also knows labels and citations of other files.
 
-- **Completion**: commands, environments, `\ref{` labels, `\cite{` keys. The menu opens while you type; `<Ctrl-n>` opens it manually, `<Tab>` / `<Ctrl-n>` move down, `<CR>` confirms only an item you picked, `<Ctrl-e>` or `<Esc>` closes it (see section Completion).
+- **Completion**: commands, environments, `\ref{` labels, `\cite{` keys. The menu opens while you type; `<Ctrl-n>` opens it manually, `<Tab>` / `<Ctrl-n>` move down, `<CR>` confirms only an item you picked, `<Ctrl-e>` or `<Esc>` closes it (see section 14).
 - **Diagnostics** (including errors from the build log), hover (`K`), symbols, rename, code actions (`<Space>ca`): the global LSP keys, see the LSP section.
 - `:LspTexlabBuild`: one build (tested).
 
@@ -5638,7 +5638,7 @@ with `refs.bib`:
 @book{knuth, author={Knuth}, title={TAOCP}, year={1968}, publisher={AW}}
 ```
 
-Typing `\cite{kn` and `<Ctrl-n>` shows `knuth [book] Knuth (1968), "TAOCP"` in the menu (tested). `latexmk` runs BibTeX itself during compile; the first compile after adding a `\cite` may show `[?]` and the next automatic run fixes it (tested: `main.bbl` was created). With biblatex use `\usepackage{biblatex}` and `\addbibresource{refs.bib}`; `latexmk` then runs biber (not tested here).
+Typing `\cite{kn` and `<Ctrl-n>` shows `knuth [book] Knuth (1968), "TAOCP"` in the menu (tested). `latexmk` runs BibTeX itself during compile; the first compile after adding a `\cite` may show `[?]` until the next automatic run (tested: `main.bbl` was created by the first run). With biblatex use `\usepackage{biblatex}` and `\addbibresource{refs.bib}`; `latexmk` then runs biber (not tested here).
 
 ## Grammar and spelling (ltex_plus)
 
@@ -5658,7 +5658,7 @@ settings = { ltex = { language = "en-US", ... } },
   | `Use 'sentence'` | Replaces the word. Works (tested) |
   | `Use 'sen tense'` | Other suggestion |
   | `Add 'sentense' to dictionary` | **Had no effect in my test**: the LTeX diagnostic stayed (the config has no handler for ltex's client commands). Do not rely on it |
-  | `Hide false positive`, `Disable rule` | Same kind of ltex command; not working the same way, expect no effect |
+  | `Hide false positive`, `Disable rule` | No effect, same as `Add to dictionary` (tested, see section 81) |
   | `sentence`, `Ignore ... in the project` (typos_lsp) | typos fix; "Ignore" is a typos command |
 
 - **What works for false positives**: ltex magic comments in the file (tested). `% LTeX: enabled=false` on a line of its own switches ltex off for the file (the LTeX underlines disappeared, typos stayed). `% LTeX: language=de-DE` makes the file checked as German (tested: German messages). Remove the line to undo.
@@ -6194,7 +6194,7 @@ What it provides, as tested in a real session:
 | Completion | 38 items for `#set te...` (`array literal`, `cite`, `context expression`, ...) in the completion menu (section 14) |
 | Hover | `K` on a function shows its signature, e.g. `let greet(name: str) = str` |
 | Definition | `gd` on a call or on a `@label` |
-| Symbols | The outline (`<Space>t`) and the winbar path (`main.typ > Introduction > greet`) list headings and `#let` definitions |
+| Symbols | The outline (`<Space>t`) lists headings and `#let` definitions |
 | Formatter | `<Space>fm` (typstyle) |
 
 Check which servers are attached: `:LspAttached` (popup) or the statusline (right side, first name is the main server `tinymist`, `(+2)` the others). `:LspInfo` shows details; `:LspLog` opens the log (section 13).
