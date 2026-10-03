@@ -314,7 +314,7 @@ More: sections 7 and 32.
 | Language | What the guide covers | Section |
 | --- | --- | --- |
 | Java | nvim-java, jdtls, running, JUnit tests, debugging, refactoring, profiles | 78 |
-| Python | pyright, ruff, black, uv, `<F9>` and `<Space>rr`, pdb debugging | 79 |
+| Python | pyright, ruff, black, uv, `<Space>rf` / `<F9>` and `<Space>rr`, pdb debugging | 79 |
 | LaTeX | vimtex, texlab, ltex, compiling, the PDF viewer | 80 |
 | Markdown | marksman, rendering, preview, footnotes, `:ToPDF` | 81 |
 | Typst | tinymist, `<Space>tw` watch, the PDF viewer | 82 |
@@ -370,11 +370,33 @@ More: sections 26 and 51.
 | Keys | What it does |
 | --- | --- |
 | `<Space>rr` | Run the current file in a terminal on the left |
-| `<F9>` | Run or compile the file (Python, C++, Lua, Vim script, LaTeX) |
+| `<Space>rf` / `<F9>` | Run or compile the file the editor's own way (Lua, Vim script, Python, C++, LaTeX; one warning in other file types) |
 | `:term` | Open a terminal in this window |
 | `<Esc>` / `i` | Leave terminal mode / go back into it (`<Esc>` works differently in the Claude panel, see sections 8 and 9) |
 
-More: sections 8 and 19.
+More: sections 8 and 19. `<Space>rf` in any other file type shows one warning (`no editor-run for this file type (use <Space>rr for a terminal run)`).
+
+### Python debugger keys
+
+Start with `<Space>dp` in a Python buffer (pdb through nvim-gdb); the keys work only during that session (otherwise one warning `pdb: no debug session here (start one with <Space>dp)`). nvim-gdb's own F-keys still work too.
+
+| Keys | What it does |
+| --- | --- |
+| `<Space>dp` | Start the pdb debugger on this file |
+| `<Space>dB` / `<F8>` | Toggle a breakpoint on this line |
+| `<Space>dc` / `<F5>` | Continue to the next breakpoint |
+| `<Space>dn` / `<F10>` | Next line (step over) |
+| `<Space>ds` / `<F11>` | Step into the call |
+| `<Space>df` / `<F12>` | Finish (run until the function returns) |
+| `<Space>du` / `<F4>` | Run until this line |
+| `<Space>dv` | Evaluate the word under the cursor (Visual: the selection) |
+| `:GdbDebugStop` | Quit the debugger |
+
+More: section 79.
+
+### Keyboards without function keys, Insert or Page keys
+
+Nearly every key in this guide has a version without function keys. `<F9>` is `<Space>rf` (run the file the editor's own way); the Python debugger has the `<Space>d` keys above. `<S-Insert>` (paste in the GUI, ginit.vim) is replaced by `<Ctrl-r>` then `+` in Insert mode or on the command line (built-in Vim, works everywhere); `<Ctrl-d>` / `<Ctrl-u>` scroll instead of the Page keys. Unicode `<F4>` is replaced by `<Ctrl-k>` + two letters (section 38). The only keys left are three vimtex defaults in section 80 (`<F6>`, `<F7>`, `<F8>`).
 
 ### Folding
 
@@ -1876,11 +1898,11 @@ After running, the terminal output appears in a split. See [Terminal Integration
 
 | Keymap | Filetype | Description |
 | --- | --- | --- |
-| `<F9>` | Python | Run with `python -u` via AsyncRun (`uv run python -u` inside a uv project) |
-| `<F9>` | C++ | Compile (clang++, else g++, C++20) and run in a split below; only mapped when a compiler is on PATH |
-| `<F9>` | LaTeX | Compile with vimtex |
-| `<F9>` | Lua | Run the file inside Neovim (`:luafile %`) |
-| `<F9>` | Vim script | Source the file (`:source %`) |
+| `<Space>rf` / `<F9>` | Python | Run with `python -u` via AsyncRun (`uv run python -u` inside a uv project) |
+| `<Space>rf` / `<F9>` | C++ | Compile (clang++, else g++, C++20) and run in a split below; only mapped when a compiler is on PATH |
+| `<Space>rf` / `<F9>` | LaTeX | Compile with vimtex |
+| `<Space>rf` / `<F9>` | Lua | Run the file inside Neovim (`:luafile %`) |
+| `<Space>rf` / `<F9>` | Vim script | Source the file (`:source %`) |
 
 ---
 
@@ -2091,8 +2113,8 @@ Only available if `latex` is installed (vimtex also needs `latexmk` to compile).
 
 | Keymap | Description |
 | --- | --- |
-| `<F9>` | Start / stop continuous compilation |
-| `\ll` | Start / stop continuous compilation (same as `<F9>`) |
+| `<Space>rf` / `<F9>` | Start / stop continuous compilation |
+| `\ll` | Start / stop continuous compilation (same as `<Space>rf` / `<F9>`) |
 | `\lv` | View PDF |
 
 The texlab language server adds diagnostics, hover, symbols and rename when `texlab` is on PATH (LaTeX devShell). Auto-save never saves LaTeX files.
@@ -2335,9 +2357,9 @@ Commands: `:AerialToggle`, `:AerialOpen`, `:AerialNavToggle`.
 | `<Ctrl-x><Ctrl-z>` | i | Complete a Unicode character by name or `U+code` |
 | `<Ctrl-x><Ctrl-g>` | i | Complete a digraph |
 | `<Space>cu` | n | Swap `<Ctrl-x><Ctrl-z>` between completing the character and completing its name |
-| `<F4>` + motion | n, x | Turn 2-character digraph pairs in the text into their characters |
+| `<F4>` + motion (no F4: see below) | n, x | Turn 2-character digraph pairs in the text into their characters |
 
-Commands: `:UnicodeSearch {name or U+hex}`, `:UnicodeName`, `:UnicodeTable`. The plugin loads on the first `ga`, `<Space>cu` or `:UnicodeSearch`; the insert keys, `<F4>` and `:UnicodeName` / `:UnicodeTable` exist only after that. Example: `<F4>$` on `a:e:o:u:` gives the umlauts (per the plugin doc).
+Commands: `:UnicodeSearch {name or U+hex}`, `:UnicodeName`, `:UnicodeTable`. The plugin loads on the first `ga`, `<Space>cu` or `:UnicodeSearch`; the insert keys, `<F4>` and `:UnicodeName` / `:UnicodeTable` exist only after that. Without function keys use `<Ctrl-k>` + two letters in Insert mode (built-in Vim digraph input, outside a snippet; `<Ctrl-k>` `a` `:` gives `ä`) or `<Ctrl-x><Ctrl-g>`. Example: `<F4>$` on `a:e:o:u:` gives the umlauts (per the plugin doc).
 
 URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 
@@ -2417,13 +2439,13 @@ In an automated test the dadbod result window opened after `<Space>S` but stayed
 
 | Filetype | Settings |
 | --- | --- |
-| Python | 4-space indent, `<F9>` to run, `<Space>f` to format with Black (needs `black`, python devShell; one warning otherwise; in a uv project both use `uv run`) |
-| Lua | `<F9>` to execute (`:luafile %`), `<Space>f` and `<Space>fm` format with Stylua |
-| C++ | `<F9>` to compile and run (only when a C++ compiler is on PATH, e.g. the c-cpp devShell) |
+| Python | 4-space indent, `<Space>rf` (or `<F9>`) to run, `<Space>f` to format with Black (needs `black`, python devShell; one warning otherwise; in a uv project both use `uv run`) |
+| Lua | `<Space>rf` (or `<F9>`) to execute (`:luafile %`), `<Space>f` and `<Space>fm` format with Stylua |
+| C++ | `<Space>rf` (or `<F9>`) to compile and run (only when a C++ compiler is on PATH, e.g. the c-cpp devShell) |
 | Markdown | Word wrap enabled, syntax highlighting continues up to column 3000 on long lines; `<Space>fm` formats with Prettier (one warning if `prettier` is missing); `<Space><Space>` does not strip trailing spaces |
 | JSON | `<Space>f` runs `:JSONFormat` on the buffer (in Visual mode on the selection) |
 | Typst | `<Space>tw` TypstWatch, `textwidth=100`, wrap |
-| Vim script | `<F9>` sources the file |
+| Vim script | `<Space>rf` (or `<F9>`) sources the file |
 | Line-length marker | The coloured column marker (`colorcolumn`) sits at 100 by default and, per language, exactly at that language's convention: 80 for C, C++, shell, YAML, Vim script, Haskell, R, JavaScript and TypeScript (also jsx/tsx); 88 for Python (black); 100 for Java, Rust, Swift, Nix, Typst; 120 for Lua, PHP, TeX; plain `.txt` files show none. A line touching the marker is over that language's limit. Nothing wraps or reflows. |
 
 ---
@@ -3030,9 +3052,9 @@ The `<Space>rr` keymap detects the current filetype and runs the appropriate com
 
 ## Filetype-Specific Runners
 
-Some filetypes have an additional `<F9>` runner:
+Some filetypes have an additional `<Space>rf` runner (also `<F9>`):
 
-| Filetype | What `<F9>` does |
+| Filetype | What `<Space>rf` / `<F9>` does |
 | --- | --- |
 | Python | Runs with `python -u <file>` via AsyncRun (unbuffered output; `uv run python -u` in a uv project) |
 | C++ | Compiles with `clang++` (else `g++`) `-Wall -Wextra -std=c++20 -O2` and runs it in a horizontal split; only mapped when a compiler is on PATH |
@@ -4858,7 +4880,7 @@ Pressing `<Space>jem` while the selection is still active does NOT work (visual 
 
 ## 9. Snippets
 
-Source: `my_snippets/java.snippets`. Type the trigger in insert mode in a Java buffer and expand it (section 15); `<Tab>` jumps between the placeholders.
+Source: `my_snippets/java.snippets`. Type the trigger in insert mode in a Java buffer and expand it with `<Ctrl-j>` (section 15); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder.
 
 | Trigger | Result |
 | --- | --- |
@@ -4893,7 +4915,7 @@ Source: `my_snippets/java.snippets`. Type the trigger in insert mode in a Java b
 | `<Esc>` first | In a terminal window press `<Esc>` to get to normal mode, then use a window key. `i` types in the terminal again |
 | `<Space>q` | Save if modified and close the current window (use it in a runner, test or debug terminal) |
 | `<Ctrl-w>o` | Keep only the current window |
-| `<Esc>` in a float | Closes the report float, the Profiles window, `New Name` box and hover floats (section 2 lists `<Esc>` closing floats) |
+| `<Esc>` in a float | Closes the report float, the Profiles window, `New Name` box and hover floats (section 7 lists `<Esc>` closing floats) |
 
 See section 7 (windows) and the cheat sheet in section 2 for the same rows.
 
@@ -4942,10 +4964,10 @@ This section is one walk-through for everything Python in your config: what star
 | **typos_lsp** | Spell checker for identifiers and comments, attaches to every file type (also Python) | `typos-lsp` on PATH (installed globally by `neovim.nix`) |
 | **tree-sitter** | Syntax highlighting (the `python` parser) | Nothing on Nix systems (parsers come from the nix store) |
 | **Snippets** | `print`, `impa`, `main`, `sol` (see Snippets below) | Nothing |
-| **uv awareness** | In a project with `uv.lock` and no active virtual environment, `<F9>` and `<Space>f` go through `uv run` | `uv` on PATH (it is: `/run/current-system/sw/bin/uv`, tested) |
+| **uv awareness** | In a project with `uv.lock` and no active virtual environment, `<Space>rf` / `<F9>` and `<Space>f` go through `uv run` | `uv` on PATH (it is: `/run/current-system/sw/bin/uv`, tested) |
 | **Statusline label** | Shows the active environment as `name (venv)` or `name (conda)` in Python buffers | An activated environment |
 | **Format check** | After saving, `black --check` runs in the background and warns `<file>: file is not formatted (black)` | `black` on PATH, otherwise silent |
-| **Run** | `<F9>` (output in the quickfix window) and `<Space>rr` (output in a terminal split) | `python` / `python3` on PATH |
+| **Run** | `<Space>rf` / `<F9>` (output in the quickfix window) and `<Space>rr` (output in a terminal split) | `python` / `python3` on PATH |
 | **Debug** | `<Space>dp` starts `python -m pdb` inside nvim-gdb | Linux or Windows |
 | **vim-illuminate** | Other uses of the word under the cursor are highlighted (Python is in its file type list) | Nothing |
 | **aerial** | Symbol outline of classes, functions and methods (`<Space>t`) | Nothing |
@@ -4955,10 +4977,10 @@ This section is one walk-through for everything Python in your config: what star
 
 1. Start nvim **inside the Python devShell** (a project folder with `.envrc` containing `use_dev_env python`, see "Devshell and Tools"). Outside it, only pyright and typos_lsp exist.
 2. Open a file: `nvim hello.py`. Wait a second or two. `:LspAttached` lists the running servers; tested in the python devShell: `pyright`, `ruff`, `typos_lsp`. The statusline shows `pyright (+2)` (the first server and two more).
-3. Type a small program, save with `:w`, then run it with `<F9>`. A 6-line quickfix window opens at the bottom and shows the output.
+3. Type a small program, save with `:w`, then run it with `<Space>rf` (or `<F9>`). A 6-line quickfix window opens at the bottom and shows the output.
 4. Run it again as a full terminal with `<Space>rr`. A terminal split opens on the LEFT of the code.
 5. Format with `<Space>f` (black). The file on disk is rewritten and the buffer reloads (`File changed on disk. Buffer reloaded!`).
-6. Debug with `<Space>dp`. The code gets a `▶` marker and a pdb pane opens below it. Step with `<F10>`, quit with `:GdbDebugStop`. (Afterwards `<F9>` is gone in that buffer until `:e!`.)
+6. Debug with `<Space>dp`. The code gets a `▶` marker and a pdb pane opens below it. Step with `<Space>dn` (or `<F10>`), quit with `:GdbDebugStop`. (Afterwards `<F9>` is gone in that buffer until `:e!`; `<Space>rf` is not affected.)
 
 ## Why Each Tool Exists
 
@@ -4967,11 +4989,11 @@ This section is one walk-through for everything Python in your config: what star
 | pyright | Python does not check types by itself. Pyright finds wrong argument types, missing imports and typos in attribute names before you run the file | A language server (`pyright-langserver --stdio`). Neovim starts it when you open a `.py` file and it answers questions: errors, hover, definition, rename. Installed globally, so it also works outside a devShell |
 | ruff | Fast linter (unused imports, undefined names, style problems) with automatic fixes and import sorting | `ruff server` is a second language server in the same buffer. Its diagnostics appear next to pyright's, and `<Space>ca` lists its fixes |
 | black | One fixed code style, so you never decide about spaces or quotes | A command-line formatter. `<Space>f` runs it on the file, and a background check runs after each save |
-| uv | Fast Python project and package manager. Projects managed by uv have a `uv.lock` file | The config checks for `uv.lock` and then runs `<F9>` and `<Space>f` through `uv run`, so they use the project's own environment |
+| uv | Fast Python project and package manager. Projects managed by uv have a `uv.lock` file | The config checks for `uv.lock` and then runs `<Space>rf` / `<F9>` and `<Space>f` through `uv run`, so they use the project's own environment |
 | venv / conda label | Tells you which environment nvim (and so pyright) was started with | Reads `$VIRTUAL_ENV` / `$CONDA_DEFAULT_ENV` |
 | direnv + devShell | Gives each project its own tools without installing them globally | `.envrc` with `use_dev_env python` loads the nix devShell; start nvim from that folder |
 | nvim-gdb | Step through a script with pdb (Python's built-in debugger) with the current line marked in your code | Starts `python -m pdb file.py` in a terminal pane and talks to it |
-| AsyncRun | Run a script without leaving the editor and read the output in the quickfix window | `<F9>` runs a shell command as a background job and streams its output into quickfix |
+| AsyncRun | Run a script without leaving the editor and read the output in the quickfix window | `<Space>rf` / `<F9>` runs a shell command as a background job and streams its output into quickfix |
 | typos_lsp | Catches misspelt words inside names and comments | A language server for every file type |
 | tree-sitter, aerial, illuminate, treesj, ufo | General tools that also work for Python (highlighting, outline, word highlight, split/join, folding) | See the sections in "Related Sections" |
 
@@ -4979,7 +5001,7 @@ Python-specific configuration lives in only a few places:
 
 | File | What it holds |
 | --- | --- |
-| `after/ftplugin/python.lua` | indentation, no wrapping, `<F9>`, `<Space>f`, `<Space>dp` |
+| `after/ftplugin/python.lua` | indentation, no wrapping, `<Space>rf` / `<F9>`, `<Space>f`, `<Space>dp` |
 | `after/lsp/pyright.lua`, `after/lsp/ruff.lua` | server settings |
 | `lua/config/lsp.lua` | which servers exist and when they are enabled |
 | `my_snippets/python.snippets` | snippets |
@@ -5013,10 +5035,10 @@ How direnv picks one: the `direnv.nix` helper defines `use_dev_env() { use flake
 | `.envrc` content | Result |
 | --- | --- |
 | `use_dev_env python` | `python` template, default output (latest Python) |
-| `use_dev_env "python#python-lts"` | same template, output named after `#` |
+| `use_dev_env "python#py-lts"` | same template, output named after `#` |
 | `use_dev_env "python#py-stable"` | same template, output `py-stable` |
 
-Your folders in `~/github-repos/personal/developing-projects/python-projects/`: `python-latest` (`use_dev_env python`), `python-lts` (`use_dev_env "python#python-lts"`), `python-stable` (`use_dev_env "python#py-stable"`). After a new or changed `.envrc` run `direnv allow` once. Then start nvim from that folder so nvim inherits the environment.
+Your folders in `~/github-repos/personal/developing-projects/python-projects/`: `python-latest` (`use_dev_env python`), `python-lts` (`use_dev_env "python#py-lts"`), `python-stable` (`use_dev_env "python#py-stable"`). After a new or changed `.envrc` run `direnv allow` once. Then start nvim from that folder so nvim inherits the environment.
 
 **When a tool is missing** the config does not complain:
 
@@ -5024,8 +5046,8 @@ Your folders in `~/github-repos/personal/developing-projects/python-projects/`: 
 | --- | --- |
 | `pyright` or `ruff` | That server is silently not enabled (no warning when opening the file). `:LspStart pyright` or `:LspStart ruff` names the missing program |
 | `black` | `<Space>f` shows ONE warning: `Python: black not found on PATH (open nvim inside the python devShell)`. The after-save format check stays silent |
-| `uv` (in a uv project) | Not a real case here (uv is installed system-wide). If it were missing, `<Space>f` would show the same black warning and `<F9>` would fail inside the quickfix window |
-| `python` / `python3` | `<F9>` shows the shell error in the quickfix window. `<Space>rr` has no PATH check for Python: tested with an empty PATH, the terminal shows `bash: line 1: python3: command not found` and no nvim warning appears |
+| `uv` (in a uv project) | Not a real case here (uv is installed system-wide). If it were missing, `<Space>f` would show the same black warning and `<Space>rf` / `<F9>` would fail inside the quickfix window |
+| `python` / `python3` | `<Space>rf` / `<F9>` shows the shell error in the quickfix window. `<Space>rr` has no PATH check for Python: tested with an empty PATH, the terminal shows `bash: line 1: python3: command not found` and no nvim warning appears |
 | `typos-lsp` | Silent |
 
 
@@ -5035,16 +5057,16 @@ Two ways, for different purposes.
 
 | Key | Command it runs | Where output goes |
 | --- | --- | --- |
-| `<F9>` | `python -u "<file>"`, or `uv run python -u "<file>"` in a uv project (see below) | Quickfix window, 6 lines tall at the bottom (AsyncRun opens it by itself). The last line says `[Finished in N seconds with code C]` |
+| `<Space>rf` / `<F9>` | `python -u "<file>"`, or `uv run python -u "<file>"` in a uv project (see below) | Quickfix window, 6 lines tall at the bottom (AsyncRun opens it by itself). The last line says `[Finished in N seconds with code C]` |
 | `<Space>rr` | `python3 <file>` (shell-escaped) | A new terminal in a vertical split on the LEFT of your code, titled like `term://...:python3 'file.py'`; Claude's panel stays on the right. When the program ends it shows `[Process exited 0]` |
 
 Facts that differ between the two (all tested):
 
-- `<F9>` is **buffer-local**: it exists only in Python buffers. `-u` means unbuffered, so `print` output appears while the program runs.
-- `<Space>rr` is global and detects the file type. For Python it is always plain `python3 <file>`: **it never uses `uv run`, and has no `-u`**. In a uv project without an active environment use `<F9>`.
+- `<Space>rf` and `<F9>` are **buffer-local** and the same command: it exists only in Python buffers. `-u` means unbuffered, so `print` output appears while the program runs.
+- `<Space>rr` is global and detects the file type. For Python it is always plain `python3 <file>`: **it never uses `uv run`, and has no `-u`**. In a uv project without an active environment use `<Space>rf`.
 - Both run the file as saved on disk. Save first (`:w`).
 - `<Space>rr` on an unnamed buffer shows one warning (`save the file first`).
-- Paths with spaces or special characters are safe in `<Space>rr` (the name is shell-escaped). `<F9>` wraps the name in double quotes, so a double quote or `$` inside a file name would break it.
+- Paths with spaces or special characters are safe in `<Space>rr` (the name is shell-escaped). `<Space>rf` / `<F9>` wraps the name in double quotes, so a double quote or `$` inside a file name would break it.
 
 Example to try both. Save as `hello.py`:
 
@@ -5058,14 +5080,14 @@ print(add(1, 2))
 print(sys.version_info[:2], os.environ.get("VIRTUAL_ENV"), sys.executable)
 ```
 
-Press `<F9>`. Expect in the quickfix window: `3`, then the Python version, the venv path (or `None`) and the interpreter path, then `[Finished in 0 seconds with code 0]`. A program that crashes ends with `code 1` and the traceback, as in the tested example `add(1, "two")`:
+Press `<Space>rf` (or `<F9>`). Expect in the quickfix window: `3`, then the Python version, the venv path (or `None`) and the interpreter path, then `[Finished in 0 seconds with code 0]`. A program that crashes ends with `code 1` and the traceback, as in the tested example `add(1, "two")`:
 
 ```
 TypeError: unsupported operand type(s) for +: 'int' and 'str'
 [Finished in 0 seconds with code 1]
 ```
 
-### When `<F9>` uses uv
+### When `<Space>rf` / `<F9>` uses uv
 
 The choice is made when the Python file is opened (`after/ftplugin/python.lua`), from the project root (nearest `.git` or `pyproject.toml`):
 
@@ -5075,7 +5097,7 @@ local py_cmd = (py_env == "uv") and "uv run python" or "python"
 vim.keymap.set("n", "<F9>", string.format(':<C-U>AsyncRun %s -u "%%"<CR>', py_cmd), ...)
 ```
 
-| Situation | `<F9>` runs | `<Space>f` runs |
+| Situation | `<Space>rf` / `<F9>` runs | `<Space>f` runs |
 | --- | --- | --- |
 | No project root (no `.git`, no `pyproject.toml`) | `python -u` | `black` |
 | An environment is active (`$VIRTUAL_ENV` or `$CONDA_DEFAULT_ENV` set) | `python -u` | `black` |
@@ -5100,7 +5122,7 @@ nvim hello.py
 
 | Started with | How to stop |
 | --- | --- |
-| `<F9>` | `:AsyncStop` (tested with a 60-second `time.sleep`: `ps` showed `python -u slow.py` before and nothing after; stronger kill: `:AsyncStop!`) |
+| `<Space>rf` / `<F9>` | `:AsyncStop` (tested with a 60-second `time.sleep`: `ps` showed `python -u slow.py` before and nothing after; stronger kill: `:AsyncStop!`) |
 | `<Space>rr` | In the terminal press `<Ctrl-c>`, or delete the terminal buffer with `:bd!` (tested: `ps` showed `python3 slow.py` before `:bd!` and nothing after) |
 
 Warning, tested earlier: `<Space>q` on a terminal window only **closes the window**; the running program keeps running hidden. Stop it first. See section 55 and section 8 for terminal navigation.
@@ -5217,7 +5239,7 @@ Ruff reads its rules from `pyproject.toml` / `ruff.toml` in the project. Pyright
 
 `<Space>dp` (Python buffers only) runs `:GdbStartPDB python -m pdb %` through the nvim-gdb plugin. Linux and Windows only; on macOS you get one warning. In any other file type `<Space>dp` shows one warning (`only in python buffers`). It always uses plain `python -m pdb`, never `uv run`.
 
-Why pdb and not a "real" DAP debugger: nvim-dap is installed only for Java. For Python you use pdb (in the standard library, nothing to install) and nvim-gdb adds the visual part: it marks the current line in your code and gives you function keys.
+Why pdb and not a "real" DAP debugger: nvim-dap is installed only for Java. For Python you use pdb (in the standard library, nothing to install) and nvim-gdb adds the visual part: it marks the current line in your code and gives you function keys and leader keys.
 
 Example to try. Save as `dbg.py`:
 
@@ -5241,20 +5263,20 @@ Press `<Space>dp` in this file. Tested result: the source window shows the file 
 (Pdb)
 ```
 
-Press `<F10>` twice. The `▶` moves to line 6, then line 7, and the terminal shows `n` typed for you each time (tested). `<F5>` continues; this small program finished and printed `total 5`, then pdb says `The program finished and will be restarted` and starts again at line 1.
+Press `<Space>dn` (or `<F10>`) twice. The `▶` moves to line 6, then line 7, and the terminal shows `n` typed for you each time (tested). `<Space>dc` (or `<F5>`) continues; this small program finished and printed `total 5`, then pdb says `The program finished and will be restarted` and starts again at line 1.
 
-Keys during the session (all tested except `<F4>`; run them from the code window, go there with `<Ctrl-\><Ctrl-n>` then `<Ctrl-w>k` if you are in the pdb pane):
+Keys during the session. The `<Space>d` keys work in Python buffers without function keys; the F-keys are nvim-gdb's own. Outside a debug session the `<Space>d` keys show one warning `pdb: no debug session here (start one with <Space>dp)`. All tested except `<F4>`; run them from the code window (go there with `<Ctrl-\><Ctrl-n>` then `<Ctrl-w>k` if you are in the pdb pane):
 
 | Key | Action | Command |
 | --- | --- | --- |
-| `<F8>` | Toggle breakpoint on the current line (a `●` appears in the sign column) | `:GdbBreakpointToggle` |
-| `<F5>` | Continue (stops at the next breakpoint: `▶` lands on the `●` line) | `:GdbContinue` |
-| `<F10>` | Next (step over) | `:GdbNext` |
-| `<F11>` | Step (into a call): from `total += square(i)` the `▶` jumped to `def square(n):` | `:GdbStep` |
-| `<F12>` | Finish (run until the function returns): the `▶` stopped on `return r` | `:GdbFinish` |
-| `<F4>` | Until (pdb: continue until the next line greater than the current one) | `:GdbUntil` |
+| `<Space>dB` / `<F8>` | Toggle breakpoint on the current line (a `●` appears in the sign column) | `:GdbBreakpointToggle` |
+| `<Space>dc` / `<F5>` | Continue (stops at the next breakpoint: `▶` lands on the `●` line) | `:GdbContinue` |
+| `<Space>dn` / `<F10>` | Next (step over) | `:GdbNext` |
+| `<Space>ds` / `<F11>` | Step (into a call): from `total += square(i)` the `▶` jumped to `def square(n):` | `:GdbStep` |
+| `<Space>df` / `<F12>` | Finish (run until the function returns): the `▶` stopped on `return r` | `:GdbFinish` |
+| `<Space>du` / `<F4>` | Until (pdb: continue until the next line greater than the current one) | `:GdbUntil` |
 | `<Ctrl-p>` / `<Ctrl-n>` | Frame up / down (`<Ctrl-p>` typed `up` in pdb and the `▶` went to the caller line) | `:GdbFrameUp` / `:GdbFrameDown` |
-| `<F9>` | Evaluate the word under the cursor (visual mode: the selection); with the cursor on `square` pdb printed `<function square at 0x...>` | `:GdbEvalWord` / `:GdbEvalRange` |
+| `<Space>dv` | Evaluate the word under the cursor (visual mode: the selection); with the cursor on `square` pdb printed `<function square at 0x...>` | `:GdbEvalWord` / `:GdbEvalRange` |
 
 Other commands: `:GdbBreakpointClearAll`, `:GdbFrame` (jump to the current line), `:GdbInterrupt`, `:GdbLopenBacktrace`, `:GdbLopenBreakpoints`, `:GdbCreateWatch`.
 
@@ -5262,11 +5284,11 @@ You can also type plain pdb commands in the terminal pane (`n`, `s`, `c`, `p var
 
 **Quit:** `:GdbDebugStop`. The debug layout was in the same tab here (tested: one tab, two windows during the session, one after). Closing the debug windows also ends it.
 
-**Known quirk (tested):** after a debug session nvim-gdb removes its mapped keys from the code buffer, and that **also removes your `<F9>` run key** in that buffer. `<F9>` stays gone until you reload the buffer with `:e!`. `<Space>f` and `<Space>dp` are not affected.
+**Known quirk (tested):** after a debug session nvim-gdb removes its mapped keys from the code buffer, and that **also removes your `<F9>` run key** in that buffer. `<F9>` stays gone until you reload the buffer with `:e!`. `<Space>rf`, `<Space>f` and `<Space>dp` are not affected.
 
 Notes:
 
-- During the session `<F9>` means "evaluate", not "run".
+- nvim-gdb's own evaluate key was `<F9>`; it is moved to `<Space>dv` (only while a debug session is active), and `<F9>` is no longer the eval key. `<F4>` `<F5>` `<F8>` `<F10>` `<F11>` `<F12>` still work.
 - nvim-gdb loads the first time you use a `:GdbStart*` command. Its default start keys `<Space>dd/dl/dp/db/dr` are turned off (`vim.g.nvimgdb_disable_start_keymaps = true`) so they do not replace your own `<Space>dd` and `<Space>db`; `<Space>dp` is yours, set in the ftplugin.
 - A quick alternative without any plugin: add `breakpoint()` in the code and run it with `<Space>rr`; the terminal stops there with a `(Pdb)` prompt.
 - Section 56 has the wider debugging picture.
@@ -5289,7 +5311,7 @@ Notes:
 | --- | --- |
 | Use the devShell tools and the project's `.venv` | Enter the project folder (direnv loads the devShell and the `venvShellHook` `.venv`), then start nvim there |
 | Plain venv | `python -m venv .venv`, `source .venv/bin/activate` (fish: `source .venv/bin/activate.fish`), then start nvim in that shell |
-| uv project | Either `source .venv/bin/activate` before starting nvim, or leave it inactive and use `<F9>` / `<Space>f`, which run through `uv run` |
+| uv project | Either `source .venv/bin/activate` before starting nvim, or leave it inactive and use `<Space>rf` / `<F9>` / `<Space>f`, which run through `uv run` |
 | Switch environment | Close nvim, change environment, start nvim again (the shell environment is inherited at start) |
 
 **How pyright finds packages (tested).** In a uv project (`.venv` with packages) opened from the python devShell (whose own `python` lacks them), `import pytokens` gave the error `Import "pytokens" could not be resolved`. After adding a `pyrightconfig.json` with `{"venvPath": ".", "venv": ".venv"}` the error was gone. So the `.venv` folder alone is not enough: pyright uses the `python` on PATH, unless `venvPath` / `venv` say otherwise. Background: Pyright runs as a child of nvim and uses the `python` on PATH. If `VIRTUAL_ENV` was set when nvim started, it resolves imports from that environment. With `autoSearchPaths` it also searches `src/`. To point pyright explicitly, put `venvPath` and `venv` in `pyrightconfig.json` or `[tool.pyright]` in `pyproject.toml`, then `:LspRestart`.
@@ -5302,7 +5324,7 @@ There is **no test runner support** for Python in this config: no neotest, no vi
 | Goal | How |
 | --- | --- |
 | Run all tests | In the terminal split: `:terminal pytest`, or run `pytest` in a shell next to nvim (pytest comes from the project environment; it is not in the python devShell list) |
-| Run a test file | `<F9>` or `<Space>rr` on a file that ends with `unittest.main()`, or `:!pytest %` |
+| Run a test file | `<Space>rf` (or `<F9>`) or `<Space>rr` on a file that ends with `unittest.main()`, or `:!pytest %` |
 | Debug a failing test | Put `breakpoint()` in the test and run `<Space>rr`, or `pytest --pdb` in a terminal |
 | See failures in quickfix | `:AsyncRun pytest -q` (output opens in the 6-line quickfix window, section 26) |
 
@@ -5352,12 +5374,12 @@ The snippet menu may also offer vim-snippets entries (`def`, `class`, `ifmain`, 
 | Statusline shows no environment | No `$VIRTUAL_ENV` or `$CONDA_DEFAULT_ENV`, or it is a uv project that is not activated | Activate the environment before starting nvim; label only appears in Python buffers |
 | `<Space>f` says `black not found on PATH` | Not in the python devShell, or `uv` missing in a uv project | Start nvim in the python devShell; for uv projects make sure `uv` is on PATH (and `uv add --dev black`) |
 | No "not formatted" warning after save, although the file is untidy | `black` is not on PATH (check is silent), or the file type is not detected as `python` | `:!which black`; `:set ft?` |
-| `<F9>` prints `ModuleNotFoundError` | Wrong interpreter: plain `python` was used (environment not active when the file was opened) | Activate the environment, reopen the file with `:e` so the uv/venv choice is re-evaluated |
+| `<Space>rf` / `<F9>` prints `ModuleNotFoundError` | Wrong interpreter: plain `python` was used (environment not active when the file was opened) | Activate the environment, reopen the file with `:e` so the uv/venv choice is re-evaluated |
 | `<F9>` does nothing at all (no quickfix window) after a debug session | nvim-gdb removed the `<F9>` map from this buffer | `:e!` |
-| `<F9>` does nothing visible | Quickfix window closed or scrolled, or `AsyncRun` not loaded | `:copen`; check `:AsyncRun echo hi` works |
+| `<Space>rf` / `<F9>` does nothing visible | Quickfix window closed or scrolled, or `AsyncRun` not loaded | `:copen`; check `:AsyncRun echo hi` works |
 | `<Space>rr` opens nothing | Unnamed buffer (one warning: save the file first) or an unsupported file type | `:w file.py`; check `:set ft?` |
 | `<Space>rr` terminal flashes and closes, or shows `command not found` | `python3` is not on PATH | Start nvim in the devShell |
-| `<Space>rr` output is late | Python buffers stdout when not attached to a tty | Use `<F9>` (it uses `-u`) or `print(..., flush=True)` |
+| `<Space>rr` output is late | Python buffers stdout when not attached to a tty | Use `<Space>rf` (it uses `-u`) or `print(..., flush=True)` |
 | `<Space>dp` shows one warning | Not a Python buffer, or macOS | Open a `.py` file; on macOS pdb is not available through this key |
 | Pyright hover looks plain | Hover is set to plain text on purpose | None needed |
 | Program keeps running after closing its terminal | `<Space>q` only closes the window | Reopen the buffer with `:ls`, `:b <n>`, `<Ctrl-c>`, or `:bd!` |
@@ -5382,7 +5404,7 @@ Writing LaTeX means: a `.tex` source file, a compiler (`latexmk` runs `pdflatex`
 
 | Tool | Why it is in the setup | What you use it for |
 | --- | --- | --- |
-| **vimtex** (plugin) | Knows LaTeX syntax and the compile chain | Compile (`<F9>`), view PDF, jump between sections/environments, text objects, change/delete/toggle environments and commands, table of contents, error list |
+| **vimtex** (plugin) | Knows LaTeX syntax and the compile chain | Compile (`<Space>rf`), view PDF, jump between sections/environments, text objects, change/delete/toggle environments and commands, table of contents, error list |
 | **texlab** (language server) | Understands the whole project (labels, citations, includes) | Completion of `\ref{` / `\cite{` / commands, diagnostics, hover (`K`), symbols, rename, `:LspTexlabBuild` |
 | **ltex_plus** (language server) | Grammar and spelling for prose | Underlines mistakes in the text (not in commands) as diagnostics |
 | **typos_lsp** (language server) | Catches common typos in any file | Same diagnostics channel; it attaches to every file type |
@@ -5403,7 +5425,7 @@ enabled = function() return utils.executable("latex") end,
 ft = { "tex" },
 ```
 
-Outside a LaTeX environment the plugin does not load: no `<F9>`, no `\ll`, no `:Vimtex*` commands. The environment comes from the flake `~/nix/templates/krit/dev-environments/language-specific/latex/flake.nix`. Its packages: `texlive.combined.scheme-full` (gives `latex`, `latexmk`, all packages), `texlab`, `zathura`, `pandoc`, `tectonic`, `latex2html`, `latex2mathml`.
+Outside a LaTeX environment the plugin does not load: no `<Space>rf`, no `<F9>`, no `\ll`, no `:Vimtex*` commands. The environment comes from the flake `~/nix/templates/krit/dev-environments/language-specific/latex/flake.nix`. Its packages: `texlive.combined.scheme-full` (gives `latex`, `latexmk`, all packages), `texlab`, `zathura`, `pandoc`, `tectonic`, `latex2html`, `latex2mathml`.
 
 | How you enter it | Details |
 | --- | --- |
@@ -5428,14 +5450,14 @@ Outside the devShell a `.tex` file still gets syntax colours, `ltex_plus`, `typo
    \end{document}
    ```
 3. Wait until the statusline shows `texlab (+2)`. `:LspAttached` lists the clients.
-4. `<F9>` starts continuous compiling. After the first successful compile **zathura opens by itself** with the PDF (see "The viewer").
+4. `<Space>rf` (or `<F9>`) starts continuous compiling. After the first successful compile **zathura opens by itself** with the PDF (see "The viewer").
 5. Edit, then `:w`. The compiler notices the saved file, recompiles, zathura reloads. (Auto-save never saves `.tex`; save yourself.)
 6. `\lv` shows or re-opens the PDF at the cursor position.
-7. `<F9>` again stops compiling; `\lc` removes the auxiliary files.
+7. `<Space>rf` / `<F9>` again stops compiling; `\lc` removes the auxiliary files.
 
 ## Compiling
 
-`<F9>` (buffer-local, set by an autocommand for `tex` files; description "LaTeX: start/stop compiling (vimtex)") and `\ll` are the same command, `<Plug>(vimtex-compile)` (tested). It starts `latexmk` in the background in **continuous mode** (recompiles whenever a source file changes); pressing it again stops it. `\` is the local leader: the config sets only `mapleader = <Space>`, so vimtex keeps the backslash.
+`<Space>rf` and `<F9>` (buffer-local, set by an autocommand for `tex` files; description "LaTeX: start/stop compiling (vimtex)") and `\ll` are the same command, `<Plug>(vimtex-compile)` (tested). It starts `latexmk` in the background in **continuous mode** (recompiles whenever a source file changes); pressing it again stops it. `\` is the local leader: the config sets only `mapleader = <Space>`, so vimtex keeps the backslash.
 
 **Where the output goes.** Tested: `main.pdf`, `main.aux`, `main.log`, `main.bbl` and the other files are written **next to `main.tex`**, not into a `build/` folder. The config contains
 
@@ -5447,7 +5469,7 @@ but the installed vimtex has no `build_dir` option (its documentation does not m
 
 | Command / key | What it does |
 | --- | --- |
-| `<F9>` or `\ll` (`:VimtexCompile`) | Start or stop continuous compiling (tested) |
+| `<Space>rf`, `<F9>` or `\ll` (`:VimtexCompile`) | Start or stop continuous compiling (tested) |
 | `\lk` (`:VimtexStop`) | Stop. Message "VimTeX: Compiler stopped (name.tex)" (tested) |
 | `\lc` (`:VimtexClean`) | Remove auxiliary files; keeps `main.pdf`, `main.bbl`, `main.synctex.gz`. Message "VimTeX: Compiler clean finished" (tested) |
 | `\lC` | Clean everything including the PDF |
@@ -5459,7 +5481,7 @@ but the installed vimtex has no `build_dir` option (its documentation does not m
 | `\lx` / `\lX` | Reload vimtex / reload its state (use after changing the document structure) |
 | `\ls` | Toggle the main file (`:VimtexToggleMain`) |
 | `\la` | Context menu for the item under the cursor |
-| `:LspTexlabBuild` | texlab's own build, once (tested: produces `main.pdf`). For daily work use `<F9>`: it keeps recompiling. |
+| `:LspTexlabBuild` | texlab's own build, once (tested: produces `main.pdf`). For daily work use `<Space>rf`: it keeps recompiling. |
 
 All `\l...` keys above were checked in the live buffer; each points at the `<Plug>(vimtex-...)` map named in the vimtex documentation (tested).
 
@@ -5486,15 +5508,15 @@ Compile always starts from the **main file** (the one with `\documentclass`). Wh
 Chapter text.
 ```
 
-Tested: opening `chap/c1.tex` with this comment gives `b:vimtex.tex` = the full path of `main.tex`, and `<F9>` in the chapter built `main.pdf`. Without the comment vimtex tries to find the main file itself, but in my test it picked a different `main.tex` from a neighbouring folder, so always add the comment in chapters. `\ls` toggles between the file and the main file.
+Tested: opening `chap/c1.tex` with this comment gives `b:vimtex.tex` = the full path of `main.tex`, and `<Space>rf` in the chapter built `main.pdf`. Without the comment vimtex tries to find the main file itself, but in my test it picked a different `main.tex` from a neighbouring folder, so always add the comment in chapters. `\ls` toggles between the file and the main file.
 
 ## The viewer
 
 `vim.g.vimtex_view_method` is `zathura` when `zathura` is on PATH, otherwise `general` (the system default PDF program). Windows uses SumatraPDF and macOS Skim (config lines for those platforms exist in the same spec).
 
-- **A zathura window opens by itself after the first successful compile.** This is vimtex's default (`g:vimtex_view_automatic = 1`), not a bug. Later compiles only refresh the open window. If you do not want it: `:let g:vimtex_view_automatic = 0` (until you quit); you then open the PDF yourself with `\lv`. For a permanent change the line has to go into the config. (Tested both ways: without the option a zathura window titled with the full path of `main.pdf` opened about 14 seconds after `<F9>` in a fresh Neovim; with `view_automatic=0` nothing opened until `\lv`.)
+- **A zathura window opens by itself after the first successful compile.** This is vimtex's default (`g:vimtex_view_automatic = 1`), not a bug. Later compiles only refresh the open window. If you do not want it: `:let g:vimtex_view_automatic = 0` (until you quit); you then open the PDF yourself with `\lv`. For a permanent change the line has to go into the config. (Tested both ways: without the option a zathura window titled with the full path of `main.pdf` opened about 14 seconds after `<Space>rf` in a fresh Neovim; with `view_automatic=0` nothing opened until `\lv`.)
 - `\lv` (`:VimtexView`) opens the viewer or, if open, jumps to the place of the cursor (forward search). Tested from a chapter file with `%! TEX root`: zathura opened the PDF of the **main** file (`main.pdf`), and the process got `--synctex-forward 1:1:<path>/chap/c1.tex`, i.e. the cursor position of the chapter.
-- **Inverse search** (Ctrl+click in the PDF jumps back to the source): the config writes the address of the running Neovim into `/tmp/vimtexserver.txt` every time a `tex` file is opened (`v:servername`). It is only a helper file; never edit it. With two Neovims open, the last one wins (the file is shared in `/tmp`). Tested prerequisites: the file exists and holds the same address as the running Neovim (`:echo v:servername`); the zathura process was started by vimtex with the inverse-search callback `-x "nvim --headless -c \"VimtexInverseSearch %{line}:%{column} '%{input}'\""`. Only the actual Ctrl+click needs a human (see "Manual test").
+- **Inverse search** (Ctrl+click in the PDF jumps back to the source): the config writes the address of the running Neovim into `/tmp/vimtexserver.txt` every time a `tex` file is opened (`v:servername`). It is only a helper file; never edit it. With two Neovims open, the last one wins (the file is shared in `/tmp`). Tested prerequisites: the file exists and holds the same address as the running Neovim (`:echo v:servername`); the zathura process was started by vimtex with the inverse-search callback `-x "nvim --headless -c \"VimtexInverseSearch %{line}:%{column} '%{input}'\""`. Only the actual Ctrl+click cannot be tested without a mouse.
 
 ## Table of contents
 
@@ -5549,7 +5571,7 @@ x = 1
 | `ie` / `ae` | Environment: inside / with `\begin..\end` | cursor on `x = 1`: `yie` = `x = 1`, `yae` = whole equation (tested) |
 | `ic` / `ac` | Command: name only / whole command | cursor on `textbf`: `yic` = `textbf`, `yac` = `\textbf{bold}` (tested) |
 | `id` / `ad` | Delimiter pair: inside / with delimiters | cursor in `{bold}`: `yid` = `bold`, `yad` = `{bold}` (tested) |
-| `i$` / `a$` | Maths | **works for display maths** (tested again: on `$a+b$`, `yi$` gave `x = 1` of the equation below, `ya$` the whole equation) (`yi$` in the equation gives `x = 1`). On inline `$a+b$` it picked the equation instead (tested), see the note below |
+| `i$` / `a$` | Maths | **unreliable**: on display maths it gives `x = 1` (`yi$` inside the equation), but on inline `$a+b$` it selected the display equation instead (tested; tree-sitter highlighting replaces vim's syntax for maths), see the note below |
 | `iP` / `aP` | Section | `yaP` on the heading line = from `\section{One}` up to before `\section{Two}` (tested) |
 | `im` / `am` | List item | needs an `itemize`/`enumerate` item |
 
@@ -5570,9 +5592,9 @@ x = 1
 | `ds$` / `cs$` / `ts$` | Delete / change / toggle maths delimiters (`$..$`, `\[..\]`, `equation`) | not tested |
 | `tsd` / `tsD` | Toggle `\left..\right` modifiers | not tested |
 | `tsf` | Toggle fraction `a/b` and `\frac{a}{b}` | not tested |
-| `<F6>` | Surround the line (or visual selection) with an environment | map exists |
-| `<F7>` | Create a command from the word (insert and normal mode) | map exists |
-| `<F8>` | Add `\left`/`\right` to delimiters | map exists |
+| `<F6>` | Surround the line (or visual selection) with an environment (vimtex default; no leader alternative is set) | map exists |
+| `<F7>` | Create a command from the word (insert and normal mode; vimtex default, no leader alternative) | map exists |
+| `<F8>` | Add `\left`/`\right` to delimiters (vimtex default, no leader alternative) | map exists |
 | `]]` in insert mode | Close the open environment/delimiter | map exists |
 | `` ` `` + letter in insert mode | Maths shortcuts (`` `a `` = `\alpha`), made by `vimtex#imaps#wrap_math`. `\lm` (`:VimtexImapsList`) opens a "VimTeX imaps" window that lists all of them; close it with `:close` | The maps exist but **did not expand** in the test, even inside `equation`: they only fire when `vimtex#syntax#in_mathzone()` is true, and it returned 0 there (tree-sitter note below). `\lm` itself was tested |
 
@@ -5655,7 +5677,7 @@ UltiSnips, file `my_snippets/tex.snippets`. Both are start-of-line snippets (`b`
 
 | Problem | Cause and fix |
 | --- | --- |
-| `<F9>` and `\ll` do nothing, `:VimtexCompile` unknown | vimtex not loaded: `latex` not on PATH. Start Neovim inside the devShell (`which latex`, `direnv allow`). Check `:set ft?` is `tex` |
+| `<Space>rf`, `<F9>` and `\ll` do nothing, `:VimtexCompile` unknown | vimtex not loaded: `latex` not on PATH. Start Neovim inside the devShell (`which latex`, `direnv allow`). Check `:set ft?` is `tex` |
 | Compile fails, quickfix opened | Read the first entry (`\le`), fix that line, `:w`; the compiler retries. Raw output: `\lo` |
 | No PDF | Look next to `main.tex` (not in `build/`), see "Where the output goes". A fatal error stops the PDF |
 | Viewer did not open | `zathura` not on PATH, or the compile failed, or `g:vimtex_view_automatic` is 0. Try `\lv` |
@@ -5669,7 +5691,7 @@ UltiSnips, file `my_snippets/tex.snippets`. Both are start-of-line snippets (`b`
 | Real word marked wrong by ltex | Magic comment, or fix the spelling; "Add to dictionary" does not work here |
 | German/other language text full of errors | `% LTeX: language=de-DE` on its own line |
 | Edits not in the PDF | Auto-save does not save `.tex`: `:w`. Check the compiler is running (`\lg`) |
-| First compile is slow | `latexmk` builds everything once (bibliography, references); later runs are fast. Stop with `<F9>` when not needed |
+| First compile is slow | `latexmk` builds everything once (bibliography, references); later runs are fast. Stop with `<Space>rf` when not needed |
 | Inverse search from zathura jumps nowhere | `/tmp/vimtexserver.txt` has the address of the last Neovim that opened a `tex` file; reopen the file in the Neovim you want |
 
 ## Related sections
@@ -5683,7 +5705,7 @@ Typst (`<Space>tw`), Markdown, 28 (LaTeX and Typst, older summary), 31 (spell ch
 
 This section covers everything your config does that is specific to `.md` files: what each tool is for, how it works, the exact keys, and what to do when it fails. Global things (diagnostics keys, code actions, the spell keys, `gc` comments) are only mentioned briefly with a pointer. Section 27 is the short key list; this one is the full story.
 
-Most results below were checked in a real Neovim session today (marked "tested"). The few things that could not be tested are in "Claims to verify" and "Manual tests for the user" at the end.
+Most results below were checked in a real Neovim session today (marked "tested"). The few things that could not be tested say so where they appear.
 
 ## The tools and why they exist
 
@@ -5702,7 +5724,7 @@ Most results below were checked in a real Neovim session today (marked "tested")
 | `+` (your own operator) | Make a list from plain lines | `+ip` |
 | `<Space>mb` (your own operator) | Hard line breaks in Markdown | Adds a trailing `\` |
 | `:ToPDF` (your own command) | Share a document as PDF | pandoc plus xelatex, PDF next to the file |
-| smart_comment | Comments in Markdown are HTML comments | `gc` writes `<!-- ... -->`, inside a fenced block it uses the language of the fence |
+| smart_comment | Comments in Markdown are HTML comments | `gc` writes `<!-- ... -->` (the filetype's comment string); `gcs` / `gcr` (smart comment) use the language of the fence inside a fenced block |
 
 Settings for the Markdown filetype (`after/ftplugin/markdown.vim`):
 
@@ -5798,7 +5820,7 @@ All keys work only in Markdown buffers unless stated. `<Space>` is the leader ke
 | `:ToPDF` | cmd | Export a PDF |
 | `:RenderMarkdown toggle` | cmd | Turn the rendering off / on |
 
-Global keys that also work here: `<Space>ca` (code action, for example a ltex_plus fix), `<Space>dd`, `]d`, `[d` (diagnostics), `<Space>rn` is mapped but no Markdown server renames.
+Global keys that also work here: `<Space>ca` (code action, for example a ltex_plus fix), `<Space>dd`, `]d`, `[d` (diagnostics), `<Space>rn` renames through marksman (headings and links; tested: marksman advertises rename).
 
 Accepted effects of the footnote maps:
 
@@ -6050,7 +6072,7 @@ Checks common typos in every normal buffer (not help, terminal, quickfix, or sta
 
 ## Related sections
 
-Section 16 (Code Commenting: `gc` in Markdown writes `<!-- -->`, inside a fenced block the comment style of the fence language), section 27 (short Markdown key list), section 28 (LaTeX and Typst: same latex dev shell and ltex_plus), and the sections on spelling, LSP diagnostics and big-file mode.
+Section 16 (Code Commenting: `gc` in Markdown writes `<!-- -->`; `gcs` / `gcr` use the comment style of the fence language inside a fenced block), section 27 (short Markdown key list), section 28 (LaTeX and Typst: same latex dev shell and ltex_plus), and the sections on spelling, LSP diagnostics and big-file mode.
 
 
 ---
@@ -6126,7 +6148,7 @@ which typst tinymist typstyle zathura
 | `gd` | LSP | Go to definition: from a function call to its `#let`, from `@intro` to the `<intro>` label (tested) |
 | `<Space>rn` | LSP | Rename symbol (`tinymist` supports rename) |
 | `<Space>ca` | LSP | Code action menu at the cursor |
-| `]d` / `[d`, `<Space>dd` | global | Next / previous diagnostic, diagnostics list (section 13) |
+| `]d` / `[d`, `<Space>dd` | global | Next / previous diagnostic; `<Space>dd` shows a float with the diagnostic of the current line (section 13) |
 | `gcc` | global | Comment line with `//` (typst.vim sets `commentstring` to `// %s`) |
 | `<Space>t` | global | Symbol outline (aerial, section 37); in Typst buffers see the note below |
 | `[t` / `]t` | aerial | Previous / next symbol (heading or `#let`) |
@@ -6223,7 +6245,7 @@ To test the viewer by hand without Neovim: `zathura main.pdf` (reloads on change
 | `<Space>cz` | Toggles Vim's own spell checker (section 31); `zg` adds a word to your English list, `2zg`/`3zg`/`4zg` Italian/German/French |
 | `<Space>ca` on a warning | Offers the fix (replace the word) |
 
-All three appear as diagnostics together with the `tinymist` ones (use `]d`, `<Space>dd`). Typst code is not skipped: LanguageTool may complain about markup such as `#link(...)`. Both tools never attach to files that are too big (section 41).
+All three appear as diagnostics together with the `tinymist` ones (use `]d`, `<Space>dd`). Typst code is not skipped: LanguageTool may complain about markup such as `#link(...)`. Both tools never attach to files that are too big (section 42).
 
 ## Filetype settings
 
