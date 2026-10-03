@@ -722,7 +722,7 @@ More: section 72.
 | `\h` / `\H` | Open the dashboard / return to the previous buffer |
 | `r` / `L` on the dashboard | Restore the session of this folder / of the last folder |
 | `<Space>?` | Open the user guide as a PDF in zathura next to Neovim (any buffer and the dashboard; clickable table of contents; `q` closes it) |
-| `<Space>a` | Ask Claude "how do I do X in Neovim": split on the right (own tab on the dashboard), skill loaded; `/exit` closes it |
+| `<Space>a` | Ask Claude "how do I do X in Neovim": split on the right (own tab on the dashboard), skill loaded, always Sonnet; `/exit` closes it |
 | `:Z <word>` / `:z <word>` | Jump to the best zoxide match (the file tree follows) |
 | `:Obsession`, `nvim -S Session.vim` | Keep a `Session.vim` up to date, restore it later |
 | `<Space>sv` | Restart nvim (writes all files first) |
@@ -892,7 +892,7 @@ More: sections 66, 68 and 71.
 | Keys | What it does |
 | --- | --- |
 | `<Space>cc` | Toggle the Claude Code window |
-| `<Space>a` | Ask Claude how to do something in Neovim (vertical split, skill loaded) |
+| `<Space>a` | Ask Claude how to do something in Neovim (vertical split, skill loaded, always Sonnet) |
 | `<Space>?` | Open the user guide PDF |
 | `<Space>ff` / `<Space>fg` | Find a file / search text in the project |
 | `<Space>fb` / `<Space>fr` / `<Space>fh` | Open buffers / recent files / help tags |

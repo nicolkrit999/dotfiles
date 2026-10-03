@@ -39,6 +39,7 @@ function M.ask_claude()
   local buf = vim.api.nvim_get_current_buf()
   vim.fn.jobstart({
     "claude",
+    "--model", "sonnet", -- always Sonnet for these questions, whatever the default model is
     "--dangerously-skip-permissions", -- a quick question must not stop to ask before reading the guide
     "/answering-neovim-usage-questions Reply with one short line and wait for my question about how to do something in Neovim.",
   }, {

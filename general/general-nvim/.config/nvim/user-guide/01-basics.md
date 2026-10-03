@@ -305,7 +305,7 @@ You can also press any partial key sequence and wait:
 | `:help :substitute` | Help on the substitute command |
 | `<Space>fh` | Fuzzy search help tags |
 | `<Space>?` | Open this user guide as a PDF next to Neovim |
-| `<Space>a` | Ask Claude how to do something in Neovim (vertical split with the skill loaded) |
+| `<Space>a` | Ask Claude how to do something in Neovim (vertical split with the skill loaded, always Sonnet) |
 | `K` (on a symbol) | LSP hover documentation |
 
 ## Checking System Health
