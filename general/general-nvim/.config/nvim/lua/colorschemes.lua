@@ -3,17 +3,29 @@ local utils = require("utils")
 
 local M = {}
 
-local use_theme = vim.cmd.colorscheme
+local raw_colorscheme = vim.cmd.colorscheme
+
+--- Load a colorscheme; on failure warn and fall back to "default" instead of erroring at startup.
+local use_theme = function(name)
+  local ok, err = pcall(raw_colorscheme, name)
+  if not ok then
+    vim.notify(string.format("Failed to load colorscheme %s, err: %s", name, err), vim.log.levels.WARN)
+    raw_colorscheme("default")
+  end
+end
 
 -- Colorscheme to its directory name mapping, because colorscheme repo name is not necessarily
 -- the same as the colorscheme name itself.
 M.colorscheme_conf = {
   onedark = function()
-    -- Lua
-    require("onedark").setup {
+    local ok, od = pcall(require, "onedark")
+    if not ok then
+      return use_theme("default")
+    end
+    od.setup {
       style = "darker",
     }
-    require("onedark").load()
+    od.load()
   end,
   edge = function()
     vim.g.edge_style = "default"
@@ -72,10 +84,6 @@ M.colorscheme_conf = {
   github = function()
     use_theme("github_dark_default")
   end,
-  e_ink = function()
-    require("e-ink").setup()
-    use_theme("e-ink")
-  end,
   ashen = function()
     use_theme("ashen")
   end,
@@ -105,9 +113,13 @@ M.nix_colorscheme = function()
   local fallback = "base16-catppuccin-mocha"
   local theme = os.getenv("NVIM_BASE16_THEME")
   local target = (theme and theme ~= "") and ("base16-" .. theme) or fallback
-  local ok = pcall(use_theme, target)
+  local ok = pcall(raw_colorscheme, target)
   if not ok and target ~= fallback then
-    pcall(use_theme, fallback)
+    ok = pcall(raw_colorscheme, fallback)
+  end
+  if not ok then
+    vim.notify("Failed to load base16 colorscheme " .. target, vim.log.levels.WARN)
+    raw_colorscheme("default")
   end
 end
 

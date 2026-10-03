@@ -13,6 +13,10 @@ local transform = require("smart_comment.transform")
 
 local M = {}
 
+-- apply(): above (edited rows x tree-sitter trees) the range is written in one go (~2 us per
+-- pair: 50000 ~ 0.1 s). Tests set it to -1 to exercise that path.
+M.bulk_budget = 50000
+
 -- Comments via tree-sitter: nodes locate the comments, the lexer re-reads each node's text to find
 -- its delimiters (and validates that the node really is a comment of that language).
 local function ts_collect(buf, lines, lo, hi, root)
@@ -23,7 +27,7 @@ local function ts_collect(buf, lines, lo, hi, root)
   if not pcall(parser.parse, parser, { lo - 1, hi }) then
     return nil
   end
-  local res = { pieces = {}, row_spec = {} }
+  local res = { pieces = {}, row_spec = {}, parser = parser }
   for r = lo, hi do
     res.pieces[r] = {}
   end
@@ -122,17 +126,46 @@ local function ts_collect(buf, lines, lo, hi, root)
     visit(tree:root())
   end)
 
+  -- Language per row. Only injected trees whose language has its own spec matter (html
+  -- <script>/<style>, markdown fences, make recipes -> bash...), or that contain such a tree.
+  -- Helper trees (comment, jsdoc, regex...) have no spec and are skipped: a buffer with thousands
+  -- of comments has thousands of `comment` trees, and testing each of them for every row made
+  -- large ranges slow (rows x comments). Without any such tree every row is the host language.
+  local useful = {}
+  local function mark_useful(lt)
+    local any = false
+    for _, child in pairs(lt:children()) do
+      if mark_useful(child) or specs.get(child:lang()) then
+        useful[child] = true
+        any = true
+      end
+    end
+    return any
+  end
+  local per_row = mark_useful(parser)
+  local function lang_at(lt, range)
+    for _, child in pairs(lt:children()) do
+      if useful[child] and child:contains(range) then
+        return lang_at(child, range)
+      end
+    end
+    return lt
+  end
+  local host = specs.get(parser:lang()) or root
+
   for r = lo, hi do
     local line = lines[r]
-    local fnb = (line:find("%S") or 1) - 1
-    local ok_l, lt = pcall(parser.language_for_range, parser, { r - 1, fnb, r - 1, fnb + 1 })
     local sp
-    -- injected helper languages (comment, jsdoc, regex...) have no spec: use the host language
-    while ok_l and lt and not sp do
-      sp = specs.get(lt:lang())
-      lt = lt:parent()
+    if per_row then
+      local fnb = (line:find("%S") or 1) - 1
+      local ok_l, lt = pcall(lang_at, parser, { r - 1, fnb, r - 1, fnb + 1 })
+      -- a tree without a spec of its own: use the nearest enclosing language that has one
+      while ok_l and lt and not sp do
+        sp = specs.get(lt:lang())
+        lt = lt:parent()
+      end
     end
-    res.row_spec[r] = sp or root
+    res.row_spec[r] = sp or host
     table.sort(res.pieces[r], function(a, b)
       return a.s < b.s
     end)
@@ -172,6 +205,10 @@ end
 function M.apply(buf, s, e, action, opts)
   opts = opts or {}
   buf = (buf == nil or buf == 0) and vim.api.nvim_get_current_buf() or buf
+  if not vim.bo[buf].modifiable then
+    vim.notify("smart_comment: buffer is not modifiable", vim.log.levels.WARN)
+    return false
+  end
   local root = specs.for_buf(buf)
   if not root then
     vim.notify("smart_comment: no comment syntax for filetype '" .. vim.bo[buf].filetype .. "'", vim.log.levels.WARN)
@@ -231,41 +268,178 @@ function M.apply(buf, s, e, action, opts)
   if not first then
     return false
   end
-  local repl = {}
-  for r = first, last do
-    vim.list_extend(repl, out.before[r] or {})
-    local t = out.new[r]
-    if t == nil then
-      table.insert(repl, lines[r])
-    elseif t then
-      table.insert(repl, t)
-    end
-    vim.list_extend(repl, out.after[r] or {})
+  -- Write only what changed, bottom-up so row numbers above stay valid: per row one
+  -- nvim_buf_set_text over the differing bytes (marks, extmarks, '< '> stay on their text, like
+  -- builtin gc); whole rows are deleted / inserted only where the result needs it. Everything
+  -- happens inside one call, so it is still ONE undo step.
+  local function cont(b)
+    return b and b >= 0x80 and b < 0xC0
   end
-  vim.api.nvim_buf_set_lines(buf, first - 1, last, false, repl)
-  return true
+  -- Every buffer edit makes the attached tree-sitter parser edit each of its injected trees (one
+  -- per comment in many languages). With many edits AND many such trees that is slow (3000 rows x
+  -- 3000 comments: ~20 s), so above a budget write the range in one go instead, keeping regular
+  -- marks with 'lockmarks' (exactly what builtin gc always does; extmarks there move to column 0).
+  local n_edits = 0
+  for r = first, last do
+    if out.new[r] ~= nil or out.before[r] or out.after[r] then
+      n_edits = n_edits + 1
+    end
+  end
+  local n_trees = 0
+  local hl = vim.treesitter.highlighter.active[buf]
+  local tsp = info.parser or (hl and hl.tree) -- only a parser that exists already (never create one)
+  if tsp then
+    tsp:for_each_tree(function()
+      n_trees = n_trees + 1
+    end)
+  end
+  local bulk = n_edits > 1 and n_edits * n_trees > M.bulk_budget
+  if bulk then
+    local repl = {}
+    for r = first, last do
+      vim.list_extend(repl, out.before[r] or {})
+      local t = out.new[r]
+      if t == nil then
+        table.insert(repl, lines[r])
+      elseif t then
+        table.insert(repl, t)
+      end
+      vim.list_extend(repl, out.after[r] or {})
+    end
+    -- 'lockmarks' only when the row count stays the same: otherwise marks below must move
+    vim._with({ lockmarks = #repl == last - first + 1 }, function()
+      vim.api.nvim_buf_set_lines(buf, first - 1, last, false, repl)
+    end)
+  end
+  local loop_first = bulk and last + 1 or first -- bulk: nothing left for the per-row loop
+  for r = last, loop_first, -1 do
+    if out.after[r] then
+      vim.api.nvim_buf_set_lines(buf, r, r, false, out.after[r])
+    end
+    local old, t = lines[r], out.new[r]
+    if t == false then
+      vim.api.nvim_buf_set_lines(buf, r - 1, r, false, {})
+    elseif t and t ~= old then
+      local max = math.min(#old, #t)
+      local p = 0
+      while p < max and old:byte(p + 1) == t:byte(p + 1) do
+        p = p + 1
+      end
+      while p > 0 and cont(old:byte(p + 1)) do -- keep UTF-8 chars whole
+        p = p - 1
+      end
+      local q = 0
+      while q < max - p and old:byte(#old - q) == t:byte(#t - q) do
+        q = q + 1
+      end
+      while q > 0 and cont(old:byte(#old - q + 1)) do
+        q = q - 1
+      end
+      vim.api.nvim_buf_set_text(buf, r - 1, p, r - 1, #old - q, { t:sub(p + 1, #t - q) })
+    end
+    if out.before[r] then
+      vim.api.nvim_buf_set_lines(buf, r - 1, r - 1, false, out.before[r])
+    end
+  end
+
+  -- old row -> new row (a deleted row maps to the row that took its place, like `dd`)
+  local function map(row)
+    local d = 0
+    for r = first, math.min(row, last) do
+      if r < row then
+        d = d + #(out.before[r] or {}) + #(out.after[r] or {}) - (out.new[r] == false and 1 or 0)
+      else
+        d = d + #(out.before[r] or {})
+      end
+    end
+    return row + d
+  end
+  return true, map
 end
 
---- Run on the current line(s) (normal mode, with count) or the visual selection.
-function M.run(action)
-  local mode = vim.fn.mode()
-  local s, e
-  if mode == "v" or mode == "V" or mode == "\22" then
-    s, e = vim.fn.line("v"), vim.fn.line(".")
-    vim.api.nvim_feedkeys(vim.keycode("<Esc>"), "nx", false)
-  else
-    s = vim.fn.line(".")
-    e = s + vim.v.count1 - 1
-  end
+-- Operator (Q70): gcs / gcr are expr maps returning `g@`, so they take a motion (gcsip, gcr200j,
+-- gcsG), a count (200gcs = 200 rows from the cursor down) or a Visual selection, and `.` repeats
+-- them. Whatever the motion, whole rows are changed. gcss / gcrr (Q71) = the cursor row ({count}:
+-- count rows), without waiting for a motion.
+
+-- Cursor when the key was typed (not set on `.`): the cursor then stays on its text row inside the
+-- range, as before the operator form, instead of jumping to the range start.
+local pending
+
+local function operate(action)
+  local buf = vim.api.nvim_get_current_buf()
+  local s = vim.api.nvim_buf_get_mark(buf, "[")[1]
+  local e = vim.api.nvim_buf_get_mark(buf, "]")[1]
   if s > e then
     s, e = e, s
   end
+  -- closed folds at either end count as a whole, like Vim's own operators (also in Visual mode: Q62)
+  if vim.fn.foldclosed(s) ~= -1 then
+    s = vim.fn.foldclosed(s)
+  end
+  if vim.fn.foldclosedend(e) ~= -1 then
+    e = vim.fn.foldclosedend(e)
+  end
   local cur = vim.api.nvim_win_get_cursor(0)
-  M.apply(0, s, e, action)
-  local n = vim.api.nvim_buf_line_count(0)
-  local row = math.min(math.max(s, math.min(cur[1], e)), n)
+  local p = pending
+  pending = nil
+  if p and p.buf == buf and p.tick == vim.b[buf].changedtick then
+    cur = p.cursor
+  end
+  local row = math.max(s, math.min(cur[1], e))
+  local changed, map = M.apply(buf, s, e, action)
+  if changed and map then
+    row = map(row) -- same text row, also when rows above it were deleted / inserted
+  end
+  row = math.max(1, math.min(row, vim.api.nvim_buf_line_count(buf)))
   pcall(vim.api.nvim_win_set_cursor, 0, { row, 0 })
   vim.cmd("normal! ^")
+end
+
+--- 'operatorfunc' targets (one per action, so `.` repeats the right one)
+function M.opfunc_comment()
+  operate("comment")
+end
+function M.opfunc_uncomment()
+  operate("uncomment")
+end
+
+--- Expr-map body for gcs ("comment") / gcr ("uncomment") in Normal and Visual mode.
+--- `rows` = true (Q71, gcss / gcrr): never wait for a motion, no count = the cursor row only.
+function M.operator(action, rows)
+  pending = {
+    buf = vim.api.nvim_get_current_buf(),
+    tick = vim.b.changedtick,
+    cursor = vim.api.nvim_win_get_cursor(0),
+  }
+  vim.o.operatorfunc = "v:lua.require'smart_comment'.opfunc_" .. action
+  local mode = vim.fn.mode()
+  if mode == "v" or mode == "V" or mode == "\22" then
+    return "g@"
+  end
+  if vim.v.count == 0 and not rows then
+    -- waits for a motion: forget the cursor once Operator-pending mode ends (after the operator ran,
+    -- or when it was cancelled with <Esc> / an invalid key), so a later `.` never uses a stale one
+    vim.api.nvim_create_autocmd("ModeChanged", {
+      group = vim.api.nvim_create_augroup("smart_comment_pending", { clear = true }),
+      pattern = "no*:n",
+      once = true,
+      callback = function()
+        pending = nil
+      end,
+    })
+    return "g@"
+  end
+  -- Count form (Q47, also gcss / gcrr): `{count}g@_` = count rows from the cursor down (no count:
+  -- the cursor row), a closed fold counting as one row like `dd`. `_` with a count > 1 fails on the
+  -- last row (or a closed fold reaching it), so there the count is dropped (<Esc> cancels it
+  -- silently) and only that row / fold is changed.
+  local r = vim.fn.line(".")
+  local fe = vim.fn.foldclosedend(r)
+  if vim.v.count > 1 and (fe ~= -1 and fe or r) >= vim.fn.line("$") then
+    return "<Esc>g@_"
+  end
+  return "g@_"
 end
 
 return M

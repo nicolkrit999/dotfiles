@@ -17,8 +17,10 @@ local new_capability = {
   },
 }
 
+-- cmd lives in lua/config/lsp.lua (its executable check enables the server)
+---@type vim.lsp.Config
 return {
-  cmd = { "pyright-langserver", "--stdio" },
+  ---@type lspconfig.settings.pyright
   settings = {
     pyright = {
       -- disable import sorting and use Ruff for this
@@ -34,13 +36,6 @@ return {
         -- we can this setting below to redefine some diagnostics
         diagnosticSeverityOverrides = {
           deprecateTypingAliases = false,
-        },
-        -- inlay hint settings are provided by pylance?
-        inlayHints = {
-          callArgumentNames = "partial",
-          functionReturnTypes = true,
-          pytestParameters = true,
-          variableTypes = true,
         },
       },
     },

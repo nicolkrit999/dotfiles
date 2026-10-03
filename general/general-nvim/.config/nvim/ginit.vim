@@ -1,7 +1,9 @@
-" Fix key mapping issues for GUI
-inoremap <silent> <S-Insert>  <C-R>+
-cnoremap <S-Insert> <C-R>+
-nnoremap <silent> <C-6> <C-^>
+" Fix key mapping issues for GUI (Lua so each map carries a desc)
+lua << EOF
+vim.keymap.set("i", "<S-Insert>", "<C-R>+", { silent = true, desc = "Paste system clipboard (GUI)" })
+vim.keymap.set("c", "<S-Insert>", "<C-R>+", { desc = "Paste system clipboard (GUI)" })
+vim.keymap.set("n", "<C-6>", "<C-^>", { silent = true, desc = "Alternate buffer (GUI)" })
+EOF
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "                          config for nvim-qt                          "
@@ -64,7 +66,7 @@ endif
 "                             config for neovide                             "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if exists("g:neovide")
-  set guifont=Hack\ NF:h10
+  set guifont=JetBrainsMono\ Nerd\ Font:h10
   let g:neovide_transparency = 1.0
   let g:neovide_cursor_animation_length = 0.1
   let g:neovide_cursor_trail_size=0.3

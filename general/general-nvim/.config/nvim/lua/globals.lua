@@ -7,8 +7,6 @@ vim.g.is_win = (utils.has("win32") or utils.has("win64")) and true or false
 vim.g.is_linux = (utils.has("unix") and (not utils.has("macunix"))) and true or false
 vim.g.is_mac = utils.has("macunix") and true or false
 
-vim.g.logging_level = vim.log.levels.INFO
-
 ------------------------------------------------------------------------
 --                         builtin variables                          --
 ------------------------------------------------------------------------
@@ -24,7 +22,10 @@ vim.g.mapleader = " "
 vim.g.vimsyn_embed = "l"
 
 -- Use English as main language
-vim.cmd([[language en_US.UTF-8]])
+-- (silent if the locale is not installed: fall back to C.UTF-8, then keep the default)
+if not pcall(vim.cmd, "silent language en_US.UTF-8") then
+  pcall(vim.cmd, "silent language C.UTF-8")
+end
 
 -- Disable loading certain plugins
 

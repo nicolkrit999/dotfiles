@@ -4,7 +4,6 @@ local gitlinker = require("gitlinker")
 gitlinker.setup {
   callbacks = {
     ["dev.azure.com"] = function(url_data)
-      vim.print(url_data)
       local url = require("gitlinker.hosts").get_base_https_url(url_data)
 
       if url_data.lstart then
@@ -26,15 +25,20 @@ gitlinker.setup {
       return url
     end,
   },
+  -- gitlinker has no option to skip its default maps (nil = "<leader>gy" in n + v),
+  -- so they are deleted right below: <leader>gl is the only permalink key
   mappings = nil,
 }
+pcall(keymap.del, "n", "<leader>gy")
+pcall(keymap.del, "v", "<leader>gy")
 
-keymap.set({ "n", "v" }, "<leader>gl", function()
-  local mode = string.lower(vim.fn.mode())
+keymap.set({ "n", "x" }, "<leader>gl", function()
+  -- any visual mode (v, V, blockwise) is a range: only normal mode stays 'n'
+  local mode = vim.fn.mode() == "n" and "n" or "v"
   gitlinker.get_buf_range_url(mode)
 end, {
   silent = true,
-  desc = "Git: get permlink",
+  desc = "Git: get permalink",
 })
 
 keymap.set("n", "<leader>gbr", function()

@@ -8,6 +8,14 @@ require("fzf-lua").setup {
   },
   files = {
     previewer = false,
+    git_icons = true,
+    -- .gitignore is respected; create a `.ignore` (read by both fd and rg) or `.fdignore`
+    -- to un-ignore files such as `.env`
+    no_ignore = false, -- documentation only: already the default (fzf-lua uses no_ignore only as a toggle flag)
+  },
+  grep = {
+    -- respect user's ripgrep config file (if env var RIPGREP_CONFIG_PATH is set)
+    RIPGREP_CONFIG_PATH = vim.env.RIPGREP_CONFIG_PATH,
   },
 }
 
@@ -17,3 +25,4 @@ vim.keymap.set("n", "<leader>fh", "<cmd>FzfLua helptags<cr>", { desc = "Fuzzy gr
 vim.keymap.set("n", "<leader>ft", "<cmd>FzfLua btags<cr>", { desc = "Fuzzy search buffer tags" })
 vim.keymap.set("n", "<leader>fb", "<cmd>FzfLua buffers<cr>", { desc = "Fuzzy search opened buffers" })
 vim.keymap.set("n", "<leader>fr", "<cmd>FzfLua oldfiles<cr>", { desc = "Fuzzy search opened files history" })
+vim.keymap.set("n", "<leader>gbl", "<cmd>FzfLua git_branches<cr>", { desc = "Fuzzy search git branches" })
