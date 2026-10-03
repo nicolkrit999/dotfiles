@@ -7,7 +7,7 @@ description: Use this skill whenever the user asks how to do something in Neovim
 
 Paths are relative to the dotfiles repo root (`/home/krit/dotfiles`):
 
-- Guide: the folder `general/general-nvim/.config/nvim/user-guide/` (entry `README.md` = contents + day-to-day cheat sheet; chapters `01-basics.md` … `10-various.md`; `languages/{java,python,latex,markdown,typst}.md`). Large; never read it whole, grep the folder first (`grep -rn "<pattern>" user-guide/`)
+- Guide: the folder `general/general-nvim/.config/nvim/user-guide/` (entry `README.md` = contents + day-to-day cheat sheet; chapters `01-basics.md` … `10-various.md`; `languages/{java,python,latex,markdown,typst}.md`). Large; never read it whole, grep the folder first (`grep -rn "<pattern>" user-guide/`). The markdown is the source of truth; `user-guide/neovim-user-guide.pdf` (what `<Space>?` and the dashboard item open) and the README table of contents are GENERATED from it by `user-guide/build-pdf.py` (see "Rebuild the PDF")
 - Keymaps: `general/general-nvim/.config/nvim/lua/mappings.lua`
 - Plugin keymaps and settings: `.../nvim/lua/config/*.lua`, `.../nvim/lua/plugin_specs.lua`
 - Options and other mappings: `.../nvim/lua/options.lua`, `.../nvim/plugin/`, `.../nvim/after/`, `.../nvim/lua/custom-autocmd.lua`
@@ -102,6 +102,16 @@ If the guide already covers it, do not propose anything.
 - Never duplicate: if a nearly identical entry exists, edit that one.
 - Touch only the files in `user-guide/` unless the user asks otherwise. Do not commit unless asked; this repo is public, so never put secrets or private paths in examples.
 
+## Rebuild the PDF (mandatory whenever a guide file changed)
+
+The user reads the PDF, not the markdown. After the LAST edit of any `user-guide/**/*.md` file in a task (not after every single edit), always:
+
+1. `cd general/general-nvim/.config/nvim/user-guide && ./build-pdf.py` (regenerates the README table of contents and `neovim-user-guide.pdf` + `.stamp`; it falls back to `nix shell nixpkgs#pandoc nixpkgs#typst` when pandoc or typst is missing).
+2. `./build-pdf.py --check` must print `OK`. It verifies: README table of contents current, every `.md` link and `#anchor` resolves, the PDF was built from the current sources, every heading appears in the PDF text. Any `FAIL` line: fix the markdown (broken link, missing chapter comment) and rebuild; never edit the PDF or the stamp by hand.
+3. Report the page count and the `--check` result. Stage the PDF and the stamp together with the markdown (the PDF is committed so every machine opens the right one).
+
+New chapter file: add it to `FILES` in `build-pdf.py`, start it with `<!-- chapter: Title -->`. New heading: nothing else to do, the table of contents picks it up.
+
 ## Quick checklist before sending an answer
 
 - [ ] Searched the guide and re-read it fresh (not from memory)
@@ -112,3 +122,4 @@ If the guide already covers it, do not propose anything.
 - [ ] If it cannot be done as asked, said so first
 - [ ] If the guide lacks it, asked the user whether to add a generalized example
 - [ ] Did not edit the guide with new examples without approval
+- [ ] If a guide file changed: ran `build-pdf.py`, then `build-pdf.py --check` printed OK

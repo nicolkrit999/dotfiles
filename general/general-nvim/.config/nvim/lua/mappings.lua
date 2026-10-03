@@ -440,6 +440,11 @@ vim.api.nvim_create_autocmd("LspDetach", {
 keymap.set("n", "<A-m>", function()
   vim.notify("Markdown preview: only in markdown buffers", vim.log.levels.WARN)
 end, { desc = "Markdown Preview (markdown only)" })
+-- User guide and Claude help, same keys as the dashboard items (lua/config/user-guide-tools.lua)
+keymap.set("n", "<leader>?", function() require("config.user-guide-tools").open_guide() end,
+  { desc = "User guide: open the PDF" })
+keymap.set("n", "<leader>a", function() require("config.user-guide-tools").ask_claude() end,
+  { desc = "Claude: ask how to do something in Neovim (split)" })
 -- ]] / [[ are NOT mapped globally: nvim's runtime defaults apply (markdown headers, python
 -- class/def, help sections, plain-buffer section motions). LSP definition = gd.
 
