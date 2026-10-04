@@ -1,7 +1,7 @@
 ---
 name: dotfiles-architect
 description: "Use this agent for the GENERAL shape of this public, nix-deployed dotfiles repo: deciding what should become a dotfile, where a new config belongs in the categorized directory tree, cross-platform portability, ricing/theming strategy (Catppuccin Mocha), and configuring any program that has no dedicated sibling agent. Also the agent that knows how a new config gets DEPLOYED (via ext-dotfiles.nix mappings — this repo is NOT stow). Hand program-specific work to the specialists: Neovim→neovim-configurator, Emacs→emacs-configurator, bash/zsh/fish→shell-config-author, scripts→script-author, verification→dotfiles-linter."
-model: sonnet
+model: opus
 color: blue
 memory: project
 ---
