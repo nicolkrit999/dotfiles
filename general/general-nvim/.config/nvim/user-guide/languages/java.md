@@ -55,6 +55,18 @@ In plain words:
 - `java.home = $JAVA_HOME` tells jdtls which JDK to compile with.
 - jdtls itself is NOT taken from the devShell (the devShell `jdtls` is only a wrapper script); nvim-java uses its own jdtls 1.54.0.
 
+### spring-boot (Spring Boot tools)
+
+Plugin: **spring-boot.nvim**. It has no spec of its own in the plugin file: nvim-java declares it as a dependency, and nvim-java's setup uses it to start the Spring Boot language server. It has no keys and no commands in this config.
+
+| Item | What it is |
+| --- | --- |
+| What it starts | A second language server (the Spring Boot tools of VS Code, installed by nvim-java as its `spring-boot-tools` package, default version 1.55.1) that attaches next to jdtls. nvim-java passes the server path to the plugin's setup and registers the client commands the server needs |
+| When it starts | Only when `java` is on PATH: the config sets `spring_boot_tools = { enable = has_java }`, so in practice only inside the Java devShell |
+| What it offers | Per the plugin's README (not tried here): finding Spring beans and web endpoints through workspace symbols, completion and navigation in `application.properties` and `application.yml`, snippet completion and code actions |
+| Where you see it | The statusline shows `jdtls (+2)` and the attached clients are `jdtls,spring-boot,typos_lsp` (see "2. Quick Start") |
+| Caveat | It attaches in every Java buffer, even in a project without Spring; that is harmless (see section 5) |
+
 ### The Java devShell (`use_dev_env java`)
 
 A Java project has a `.envrc` with one line:

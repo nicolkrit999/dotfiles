@@ -949,7 +949,7 @@ local plugin_specs = {
     enabled = function()
       return vim.g.is_linux
     end,
-    cmd = { "OSCYank", "OSCYankReg" },
+    cmd = { "OSCYank", "OSCYankVisual", "OSCYankRegister" },
   },
 
   -- showing keybindings

@@ -88,7 +88,7 @@ Nerd Font signs in the gutter: 󰅚 (error), 󰀪 (warning), 󰋽 (info), 󰌶 (
 | Keymap | Description |
 | --- | --- |
 | `<Space>db` | Telescope picker with the diagnostics of the current file |
-| `<Space>dw` | Toggle the Trouble diagnostics list (all open buffers) |
+| `<Space>dw` | Toggle the Trouble diagnostics list (the diagnostics of every buffer Neovim has loaded, grouped by file; see "Diagnostics In Depth") |
 | `<Space>de` | Jump to next error |
 | `<Space>dE` | Jump to previous error |
 | `<Space>dd` | Show diagnostic detail in floating window |
@@ -186,7 +186,7 @@ Diagnostics are the errors, warnings, and hints that the LSP server reports abou
 | `<Space>dE` | Jump to the previous **error** |
 | `<Space>dd` | Manually open the diagnostic float for the current line |
 | `<Space>db` | Open a Telescope picker showing all diagnostics in the current file |
-| `<Space>dw` | Open Trouble showing all diagnostics across the workspace |
+| `<Space>dw` | Toggle Trouble (`:Trouble diagnostics toggle`): the diagnostics of every buffer Neovim has loaded, grouped by file, not only the current one. A file that was never opened is listed only when its language server sends project-wide diagnostics. The key's `desc` says "Workspace Diagnostics" |
 | `<Space>dt` | Toggle diagnostics on/off globally (a message says which; the automatic float stays off while disabled) |
 
 **Sending diagnostics to quickfix**:
@@ -203,6 +203,20 @@ Then use `:cnext`/`:cprev` to jump through them one by one.
 Plugin: **nvim-lightbulb**. A lightbulb icon appears in the sign column whenever the LSP has code actions available for the current line. This is your cue to press `<Space>ca`.
 
 The lightbulb filters out noisy ruff actions (`source.fixAll.ruff`, `source.organizeImports.ruff`) to avoid false positives.
+
+## Editing the Neovim Config in Lua (lazydev.nvim)
+
+Plugin: **lazydev.nvim**. When you edit a Lua file (for example this config), the Lua language server (`lua_ls`) must know the Neovim API. lazydev adds those definitions to the server's workspace, so `vim.*` gets completion, hover (`K`) and signature help instead of "undefined global" warnings. It also adds the modules you `require(...)` in the open file as you go, so only what is used is loaded.
+
+| Item | Detail |
+| --- | --- |
+| Loads | Only in Lua files (lazy `ft = "lua"`); no cost elsewhere |
+| Extra libraries (`lua/plugin_specs.lua`) | The luv types when the file mentions `vim.uv`; the nvim-lspconfig types when it mentions `lspconfig` (type help for `after/lsp/*.lua` files) |
+| Keys | None |
+| Needs | `lua_ls` attached to the buffer (see the server table above) |
+| Not set up | lazydev's optional nvim-cmp source for `require("...")` module names is not configured here, so module-name completion inside `require(...)` only lists modules that are already loaded in the workspace |
+
+How the results reach the menu: the names come from `lua_ls` through the normal LSP source (see section 45, "Completion Sources and Helpers"); it was not verified here that every lazydev-provided name shows up in the menu.
 
 ---
 
@@ -381,7 +395,32 @@ Plugin: **nvim-dap**. DAP is a standardized protocol (created by Microsoft) for 
 
 ## GDB Integration
 
-Plugin: **nvim-gdb**. For C/C++ debugging with GDB. Available on Linux and Windows only.
+Plugin: **nvim-gdb**. A visual front end for GDB, LLDB, pdb and a few other debuggers: it starts the debugger in a terminal pane under your code and marks the current line in the source window. Available on Linux and Windows only (disabled on macOS). It loads the first time one of the start commands below runs.
+
+| Command | Effect |
+| --- | --- |
+| `:GdbStart gdb -q ./a.out` | Start GDB on a program (you give the whole gdb command line) |
+| `:GdbStartLLDB lldb ./a.out` | The same with LLDB |
+| `:GdbStartPDB python -m pdb file.py` | Python's pdb (in Python buffers `<Space>dp` runs this for the current file) |
+| `:GdbStartBashDB bashdb script.sh` | bashdb for shell scripts |
+| `:GdbStartRR` | Replay a recording made with `rr` |
+
+The command forms are the plugin's documented usage (its README); the pdb one is what `<Space>dp` runs, the others were not run for this guide.
+
+The plugin's own start keys (`<Space>dd`, `dl`, `dp`, `db`, `dr`) are switched off in `lua/plugin_specs.lua` so they do not replace the diagnostic keys; `<Space>dp` is a Python-buffer key defined in `after/ftplugin/python.lua`. During a session the plugin sets these keys in the source window (buffer-local, removed again when the session ends):
+
+| Key | Command | Effect |
+| --- | --- | --- |
+| `<F8>` | `:GdbBreakpointToggle` | Toggle a breakpoint on the cursor line |
+| `<F5>` | `:GdbContinue` | Continue |
+| `<F10>` | `:GdbNext` | Step over |
+| `<F11>` | `:GdbStep` | Step into |
+| `<F12>` | `:GdbFinish` | Step out of the current frame |
+| `<F4>` | `:GdbUntil` | Run until the cursor line |
+| `<Ctrl-p>` / `<Ctrl-n>` | `:GdbFrameUp` / `:GdbFrameDown` | Move one stack frame up / down (plugin default) |
+| `<Space>dv` | (evaluate) | Evaluate the word under the cursor (Normal) or the selection (Visual); moved here from the plugin's `<F9>` |
+
+Two commands without a key: `:GdbCreateWatch <command>` (for example `info locals` in GDB) opens a watch window that re-runs the command at every step, and `:GdbLopenBacktrace` / `:GdbLopenBreakpoints` put the backtrace / breakpoints into the location list. The Python-only Space keys for the same actions (`<Space>dc`, `dn`, `ds`, `df`, `dB`, `du`) are in the Python guide ("Debugging with pdb"). The F-keys, `<Ctrl-p>` / `<Ctrl-n>` and the commands are the plugin's defaults from its README and help (`:help nvimgdb`). They are untested here beyond what the Python guide documents for pdb.
 
 ---
 
@@ -427,6 +466,14 @@ Plugin: **nvim-devdocs**. Browse programming documentation without leaving Neovi
 | `:DevdocsOpenFloat` | Open in floating window (25 lines tall, 100 chars wide) |
 | `:DevdocsInstall` | Install documentation for a language (e.g., `:DevdocsInstall python`) |
 | `:DevdocsUninstall` | Remove installed docs |
+| `:DevdocsFetch` | Download the list of available documentation sets (the registry); if another command says the registry is not found, run this first |
+| `:DevdocsOpenCurrent` | Open the documentation for the current file's filetype in a normal buffer |
+| `:DevdocsOpenCurrentFloat` | The same in a floating window |
+| `:DevdocsToggle` | Show or hide the floating documentation window |
+| `:DevdocsKeywordprg <word>` | Look a word up in the documentation set that is currently open (needs the word as argument; the plugin sets it as `keywordprg` in its documentation buffers, so `K` there uses it) |
+| `:DevdocsUpdate [name]` / `:DevdocsUpdateAll` | Update one / all installed documentation sets |
+
+The plugin loads only when you run one of these commands. Without an argument, `:DevdocsOpen`, `:DevdocsInstall` and the others use a Telescope picker. Installing builds the documentation synchronously (large sets can block input for a while) and needs the network; `:DevdocsFetch`, `:DevdocsInstall` and the updates download, reading an installed set is local. The command descriptions follow the plugin's README (not run for this guide). No keys are mapped; the plugin's own "open in browser" key is disabled in `lua/config/devdocs.lua`.
 
 ## Hover Documentation (LSP)
 

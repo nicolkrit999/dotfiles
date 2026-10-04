@@ -38,7 +38,7 @@ When unsure which row applies, ask one short question. A mixed request is split:
 
 ### Neovim guards for the authoring row
 
-- `neovim-configurator` already carries the standing rules (`desc`, clash check, branch rule); it ends with a guide brief. Dispatch `nvim-guide-maintainer` with that brief in the same change so the guide and PDF are updated.
+- `neovim-configurator` already carries the standing rules (`desc`, clash check, branch rule); it ends with a guide brief. Dispatch `nvim-guide-maintainer` with that brief in the same change so the guide and PDF are updated. A new, removed or changed plugin always needs both a brief `user-guide/11-plugins.md` entry and an in-depth section (`answering-neovim-usage-questions/documenting-plugins-in-the-guide.md`).
 - Never touch `main`, never merge or push unasked; work on `develop` or a task branch.
 - After VERIFY, dispatch `nvim-gate-runner` for any change to Lua, plugins or keymaps, and report its verdicts next to the linter's.
 

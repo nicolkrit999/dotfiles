@@ -73,6 +73,12 @@ This section explains how to open, navigate, resize, and close split windows ent
 
 The top line shows one tab per open buffer (bufferline). Click a tab to switch to it. The `x` at the right of a tab closes it; while that buffer has unsaved changes the `x` is replaced by a `●`, and clicking the `●` closes it too. For a changed file Vim then asks `Save changes to "name"? [Y]es, (N)o, (C)ancel`: Yes saves and closes, No discards and closes, Cancel keeps the buffer and shows the warning "unsaved changes, buffer kept". A terminal whose program is still running is kept ("running terminal, buffer kept"). A right-click opens Neovim's own menu (see the Mouse table in the cheat sheet).
 
+| Key | Effect |
+| --- | --- |
+| `<Space>bp` | Pick a buffer (`:BufferLinePick`): per the plugin's docs every visible tab shows a character, and typing that character jumps to that buffer |
+
+Quickfix, fugitive and git buffers never get a tab. The tabs show no file icons and no diagnostics, and they are ordered by buffer number.
+
 ## Closing Windows
 
 | Keymap / Command | Description |
@@ -204,15 +210,120 @@ Plugin: **instant.nvim**. Real-time collaborative editing.
 | **which-key.nvim** | Press `<Space>` and wait: a popup shows all available leader keybindings |
 | **Dashboard** | Start screen for a bare `nvim` (no file, directory or stdin); menu and keys in "Dashboard (Start Screen)" below |
 | **nvim-notify** | Animated notification popups (fade + slide, 1500ms) |
-| **Colorschemes** | On Nix systems the base16 theme named by `NVIM_BASE16_THEME` (fallback Catppuccin Mocha); on other systems one of 19 themes chosen at random at each start. UI colours (yank flash, hop keys, notifications, float borders) follow the active theme |
+| **Colorschemes** | On Nix systems the base16 theme named by `NVIM_BASE16_THEME` (fallback Catppuccin Mocha); on other systems one of 19 themes chosen at random at each start. UI colours (yank flash, hop keys, notifications, float borders) follow the active theme. Details: "Colorschemes" below |
 | **dropbar.nvim** | Breadcrumb bar at top showing file > class > function |
-| **nvim-colorizer** | Color codes (hex, rgb) are highlighted with their actual color |
+| **nvim-colorizer** | Color codes (hex, rgb) are highlighted with their actual color; plain color words such as `red` are not |
 | **mini.indentscope** | Visual `▏` guide for current indent scope (loads right after the first screen; `ii`/`ai` exist from then on) |
 | **fidget.nvim** | LSP progress messages in bottom-right corner |
 | **nvim-lightbulb** | Lightbulb icon when code actions are available |
 | **vim-illuminate** | Highlights the other uses of the word under the cursor (`<Alt-n>` / `<Alt-p>` jump between them) |
 | **vimade** | Dims inactive windows |
 | **Borders** | Floating windows and the completion menu have a single-line border (exceptions: `:Lazy` and the DevDocs float use rounded corners) |
+
+## Breadcrumb Bar (dropbar.nvim)
+
+Plugin: **dropbar.nvim**. A line at the top of a window shows the path to the code under the cursor: the file path, then the class and function you are in. It follows the cursor by itself and appears for files that have a Treesitter parser or a language server with symbols (and for markdown and terminal buffers). Files over 1 MB, help buffers, floating windows and windows that already have their own winbar do not get it. This config loads the plugin with its default settings and maps no key for it.
+
+| Action | Effect |
+| --- | --- |
+| Click a part of the bar with the mouse | Opens a menu of the entries at that level (for example the other functions of the class); `<CR>` or a click on an entry jumps there (plugin default) |
+| In that menu: `q` or `<Esc>` | Close the menu (plugin default) |
+
+For a keyboard-driven view of the same information use the symbol outline (`<Space>t`, "Symbol Outline" in the navigation chapter).
+
+## LSP Progress Messages (fidget.nvim)
+
+Plugin: **fidget.nvim**. While a language server is busy (starting up, indexing a project), a small progress message appears in the bottom-right corner and disappears when the server is done. It is only informational: there is nothing to press, and the config calls `setup {}` with the default settings. If the message stays for a while after opening a file, the server is still working; wait until it vanishes before expecting completion or go-to-definition.
+
+## Colorschemes
+
+Twenty-two plugins in this config are colour themes or their helper library: 19 themes of the random list, plus catppuccin, nvim-base16 and lush.nvim. None of them is loaded at startup (all are lazy): lazy.nvim loads a theme plugin only when its colorscheme is selected.
+
+### Which theme is active at startup
+
+| System | What happens |
+| --- | --- |
+| Nix / NixOS (the folder `/etc/nixos` or `/etc/nix` exists) | The base16 theme named by the environment variable `NVIM_BASE16_THEME` is applied through nvim-base16 as `base16-<name>`. If the variable is missing or empty, or that theme fails to load, `base16-catppuccin-mocha` is used |
+| Any other system | One theme out of the 19 below is picked at random at every start |
+
+If even the Nix fallback fails, a warning ("Failed to load base16 colorscheme ...") is shown and Neovim's built-in `default` colorscheme is used. If a random theme fails to load, a warning ("Failed to load colorscheme ...") is shown and `default` is used.
+
+The Catppuccin Mocha look is the convention of this repository. In Neovim it comes only from the Nix fallback `base16-catppuccin-mocha` (nvim-base16). The catppuccin plugin is installed too, but it is not in the random list and has no setup of its own: use it by hand with `:colorscheme catppuccin-mocha`.
+
+### Switching and listing themes
+
+There is no key or custom command for it; use the built-in commands:
+
+| Command | Effect |
+| --- | --- |
+| `:colorscheme <Tab>` | Lists and completes the names of the colorschemes Neovim knows (plugin colorschemes that are not loaded yet are expected to be included, because lazy.nvim registers them; not tried) |
+| `:colorscheme <name>` | Switches to that theme; lazy.nvim loads the plugin first when needed |
+| `:colorscheme` | Shows the name of the active theme |
+
+A manual switch lasts until you quit Neovim; the next start picks the theme again as described above. The per-theme settings in the table below (style, italics, background) are set only by the startup loader. A manual `:colorscheme <name>` does not run that code, so the theme starts from the plugin's own defaults (read from the code, not tried).
+
+The UI colours of this config (yank flash, cursor and float borders, hop hint keys, notification background, completion menu, git signs) are derived from the active theme again after every `:colorscheme`, so they follow a manual switch.
+
+### The 19 themes of the random list
+
+| Plugin | Colorscheme loaded at startup | Other names the plugin provides |
+| --- | --- | --- |
+| onedark.nvim | `onedark` (style "darker") | |
+| edge | `edge` (default style, italics on) | |
+| sonokai | `sonokai` (italics on) | |
+| gruvbox-material | `gruvbox-material` (hard background, original foreground, italics on) | |
+| everforest | `everforest` (hard background, italics on) | |
+| nightfox.nvim | `carbonfox` | `nightfox`, `dayfox`, `dawnfox`, `duskfox`, `nordfox`, `terafox` |
+| onedarkpro.nvim | `onedark_dark` | `onedark`, `onedark_vivid`, `onelight`, `vaporwave` |
+| material.nvim | `material` (style "darker") | `material-darker`, `material-lighter`, `material-oceanic`, `material-palenight`, `material-deep-ocean` |
+| arctic | `arctic` (needs lush.nvim) | |
+| kanagawa.nvim | `kanagawa-dragon` | `kanagawa`, `kanagawa-wave`, `kanagawa-lotus` |
+| modus-themes.nvim | `modus` | `modus_operandi`, `modus_vivendi` |
+| jellybeans.nvim | `jellybeans` | `jellybeans-default`, `-hc`, `-mono`, `-muted`, `-warm` and light variants |
+| github-theme | `github_dark_default` | `github_dark`, `github_dark_dimmed`, `github_dark_high_contrast`, `github_dark_colorblind`, `github_dark_tritanopia`, `github_light*` |
+| ashen.nvim | `ashen` | |
+| melange-nvim | `melange` | |
+| makurai-nvim | `makurai_dark` | `makurai_autumn`, `makurai_light` |
+| vague.nvim | `vague` | |
+| kanso.nvim | `kanso` | `kanso-ink`, `kanso-mist`, `kanso-pearl`, `kanso-zen` |
+| citruszest.nvim | `citruszest` | |
+
+The "other names" are the colorscheme files found in the installed plugin folders, so they depend on the plugin version.
+
+Not in the random list: catppuccin (`catppuccin`, `catppuccin-mocha`, `-macchiato`, `-frappe`, `-latte`) and nvim-base16 (many `base16-<name>` themes; the one used on Nix). lush.nvim is only a library that arctic needs; it provides no colorscheme (see "Libraries and Dependencies" in "39. Other Plugins" in `10-various.md`).
+
+## Line Number Column (`statuscol.nvim`)
+
+The column at the left of every window is drawn by statuscol.nvim as one column with three parts, from left to right: the sign column, the line number and the fold column. Each part has a click handler of the plugin (its default handlers; not described further here).
+
+| Part | What it shows |
+| --- | --- |
+| Signs | The sign column is one cell wide (`signcolumn=yes:1`). The config defines signs for git changes (gitsigns) and for diagnostics (error, warning, info, hint glyphs) |
+| Number | The line number; `number` and `relativenumber` are both on (see "Automatic Behaviors" for which window gets relative numbers). `relculright` is off, so the number of the cursor line is not right-aligned |
+| Folds | The fold markers; fold levels deeper than 3 show a blank instead |
+
+The fold keys are in "Code Folding (`nvim-ufo`)".
+
+## Icons and UI Libraries
+
+These plugins have no keys and no commands of their own; other plugins use them. Icons need a Nerd Font in the terminal.
+
+| Plugin | Role |
+| --- | --- |
+| mini.icons | Supplies file-type and LSP-kind icons (the completion menu kind icons come from it). The config calls its `mock_nvim_web_devicons()`, so plugins that only know nvim-web-devicons get mini.icons answers; it is lazy and loads when a plugin asks for it |
+| nvim-web-devicons | The older icon plugin. It has no spec of its own: lazy.nvim installs it because trouble.nvim lists it as a dependency (the nvim-tree config also has a `web_devicons` setting). Which of the two answers when both are present was not checked |
+| nui.nvim | Popup, menu and layout building blocks. Needed by nvim-java, nvim-dbee and ascii.nvim |
+| ascii.nvim | A collection of ASCII-art pictures, only needed by the dashboard, which takes a random one for its header at each start |
+
+## Input Popups and Big Files (`snacks.nvim`)
+
+Plugin: **snacks.nvim**. Loaded at startup; three of its parts are enabled, with no keys or commands of their own.
+
+| Part | What it does here |
+| --- | --- |
+| input | Replaces `vim.ui.input`: questions that ask for text appear as a small popup at the cursor with a darkened backdrop |
+| picker | Replaces `vim.ui.select` (the snacks picker option `ui_select` is on by default and the config does not turn it off), so selection lists such as the branch menu or code actions are filterable pickers. The keys inside them are in "Moving Inside Any Picker" (`05-search-and-files.md`) |
+| bigfile | A file over 1.5 MB, or one whose lines average more than 5000 characters, gets the filetype `bigfile`: no Treesitter and no filetype keys. The language server of the real filetype starts a little later, without semantic tokens or completion. `:lsp stop` drops it; `:set ft=<language>` (for example `:set ft=json`) returns to full mode |
 
 ## Dashboard (Start Screen)
 

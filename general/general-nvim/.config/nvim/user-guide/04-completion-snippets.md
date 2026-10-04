@@ -3,7 +3,7 @@
 
 # 14. Autocompletion (`nvim-cmp`)
 
-Plugin: nvim-cmp. Sources: LSP, UltiSnips snippets, file paths, buffer words.
+Plugin: nvim-cmp. Sources: LSP, UltiSnips snippets, file paths, buffer words; in LaTeX files also omni (BibTeX/citations); in the `/` search line buffer words, in the `:` command line paths and command names. Each source is its own small plugin, listed in section 45 ("Completion Sources and Helpers").
 
 | Keymap | Description |
 | --- | --- |
@@ -99,6 +99,28 @@ For LaTeX files the sources are **omni** (BibTeX/citations), the texlab LSP (onl
 - Deprecated items appear with strikethrough
 - The completion menu is semi-transparent (5% blend)
 
+## Completion Sources and Helpers
+
+nvim-cmp itself only draws the menu. What it offers comes from small "source" plugins, each used under the `name` it has in `lua/config/nvim-cmp.lua`:
+
+| Plugin | Source name | What it offers | Where it is active |
+| --- | --- | --- | --- |
+| `cmp-nvim-lsp` | `nvim_lsp` | Names from the language server (functions, variables, types) | Normal Insert-mode completion; first in the list (in buffers without an attached server it offers nothing) |
+| `cmp-nvim-ultisnips` | `ultisnips` | Snippet triggers from UltiSnips (see "Snippets for Developers" below) | Insert-mode completion, second in the list |
+| `cmp-path` | `path` | File and folder paths | Insert-mode completion; also first in the `:` command line |
+| `cmp-buffer` | `buffer` | Words already in the current buffer, from 2 typed characters | Insert-mode completion (last in the list); the only source in the `/` search line |
+| `cmp-omni` | `omni` | Whatever the filetype's omni-completion function offers; in LaTeX files that is vimtex (commands, labels, citations) | Only in `tex` files, where it is listed first |
+| `cmp-cmdline` | `cmdline` | Ex command names and their arguments | Only in the `:` command line |
+
+How the command line behaves: in `/` the menu offers buffer words. In `:` the `path` source is asked first and the `cmdline` source is used when it has nothing (nvim-cmp's group rule), so a path-like word completes as a path and an ordinary word as a command or argument. `<Tab>` / `<S-Tab>` open and move through the menu there (see the table in section 14).
+
+Two helpers are not sources:
+
+- `colorful-menu.nvim` colours each completion label the way code is coloured (name, argument list, type) using the language server's own label; the extra text (arguments, types) is drawn in the comment colour (settings in `lua/config/colorful_menu.lua`), and labels longer than 60 columns are cut. It works automatically, no keys.
+- `vim-snippets` is a ready-made snippet collection loaded by UltiSnips next to the personal `my_snippets/` files (see "Ready-Made Snippets" in the snippets section below).
+
+Libraries and dependencies of these plugins (for example `mini.icons`, which draws the kind icons) have no keys of their own.
+
 ---
 
 # 52. Snippets for Developers
@@ -106,6 +128,10 @@ For LaTeX files the sources are **omni** (BibTeX/citations), the texlab LSP (onl
 ## What Snippets Are
 
 Plugin: **UltiSnips** + **vim-snippets**. Snippets are templates that expand into boilerplate code when you type a trigger word.
+
+## Ready-Made Snippets (`vim-snippets`)
+
+Besides the personal files in `my_snippets/`, UltiSnips also loads the `vim-snippets` collection: a library of common snippets for many languages that ships its own `UltiSnips/` folder. The plugin is installed as a dependency of UltiSnips and has no setup, keys or commands of its own, and the config lists the snippet folders it searches as `UltiSnips` and `my_snippets`. Its entries appear in the completion menu next to the personal ones (through the `ultisnips` source in section 45, "Completion Sources and Helpers"). To see what a language offers, open a file of that type, type the first letters of a common word such as `def` or `class` and look at the menu. The exact trigger list of the collection is not reproduced in this guide.
 
 ## How to Use Snippets
 

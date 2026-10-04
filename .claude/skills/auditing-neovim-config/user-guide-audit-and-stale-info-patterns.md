@@ -19,7 +19,7 @@ Hard facts first:
 | File | Content |
 | --- | --- |
 | `user-guide/README.md` | Intro, generated "Contents" (nested chapter > section > subsection list between `<!-- toc:start -->` / `<!-- toc:end -->`; never hand-edit), then section 2 = "Day-to-Day Cheat Sheet" (16+ topic tables, each ending with `More: sections N, M`) |
-| `01-basics.md` .. `10-various.md` | Chapters. Each starts with `<!-- chapter: <name> -->` then `[Back to the guide index](README.md)`, then `# N. Title` headings |
+| `01-basics.md` .. `11-plugins.md` | Chapters. Each starts with `<!-- chapter: <name> -->` then `[Back to the guide index](README.md)`, then `# N. Title` headings |
 | `build-pdf.py`, `pdf-header.typ`, `neovim-user-guide.pdf`, `neovim-user-guide.pdf.stamp` | Build script (regenerates the README table of contents and the PDF; `--check` verifies), typst styling, the committed PDF that dashboard `u` opens, and the hash of the sources it was built from |
 | `languages/{java,python,latex,markdown,typst}.md` | Sections 78-82, one self-contained guide per language. Start with `<!-- chapter: X -->` and `[Back to the guide index](../README.md)` (note `../`) |
 
@@ -27,7 +27,7 @@ Hard facts first:
 - Section order inside a chapter is by topic, not by number (e.g. 07-code has 13, 44, 18, 47 ...). Do not "fix" the order.
 - "Part II: Developer Guide" is a heading inside `10-various.md`; "Part III: Everyday Scenarios & Recipes" is inside `07-code.md`. Parts are only headings, not files.
 - Language guide layout (78-82): intro paragraph; "What you get" table (feature / what it does / needs); Quick start (numbered); Requirements/devShell (+ an "Outside the devShell" table: what happens when the tool is missing); keys and commands tables; tested workflows; Troubleshooting table (symptom | cause | fix); last heading "Related sections" listing `section N (topic)` pointers. Java uses numbered `## 1.` subheadings; the others do not.
-- Where new content goes: first look for an existing subsection/table and extend it (never duplicate a near-identical entry; edit that one). New everyday keys also go into the cheat sheet (README, section 2) and, if language-specific, into the language section. New plugin = subsection in the section that owns that topic AND the "In Depth" twin section (Part II repeats Part I) AND `10-various.md` "Other Plugins" only if it has no better home. New command = section 34 Custom Commands and section 59 Useful Developer Commands. New file/chapter: add to the README Contents table.
+- Where new content goes: first look for an existing subsection/table and extend it (never duplicate a near-identical entry; edit that one). New everyday keys also go into the cheat sheet (README, section 2) and, if language-specific, into the language section. New plugin = TWO places, always (`.claude/skills/answering-neovim-usage-questions/documenting-plugins-in-the-guide.md`): a brief entry in `11-plugins.md` (catalog, grouped by category, links to the in-depth section) AND an in-depth section in the chapter that owns the topic (plus its "In Depth" twin where Part II repeats Part I; `10-various.md` "Other Plugins" only if there is no better home). New command = section 34 Custom Commands and section 59 Useful Developer Commands. New file/chapter: add to the README Contents table.
 - Do not reorganise sections. Keep the existing style.
 
 ### 1.2 Tone and notation
@@ -162,7 +162,7 @@ Rule (owner's, standing): every change to keymaps, plugins, options, commands, l
 Staleness checklist (run in this order):
 
 1. Recency: `git -C ~/dotfiles log --format='%h %ad %s' --date=short -- general/general-nvim/.config/nvim/user-guide | head -5` vs the same for `lua/mappings.lua lua/plugin_specs.lua lua/options.lua lua/custom-autocmd.lua lua/config after plugin ftdetect my_snippets lazy-lock.json` (`-- <paths>`). Every config commit newer than the last guide commit is suspect: `git diff <last-guide-commit>..HEAD --stat -- <config paths>` and read each hunk that touches a map, spec, option, command, autocmd.
-2. Plugins: compare spec names in `lua/plugin_specs.lua` (and `enabled`/`cond`) with plugin names in the guide: every enabled plugin that has user-visible behaviour is documented; every documented plugin is enabled. `lazy-lock.json` keys vs specs.
+2. Plugins: compare ALL declared plugins (lazy `spec.plugins` plus `spec.disabled`, not only `lazy.plugins()`, which omits environment-disabled ones such as vimtex, typst.vim, vim-xkbswitch) with `11-plugins.md`: every plugin has a catalog entry whose link lands on a section that really explains it; every catalog entry is a real plugin; the count matches. `build-pdf.py --check` enforces presence, but you check description and link target quality. `lazy-lock.json` keys vs specs (stale pins are a separate finding).
 3. Keys: full dump (all filetypes, git/non-git, fresh and loaded) vs every key in the guide (both directions). Run the "removed things" grep.
 4. Commands: `commands.txt` vs `:Command` mentions; custom commands in `plugin/*.vim`, `lua/` match section 34 and 59.
 5. Options/autocmds: `:verbose set` for each option the guide states; `custom-autocmd.lua` vs section 42 rows.
