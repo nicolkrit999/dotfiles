@@ -112,6 +112,8 @@ Other uses of the word under the cursor are highlighted when there are at least 
 | `<Alt-p>` | n | Jump to the previous reference |
 | `<Alt-i>` | x, o | Text object: the reference under the cursor (e.g. `d<Alt-i>`) |
 
+These three keys are plugin defaults of vim-illuminate: the plugin sets them only when nothing else uses the key, and the config does not define them itself.
+
 Commands: `:IlluminateToggle`, `:IlluminatePause`, `:IlluminateResume`.
 
 ## Marks (Bookmarks)

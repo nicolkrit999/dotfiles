@@ -48,8 +48,9 @@ Agent task list:
    - It has no `desc` and one can be added by editing our own config line: add it.
    - It cannot be added without extra steps (a third-party plugin map, a built-in Neovim key, a default created by a plugin): do not work around it; report it and stop that part.
    - The working path is plain default Neovim with no mapping at all: nothing to check; say so.
-3. **Rebuild.** After the last guide edit: `./build-pdf.py` then `./build-pdf.py --check` must print `OK` (see `SKILL.md`, "Rebuild the PDF").
-4. **Report back**, structured: per changed file the path and section heading, the previous state, the new state; the `desc` result (already right / changed / added / could not be added and why); page count and `--check` result.
+3. **Plugin involved** (a new plugin, or the working key/command belongs to a plugin the guide does not cover): also follow `./documenting-plugins-in-the-guide.md` (catalog entry in `11-plugins.md` plus an in-depth section the agent chooses).
+4. **Rebuild.** After the last guide edit: `./build-pdf.py` then `./build-pdf.py --check` must print `OK` (see `SKILL.md`, "Rebuild the PDF").
+5. **Report back**, structured: per changed file the path and section heading, the previous state, the new state; the `desc` result (already right / changed / added / could not be added and why); page count and `--check` result; for a plugin, the catalog group and the in-depth section.
 
 When the agent finishes, YOU (not the agent) tell the user, verbatim from its report and after reading the diff (`git diff` on the touched files):
 

@@ -7,6 +7,8 @@
 
 The fugitive keys (and the gitlinker keys below) exist only inside a git repository: nvim started in one, or a file of one opened. Outside a repository these keys are not mapped: `<Space>` just moves the cursor one column right and the next keys run as their normal Vim/plugin meaning (`<Space>gs` becomes `l` plus vim-swap's `gs`). `<Space>gbl` works everywhere (fzf-lua).
 
+`<Space>gn` (Neogit) and `<Space>gD` (Diffview) belong to the same group: both are defined in `lua/config/fugitive.lua`, which loads together with fugitive when git is detected, so they exist only in a git repository too (once defined they stay for the rest of the session, even after `:cd` out of the repository). The plugins behind them are not repo-limited: `:Neogit` and `:DiffviewOpen` load on demand from any directory (Neogit itself still needs a repository to show anything).
+
 | Keymap | Mode | Description |
 | --- | --- | --- |
 | `<Space>gs` | n | Git status window |
@@ -63,6 +65,60 @@ A **hunk** is a contiguous block of changed lines. With the hunk keys you can st
 | `<Space>gl` | n, x | Copy permalink for current line(s) |
 | `<Space>gbr` | n | Open repository in browser |
 
+## Neogit (Plugin)
+
+Neogit is a full-screen git interface in the style of Emacs Magit: one status buffer shows the branch, the unstaged and staged changes and recent commits, and short keys act on the item under the cursor. It uses diffview.nvim for diff views and fzf-lua for pickers; both load with it. It loads on its first command and needs a git repository to be useful.
+
+| Key / command | Effect |
+| --- | --- |
+| `<Space>gn` | Open Neogit (`:Neogit`); the key exists only in a git repository, see the note at the top of section 20 |
+| `:Neogit` | Open the status buffer (a new tab) from any directory inside a repository |
+| `:NeogitCommit [<sha>]` | Open the commit view of a commit (`HEAD` when no argument) |
+| `:NeogitLogCurrent [<file>]` | Log of a file (the current file when no argument; with a visual range, the history of those lines) |
+| `:NeogitResetState` | Reset the flags Neogit remembers for its popups |
+
+Inside the status buffer the keys are Neogit's own defaults (this config does not change them; see `:help neogit`): `?` opens a popup that lists the available keys, `s` stages and `u` unstages the item under the cursor, `x` discards it (with a confirmation), `<Tab>` folds or unfolds it, `<CR>` opens the file, `c` opens the commit popup, `q` closes the window. These keys were read from the plugin's help, not tried here.
+
+## vim-flog (Plugin)
+
+vim-flog shows the history of the repository as a graph: one line per commit, with lines joining the branches and merges. It is a viewer; commits themselves are made with fugitive.
+
+| Command / key | Effect |
+| --- | --- |
+| `:Flog` | Open the commit graph of the current repository in a new tab (the first run asks git to write a commit-graph file) |
+| `g?` (inside Flog) | Show Flog's own list of keys |
+| `<CR>` (inside Flog) | Open the commit under the cursor in a side window |
+| `dd` (inside Flog) | Diff the commit under the cursor against the current `HEAD` |
+| `u` (inside Flog) | Reload the graph |
+| `gq` or `ZZ` (inside Flog) | Quit Flog |
+
+There is no key for `:Flog` in this config. Flog requires vim-fugitive (it is a documented prerequisite, and fugitive is loaded in a git repository), so open it inside a repository. Inside the Flog window any fugitive command can be used, and Flog's `gs` / `gu` / `gU` (show staged / untracked / unstaged changes) apply there instead of vim-swap's `gs`. The in-window keys are the plugin's defaults from its help (`:help flog-mappings`), not tried here.
+
+## diffs.nvim (Plugin)
+
+diffs.nvim makes diffs easier to read. It works on its own, without keys.
+
+| What | Effect |
+| --- | --- |
+| Automatic highlighting | Code inside the diffs shown by fugitive, neogit and gitsigns gets syntax highlighting, with intra-line changes marked; the integrations are switched on in `lua/plugin_specs.lua` |
+| Conflict markers | Inline merge conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) in working files are detected and highlighted; its resolve keymaps are off by default and this config does not turn them on (use the diffview keys above); diagnostics are switched off in a buffer while it has conflicts |
+| `:Diff` | Diff of the current file against git. Without arguments it compares the index with the working file, so it shows unstaged changes only; `:Diff <revision>` (for example `HEAD~3` or a branch) compares the current file at that revision with the working file; `:Diff review` opens a review of the whole repository; `:vertical Diff` splits vertically |
+
+This plugin is not fetched from GitHub but from forge.barrettruth.com. The argument forms of `:Diff` come from the plugin's help (`:help diffs.nvim-commands`) and were not tried here.
+
+## codediff.nvim (Plugin)
+
+codediff.nvim shows two versions of a file side by side with VSCode-like highlighting of the changed words inside each line.
+
+| Command | Effect |
+| --- | --- |
+| `:CodeDiff` | Open an explorer of the changed files of the repository; pick a file to see its side-by-side diff |
+| `:CodeDiff <revision>` | Compare a branch, commit or `HEAD~N` with the working tree |
+| `:CodeDiff <revision> <revision>` | Compare two revisions |
+| `:CodeDiff --staged` | Only the changes in the git index |
+
+There is no key for it in this config. The first use downloads a small native diff library (network needed once; `:CodeDiff install` does it explicitly). More forms exist (pull requests, history, other repositories): see the plugin's README. The forms above come from that README and were not tried here.
+
 ## Other Git Tools
 
 | Plugin | Command / Trigger | Description |
@@ -70,7 +126,7 @@ A **hunk** is a contiguous block of changed lines. With the hunk keys you can st
 | neogit | `:Neogit` | Full git UI (magit-like; loads on the first `:Neogit*` command, in any directory; also `:NeogitCommit`, `:NeogitLogCurrent`, `:NeogitResetState`) |
 | diffview.nvim | `:DiffviewOpen`, `:DiffviewFileHistory` (`:DiffviewClose` once a view was opened) | Side-by-side diff viewer and 3-way merge tool; file history panel |
 | vim-flog | `:Flog` | Visual git log graph |
-| diffs.nvim | `:Diff` (and automatic) | Unified diff of the current file against git; also colours the diffs shown by fugitive, neogit and gitsigns, and conflict markers |
+| diffs.nvim | `:Diff` (and automatic) | Unified diff of the current file against the index (unstaged changes; details in its section above); also colours the diffs shown by fugitive, neogit and gitsigns, and conflict markers |
 | codediff.nvim | `:CodeDiff` | VSCode-style side-by-side diff (downloads a small native library on first use) |
 
 ## Resolving Merge Conflicts (diffview.nvim)
@@ -101,7 +157,7 @@ This config includes several git-related plugins that each handle a different as
 | **neogit** | A full git UI inside Neovim (like Magit for Emacs). | `:Neogit` to open (loads on that command; also `:NeogitCommit`, `:NeogitLogCurrent`, `:NeogitResetState`). |
 | **diffview.nvim** | Side-by-side diff viewer for comparing branches, commits, etc. | `:DiffviewOpen` to open. |
 | **vim-flog** | Visual git log/graph showing branch history. | `:Flog` to open. |
-| **diffs.nvim** | Syntax highlighting inside the diffs of fugitive, neogit and gitsigns; conflict markers. `:Diff` shows the file against git. | Automatic, `:Diff`. |
+| **diffs.nvim** | Syntax highlighting inside the diffs of fugitive, neogit and gitsigns; conflict markers. `:Diff` shows the file against the index. | Automatic, `:Diff`. |
 | **codediff.nvim** | VSCode-style side-by-side diff. | `:CodeDiff`. |
 
 Merge conflicts: `:DiffviewOpen` is the merge tool (keys in section 20, "Resolving Merge Conflicts").

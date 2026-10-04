@@ -112,6 +112,7 @@ Last line of every answer that gave steps, plain and short, for example: **"Did 
 - Match the format: Markdown tables for key / effect, short bullets for caveats, backticked keys. Include what surprised the user: remaps, modes, counts, what a selection includes.
 - State status honestly: "tested" only because the user confirmed the exact keys.
 - Never duplicate: edit a nearly identical entry instead. Fix wrong text before adding new.
+- Plugins: a new, removed or changed plugin is documented in TWO places, a brief entry in `user-guide/11-plugins.md` and an in-depth section in a chapter the agent chooses. Full procedure: `./documenting-plugins-in-the-guide.md`.
 - Touch only the files in `user-guide/` for the guide part (the keymap `desc` check may touch the Lua config line of the key). Do not commit unless the user asks. The repo is public: no secrets or private paths.
 
 ## Rebuild the PDF (mandatory whenever a guide file changed)

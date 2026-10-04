@@ -35,7 +35,7 @@ TOC_START, TOC_END = "<!-- toc:start -->", "<!-- toc:end -->"
 FILES = [
     "README.md", "01-basics.md", "02-navigation.md", "03-editing.md",
     "04-completion-snippets.md", "05-search-and-files.md", "06-windows-terminal-sessions.md",
-    "07-code.md", "08-git.md", "09-ai-and-writing.md", "10-various.md",
+    "07-code.md", "08-git.md", "09-ai-and-writing.md", "10-various.md", "11-plugins.md",
     "languages/java.md", "languages/python.md", "languages/latex.md",
     "languages/markdown.md", "languages/typst.md",
 ]
@@ -262,6 +262,129 @@ def font_paths():
     return paths + ([hm] if hm else [])
 
 
+# ----------------------------------------------------------------------------- plugin catalog
+
+CATALOG = "11-plugins.md"
+ENTRY = re.compile(r"^\s*[-*]\s+`([^`]+)`")
+COUNT = re.compile(r"<!--\s*plugin-count:\s*(\d+)\s*-->")
+NVIM_DIR = os.path.dirname(HERE)
+
+
+def installed_plugins():
+    """Names of every plugin the config DECLARES, whether or not it is enabled on this machine:
+    lazy.nvim's active plugins plus the ones it set aside as disabled (vimtex and typst.vim need
+    latex/typst on PATH, vim-xkbswitch is macOS only). Using only lazy.plugins() would make the list
+    depend on the environment. None when nvim is unavailable or fails (the caller then skips)."""
+    nvim = shutil.which("nvim")
+    if not nvim:
+        return None
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "plugins.txt")
+        lua = ("local c=require('lazy.core.config') local t={} "
+               "for k,_ in pairs(c.spec.plugins) do t[#t+1]=k end "
+               "for k,_ in pairs(c.spec.disabled) do t[#t+1]=k end "
+               f"local f=io.open('{out}','w') f:write(table.concat(t,'\\n')) f:close()")
+        env = dict(os.environ, XDG_STATE_HOME=tmp, XDG_CACHE_HOME=tmp)
+        try:
+            subprocess.run([nvim, "--headless", "-u", os.path.join(NVIM_DIR, "init.lua"),
+                            "-c", f"lua {lua}", "-c", "qa!"],
+                           capture_output=True, text=True, timeout=120, env=env)
+            names = open(out, encoding="utf-8").read().split()
+        except (OSError, subprocess.SubprocessError):
+            return None
+    return sorted(set(names)) or None
+
+
+def section_text(rel, anchor):
+    """Text of the heading with this anchor, including its subsections (until the next heading
+    of the same or a higher level), lowercased."""
+    seen, fence, grab, level, out = {}, False, False, 0, []
+    for line in read(rel).splitlines():
+        if re.match(r"^\s*(```|~~~)", line):
+            fence = not fence
+        m = None if fence else re.match(r"^(#{1,6})\s+(.*?)\s*#*\s*$", line)
+        if m:
+            lvl, a = len(m.group(1)), slug(m.group(2), seen)
+            if grab and lvl <= level:
+                break
+            if not grab and a == anchor:
+                grab, level = True, lvl
+        if grab:
+            out.append(line)
+    return "\n".join(out).lower()
+
+
+def name_variants(name):
+    n = name.lower()
+    v = {n}
+    for suf in (".nvim", ".vim", ".lua", "-nvim", "-vim"):
+        if n.endswith(suf):
+            v.add(n[: -len(suf)])
+    if n.startswith("nvim-"):
+        v.add(n[5:])
+    if n.startswith("vim-"):
+        v.add(n[4:])
+    return {x for x in v if len(x) >= 3}
+
+
+def catalog_entries():
+    """{plugin name: [(file, anchor), ...]} from the bullets '- `name` ...' of 11-plugins.md; the
+    links of an entry may continue on the following lines until the next bullet or heading."""
+    entries, cur, fence = {}, None, False
+    for line in read(CATALOG).splitlines():
+        if re.match(r"^\s*(```|~~~)", line):
+            fence = not fence
+        if fence:
+            continue
+        if re.match(r"^#{1,6}\s", line):
+            cur = None
+        m = ENTRY.match(line)
+        if m:
+            cur = entries.setdefault(m.group(1), [])
+        if cur is not None:
+            for lm in LINK.finditer(re.sub(r"`[^`]*`", "", line)):
+                target, frag = lm.group(1), lm.group(2)
+                if re.match(r"^[a-z]+:", target) or frag is None:
+                    continue
+                path = CATALOG if target == "" else os.path.normpath(
+                    os.path.join(os.path.dirname(CATALOG), target)).replace(os.sep, "/")
+                cur.append((path, frag))
+    return entries
+
+
+def check_plugins():
+    """Every plugin the config declares (enabled or not) has a catalog entry that links to a REAL in-depth section
+    (outside the catalog) in which the plugin is actually mentioned; no entry for removed plugins."""
+    if not os.path.exists(os.path.join(HERE, CATALOG)):
+        return [f"{CATALOG} is missing (the plugin catalog)"]
+    plugins = installed_plugins()
+    if plugins is None:
+        print("note: nvim (or lazy.nvim specs) not available, skipped the plugin catalog check")
+        return []
+    entries = catalog_entries()
+    problems = []
+    for name in plugins:
+        if name not in entries:
+            problems.append(f"{CATALOG}: plugin `{name}` has no catalog entry (add it, plus an in-depth section)")
+            continue
+        targets = [(f, a) for f, a in entries[name] if f != CATALOG and f in FILES]
+        if not targets:
+            problems.append(f"{CATALOG}: `{name}` has no link to an in-depth section outside the catalog")
+            continue
+        variants = name_variants(name)
+        if not any(v in section_text(f, a) for f, a in targets for v in variants):
+            problems.append(f"{CATALOG}: `{name}` is not mentioned in the section(s) it links to "
+                            f"({', '.join(f'{f}#{a}' for f, a in targets)}): write the in-depth text")
+    for name in sorted(set(entries) - set(plugins)):
+        problems.append(f"{CATALOG}: `{name}` is listed but is not a plugin of the config (removed or renamed?)")
+    m = COUNT.search(read(CATALOG))
+    if not m:
+        problems.append(f"{CATALOG}: add the line <!-- plugin-count: {len(plugins)} -->")
+    elif int(m.group(1)) != len(plugins):
+        problems.append(f"{CATALOG}: plugin-count says {m.group(1)} but the config has {len(plugins)}")
+    return problems
+
+
 # ----------------------------------------------------------------------------- checks
 
 def norm(s):
@@ -274,6 +397,7 @@ def check():
     if open(README, encoding="utf-8").read() != readme_with_toc():
         problems.append("README.md table of contents is out of date (run ./build-pdf.py)")
     problems += check_links()
+    problems += check_plugins()
     if not os.path.exists(PDF) or not os.path.exists(STAMP):
         problems.append("neovim-user-guide.pdf is missing (run ./build-pdf.py)")
     else:

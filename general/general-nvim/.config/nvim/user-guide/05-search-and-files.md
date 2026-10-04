@@ -524,13 +524,6 @@ quicker.nvim formats the list (grouped by file, file-name column at most 40 char
 | `t` / `T` | Open in a new tab (`T` stays in the quickfix window) |
 | `<Ctrl-x>` / `<Ctrl-v>` / `<Ctrl-t>` | Open in a horizontal split / vertical split / new tab |
 
-## Trouble (Plugin)
-
-| Keymap / Command | Description |
-| --- | --- |
-| `:Trouble` | Open Trouble diagnostics viewer |
-| `<Space>dw` | Workspace diagnostics via Trouble |
-
 ---
 
 # 51. Quickfix Workflows for Developers
@@ -576,7 +569,7 @@ Plugin: **trouble.nvim**. A nicer interface for browsing diagnostics and quickfi
 
 | Keymap / Command | What it does |
 | --- | --- |
-| `<Space>dw` | Open Trouble with workspace diagnostics |
+| `<Space>dw` | Toggle Trouble with the diagnostics of every loaded buffer, grouped by file (`:Trouble diagnostics toggle`; see "Diagnostics In Depth" in the code chapter) |
 | `:Trouble` | Open Trouble window |
 
 Trouble shows diagnostics grouped by file with icons and colors, making it easier to triage errors.

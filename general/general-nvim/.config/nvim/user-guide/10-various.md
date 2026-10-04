@@ -54,9 +54,87 @@ Type these in command mode, then press space (or Enter) to expand:
 | `colorful-menu.nvim` | Automatic | Completion labels coloured like code |
 | `live-command.nvim` | `:norm` | Live preview of `:norm` while you type |
 | `lazydev.nvim` | Lua files | Neovim API completion when editing the config |
-| `vim-oscyank` | `:OSCYank` | Copy to the system clipboard through the terminal (works over SSH; Linux) |
-| `vim-scriptease` | `:Messages`, `:Scriptnames` | Vim-script debugging helpers |
+| `vim-oscyank` | `:OSCYank {text}`, `:OSCYankVisual`, `:OSCYankRegister` | Copy to the system clipboard through the terminal (works over SSH; Linux). `:OSCYank` needs the text as an argument; in Visual mode use `:OSCYankVisual`, for a register `:OSCYankRegister {reg}` |
+| `vim-scriptease` | `:Messages`, `:Scriptnames`, `:Verbose {command}` | Vim-script debugging helpers |
 | `nvim-dbee`, `vim-dadbod-ui` | `<Space>D...` | SQL clients (see below) |
+
+## Telescope (second picker)
+
+Plugins: **telescope.nvim** and **telescope-symbols.nvim**. Telescope is a second popup picker next to fzf-lua (the file, grep and buffer pickers are fzf-lua, see `05-search-and-files.md`). It is lazy: it loads only on its first `:Telescope` command, so nothing starts at launch. nvim-devdocs lists it as a dependency too.
+
+| Command / key | Effect |
+| --- | --- |
+| `<Space>db` | Telescope list of the diagnostics of the current buffer (the config calls `telescope.builtin.diagnostics` for this buffer only) |
+| `:Telescope keymaps` | Searchable list of all keymaps |
+| `:Telescope symbols` | Pick a symbol from a list and insert it at the cursor (emoji, kaomoji, gitmoji, math, latex, julia, nerd font glyphs) |
+
+telescope-symbols.nvim has no command, key or setup of its own; it only ships the symbol lists (JSON files) that the built-in `:Telescope symbols` picker reads from the runtime path. Lazy.nvim loads it together with Telescope. The keys inside the picker (and the ways Telescope differs from fzf-lua) are in "Moving Inside Any Picker" in `05-search-and-files.md`. `:Telescope symbols` was read from the plugin code, not tried.
+
+## Copying Over SSH (vim-oscyank)
+
+Plugin: **vim-oscyank** (enabled on Linux only; loaded on its first command). It wraps text in an OSC 52 escape sequence and writes it to the terminal, which then puts it into the system clipboard of the machine you sit at, also when Neovim runs on another machine over SSH. Your terminal (and tmux, if used) must allow OSC 52 clipboard writes. This configuration maps no key for it.
+
+| Command | Effect |
+| --- | --- |
+| `:OSCYank {text}` | Copy the given text (the argument is required) |
+| `:OSCYankVisual` | Copy the Visual selection (run it from Visual mode) |
+| `:OSCYankRegister {reg}` | Copy the content of a register |
+
+## Keyboard Layout Switching (vim-xkbswitch)
+
+Plugin: **vim-xkbswitch** (`lyokha/vim-xkbswitch`). It switches the keyboard layout automatically when you enter and leave Insert mode, so that Normal-mode keys keep working while you type text in another layout (for example a non-Latin one).
+
+- **Only on macOS**, and only when the `xkbswitch` command is found on `PATH`. On Linux and Windows it is declared but disabled: it is not installed and does nothing.
+- It loads on the first `InsertEnter` and the config only turns it on (`XkbSwitchEnabled = 1`); there are no keys and no commands of our own.
+- **Unverified:** this plugin is declared in the config but not installed or run on this Linux machine, so nothing in this section was tested. It is written as a best effort from the plugin's documented purpose and the spec in `lua/plugin_specs.lua`.
+
+## Neovim in the Browser (firenvim)
+
+Plugin: **firenvim**. With the Firenvim browser extension installed, a browser text area can be edited in a Neovim window. The config applies the following only when Neovim was started by Firenvim:
+
+| Setting | Value |
+| --- | --- |
+| Which fields | `textarea` elements only |
+| Takeover | `never`: Firenvim does not open by itself; you start it from the extension |
+| Command line | Neovim's own (`cmdline: neovim`) |
+| Filetype | Buffers from `github.com` and `stackoverflow.com` are Markdown, `sqlzoo*` buffers are SQL |
+| Look | No sign column, ruler, command display, statusline or tabline in the browser window; lualine and bufferline are not loaded there |
+
+The plugin build (`:Lazy build firenvim`) installs the native part for the browser, using the `PATH` of the running Neovim. The browser-side button or shortcut for a manual takeover belongs to the extension, not to this config.
+
+## Live Preview of :norm (live-command.nvim)
+
+Plugin: **live-command.nvim**. When `norm` is typed as an Ex command (at the start of the command line, after a range, after `|`, after `:g/pattern/` or `:v/pattern/`, or after a command modifier such as `:silent!`), a command-line abbreviation turns it into `:Norm`. `:Norm` behaves like `:norm` but shows the effect in the buffer, with the changed text highlighted inline, while you are still typing. The word `norm` inside a pattern, a string or other text is left alone.
+
+| You type | Effect |
+| --- | --- |
+| `:%norm Atext` | Preview of appending `text` to every line; `<Enter>` runs it, `<Esc>` leaves the buffer unchanged |
+| `:g/<pattern>/norm dd` | The preview also works after `:g/.../` and `:v/.../` |
+| `:silent! norm ...` | The preview also works after command modifiers |
+
+The examples are standard `:norm` uses; the preview itself was read from the config, not tried here.
+
+## Vim-script Debugging (vim-scriptease)
+
+Plugin: **vim-scriptease**. Loaded on the first use of one of its three commands (the lazy list names `:Scriptnames`, `:Messages`, `:Verbose`). The plugin has more commands; only these three are loaded on demand here.
+
+| Command | Effect (from the plugin's help) |
+| --- | --- |
+| `:Messages` | Load the output of `:messages` into the quickfix list; `:Messages clear` clears the messages. Not the same as the built-in lower-case `:messages` |
+| `:Scriptnames` | Load the list of `:scriptnames` into the quickfix list and open it |
+| `:Verbose {command}` | Like `:verbose {command}`, but the output goes to a file and is shown in the preview window (handy for noisy commands; a count in front raises the verbosity) |
+
+## Libraries and Dependencies
+
+These plugins have no commands or keys. Other plugins need them, and lazy.nvim loads them when one of those plugins starts or asks for them.
+
+| Plugin | What it is | Needed by (in this configuration) |
+| --- | --- | --- |
+| plenary.nvim | Lua helper library (async, paths, jobs) | claude-code.nvim, neogit, nvim-devdocs and Telescope |
+| promise-async | Promise and async library | nvim-ufo (code folding) |
+| lush.nvim | Library for writing colour themes in Lua | the arctic colorscheme (see "Colorschemes" in `06-windows-terminal-sessions.md`) |
+| nui.nvim | Popup, menu and layout building blocks | nvim-java, nvim-dbee, ascii.nvim (see "Icons and UI Libraries" in `06-windows-terminal-sessions.md`) |
+| nvim-web-devicons, mini.icons | File and kind icons | see "Icons and UI Libraries" in `06-windows-terminal-sessions.md` |
 
 ## SQL Databases (nvim-dbee, vim-dadbod-ui)
 
@@ -115,6 +193,15 @@ In an automated test the dadbod result window opened after `<Space>S` but stayed
 | Typst | `<Space>tw` TypstWatch, `textwidth=100`, wrap |
 | Vim script | `<Space>rf` (or `<F9>`) sources the file |
 | Line-length marker | The coloured column marker (`colorcolumn`) sits at 100 by default and, per language, exactly at that language's convention: 80 for C, C++, shell, YAML, Vim script, Haskell, R, JavaScript and TypeScript (also jsx/tsx); 88 for Python (black); 100 for Java, Rust, Swift, Nix, Typst; 120 for Lua, PHP, TeX; plain `.txt` files show none. A line touching the marker is over that language's limit. Nothing wraps or reflows. |
+
+## Filetype Syntax Plugins (vim-tmux, vim-toml)
+
+These two plugins add syntax highlighting and filetype settings. They have no keys or commands in this configuration and load only when a file of that type is opened.
+
+| Plugin | Files | Notes |
+| --- | --- | --- |
+| vim-tmux | tmux configuration files (filetype `tmux`) | Installed only when the `tmux` program is found on the machine. Per its README it also sets the comment string, makes `K` jump to the matching place in `man tmux` and adds `g!` (run lines as tmux commands); those extras were not tried here |
+| vim-toml | `.toml` files (filetype `toml`) | Follows the plugin's `main` branch |
 
 ---
 

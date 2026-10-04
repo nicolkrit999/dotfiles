@@ -117,6 +117,18 @@ yanky.nvim loads right after the first screen (VeryLazy), so every yank of the s
 | `gJ` | n | Join lines without inserting a space (cursor stays in place) |
 | `gS` | n | Toggle split / join of the list, argument list, table, dict or block under the cursor (treesj, Treesitter based) |
 
+### Split and Join Code (treesj)
+
+Plugin: **treesj**. Put the cursor inside a list, the arguments of a call, a table, a dict or a block and press `gS`. If the construct is on one line it is split with one item per line; if it is already split over several lines it is joined back to one line (one key toggles both ways). A normal `u` undoes either change.
+
+| Key | Mode | Effect |
+| --- | --- | --- |
+| `gS` | n | Toggle split / join of the construct under the cursor |
+
+- It works from the Treesitter syntax tree, so it needs a parser for the file type, and treesj needs a rule ("preset") for that language: it ships rules for many languages (for example Lua, Python, Java, JavaScript / TypeScript, JSON, Nix, Rust, C / C++, YAML, TOML), not for every file type.
+- The plugin's own default keys are switched off in `lua/config/treesj.lua`; `gS` is the only one.
+- Capital `gS` is treesj; lowercase `gs` is vim-swap's interactive swap (section 65). It loads the first time `gS` is pressed.
+
 ## Indentation
 
 | Keymap | Mode | Description |
@@ -285,7 +297,7 @@ Neovim 0.12 can grow and shrink a selection along the syntax tree (needs a Trees
 | `i,` / `a,` | x, o | Between separators such as `,` `;` `:` `+` `-` `=` `/` `\|` `&` (targets.vim) |
 | `<Space>iB` | x, o | The whole buffer (`y<Space>iB` copies everything) |
 | `<Space>iu` | x, o | The URL under the cursor (`d<Space>iu`) |
-| `<Alt-i>` | x, o | The LSP/Treesitter reference under the cursor (vim-illuminate) |
+| `<Alt-i>` | x, o | The LSP/Treesitter reference under the cursor (vim-illuminate; the key is the plugin's default, not set in this config) |
 
 ### Markdown Code Block Text Objects
 
@@ -824,7 +836,10 @@ The `.` key repeats the last change. This is arguably the most important efficie
 - Any editing in insert mode between `i`...`<Esc>` (typed text, deletions, etc.)
 - Any operator command: `dd`, `dw`, `ciw`, `>>`, `gcc`, etc.
 - Surroundings: `saiw"`, `sd"`, `sr"'`
-- Plugin actions (via vim-repeat): sandwich, commentary, etc.
+- Operator-style plugin actions: surroundings (sandwich) and `gc` comments are repeated by Vim's own `.` machinery (they set an operator function); they do not call vim-repeat in the installed copies
+- Other plugin mappings, only if the plugin registers with vim-repeat (see below)
+
+**vim-repeat** is a small helper plugin with no keys or commands of its own. It tells `.` how to repeat the last action of a plugin mapping, which Vim alone would repeat only as its last built-in command. In the installed copies of this config's plugins, targets.vim, vim-matchup (its `ds%` / `cs%` surround actions) and gitsigns (its stage-hunk and reset-hunk actions) call it, so pressing `.` after them repeats the whole action. Whether `.` really repeats a given plugin key was not tried here; if a plugin does not register with vim-repeat, `.` repeats only the last built-in step. vim-repeat loads right after the first screen (VeryLazy).
 
 ## Scenario: Change a Variable Name One-by-One
 
@@ -1003,6 +1018,8 @@ Place your cursor on one of the arguments inside parentheses:
 | Keymap | What it does |
 | --- | --- |
 | `gs` | Start swap mode (then `h`/`l` swap with the neighbour, `j`/`k` choose an item, `1`-`9` pick an item, `<Esc>` exit) |
+
+The keys inside swap mode (`h` `l` `j` `k` `1`-`9` `s` `S` `r` `u` `<Ctrl-r>`, plus `g` / `G` to group / ungroup items) are vim-swap's own defaults per its help (`:help swap.txt`), not set in this config; only the `gs` start key is defined here (`lua/plugin_specs.lua`), and the plugin's other default keys (`g<`, `g>`) are switched off so the builtin `g<` stays.
 
 **Example**: Given `func(a, b, c)` with the cursor on `b`, press `gs`, then `l`: `b` moves one place right, giving `func(a, c, b)`. Press `<Esc>` to leave swap mode (tested).
 
