@@ -1,126 +1,137 @@
 ---
 name: answering-neovim-usage-questions
-description: Use this skill whenever the user asks how to do something in Neovim or Vim with their own config ("how do I select...", "how do I go to...", "how do I delete/copy/change...", "what key does...", "is it possible to...", "why did this key do that"). It answers from the user's neovim-guide (the user-guide/ folder), verifies every key against the real keymaps (lua/mappings.lua and plugin configs), states clearly when an answer is only an assumption, and keeps the guide correct and complete without ever adding examples the user did not approve.
+description: Use this skill whenever the user asks how to do something in Neovim or Vim with their own config ("how do I select...", "how do I go to...", "how do I delete/copy/change...", "what key does...", "is it possible to...", "why did this key do that"). It looks in the user's neovim-guide (the user-guide/ folder) first, then in the real keymaps, then proposes standard Neovim; answers as numbered steps that separate the exact keys or command from what each step does; asks whether it worked; and if not, debugs (a sandbox trial loop first, then together with the user) and finally fixes the guide, its PDF and the keymap desc.
 ---
 
 # Answering Neovim usage questions
 
 Paths are relative to the dotfiles repo root (`/home/krit/dotfiles`):
 
-- Guide: the folder `general/general-nvim/.config/nvim/user-guide/` (entry `README.md` = contents + day-to-day cheat sheet; chapters `01-basics.md` … `10-various.md`; `languages/{java,python,latex,markdown,typst}.md`). Large; never read it whole, grep the folder first (`grep -rn "<pattern>" user-guide/`). The markdown is the source of truth; `user-guide/neovim-user-guide.pdf` (what `<Space>?` and the dashboard item open) and the README table of contents are GENERATED from it by `user-guide/build-pdf.py` (see "Rebuild the PDF")
+- Guide: the folder `general/general-nvim/.config/nvim/user-guide/` (see "How to use the guide"). The markdown is the source of truth; `user-guide/neovim-user-guide.pdf` (what `<Space>?` and the dashboard item open) and the README table of contents are GENERATED from it by `user-guide/build-pdf.py` (see "Rebuild the PDF").
 - Keymaps: `general/general-nvim/.config/nvim/lua/mappings.lua`
 - Plugin keymaps and settings: `.../nvim/lua/config/*.lua`, `.../nvim/lua/plugin_specs.lua`
 - Options and other mappings: `.../nvim/lua/options.lua`, `.../nvim/plugin/`, `.../nvim/after/`, `.../nvim/lua/custom-autocmd.lua`
 
+## How to use the guide
+
+The guide is large; never read it whole. It is divided on purpose, and chapter names and numbers change over time, so never rely on remembered ones. Discover them each time:
+
+1. `ls user-guide/ user-guide/languages/`. The files are labeled: numbered chapter files whose names state the topic, and a `languages/` folder with one file per language or toolchain. `README.md` is the index.
+2. Read the top of `README.md`: it holds a generated table of contents (chapters, then their sections, as links `file.md#anchor`) and a short day-to-day cheat sheet.
+3. Map the question to a category from two signals: the table-of-contents entries and the chapter file names. Pick the one or two best chapters (a language-specific question goes to its `languages/` file first).
+4. Read only that chapter's relevant section (`grep -n` the heading or keyword inside the file, then read around it). If the chapter has nothing, try the next best category, then `grep -rn "<keyword>" user-guide/` as a last net.
+5. Chapters link to each other with "see section N" and `file.md#anchor`; follow those links instead of guessing.
+
+## Where to look, in this order
+
+1. **The user guide first.** If it answers, that is the answer (after the verification below).
+2. **If the guide is silent or incomplete, the real mappings and plugin configs** (`lua/mappings.lua`, `lua/config/`, `lua/plugin_specs.lua`, `after/`).
+3. **If still nothing, standard Neovim.** Say plainly that it is not in the guide or the config, propose the default Neovim way (`:help` is the authority; check `:help` rather than recall), and label it **"Not in your config or guide: this is default Neovim behaviour and an assumption until you try it."**
+
 ## Hard rules
 
 1. **Never invent a solution.** If the thing cannot be done the way the user asked, say so plainly. If it needs several steps, list the steps and say it needs several steps. Do not present a workaround as if it were one command.
-2. **Never add a new example to the guide unless the user explicitly approved it in this conversation.** Asking "do you want me to add it?" is required every time; silence or "ok" to something else is not approval.
-3. **Never write "tested" or "verified" in the guide from reasoning alone.** Only after the user reports the real result.
-4. **If unsure, say so clearly** (see "Uncertain answers").
-5. **Be skeptical of both sources, every time** (see next section). The guide and the mappings are claims to check, not facts to repeat.
+2. **Adding to the guide needs the user's confirmation that it worked.** The user reporting the working keymap or command is the approval, and then the update in `./debugging-and-guide-update-flow.md` section 3 runs automatically. Without that report, add nothing and do not write "tested" or "verified" from reasoning alone.
+3. **If unsure, say so clearly** (see "Uncertain answers").
+4. **Be skeptical of both sources, every time** (next section).
 
 ## Be skeptical: nothing is trusted by default
 
-The guide may be stale, and the mappings may have changed since it was written or since you last read them. Even when everything looks up to date, assume there is a small chance it is not.
+The guide may be stale, and the mappings may have changed since it was written or since you last read them.
 
-- **Source of truth order.** The mappings are the authority on what a key is bound to, because the keys are hardcoded in the config. The guide is only a description of them and is the one that can be wrong or stale. When they disagree, the mapping wins and the guide is what gets corrected.
-- **Mappings can still mislead in three ways, so check them:** the same key bound twice (the later definition wins; grep for every definition of the key), an override in a plugin config, `after/ftplugin` file or buffer-local mapping, and the running Neovim not having reloaded the file. A mapping also says nothing about what a built-in motion does, so label that part as an assumption until the user confirms.
-- **Read fresh on every question.** Re-read the relevant guide section and the relevant mapping lines each time, even if you read them earlier in the conversation. The user may have edited them in the meantime. Never answer from memory of an earlier read or from a previous answer.
-- **Check recency when it matters.** Run `git log -3 --format='%h %ad %s' --date=short -- <file>` (and `git status --short`) on `user-guide/`, `lua/mappings.lua` and the plugin config involved, to see whether the mappings changed after the guide text was written. If the mapping changed later than the guide, treat the guide's text as suspect.
-- **Cross-check the two sources against each other.** If the guide says a key does X, find the mapping that actually does X. A guide entry with no matching mapping, or a mapping the guide describes differently, is a discrepancy.
-- **Report discrepancies instead of smoothing them over.** Tell the user which file says what (with `file:line`), which one you trust and why (the real mapping wins over the guide), and offer to correct the guide. Fixing wrong guide text follows the same rule as step 5 of the workflow: correct it and say what changed.
-- **Matching sources are still not proof.** Both can be right about the keys and wrong about the behaviour (which mode, what is included in a selection, what a plugin does). If you did not see the behaviour confirmed by the user, label it as an assumption.
+- **Source of truth order.** The mappings are the authority on what a key is bound to; the guide only describes them and is the one that can be wrong. When they disagree, the mapping wins and the guide gets corrected.
+- **Mappings can still mislead:** the same key bound twice (the later definition wins; grep every definition), an override in a plugin config, `after/ftplugin` file or buffer-local mapping, and a running Neovim that has not reloaded the file. A mapping says nothing about what a built-in motion does: label that part as an assumption until confirmed.
+- **Read fresh on every question.** Re-read the relevant guide section and mapping lines each time; never answer from memory or from an earlier answer.
+- **Check recency when it matters:** `git log -3 --format='%h %ad %s' --date=short -- <file>` and `git status --short` on `user-guide/`, `lua/mappings.lua` and the plugin config. A mapping changed after the guide text makes the guide suspect.
+- **Cross-check the two sources.** A guide entry with no matching mapping, or a mapping the guide describes differently, is a discrepancy. Report it with `file:line`, say which one you trust and why, and offer to correct the guide.
+- **Matching sources are still not proof** of behaviour (which mode, what a selection includes, what a plugin does). Not seen confirmed by the user means assumption.
 
 ## Workflow for every "how do I ..." question
 
 ### 1. Look in the guide
-
-- Grep the guide for the keys and keywords involved (`grep -n` for the motion, key or plugin name), then read only the matching sections.
-- Note whether the guide already answers it, partly answers it, or is silent.
+Use "How to use the guide". Note whether it answers fully, partly, or is silent.
 
 ### 2. Verify against the real config
+Never trust the guide alone, and never answer from generic Vim knowledge alone. For every key in the answer:
 
-Never trust the guide alone, and never answer from generic Vim knowledge alone. For every key in the answer, check the config:
+- Is the key remapped? Read `lua/mappings.lua`, grep `lua/config/` and `lua/plugin_specs.lua`. Known traps: `f` is hop.nvim (2 characters plus a label), `;` is `:`, `$` is `g_` in visual mode only, `H`/`L` are remapped, `0` is `g0`, `c`/`C`/`cc` use the black-hole register, `s` is disabled (vim-sandwich), `j`/`k` follow wrapped lines only without a count.
+- **Which modes does the mapping cover?** A mapping for `{ "n", "x" }` does NOT apply after an operator (`d`, `y`, `c`).
+- Is the plugin enabled, or commented out in `plugin_specs.lua`?
+- Options that change behaviour (`nowrap`, `ignorecase smartcase`, `relativenumber`): check `lua/options.lua`.
+- A quick sandbox test is allowed (scratch copy under `/tmp` or the scratchpad, `isolated-nvim.sh`, private `tmux -L`; never push, never credentials; see the auditing skill's verification doc, section 1 rule 4).
 
-- Is the key remapped? Read `lua/mappings.lua` and grep `lua/config/` and `lua/plugin_specs.lua`. Known traps in this config: `f` is hop.nvim (2 characters plus a label), `;` is `:`, `$` is `g_` in visual mode only, `H`/`L` are remapped, `0` is `g0`, `c`/`C`/`cc` use the black-hole register, `s` is disabled (vim-sandwich), `j`/`k` follow wrapped lines only without a count.
-- **Which modes does the mapping cover?** A mapping for `{ "n", "x" }` does NOT apply after an operator (`d`, `y`, `c`). `dL` therefore uses the built-in `L` (bottom of screen, linewise) and deletes whole lines.
-- Is the plugin actually enabled, or commented out in `plugin_specs.lua`? (for example vim-visual-multi is commented out, so there is no multi-cursor.)
-- When a quick test is needed, run it yourself in a throwaway copy under `/tmp` or the scratchpad (scratch git repo, `isolated-nvim.sh`, private `tmux -L`): creating, editing, staging and committing there is allowed; `git push`, fake remotes and anything needing the user's credentials never. See the auditing skill's verification doc, section 1 rule 4.
-- Options that change behaviour: `nowrap`, `ignorecase smartcase`, `relativenumber`. Check `lua/options.lua` when they matter.
+If a check is not possible, say which part could not be verified.
 
-If a check is not possible (for example a plugin default not visible in the config), say which part could not be verified.
+### 3. Answer: numbered steps, keys clearly separated from descriptions
 
-### 3. Answer
+The user must see exactly which keys to press, in which order, and which command to run with the exact syntax. Format every answer like this:
 
-- Start with the direct answer: the keys, in order, and what each one does.
-- Give a short example of the expected result when it helps.
-- Mention related gotchas that would surprise the user (a key that looks right but is remapped, `v2t` versus `2vt`, selections include the character under the cursor, and so on).
-- Keep it short. Use a table only when comparing keys.
-- If the request cannot be done as asked, say so first, then the multi-step alternative.
+- A **numbered list, one action per step**. Each step has two visibly different parts: the **action** in a code span (keys or command), then the **description** after it, in plain text.
+- **Keys**: write each key literally in a code span, Neovim notation, keys of one sequence together, separate presses apart: `` `<Space>` `` then `` `ff` ``. Say the mode when it matters (Normal, Visual, Insert, Command-line). Say whether to press keys together or one after another, and note `<Space>` is the leader.
+- **Commands**: the full Ex command with `:` and exact syntax, placeholders in angle brackets that name what to fill in (`` `:%s/<pattern>/<replacement>/g` ``), and `<CR>` as the last step if needed. Never write a command without its arguments when it needs them.
+- A step that is only a result or check ("the cursor is now on the first match") is labeled as such, not written as an action.
+
+Example shape (generic, not a real answer):
+
+```
+1. `<Space>ff`  Opens the file finder.
+2. `<text>`  Type part of the file name to filter the list.
+3. `<CR>`  Opens the selected file.
+```
+
+Then, briefly: the result to expect, and gotchas that would surprise the user (a remapped key, `v2t` versus `2vt`, selections include the character under the cursor). If the request cannot be done as asked, say that first, then the multi-step alternative. Keep it short; a table only when comparing keys. State where the answer came from (guide, mappings, or default Neovim assumption).
 
 ### 4. Uncertain answers
+When any part is not confirmed by both the guide and the config:
 
-Whenever any part of the answer is not confirmed by both the guide and the config, or the user's report contradicts an earlier answer:
-
-- Say explicitly: **"This is an assumption, I have not been able to confirm it."** Name which part is unconfirmed.
-- Give the exact keys to try and the result you expect.
-- Ask the user to try it and **report back exactly what happened** (resulting text, selection, or error message).
-
-Do not hedge with "probably" inside an otherwise confident answer. Either it is confirmed, or it is labelled as an assumption with a test.
+- Say explicitly: **"This is an assumption, I have not been able to confirm it."** and name the unconfirmed part.
+- Give the exact keys to try and the result you expect, then ask the user to report exactly what happened.
+- No "probably" inside an otherwise confident answer: it is confirmed or it is labelled.
 
 ### 4b. Unexpected behaviour: ask about the keyboard layout, do not assume
+If a key sequence does nothing, needs an extra key, or types a strange or accented character, and config and guide do not explain it, **ask which keyboard layout or input method is used on this machine** before concluding anything. Dead keys (`"`, `'`, `` ` ``, `~`, `^` need a following `<Space>`) or an IME can swallow keys before Neovim sees them.
 
-If a key sequence does nothing, needs an extra key, or types a strange or accented character, and the config and guide do not explain it, **ask the user which keyboard layout or input method they are using on this machine** before drawing any conclusion. Dead keys (`"`, `'`, `` ` ``, `~`, `^` need a following `<Space>`) or an IME can swallow keys before Neovim sees them.
+- The usual layout is US International (with dead keys) but the user works from different PCs: never assume, always ask. Do not blame the config before the answer. The guide has a section on dead-key keyboard layouts (find it through the table of contents).
+- Quick test: type the key then a letter in Insert mode and see whether an accented letter appears.
+- Only write confirmed layout facts into the guide.
 
-- The user's usual layout is US International (with dead keys), but they work from different PCs, so **never assume** it is the same on this one. Ask, even if the symptom matches the usual layout.
-- Do not blame the config until the layout question is answered. Check the guide section "Keyboard Layouts With Dead Keys" (section 70) for the known case.
-- Suggest the quick test: type the key then a letter in Insert mode and see whether an accented letter appears.
-- Only write confirmed layout facts into the guide, and only with the user's approval.
+### 5. Always end by asking whether it worked
+Last line of every answer that gave steps, plain and short, for example: **"Did these steps work?"** Then act on the reply, following `./debugging-and-guide-update-flow.md`:
 
-### 5. After the user reports the result
+- **Yes:** confirm and stop. If the guide already covers it, nothing else happens; you may note it as confirmed. If the guide lacked it and the user confirmed the steps, the guide update of section 3 of that file still applies (the confirmation is the approval).
+- **No, and the user says what worked** (the right key or command): go straight to the guide update in that file (section 3: dispatch the `nvim-guide-maintainer` agent to fix the guide, rebuild the PDF and check the keymap desc; then you report previous state, new state and location). Also correct your own earlier answer in the conversation.
+- **No, and the user does not know what works:** start debugging. First the autonomous sandbox trial loop (section 1 there: the `nvim-trial-runner` agent, `auditing-neovim-config` trial mode, up to 20 failed attempts). If it finds a working way, offer it to the user to confirm. If it ends stale or ambiguous, continue together with the user (section 2 there) until the user says something worked, then the guide update.
+- If the result contradicts the guide text, correct the wrong text as part of that update and say what was wrong.
 
-1. Re-read the relevant guide section.
-2. **Result contradicts the guide (or your claim):** correct the wrong text in the guide right away, and tell the user what was wrong and what you changed. Also fix your own earlier answer in the conversation, not just the file. Correcting wrong information does not need approval; adding new examples does.
-3. **Result matches the guide:** say it is confirmed, then ask whether the user wants this question added to the guide as a day-to-day example (see next section). If the guide already covers it, add nothing; you may mark it as tested.
+## Rules for fixing or adding guide text
 
-### 6. Coverage check (also for questions answered without a test)
+(`nvim-guide-maintainer` follows these.)
 
-If step 1 found that the guide does not cover the question:
-
-- Ask the user: "This isn't in the guide. Do you want me to add a generalized example?" and wait.
-- **If yes:** add it (rules below). **If no or no answer:** add nothing.
-
-If the guide already covers it, do not propose anything.
-
-## Rules for adding an example (only after approval)
-
-- Generalize it: no variable names, file names or snippets from the user's current code. Use neutral placeholders (`foo`, `X`, `<char>`).
-- Put it in the matching section (selection in section 5, insert in section 4, searching in section 10, and so on). Extend an existing subsection before creating a new one. Do not renumber sections; check the table in "Quick lookup" style sections and update it if the new example belongs there.
-- Match the guide's format: Markdown tables for key / effect, short bullets for caveats, backticked keys.
-- Include the things that surprised the user: remaps, which modes, counts, what is included in a selection.
-- State the status honestly: mark as tested only if the user confirmed the exact keys; otherwise write that it was not tested yet.
-- Never duplicate: if a nearly identical entry exists, edit that one.
-- Touch only the files in `user-guide/` unless the user asks otherwise. Do not commit unless asked; this repo is public, so never put secrets or private paths in examples.
+- Generalize: no variable names, file names or snippets from the user's current code. Neutral placeholders (`foo`, `X`, `<char>`).
+- Put it in the matching chapter and section, found with the table of contents and file names. Extend an existing subsection before creating a new one. Do not renumber sections; update any quick-lookup table the entry belongs in.
+- Match the format: Markdown tables for key / effect, short bullets for caveats, backticked keys. Include what surprised the user: remaps, modes, counts, what a selection includes.
+- State status honestly: "tested" only because the user confirmed the exact keys.
+- Never duplicate: edit a nearly identical entry instead. Fix wrong text before adding new.
+- Touch only the files in `user-guide/` for the guide part (the keymap `desc` check may touch the Lua config line of the key). Do not commit unless the user asks. The repo is public: no secrets or private paths.
 
 ## Rebuild the PDF (mandatory whenever a guide file changed)
 
-The user reads the PDF, not the markdown. After the LAST edit of any `user-guide/**/*.md` file in a task (not after every single edit), always:
+After the LAST edit of any `user-guide/**/*.md` file in a task:
 
-1. `cd general/general-nvim/.config/nvim/user-guide && ./build-pdf.py` (regenerates the README table of contents and `neovim-user-guide.pdf` + `.stamp`; it falls back to `nix shell nixpkgs#pandoc nixpkgs#typst` when pandoc or typst is missing).
-2. `./build-pdf.py --check` must print `OK`. It verifies: README table of contents current, every `.md` link and `#anchor` resolves, the PDF was built from the current sources, every heading appears in the PDF text. Any `FAIL` line: fix the markdown (broken link, missing chapter comment) and rebuild; never edit the PDF or the stamp by hand.
-3. Report the page count and the `--check` result. Stage the PDF and the stamp together with the markdown (the PDF is committed so every machine opens the right one).
+1. `cd general/general-nvim/.config/nvim/user-guide && ./build-pdf.py` (regenerates the README table of contents and `neovim-user-guide.pdf` + `.stamp`; falls back to `nix shell nixpkgs#pandoc nixpkgs#typst` when pandoc or typst is missing).
+2. `./build-pdf.py --check` must print `OK` (table of contents current, every `.md` link and `#anchor` resolves, PDF built from current sources, every heading in the PDF text). Any `FAIL`: fix the markdown and rebuild; never edit the PDF or stamp by hand.
+3. Report the page count and the `--check` result. Stage the PDF and stamp together with the markdown.
 
-New chapter file: add it to `FILES` in `build-pdf.py`, start it with `<!-- chapter: Title -->`. New heading: nothing else to do, the table of contents picks it up.
+New chapter file: add it to `FILES` in `build-pdf.py`, start it with `<!-- chapter: Title -->`. New heading: the table of contents picks it up.
 
 ## Quick checklist before sending an answer
 
-- [ ] Searched the guide and re-read it fresh (not from memory)
-- [ ] Every key checked in the config (remaps and modes), re-read fresh
-- [ ] Checked whether the guide and the mappings agree, and which changed last
-- [ ] Reported any discrepancy with `file:line`
-- [ ] Anything unconfirmed is labelled as an assumption, with a test and a request for the output
-- [ ] If it cannot be done as asked, said so first
-- [ ] If the guide lacks it, asked the user whether to add a generalized example
-- [ ] Did not edit the guide with new examples without approval
-- [ ] If a guide file changed: ran `build-pdf.py`, then `build-pdf.py --check` printed OK
+- [ ] Found the right chapter through the table of contents and file names; re-read fresh
+- [ ] Guide first, then mappings, then default Neovim (labelled as assumption)
+- [ ] Every key checked in the config (remaps and modes)
+- [ ] Guide and mappings compared; discrepancies reported with `file:line`
+- [ ] Numbered steps: keys or command in code spans, description separate, exact syntax with placeholders
+- [ ] Anything unconfirmed labelled as an assumption with a test
+- [ ] Ended with "Did these steps work?"
+- [ ] On "no": followed `./debugging-and-guide-update-flow.md`
+- [ ] If a guide file changed: `build-pdf.py`, then `--check` printed OK

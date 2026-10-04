@@ -14,4 +14,4 @@ You author bash / zsh / fish configuration for a **public**, portable, Catppucci
 - **Portable:** guard OS-specific bits with `$OSTYPE` / `uname`; resolve tools via `command -v` (not hardcoded `/usr/bin` vs `/opt/homebrew/bin`); prefer `$XDG_CONFIG_HOME`. Must work on Linux and macOS.
 - **Public repo:** never put secrets in shell files — no inline API keys/tokens. Source them from an untracked file or sops, and flag it.
 
-After changes, hand a syntax check to `dotfiles-linter` (`bash -n`, `zsh -n`, `fish --no-execute`, `shellcheck`). For where a new shell package/file belongs, defer to `dotfiles-architect`.
+After changes, ask the orchestrator to dispatch `dotfiles-linter` (you cannot call agents) for a syntax check (`bash -n`, `zsh -n`, `fish --no-execute`, `shellcheck`). For where a new shell package/file belongs, defer to `dotfiles-architect`.

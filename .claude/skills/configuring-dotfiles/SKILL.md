@@ -1,6 +1,6 @@
 ---
 name: configuring-dotfiles
-description: Use this skill when the user says 'add a config for <program>', 'add an alias', 'write a fish function', 'configure my nvim/emacs', 'rice <program>', 'add a utility script', or 'dotfile this' in this PUBLIC dotfiles repo (categorized under general/, linux/, macOS/, various-scripts/, Catppuccin Mocha theme). It routes program-specific work to the right specialist (neovim-configurator, emacs-configurator, shell-config-author, script-author) or to dotfiles-architect for structural/new-program/unclear-placement decisions, verifies with dotfiles-linter (parse checks, secret scan, deployment-mapping check), and ends by handing over the exact ext-dotfiles.nix mapping line(s) needed to actually deploy the new file. Does NOT cover system-level config (NixOS modules, /etc, services - that's the ~/nix repo) and does NOT cover standalone-script requests unrelated to dotfiles.
+description: Use this skill when the user says 'add a config for <program>', 'add an alias', 'write a fish function', 'configure my nvim/emacs' (for Neovim it only handles changing the config; Neovim usage questions, audits and debugging are redirected to answering-neovim-usage-questions or auditing-neovim-config), 'rice <program>', 'add a utility script', or 'dotfile this' in this PUBLIC dotfiles repo (categorized under general/, linux/, macOS/, various-scripts/, Catppuccin Mocha theme). It routes program-specific work to the right specialist (neovim-configurator, emacs-configurator, shell-config-author, script-author) or to dotfiles-architect for structural/new-program/unclear-placement decisions, verifies with dotfiles-linter (parse checks, secret scan, deployment-mapping check), and ends by handing over the exact ext-dotfiles.nix mapping line(s) needed to actually deploy the new file. Does NOT cover system-level config (NixOS modules, /etc, services - that's the ~/nix repo) and does NOT cover standalone-script requests unrelated to dotfiles.
 ---
 
 # Configuring Dotfiles
@@ -16,9 +16,31 @@ This is a **PUBLIC** dotfiles repo - never write secrets, tokens, or credentials
 - `emacs-configurator` (sonnet) - Emacs config.
 - `shell-config-author` (sonnet) - bash/zsh/fish rc config, aliases, functions.
 - `script-author` (sonnet) - standalone scripts.
+- `nvim-guide-maintainer` (sonnet) - Neovim user guide text, PDF rebuild and key `desc` check; contract is the `answering-neovim-usage-questions` skill.
+- `nvim-gate-runner` (sonnet, read-only) - Neovim regression gate; contract is the `auditing-neovim-config` skill.
+- `nvim-trial-runner` (sonnet) - sandbox search for a working key or command; used by the Neovim skills, not by this loop.
 - `dotfiles-linter` (haiku, read-only) - parse/load checks, `ext-dotfiles.nix` deployment-mapping check, PUBLIC-repo secret scan. Never edits files.
 
 The orchestrator (this chat) is the only one that dispatches agents and loops between them - agents cannot invoke one another.
+
+## Neovim requests: check first, redirect without asking
+
+If the task touches Neovim (keys, plugins, `general-nvim`, the user guide), classify it before anything else and, when it is not an authoring task, invoke the right skill with the Skill tool immediately and stop following this one. Do not refuse and do not make the user retype the request:
+
+| The user wants... | Action |
+|---|---|
+| to know how to do something, what a key does, why a key behaved a certain way | invoke `answering-neovim-usage-questions` |
+| a key or command that does not work debugged, or a working alternative found | invoke `auditing-neovim-config` (trial mode) |
+| to audit, review, verify, check clashes, check the guide is stale, run the gate, "bug or deliberate?" | invoke `auditing-neovim-config` |
+| to ADD or CHANGE Neovim config (plugin, keymap, option, LSP, autocmd) | stay here: route to `neovim-configurator` (Loop below), then apply the Neovim guards |
+
+When unsure which row applies, ask one short question. A mixed request is split: authoring first, then the audit skill on the result.
+
+### Neovim guards for the authoring row
+
+- `neovim-configurator` already carries the standing rules (`desc`, clash check, branch rule); it ends with a guide brief. Dispatch `nvim-guide-maintainer` with that brief in the same change so the guide and PDF are updated.
+- Never touch `main`, never merge or push unasked; work on `develop` or a task branch.
+- After VERIFY, dispatch `nvim-gate-runner` for any change to Lua, plugins or keymaps, and report its verdicts next to the linter's.
 
 ## Loop
 

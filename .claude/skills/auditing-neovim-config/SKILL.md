@@ -1,6 +1,6 @@
 ---
 name: auditing-neovim-config
-description: Audits, reviews and verifies the owner's Neovim config in this dotfiles repo (general/general-nvim/.config/nvim) before a commit, PR or merge of nvim changes. Use when asked to audit, review, verify or check the neovim config, find keymap clashes or conflicts, find keymaps missing a desc, check whether the user guide is stale or wrong, run the regression gate, or decide "is this a bug or deliberate?". Holds the standing rules, the list of deliberate choices that must not be flagged, keymap false-positive catalogs, and a portable isolated test harness.
+description: Audits, reviews and verifies the owner's Neovim config in this dotfiles repo (general/general-nvim/.config/nvim) before a commit, PR or merge of nvim changes. Use when asked to audit, review, verify or check the neovim config, find keymap clashes or conflicts, find keymaps missing a desc, check whether the user guide is stale or wrong, run the regression gate, or decide "is this a bug or deliberate?". Also runs trial mode: when a keymap or command does not do what the user wants (called directly, or by answering-neovim-usage-questions after a failed answer), it tests alternatives alone in a sandbox until one works or 20 attempts fail. Holds the standing rules, the list of deliberate choices that must not be flagged, keymap false-positive catalogs, and a portable isolated test harness.
 ---
 
 # Auditing the Neovim config
@@ -13,12 +13,18 @@ Audit the config in `general/general-nvim/.config/nvim` (deployed as `~/.config/
 - "is the user guide stale or wrong?", "is this a bug or deliberate?"
 - Before a commit, PR or merge that touches the nvim config (the regression gate, mandatory diff review).
 
-For "how do I do X in Neovim" questions use `answering-neovim-usage-questions` instead.
+- "this key/command does not do what I want, find what works" (a known problem; load this skill directly and run **trial mode**, below).
+
+For "how do I do X in Neovim" questions use `answering-neovim-usage-questions` instead; it calls this skill's trial mode when its steps fail and the user does not know the fix.
+
+## Trial mode (separate from the 5-step audit)
+
+Tests alternative keymaps and commands alone in a sandbox (fake git repo, isolated nvim, private tmux) until one reproduces the goal, up to 20 failed attempts, then hands over to debugging with the user. Run by the `nvim-trial-runner` agent. Entered from `answering-neovim-usage-questions` or directly by the user. Guide fixes that follow a found answer go to the `nvim-guide-maintainer` agent. Full method, stop conditions and report format: `./trial-mode-for-usage-questions.md`. The sandbox rules of the verification doc, section 1, apply.
 
 ## The 5-step audit flow
 
 1. **Scope and state.** Run the one-minute state check (`./standing-rules-and-playbooks.md` section 6). Confirm `git branch --show-current` is `develop` or a task branch, never `main`. Work in an isolated copy, never against the live config dir for plugin-affecting runs.
-2. **Gate.** Run `bash scripts/verify.sh <label> [baseline-dir]` (see `./verification-gates-and-isolated-harness.md`). Required: startup messages, notify history, load-all, checkhealth-unexpected, luac and stderr files empty; `smart_comment` suite at least 10000 cases with 0 failures; `lazy-lock.json` unchanged. Diff against the last green gate and classify every diff line.
+2. **Gate.** Dispatch the `nvim-gate-runner` agent (it runs and classifies the gate below and returns the report), or run `bash scripts/verify.sh <label> [baseline-dir]` yourself (see `./verification-gates-and-isolated-harness.md`). Required: startup messages, notify history, load-all, checkhealth-unexpected, luac and stderr files empty; `smart_comment` suite at least 10000 cases with 0 failures; `lazy-lock.json` unchanged. Diff against the last green gate and classify every diff line.
 3. **Keymaps.** Dump all maps (global, buffer-local, lazy) and check clashes, desc, and the no-function-keys rule (`./keymap-clash-audit-and-false-positives.md`). Look every candidate finding up in its false-positive catalog first.
 4. **Guide.** Compare guide against code in both directions and run the staleness checklist (`./user-guide-audit-and-stale-info-patterns.md`). Code wins; wrong guide text is corrected, new examples need the owner's approval. Always run `user-guide/build-pdf.py --check` (README table of contents, links, PDF vs markdown); after any guide fix run `build-pdf.py` first, then `--check` must be OK.
 5. **Report.** One row per area with GREEN / ISSUES / RED, findings as `file:line | quote | class | evidence | exact fix`, a "verified OK" list and a "not re-run" list. Separate pre-existing issues from regressions. Split fixes into auto-fix and needs-user-decision. Say which checks ran and which did not apply.
@@ -59,5 +65,6 @@ Owner facts that shape the audit: the keyboard has no function keys, Insert, Pag
 - `./keymap-clash-audit-and-false-positives.md`: clash vocabulary, dump method, false-positive catalogs, which-key ignore list, desc scan, key-family map for choosing free keys, no-F-keys rules.
 - `./verification-gates-and-isolated-harness.md`: gate steps A-F, thresholds, diff meaning, headless and tmux methods, devShell testing, test pitfalls, clean-up.
 - `./user-guide-audit-and-stale-info-patterns.md`: guide structure and notation, per-claim-class verification, past wrong-info patterns, staleness checklist.
+- `./trial-mode-for-usage-questions.md`: trial mode: sandbox trial loop that searches for a working keymap or command (20-attempt cap), report format, hand-off to the guide update.
 - `./known-issues-and-environment.md`: accepted known issues, late-found bug patterns, nix and platform environment, upstream sync outcome, process lessons.
 - `scripts/`: portable harness (`verify.sh`, `isolated-nvim.sh`, `tmux-lib.sh`, `capture.lua`, `checks.lua`, `README.txt`). Needs nvim 0.12 or newer, tmux, git. Output goes to `${AUDIT_OUT:-/tmp/nvim-audit}`.

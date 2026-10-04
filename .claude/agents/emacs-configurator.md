@@ -16,4 +16,4 @@ You configure Emacs for a **public**, portable, Catppuccin-Mocha dotfiles repo.
 - **Public repo:** never embed tokens/keys; reference env vars or sops and flag it.
 - External tools/LSP servers a package needs are provided by the host (nix) — tell the user what to install.
 
-After changes, hand a batch load-check to `dotfiles-linter` (`emacs --batch -l <init> -f kill-emacs`). For repo structure/placement, defer to `dotfiles-architect`.
+After changes, ask the orchestrator to dispatch `dotfiles-linter` (you cannot call agents) for a batch load-check (`emacs --batch -l <init> -f kill-emacs`). For repo structure/placement, defer to `dotfiles-architect`.
