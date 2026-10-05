@@ -60,6 +60,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
     - [Save and quit](README.md#save-and-quit)
     - [Sessions, dashboard and zoxide](README.md#sessions-dashboard-and-zoxide)
     - [Code intelligence (LSP)](README.md#code-intelligence-lsp)
+    - [Completion and snippets](README.md#completion-and-snippets)
     - [Git day to day](README.md#git-day-to-day)
     - [Mouse](README.md#mouse)
     - [Language guides (tools that exist only for one language)](README.md#language-guides-tools-that-exist-only-for-one-language)
@@ -916,6 +917,24 @@ More: sections 30 and 58.
 | `<Space>dd` | Show the diagnostic under the cursor |
 
 More: sections 13 and 44.
+
+### Completion and snippets
+
+The completion menu opens by itself while you type in Insert mode (from 1 character; buffer words from 2).
+
+| Keys | What it does |
+| --- | --- |
+| `<Tab>` | Menu open: select the next item. Menu closed: insert a normal tab |
+| `<CR>` | Confirm the item you picked with `<Tab>`; with nothing picked it is a plain newline |
+| `<Ctrl-e>` / `<Esc>` | Close the menu (without it: end of line / leave Insert mode) |
+| `<Ctrl-d>` / `<Ctrl-f>` | Scroll the documentation window up / down (menu open) |
+| `<Ctrl-j>` / `<Ctrl-k>` | Expand a snippet or jump to the next placeholder / jump back |
+| `<Space>fs` | Gallery: fuzzy-search only your own snippets (`my_snippets/`) for this filetype and insert one |
+| `<Alt-s>` (Insert mode) | Same gallery, inserting at the cursor |
+
+Menu order: language server, then snippets, then paths, then buffer words (LaTeX files start with vimtex). In the `/` search line the menu offers buffer words; in `:` it offers paths and commands.
+
+More: sections 14, 15, 45 and 52 (the gallery is in section 52, "The snippet gallery").
 
 ### Git day to day
 
