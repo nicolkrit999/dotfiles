@@ -1215,6 +1215,12 @@ local plugin_specs = {
           if vim.b[ev.buf].claude_esc_passthrough or not is_claude_buf(ev.buf) then return end
           -- noremap <Esc> in terminal mode = send Esc to the terminal job
           vim.keymap.set("t", "<Esc>", "<Esc>", { buffer = ev.buf, nowait = true, desc = "Esc to Claude Code" })
+          -- since <Esc> no longer leaves terminal mode, <C-w>h/j/k/l must work from terminal mode
+          -- (else they are typed into Claude and only the mouse gets you back to the code)
+          for _, dir in ipairs({ "h", "j", "k", "l" }) do
+            vim.keymap.set("t", "<C-w>" .. dir, [[<C-\><C-n><C-w>]] .. dir,
+              { buffer = ev.buf, desc = "Claude Code: move to the window " .. dir })
+          end
           vim.b[ev.buf].claude_esc_passthrough = true
         end,
       })

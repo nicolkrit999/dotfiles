@@ -333,6 +333,13 @@ index           -> for (int index = start; ... typing replaces the selected plac
 (Ctrl-k)        -> back to the previous placeholder
 ```
 
+Filling the loop in (tested in a real Neovim, empty line inside a Java method): `jfor`, `<Ctrl-j>`, type `index` (every `i` is renamed), `<Ctrl-j>`, type `0` for `start`, `<Ctrl-j>`, type `10` for `end`, `<Ctrl-j>` jumps to the body.
+
+Gotchas (tested):
+
+- `<Ctrl-j>` with no snippet trigger in front of the cursor does not expand anything: it just inserts a new line.
+- An expanded snippet starts at the column where the cursor was. On a completely empty, unindented line it comes out unindented; format afterwards with `<Space>fm` (see the Java chapter).
+
 ## The snippet gallery
 
 The completion menu also lists the hundreds of built-in `vim-snippets` entries. The **snippet gallery** shows only your own snippets (the files in `my_snippets/`) for the filetype of the current buffer, plus the ones from `all.snippets`, without typing a trigger.
@@ -342,6 +349,8 @@ The completion menu also lists the hundreds of built-in `vim-snippets` entries. 
 3. Type to filter, move with `<Ctrl-n>` / `<Ctrl-p>` (see [section 12](05-search-and-files.md#12-fuzzy-finding--project-wide-search-fzf-lua), "[Moving Inside Any Picker](05-search-and-files.md#moving-inside-any-picker-lists-with-a-search-bar)")
 4. Press `<Enter>` to insert the snippet: from insert mode it lands exactly at the cursor, from normal mode right after the character under the cursor (like `a`); the usual placeholders work, jump with `<Ctrl-j>` / `<Ctrl-k>`
 5. Press `<Esc>` to cancel: nothing is inserted (from insert mode you return to insert mode)
+
+Before pressing `<Enter>`, check which line is HIGHLIGHTED, not just which lines the filter left. Example (tested in Normal mode in a Java buffer): typing `jArrayL` leaves two entries and the highlighted one was `jArrayLiteral`, not `jArrayList`. Move with `<Ctrl-n>` / `<Ctrl-p>` to the one you want first. `<Enter>` on the highlighted `jArrayLiteral` inserted `type[] name = {value1, value2, value3};`, and its fields worked with `<Ctrl-j>` / `<Ctrl-k>`.
 
 Notes:
 

@@ -53,6 +53,12 @@ function M.ask_claude()
   })
   -- <Esc> goes to Claude (interrupt) instead of leaving terminal mode; <C-\><C-n> still leaves it
   vim.keymap.set("t", "<Esc>", "<Esc>", { buffer = buf, nowait = true, desc = "Esc to Claude Code" })
+  -- <Esc> no longer leaves terminal mode, so <C-w>h/j/k/l must work from terminal mode too
+  -- (otherwise the keys are typed into Claude and the only way back to the code is the mouse)
+  for _, dir in ipairs({ "h", "j", "k", "l" }) do
+    vim.keymap.set("t", "<C-w>" .. dir, [[<C-\><C-n><C-w>]] .. dir,
+      { buffer = buf, desc = "Claude: move to the window " .. dir })
+  end
   vim.cmd("startinsert")
 end
 
