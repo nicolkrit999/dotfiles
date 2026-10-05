@@ -37,7 +37,8 @@ FILES = [
     "04-completion-snippets.md", "05-search-and-files.md", "06-windows-terminal-sessions.md",
     "07-code.md", "08-git.md", "09-ai-and-writing.md", "10-various.md", "11-plugins.md",
     "languages/java.md", "languages/python.md", "languages/latex.md",
-    "languages/markdown.md", "languages/typst.md",
+    "languages/markdown.md", "languages/typst.md", "languages/cpp.md",
+    "languages/vim.md",
 ]
 CHEAT_SHEET_TITLE = "Day-to-day cheat sheet"
 TOC_DEPTH = 3  # headings # ## ### are listed in the README table of contents

@@ -1,4 +1,4 @@
-snippet bare "barebone code template"
+snippet bare "Barebone C++ program: common includes, using std:: declarations and main" b
 #include <iostream>
 #include <vector>
 #include <string>
@@ -9,6 +9,7 @@ snippet bare "barebone code template"
 #include <stack>
 #include <queue>
 #include <numeric>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
@@ -23,23 +24,21 @@ using std::queue;
 using std::pair;
 using std::make_pair;
 
-
-
 int main()
 {
-
+	${0:// code}
 	return 0;
 }
 endsnippet
 
-snippet icd "#include directive" b
-#include <$1>
+snippet icd "#include directive (start of line)" b
+#include <${1:header}>
 $0
 endsnippet
 
-snippet plist "print vector" w
+snippet plist "print a container as [a, b, c] (needs <iostream>, <string>, <iterator>)" w
 template <class T>
-void printList(const T& arr, const string& desc){
+void printList(const T& arr, const std::string& desc){
 	std::cout << desc << ": [";
 
 	for (auto it = arr.begin(); it != arr.end(); it++){
@@ -49,22 +48,22 @@ void printList(const T& arr, const string& desc){
 }
 endsnippet
 
-snippet pmat "print list of list" w
+snippet pmat "print a vector of vectors, one [a, b, c] row per line (needs <iostream>, <vector>, <string>, <iterator>)" w
 template <class T>
-void printMat(const vector<vector<T>>& mat, const string& desc){
-	cout << desc << ": " << endl;
+void printMat(const std::vector<std::vector<T>>& mat, const std::string& desc){
+	std::cout << desc << ": " << std::endl;
 
-	for (auto it1 = mat.begin(); it1 != mat.end(); it1++){
-		auto cur_vec = *it1;
-		cout << "[";
-		for (auto it2 = cur_vec.begin(); it2 != cur_vec.end(); it2++){
-			cout << *it2 << ((std::next(it2) != cur_vec.end()) ? ", " : "]\n");
+	for (const auto& row : mat){
+		std::cout << "[";
+		for (auto it = row.begin(); it != row.end(); it++){
+			std::cout << *it << ((std::next(it) != row.end()) ? ", " : "");
 		}
+		std::cout << "]\n";
 	}
 }
 endsnippet
 
-snippet pqueue "print queue"
+snippet pqueue "print a priority_queue or stack by popping a copy (uses top(); std::queue has front() instead)"
 template <class T>
 void printQueue(T q){
 	while(!q.empty()){
@@ -75,19 +74,19 @@ void printQueue(T q){
 }
 endsnippet
 
-snippet cout "print a variable" w
-cout << "$1: " << $2 << endl;
+snippet cout "Print a labelled variable with std::cout (needs #include <iostream>)" w
+std::cout << "${1:label}: " << ${2:variable} << std::endl;
 endsnippet
 
-snippet random "Generate a random list" b
+snippet random "Function returning a vector of random ints in [low, high] (needs #include <random> and <vector>)" b
 // Generate a random sequence of length len, in range(low, high) (inclusive).
 // need to #include<random>
-vector<int> genRandom(int low, int high, int len){
+std::vector<int> genRandom(int low, int high, int len){
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<int> distribution(low, high);
 
-	vector<int> arr(len, 0);
+	std::vector<int> arr(len, 0);
 	for (int i = 0; i != len; ++i){
 		arr[i] = distribution(gen);
 	}
@@ -96,92 +95,94 @@ vector<int> genRandom(int low, int high, int len){
 }
 endsnippet
 
-snippet incset "Use set" b
+snippet incset "Include <set> and add using std::set (start of line)" b
 #include <set>
 
 using std::set;
 endsnippet
 
-snippet incmap "Use map" b
+snippet incmap "Include <map> and add using std::map (start of line)" b
 #include <map>
 
 using std::map;
 endsnippet
 
-snippet incqueue "Use queue" b
+snippet incqueue "Include <queue> and add using std::queue (start of line)" b
 #include <queue>
 
 using std::queue;
 endsnippet
 
-snippet incstr "Use string" b
+snippet incstr "Include <string> and add using std::string (start of line)" b
 #include <string>
 
 using std::string;
 endsnippet
 
-snippet incvec "Use vector" b
+snippet incvec "Include <vector> and add using std::vector (start of line)" b
 #include <vector>
 
 using std::vector;
 endsnippet
 
-snippet incstack "Use stack" b
+snippet incstack "Include <stack> and add using std::stack (start of line)" b
 #include <stack>
 
 using std::stack;
 endsnippet
 
-snippet vec "std::vector" w
-vector<$1> ${2:vec}
+snippet vec "std::vector declaration (needs using std::vector: bare or incvec)" w
+vector<${1:type}> ${2:name};$0
 endsnippet
 
-snippet map "std::map" w
-map<$1, $2> ${3:mymap}
+snippet map "std::map declaration (needs using std::map: bare or incmap; overrides the vim-snippets map)" w
+map<${1:keyType}, ${2:valueType}> ${3:name};$0
 endsnippet
 
-snippet umap "std::unordered_map"
-unordered_map<$1, $2> ${3:mymap}
+snippet umap "std::unordered_map declaration (needs using std::unordered_map: bare)" w
+unordered_map<${1:keyType}, ${2:valueType}> ${3:name};$0
 endsnippet
 
-snippet set "std::set" w
-set<$1> ${2:myset}
+snippet set "std::set declaration (needs using std::set: bare or incset)" w
+set<${1:type}> ${2:name};$0
 endsnippet
 
-snippet uset "std::unordered_set" w
-unordered_set<$1> ${2:myset}
+snippet uset "std::unordered_set declaration (needs using std::unordered_set: bare)" w
+unordered_set<${1:type}> ${2:name};$0
 endsnippet
 
-snippet queue "std::queue" w
-queue<$1> ${2:q}
+snippet queue "std::queue declaration (needs using std::queue: bare or incqueue)" w
+queue<${1:type}> ${2:name};$0
 endsnippet
 
-snippet stack "std::stack" w
-stack<$1> ${2:mystack}
+snippet stack "std::stack declaration (needs using std::stack: bare or incstack)" w
+stack<${1:type}> ${2:name};$0
 endsnippet
 
-snippet sol "solution" w
+snippet sol "LeetCode style: create a Solution object (needs a class Solution)" w
 auto solution = Solution();
 $0
 endsnippet
 
-snippet for "for loop" w
-for ($1; $2; $3){
-	$4
-}
-endsnippet
-
-snippet if "if condition" w
-if ($1){
-	$2
+snippet for "for loop with init, condition and step (overrides the vim-snippets for)" w
+for (${1:init}; ${2:condition}; ${3:step}) {
+	${4:// code}
 }
 $0
 endsnippet
 
-snippet ifelse "if else condition"
-if ($1){
-	$2
-}else{
-
+snippet if "if statement" w
+if (${1:condition}) {
+	${2:// code}
 }
+$0
+endsnippet
+
+snippet ifelse "if-else statement"
+if (${1:condition}) {
+	${2:// code}
+} else {
+	${3:// code}
+}
+$0
 endsnippet

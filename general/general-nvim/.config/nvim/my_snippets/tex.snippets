@@ -1,9 +1,9 @@
-snippet use "usepackage" b
+snippet use "\usepackage line: type the package name (start of line)" b
 \usepackage{${1:package}}
 endsnippet
 
-snippet eqa "equation environment" b
-\begin{equation}\label{$1}
-	$2
+snippet eqa "Numbered equation environment with a label, referenced with \ref{label} (start of line)" b
+\begin{equation}\label{${1:label}}
+	${2:content}
 \end{equation}
 endsnippet

@@ -428,12 +428,30 @@ The file is quoted in full (`after/lsp/ltex_plus.lua`). `enabled` lists language
 
 ## Snippets
 
-UltiSnips, file `my_snippets/tex.snippets`. Both are start-of-line snippets (`b`): type the trigger at the beginning of a line, `<Ctrl-j>` expands and jumps forward, `<Ctrl-k>` jumps back. They also appear in the completion menu (tested: `use` + `<Ctrl-j>` gave `\usepackage{}` with the cursor inside; `eqa` + `<Ctrl-j>` gave the equation environment with the cursor in `\label{}`).
+UltiSnips, file `my_snippets/tex.snippets`. Both are start-of-line snippets (`b`): type the trigger at the beginning of a line, `<Ctrl-j>` expands and jumps forward, `<Ctrl-k>` jumps back. They also appear in the completion menu, which shows the description in quotes below.
 
-| Trigger | Result |
+| Trigger | Description |
 | --- | --- |
-| `use` | `\usepackage{package}`, name selected |
-| `eqa` | `\begin{equation}\label{}` / body / `\end{equation}`; first stop in the label, second in the body |
+| `use` | \usepackage line: type the package name (start of line) |
+| `eqa` | Numbered equation environment with a label, referenced with \ref{label} (start of line) |
+
+**`use`**: the cursor starts on the `package` placeholder inside the braces.
+
+```latex
+\usepackage{package}
+```
+
+Example: `package` = `amsmath` gives `\usepackage{amsmath}`.
+
+**`eqa`**: an equation environment with a label. The first placeholder is `label` (inside `\label{}`), the second is `content` (the formula on its own indented line). Refer to the equation elsewhere with `\ref{label}` using the same label text.
+
+```latex
+\begin{equation}\label{label}
+	content
+\end{equation}
+```
+
+Example: `label` = `eq:energy`, `content` = `E = mc^2`; later `\ref{eq:energy}` prints the equation number.
 
 ## Troubleshooting
 

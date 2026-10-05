@@ -19,7 +19,7 @@ A hands-on manual for one specific Neovim setup (Catppuccin Mocha theme, plugins
 | Git | 20, 48 |
 | Claude Code, Markdown, LaTeX/Typst, spelling, URLs | 9, 27, 28, 31, 38, 49 |
 | Everything else: custom commands, configuration, automatic behaviors, shell commands, Neovide, other plugins | 34, 39 to 42, 66, 77 |
-| One chapter per language: Java, Python, LaTeX, Markdown, Typst | 78 to 82 |
+| Languages: Java, Python, LaTeX, Markdown, Typst, C++, Vim | 78 to 82, 84, 85 |
 | Catalog of every plugin, each linked to its section | 83 |
 
 **How it is organized.** Every topic is a numbered section, and the text "see section N" always means that number. Section 2 is a one-page cheat sheet of the daily keys, with pointers to the full sections. Sections with "in depth" in the title go further than the short section on the same topic. Start with section 1, then section 2; use the table of contents (or the plugin catalog, section 83) to find the rest.
@@ -628,6 +628,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Rendering inside the buffer (render-markdown.nvim)](languages/markdown.md#rendering-inside-the-buffer-render-markdownnvim)
         - [Formatting with prettier](languages/markdown.md#formatting-with-prettier)
         - [PDF export (:ToPDF)](languages/markdown.md#pdf-export-topdf)
+        - [Snippets](languages/markdown.md#snippets)
         - [Writing quality](languages/markdown.md#writing-quality)
             - [ltex_plus (grammar, LanguageTool)](languages/markdown.md#ltex_plus-grammar-languagetool)
             - [Vim spell checking](languages/markdown.md#vim-spell-checking)
@@ -650,6 +651,18 @@ Every section keeps its number; the text "see section N" in the guide refers to 
             - [What to try](languages/typst.md#what-to-try)
         - [Troubleshooting](languages/typst.md#troubleshooting)
         - [Related sections](languages/typst.md#related-sections)
+
+18. **[C++](languages/cpp.md)**
+    - [84. C++ (snippets, compile and run)](languages/cpp.md#84-c-snippets-compile-and-run)
+        - [What you get](languages/cpp.md#what-you-get)
+        - [Snippets](languages/cpp.md#snippets)
+        - [Related sections](languages/cpp.md#related-sections)
+
+19. **[Vimscript](languages/vim.md)**
+    - [85. Vimscript (snippets, source and settings)](languages/vim.md#85-vimscript-snippets-source-and-settings)
+        - [What you get](languages/vim.md#what-you-get)
+        - [Snippets](languages/vim.md#snippets)
+        - [Related sections](languages/vim.md#related-sections)
 
 <!-- toc:end -->
 

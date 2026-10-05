@@ -172,22 +172,44 @@ Conventions (the same in every Java snippet):
 
 ### Other snippets
 
-| File | Triggers |
-| --- | --- |
-| all | `arw` (right arrow), `ltx` (LaTeX symbol) |
-| cpp | `bare` (barebone template), `icd` (`#include`), `incvec` `incmap` `incset` `incqueue` `incstr` `incstack` (include that header), `vec` `map` `umap` `set` `uset` `queue` `stack` (std containers), `cout`, `plist` (print vector), `pmat` (print list of lists), `pqueue` (print queue), `random` (random list), `sol` (solution), `for`, `if`, `ifelse` |
-| markdown | `meta` (YAML front matter), `h1` ... `h6` (header), `link`, `rlink` (reference link), `img`, `font`, `more`, `detail` (clickable details), `k1` / `kbd`, `k2`, `k3` (keyboard keys), `info` `warn` `error` `success` (boxes), `td` (too long, did not read), `yh` (corner quotes) |
-| nix | `homepackages`, `systempackages`, `excludepackages`, `delibheaderhome`, `delibheadersystem`, `delibheaderhomealways`, `delibheadersystemalways`, `let`, `mkshell`, `mkderiv`, `flake`, `homefile`, `fetchgit`, `systemd` |
-| python | `print`, `impa` (import as), `main` (main boilerplate), `sol` (solution) |
-| snippets | `snip` (UltiSnips snippet definition) |
-| tex | `use` (`\usepackage{}`), `eqa` (equation environment) |
-| vim | `fun` (function), `aug` (augroup) |
+Every row gives the trigger and its description as the completion menu shows it. Explanations, expansions and placeholders are in the chapters named in the last column. The nix snippets are not described in this guide.
 
-Two examples (tested): in any file `arw` + `<Ctrl-j>` gives `--> ` with the cursor after the arrow. In a Python file `main` + `<Ctrl-j>` (at the start of a line) gives this block, with the cursor on the empty indented line inside `def main():`:
+| File | Trigger | Description | Chapter |
+| --- | --- | --- | --- |
+| all | `ltx` (regular expression `(?<!\w)ltx`) | Type ltx (not right after a word character) to insert the word LaTeX; works in every filetype | this section |
+| all | `arw` | ASCII right arrow (-->) followed by text | this section |
+| snippets | `snip` | Template for a new snippet definition (copied from vim-snippets; start of line) | this section |
+| cpp | `bare` | Barebone C++ program: common includes, using std:: declarations and main | `languages/cpp.md` |
+| cpp | `icd` | #include directive (start of line) | `languages/cpp.md` |
+| cpp | `incset` `incmap` `incqueue` `incstr` `incvec` `incstack` | Include the header and add the using line, for example "Include <set> and add using std::set (start of line)" | `languages/cpp.md` |
+| cpp | `vec` `map` `umap` `set` `uset` `queue` `stack` | std container declaration, for example "std::vector declaration (needs using std::vector: bare or incvec)"; `map` also "overrides the vim-snippets map" | `languages/cpp.md` |
+| cpp | `plist` | print a container as [a, b, c] (needs <iostream>, <string>, <iterator>) | `languages/cpp.md` |
+| cpp | `pmat` | print a vector of vectors, one [a, b, c] row per line (needs <iostream>, <vector>, <string>, <iterator>) | `languages/cpp.md` |
+| cpp | `pqueue` | print a priority_queue or stack by popping a copy (uses top(); std::queue has front() instead) | `languages/cpp.md` |
+| cpp | `cout` | Print a labelled variable with std::cout (needs #include <iostream>) | `languages/cpp.md` |
+| cpp | `random` | Function returning a vector of random ints in [low, high] (needs #include <random> and <vector>) | `languages/cpp.md` |
+| cpp | `sol` | LeetCode style: create a Solution object (needs a class Solution) | `languages/cpp.md` |
+| cpp | `for` `if` `ifelse` | for loop with init, condition and step (overrides the vim-snippets for); if statement; if-else statement | `languages/cpp.md` |
+| python | `print` | Print a text with the value of a variable (f-string: the variable name goes inside the braces) | `languages/python.md` |
+| python | `impa` `main` `sol` | Import a module under an alias (start of line); Main function plus the if __name__ == "__main__" guard (start of line); LeetCode style: create a Solution object (needs a class Solution; start of line) | `languages/python.md` |
+| tex | `use` | \usepackage line: type the package name (start of line) | `languages/latex.md` |
+| tex | `eqa` | Numbered equation environment with a label, referenced with \ref{label} (start of line) | `languages/latex.md` |
+| vim | `fun` | Vimscript function declared with abort (args are comma separated) | `languages/vim.md` |
+| vim | `aug` | Autocommand group that clears itself first (EVENT: BufWritePost, FileType, ...; PATTERN: *.vim, ...; start of line) | `languages/vim.md` |
+| markdown | `k1` / `kbd`, `k2`, `k3` | HTML <kbd> tag for one key (type k1 or kbd); two keys / three keys joined by + as <kbd> tags | `languages/markdown.md` |
+| markdown | `h1` ... `h6` | Heading of level 1 to 6: type h1 ... h6 at the start of a line | `languages/markdown.md` |
+| markdown | `meta`, `more`, `td` | YAML front matter with title, current date and time, tags and categories (start of line); Blog read-more marker; tl;dr line (start of line) | `languages/markdown.md` |
+| markdown | `img`, `link`, `detail` | Centered image / Markdown link / Collapsible details block; each overrides the vim-snippets entry of the same trigger | `languages/markdown.md` |
+| markdown | `rlink`, `font`, `yh` | Markdown reference link [text][label]; HTML font tag with a color (obsolete in HTML5); Corner brackets for quoting (CJK style) | `languages/markdown.md` |
+| markdown | `info` `warn` `error` `success` | Message box (embeds its own style block; needs network for the Font Awesome 4.2.0 icons from a remote CDN) | `languages/markdown.md` |
+
+**`ltx`** replaces the typed `ltx` with the word `LaTeX`. It does not fire when `ltx` follows a word character, so words that merely contain these letters are left alone. **`arw`** inserts `--> ` (two hyphens and a greater-than sign, plain ASCII, not a Unicode arrow) and selects the placeholder `text`, so you can type the text right after it. **`snip`** (start of line) writes a template for a new snippet definition in a `.snippets` file: the keyword `snippet`, then the placeholders `Tab_trigger`, `Description` and the options `b`, then a body line and `endsnippet`.
+
+Example: in a Python file `main` + `<Ctrl-j>` (at the start of a line) gives this block, with the `# code` placeholder on the indented line inside `def main():` selected:
 
 ```
 def main():
-    (cursor here)
+    # code
 
 
 if __name__ == "__main__":
@@ -310,14 +332,14 @@ Custom snippets live in the `my_snippets/` directory. Each file targets a specif
 
 | File | Language | Notable snippets |
 | --- | --- | --- |
-| `all.snippets` | All filetypes | General-purpose snippets |
+| `all.snippets` | All filetypes | `ltx` (the word LaTeX), `arw` (ASCII `-->` then text); see section 15, Other snippets |
 | `java.snippets` | Java | 71 snippets: input, arrays and collections, control flow, methods, classes, exceptions, file I/O, JavaFX (full list in section 15, Java snippets) |
-| `python.snippets` | Python | Python-specific patterns |
-| `cpp.snippets` | C++ | C++ templates |
+| `python.snippets` | Python | `print` (f-string), `impa`, `main`, `sol` (chapter `languages/python.md`, Snippets) |
+| `cpp.snippets` | C++ | `bare` program, includes, container declarations, print helpers, `random`, control flow (chapter `languages/cpp.md`, section 84) |
 | `nix.snippets` | Nix | Nix language patterns |
-| `tex.snippets` | LaTeX | LaTeX environments and commands |
-| `markdown.snippets` | Markdown | Markdown structures |
-| `vim.snippets` | Vimscript | Vim plugin development |
+| `tex.snippets` | LaTeX | `use` (`\usepackage`), `eqa` (equation with label) (chapter `languages/latex.md`, Snippets) |
+| `markdown.snippets` | Markdown | 17 snippets: keys, headings, links, images, front matter, message boxes (chapter `languages/markdown.md`, Snippets) |
+| `vim.snippets` | Vimscript | `fun` (function), `aug` (augroup) (chapter `languages/vim.md`, section 85) |
 | `snippets.snippets` | Snippet files | `snip`: template for a new snippet definition |
 
 ## Creating your own snippets
