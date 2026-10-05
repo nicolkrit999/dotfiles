@@ -233,6 +233,7 @@ def check_cover():
     table = src.split("**What it covers.**", 1)[1].split("\n\n**", 1)[0]
     seen = []
     for row in table.splitlines():
+        row = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", row)  # section numbers are links
         cells = row.split("|")
         if len(cells) < 4 or not re.search(r"\d", cells[2]):
             continue
@@ -257,7 +258,10 @@ def cover_markdown():
     plugins = COUNT.search(read(CATALOG))
     facts = (f"This edition: {len(sections)} numbered sections in {len(FILES)} chapters"
              + (f", {plugins.group(1)} plugins in the catalog" if plugins else "") + ".")
-    return f"{head.strip()} {facts}\n"
+    # the cover is converted on its own: point its .md links at the in-document chapter headings
+    ids = {rel: {a for _, _, a in headings(rel)} for rel in FILES}
+    head = "\n".join(rewrite_links(line, "README.md", ids) for line in head.strip().splitlines())
+    return f"{head} {facts}\n"
 
 
 def build_pdf():

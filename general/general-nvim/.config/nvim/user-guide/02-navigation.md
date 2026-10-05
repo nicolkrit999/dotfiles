@@ -119,7 +119,7 @@ Examples (tested): on `if (a && (b || c)) {` with the cursor on the first `(`, `
 
 ## Jumping to specific characters
 
-**Note**: The built-in `f` motion has been replaced by the hop.nvim plugin (see Jump Navigation section). The following built-in motions still work:
+**Note**: The built-in `f` motion has been replaced by the hop.nvim plugin (see [Jump Navigation section](#22-jump-navigation-hopnvim)). The following built-in motions still work:
 
 | Keymap | Description |
 | --- | --- |
@@ -142,7 +142,7 @@ press f, type fo ->   the first aoo and the second soo end     (a label replaces
 press s          ->   the cursor jumps to the second foo
 ```
 
-The label letters depend on the screen (here `a` and `s`), so read them from the screen. After an operator the jump is the range: `d` + `f` + `fo` + `s` on the same text deletes everything from the cursor up to and including the `f` of the second `foo` and leaves `oo end`; the range is not limited to the line (see the note on `f` after an operator in the editing chapter).
+The label letters depend on the screen (here `a` and `s`), so read them from the screen. After an operator the jump is the range: `d` + `f` + `fo` + `s` on the same text deletes everything from the cursor up to and including the `f` of the second `foo` and leaves `oo end`; the range is not limited to the line (see the note on `f` after an operator in [the editing chapter](03-editing.md#t-and-t-stop-just-before-a-character)).
 
 ## Jump history
 

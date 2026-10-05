@@ -7,7 +7,7 @@ This chapter lists every plugin of the config in one place, grouped by what it i
 
 The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of the config has no entry here, when an entry has no working link to a section that really names the plugin, or when an entry names a plugin that is no longer installed. Whoever adds, removes or renames a plugin updates this chapter and the in-depth section in the same change.
 
-**Loaded at startup.** An entry that begins with this label is loaded in every session without any trigger from you: either while Neovim starts or right after the first screen appears (lazy.nvim's `VeryLazy`), or on a bare `nvim` start for the dashboard. Entries without the label are loaded only when needed (a key, a command, a file type, a git repository, Insert mode and so on), so their startup cost is zero until then. The colorscheme of the current session is also loaded at startup, which theme that is depends on the machine (see Colorschemes).
+**Loaded at startup.** An entry that begins with this label is loaded in every session without any trigger from you: either while Neovim starts or right after the first screen appears (lazy.nvim's `VeryLazy`), or on a bare `nvim` start for the dashboard. Entries without the label are loaded only when needed (a key, a command, a file type, a git repository, Insert mode and so on), so their startup cost is zero until then. The colorscheme of the current session is also loaded at startup, which theme that is depends on the machine (see [Colorschemes](#colorschemes)).
 
 <!-- plugin-count: 118 -->
 

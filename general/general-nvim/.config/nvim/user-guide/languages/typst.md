@@ -14,10 +14,10 @@ Typst is a modern markup language that compiles to PDF (like LaTeX, but much fas
 | `tinymist` | Language server: diagnostics, completion, hover, go to definition, rename, symbols, formatter | typst devShell |
 | `typstyle` | The formatter that `tinymist` uses (`<Space>fm`) | typst devShell |
 | `zathura` | PDF viewer that reloads by itself when the PDF changes | typst devShell |
-| `ltex_plus` and `typos_lsp` | Grammar, spelling and typo diagnostics in the prose | global (see "Prose checking") |
+| `ltex_plus` and `typos_lsp` | Grammar, spelling and typo diagnostics in the prose | global (see "[Prose checking](#prose-checking-in-typst)") |
 | Buffer settings | `textwidth=100`, wrap on, colour marker at column 100, indent of 2 spaces | `after/ftplugin/typst.lua`, `lua/options.lua`, typst.vim |
 
-There are no Typst snippets (`my_snippets/` has no `typst.snippets`) and no Typst-specific completion source: completion comes from the language server (section 14).
+There are no Typst snippets (`my_snippets/` has no `typst.snippets`) and no Typst-specific completion source: completion comes from the language server ([section 14](../04-completion-snippets.md#14-autocompletion-nvim-cmp)).
 
 ## Requirements: the Typst devShell
 
@@ -33,7 +33,7 @@ A project enters it through direnv. The `.envrc` of a Typst project contains one
 use_dev_env typst
 ```
 
-Then `cd` into the project (run `direnv allow` once per project). Start Neovim from that shell, so it sees the programs. Or, in an already running Neovim, run `:DevEnv typst` (then `<CR>`): it adds the programs to `PATH` for this session, loads typst.vim and enables tinymist (section 43). Check:
+Then `cd` into the project (run `direnv allow` once per project). Start Neovim from that shell, so it sees the programs. Or, in an already running Neovim, run `:DevEnv typst` (then `<CR>`): it adds the programs to `PATH` for this session, loads typst.vim and enables tinymist ([section 43](../07-code.md#43-how-the-development-toolchain-fits-together)). Check:
 
 ```bash
 which typst tinymist typstyle zathura
@@ -64,7 +64,7 @@ which typst tinymist typstyle zathura
 | --- | --- | --- |
 | `<Space>tw` | Typst buffers only | Runs `:TypstWatch`: `typst watch --diagnostic-format short <file> --open <viewer>` as a background job. Pressing it again stops the old job and starts a new one (tested: new process id) |
 | `:TypstWatch {args}` | needs typst.vim | Same, with extra `typst` options, e.g. `:TypstWatch --root ..` |
-| `:make` | needs typst.vim | Compiles the file once (`typst compile --diagnostic-format short %`); errors go to the quickfix list (section 26) |
+| `:make` | needs typst.vim | Compiles the file once (`typst compile --diagnostic-format short %`); errors go to the quickfix list ([section 26](../05-search-and-files.md#26-quickfix--location-list)) |
 | `:Toc` / `:Tocv` | needs typst.vim | Table of contents of the `=` headings in a vertical location list on the right; `:Toch` horizontal, `:Toct` in a new tab. Press `Enter` on a line to jump |
 | `<Space>fm` | global | Format the whole file with the language server (typstyle). Tested: `#greet(   "x"  )   #let   y=3` became `#greet("x")   #let y = 3` |
 | `gq` | global | Reformats prose lines to `textwidth` (100); not the Typst formatter |
@@ -72,9 +72,9 @@ which typst tinymist typstyle zathura
 | `gd` | LSP | Go to definition: from a function call to its `#let`, from `@intro` to the `<intro>` label (tested) |
 | `<Space>rn` | LSP | Rename symbol (`tinymist` supports rename) |
 | `<Space>ca` | LSP | Code action menu at the cursor |
-| `]d` / `[d`, `<Space>dd` | global | Next / previous diagnostic; `<Space>dd` shows a float with the diagnostic of the current line (section 13) |
+| `]d` / `[d`, `<Space>dd` | global | Next / previous diagnostic; `<Space>dd` shows a float with the diagnostic of the current line ([section 13](../07-code.md#13-lsp-language-server-protocol)) |
 | `gcc` | global | Comment line with `//` (typst.vim sets `commentstring` to `// %s`) |
-| `<Space>t` | global | Symbol outline (aerial, section 37); in Typst buffers see the note below |
+| `<Space>t` | global | Symbol outline (aerial, [section 37](../02-navigation.md#37-symbol-outline-aerialnvim)); in Typst buffers see the note below |
 | `[t` / `]t` | aerial | Previous / next symbol (heading or `#let`) |
 
 Note on `<Space>t`: in Typst buffers `<Space>tw` exists next to the global `<Space>t` (outline). When you press `<Space>t` alone, Neovim waits `timeoutlen` (500 ms) for a possible `w` before it opens the outline. This is expected; press `<Space>t` and wait half a second.
@@ -115,13 +115,13 @@ What it provides, as tested in a real session:
 | Feature | How to see it |
 | --- | --- |
 | Diagnostics | A broken line (`#greet( 1 ,  2 )` with too many arguments) showed `typst:18:unexpected argument` in `vim.diagnostic.get()` and the error sign in the gutter. Source name: `typst` |
-| Completion | 38 items for `#set te...` (`array literal`, `cite`, `context expression`, ...) in the completion menu (section 14) |
+| Completion | 38 items for `#set te...` (`array literal`, `cite`, `context expression`, ...) in the completion menu ([section 14](../04-completion-snippets.md#14-autocompletion-nvim-cmp)) |
 | Hover | `K` on a function shows its signature, e.g. `let greet(name: str) = str` |
 | Definition | `gd` on a call or on a `@label` |
 | Symbols | The outline (`<Space>t`) lists headings and `#let` definitions |
 | Formatter | `<Space>fm` (typstyle) |
 
-Check which servers are attached: `:LspAttached` (popup) or the statusline (right side, first name is the main server `tinymist`, `(+2)` the others). `:LspInfo` shows details; `:LspLog` opens the log (section 13).
+Check which servers are attached: `:LspAttached` (popup) or the statusline (right side, first name is the main server `tinymist`, `(+2)` the others). `:LspInfo` shows details; `:LspLog` opens the log ([section 13](../07-code.md#13-lsp-language-server-protocol)).
 
 ## Watch, compile and the PDF
 
@@ -198,7 +198,7 @@ else
 end
 ```
 
-The `<Space>tw` part of this file is the block above ("Watch, compile and the PDF"); the two `vim.opt_local` lines are the `textwidth` and `wrap` rows in "Filetype settings".
+The `<Space>tw` part of this file is the block above ("[Watch, compile and the PDF](#watch-compile-and-the-pdf)"); the two `vim.opt_local` lines are the `textwidth` and `wrap` rows in "[Filetype settings](#filetype-settings)".
 
 | Question | Answer |
 | --- | --- |
@@ -206,8 +206,8 @@ The `<Space>tw` part of this file is the block above ("Watch, compile and the PD
 | Which viewer? | `$TYPST_PDF_VIEWER` if set, else `zathura` if installed, else (empty value) `--open` alone, i.e. the system default PDF program |
 | Where is the PDF? | Next to the `.typ` file with the same name (`main.typ` gives `main.pdf`). Tested. (`g:typst_output_to_tmp` is not set, so `/tmp/typst_out` is not used) |
 | When does it recompile? | Every time the `.typ` file (or a file it imports) is saved |
-| Why is auto-save off for Typst? | A recompile on every focus change would restart the watcher over and over; save with `:w` (section 42) |
-| Where are compile errors? | In the quickfix list (opens at the bottom, cursor stays in your window). Lines look like `main.typ\|19 col 13\| error: unexpected argument`. `]q`-style quickfix keys are in section 26 |
+| Why is auto-save off for Typst? | A recompile on every focus change would restart the watcher over and over; save with `:w` ([section 42](../10-various.md#42-automatic-behaviors)) |
+| Where are compile errors? | In the quickfix list (opens at the bottom, cursor stays in your window). Lines look like `main.typ\|19 col 13\| error: unexpected argument`. `]q`-style quickfix keys are in [section 26](../05-search-and-files.md#26-quickfix--location-list) |
 | What happens to the PDF on an error? | The old PDF stays (tested: file time unchanged) until the error is fixed |
 | Does a fixed error clear the window? | Yes: the next successful compile empties the list and closes the window (tested) |
 | How to stop? | Quit Neovim. A second `<Space>tw` replaces the running watcher. There is no stop command |
@@ -221,10 +221,10 @@ To test the viewer by hand without Neovim: `zathura main.pdf` (reloads on change
 | --- | --- |
 | `ltex_plus` | LanguageTool (English, `en-US`) on the text: `'smal': Possible spelling mistake found.`, `Don't put a space before the full stop.`. Source name `LTeX`. Needs `ltex-ls-plus` installed globally |
 | `typos_lsp` | Common typos: `` `smal` should be `small` ``. Source name `typos` |
-| `<Space>cz` | Toggles Vim's own spell checker (section 31); `zg` adds a word to your English list, `2zg`/`3zg`/`4zg` Italian/German/French |
+| `<Space>cz` | Toggles Vim's own spell checker ([section 31](../09-ai-and-writing.md#31-spell-checking)); `zg` adds a word to your English list, `2zg`/`3zg`/`4zg` Italian/German/French |
 | `<Space>ca` on a warning | Offers the fix (replace the word) |
 
-All three appear as diagnostics together with the `tinymist` ones (use `]d`, `<Space>dd`). Typst code is not skipped: LanguageTool may complain about markup such as `#link(...)`. Both tools never attach to files that are too big (section 42).
+All three appear as diagnostics together with the `tinymist` ones (use `]d`, `<Space>dd`). Typst code is not skipped: LanguageTool may complain about markup such as `#link(...)`. Both tools never attach to files that are too big ([section 42](../10-various.md#42-automatic-behaviors)).
 
 ## Filetype settings
 
@@ -236,7 +236,7 @@ All three appear as diagnostics together with the `tinymist` ones (use `]d`, `<S
 | `expandtab`, `shiftwidth` | spaces, 2 | typst.vim |
 | `commentstring` | `// %s` | typst.vim |
 | `iskeyword` | letters, digits, `_`, `-` and accents | typst.vim: `ciw` on `my-label` takes the whole word |
-| Folding | off (`typst_folding = 0`; `foldmethod=manual`); folds in general come from nvim-ufo (section 18) | `plugin_specs.lua` |
+| Folding | off (`typst_folding = 0`; `foldmethod=manual`); folds in general come from nvim-ufo ([section 18](../07-code.md#18-code-folding-nvim-ufo)) | `plugin_specs.lua` |
 | Concealing | off (`typst_conceal*` all 0): you see the raw source | `plugin_specs.lua` |
 | Auto-save | never for Typst files | `plugin_specs.lua` (auto-save condition) |
 
@@ -297,9 +297,9 @@ $ E = m c^2 $
 | Two PDFs or a PDF in `out/` | A server export was enabled by hand | Keep `exportPdf = "never"` in `lua/config/lsp.lua` |
 | Quickfix window did not open | The error has no `file:line:col` (e.g. a missing font warning) | Run `:!typst compile --diagnostic-format short %` and read the output |
 | `<Space>t` feels slow in Typst files | It waits for a possible `w` (`<Space>tw`) | Expected; wait 500 ms, or use `:AerialToggle` |
-| Warnings about prose inside markup | LanguageTool reads Typst source as text | Ignore, or `<Space>cz`/`zg` for words; see section 31 |
+| Warnings about prose inside markup | LanguageTool reads Typst source as text | Ignore, or `<Space>cz`/`zg` for words; see [section 31](../09-ai-and-writing.md#31-spell-checking) |
 | File not saved automatically | By design, Typst files are excluded from auto-save | `:w` |
 
 ## Related sections
 
-Section 13 (LSP), 14 (autocompletion), 18 (folding), 26 (quickfix and location list), 27 (Markdown), 28 (LaTeX and Typst overview), 31 (spell checking), 32 (statusline), 37 (symbol outline), 41 (filetype settings), 42 (automatic behaviours), 44 (LSP in depth).
+Section [13](../07-code.md#13-lsp-language-server-protocol) (LSP), [14](../04-completion-snippets.md#14-autocompletion-nvim-cmp) (autocompletion), [18](../07-code.md#18-code-folding-nvim-ufo) (folding), [26](../05-search-and-files.md#26-quickfix--location-list) (quickfix and location list), [27](../09-ai-and-writing.md#27-markdown-support) (Markdown), [28](../09-ai-and-writing.md#28-latex-and-typst-support) (LaTeX and Typst overview), [31](../09-ai-and-writing.md#31-spell-checking) (spell checking), [32](../06-windows-terminal-sessions.md#32-statusline-lualinenvim) (statusline), [37](../02-navigation.md#37-symbol-outline-aerialnvim) (symbol outline), [41](../10-various.md#41-filetype-specific-settings) (filetype settings), [42](../10-various.md#42-automatic-behaviors) (automatic behaviours), [44](../07-code.md#44-language-server-protocol-lsp-in-depth) (LSP in depth).

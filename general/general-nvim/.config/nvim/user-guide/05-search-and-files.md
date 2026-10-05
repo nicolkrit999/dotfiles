@@ -455,7 +455,7 @@ You renamed `/api/users` to `/api/v2/users`:
 | `:cfdo {cmd}` | Run `{cmd}` once per **file** in the quickfix list (visits each file only once) |
 | `:bufdo {cmd}` | Run `{cmd}` on every **open buffer** (not just quickfix results) |
 
-For search-and-replace use `:cfdo %s/old/new/g` (see Method 2 for why a plain `:cdo s/old/new/g` can stop early). `:cdo` is fine for commands that act on the entry's line once, or with the `e` flag.
+For search-and-replace use `:cfdo %s/old/new/g` (see [Method 2](#method-2-grep--cfdo-best-for-plain-text) for why a plain `:cdo s/old/new/g` can stop early). `:cdo` is fine for commands that act on the entry's line once, or with the `e` flag.
 
 Example (tested): the file `x.txt` has the single line `x and x`.
 
@@ -495,7 +495,7 @@ Several things look the same: a search bar on top and a filtered list below it. 
 | `<Enter>` | Choose the item (or the marked ones) |
 | `<Esc>` | fzf-lua: close the picker. snacks and Telescope: the first `<Esc>` leaves the search bar for Normal mode, where `j` / `k` move the list; a second `<Esc>` closes it |
 
-The same `<Ctrl-n>` / `<Ctrl-p>` also move through the completion menu (section 14); on the `:` command line use `<Tab>` / `<S-Tab>`.
+The same `<Ctrl-n>` / `<Ctrl-p>` also move through the completion menu ([section 14](04-completion-snippets.md#14-autocompletion-nvim-cmp)); on the `:` command line use `<Tab>` / `<S-Tab>`.
 
 ## Keymaps
 
@@ -507,9 +507,9 @@ The same `<Ctrl-n>` / `<Ctrl-p>` also move through the completion menu (section 
 | `<Space>ft` | Search tags (functions, classes) in the current buffer (needs `ctags`; the Nix nvim wrapper provides universal-ctags) |
 | `<Space>fb` | Search currently open buffers |
 | `<Space>fr` | Search recently opened files |
-| `<Space>fs` | Search only your own snippets (`my_snippets/`) and insert one; also `<Alt-s>` in insert mode (section 52, The snippet gallery) |
+| `<Space>fs` | Search only your own snippets (`my_snippets/`) and insert one; also `<Alt-s>` in insert mode ([section 52, The snippet gallery](04-completion-snippets.md#the-snippet-gallery)) |
 | `<Space>gbl` | Fuzzy-search git branches (`<Enter>` checks the branch out) |
-| `<Space>gB` | Branch menu (the same menu as clicking the branch name in the statusline): choose a branch and Neovim switches to it. Move with `<Ctrl-n>` / `<Ctrl-p>`, see "Moving Inside Any Picker" |
+| `<Space>gB` | Branch menu (the same menu as clicking the branch name in the statusline): choose a branch and Neovim switches to it. Move with `<Ctrl-n>` / `<Ctrl-p>`, see "[Moving Inside Any Picker](#moving-inside-any-picker-lists-with-a-search-bar)" |
 
 `<Space>ff` has no preview window and shows git status icons next to modified/untracked files; `.gitignore` is respected.
 
@@ -676,7 +676,7 @@ The quickfix list is a central tool for developers. It's a list of locations (fi
 | Command | What it does |
 | --- | --- |
 | `:cfdo %s/old/new/g \| update` | Run a substitution once in every file of the quickfix list, then save it |
-| `:cdo s/old/new/ge \| update` | The same per quickfix entry (the `e` flag is needed, see the Multi-File Search and Replace section) |
+| `:cdo s/old/new/ge \| update` | The same per quickfix entry (the `e` flag is needed, see the [Multi-File Search and Replace](#67-multi-file-search-and-replace-complete-guide) section) |
 
 **Example workflow**: Rename a string across the project:
 1. `:grep "oldName"` to populate quickfix with all occurrences
@@ -688,7 +688,7 @@ Plugin: **trouble.nvim**. A nicer interface for browsing diagnostics and quickfi
 
 | Keymap / Command | What it does |
 | --- | --- |
-| `<Space>dw` | Toggle Trouble with the diagnostics of every loaded buffer, grouped by file (`:Trouble diagnostics toggle`; see "Diagnostics in depth" in the code chapter) |
+| `<Space>dw` | Toggle Trouble with the diagnostics of every loaded buffer, grouped by file (`:Trouble diagnostics toggle`; see "[Diagnostics in depth](07-code.md#diagnostics-in-depth)" in the code chapter) |
 | `:Trouble` | Open Trouble window |
 
 Trouble shows diagnostics grouped by file with icons and colors, making it easier to triage errors.

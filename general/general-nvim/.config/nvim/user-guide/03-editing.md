@@ -126,7 +126,7 @@ yanky.nvim loads right after the first screen (VeryLazy), so every yank of the s
 | --- | --- |
 | `.` | Repeat the last change. Works with most editing commands. Extremely powerful: e.g., `ciw` + type new word + `<Esc>`, then move to another word and press `.` to repeat. |
 
-Example: `foo x foo`: `ciw`, type `bar`, `<Esc>`, `ww` (to the second `foo`), `.` -> `bar x bar`. More scenarios are in section 61 (the dot command).
+Example: `foo x foo`: `ciw`, type `bar`, `<Esc>`, `ww` (to the second `foo`), `.` -> `bar x bar`. More scenarios are in [section 61](#61-the-dot-command-----repeating-actions) (the dot command).
 
 ## Line operations
 
@@ -175,7 +175,7 @@ Join it back with `gS` from any of the lines between the brackets or from the cl
 
 - It works from the Treesitter syntax tree, so it needs a parser for the file type, and treesj needs a rule ("preset") for that language: it ships rules for many languages (for example Lua, Python, Java, JavaScript / TypeScript, JSON, Nix, Rust, C / C++, YAML, TOML), not for every file type.
 - The plugin's own default keys are switched off in `lua/config/treesj.lua`; `gS` is the only one.
-- Capital `gS` is treesj; lowercase `gs` is vim-swap's interactive swap (section 65). It loads the first time `gS` is pressed.
+- Capital `gS` is treesj; lowercase `gs` is vim-swap's interactive swap ([section 65](#65-swapping-function-arguments-vim-swap)). It loads the first time `gS` is pressed.
 
 ## Indentation
 
@@ -445,7 +445,7 @@ How to select (or delete/copy/change) from the cursor to a specific character, w
 **Golden rules**
 - The character **under the cursor is always included** in a visual selection, both at the start and at the end.
 - Everything below works after `v`. Most of it also works after an operator (`d`, `y`, `c`) in place of `v`: for example `vt)` -> `dt)`, `yt)`, `ct)`. Exceptions are noted below.
-- A *selection* can only be one continuous area. You cannot select two separate places at once (see "Non-contiguous lines" below).
+- A *selection* can only be one continuous area. You cannot select two separate places at once (see "[Non-contiguous lines](#non-contiguous-lines-for-example-line-3-and-line-10-together)" below).
 
 ### Quick lookup
 
@@ -537,7 +537,7 @@ Searching with `/` (forward) or `?` (backward) works as a motion after `v`:
 - **The count counts matches, not lines.** `2/foo` means "the 2nd `foo` after the cursor, wherever it is". It does not care on which line a match is. If a line you expected has no `foo`, the count simply moves on to the next match.
 - Because it counts matches, it also works **inside a single line**: if a line contains `foo` twice, `v2/foo/e<Enter>` selects up to the end of the second `foo` on that same line (tested: on a line with `Nome` and `nome`, the selection ended on the last letter of the second match, `nome`). (Unlike `t`, which also works on one line, search lets you target a whole word or phrase, not just one character.)
 - If there are fewer matches than the count, the search **wraps** to the top of the file (`wrapscan` is on by default and this config does not change it) and keeps counting, so you can end up before the cursor. Check the hlslens `[n/total]` overlay.
-- `ignorecase smartcase` is on, so a lowercase pattern (`foo`) also matches `Foo`. Type a capital letter to make it case-sensitive. (This is for `/` and `?`; `:s` and `:g` always ignore case here, see the Substitution section.)
+- `ignorecase smartcase` is on, so a lowercase pattern (`foo`) also matches `Foo`. Type a capital letter to make it case-sensitive. (This is for `/` and `?`; `:s` and `:g` always ignore case here, see the [Substitution](05-search-and-files.md#substitution-find--replace-in-current-file) section.)
 - `/` is not remapped in this config.
 - With operators, `d/foo<Enter>` deletes up to (not including) the match; `d/foo/e<Enter>` includes the last letter of the match (tested: with the cursor on the start of `two words`, `d/words/e<Enter>` deleted everything up to and including the last letter of `words`).
 
@@ -616,8 +616,8 @@ Not possible. Vim has no selection of separate pieces, and this config has no mu
 - **The numbers are absolute file line numbers**, not relative to the cursor, and it does not matter where the cursor is. With relative numbers on, only the cursor line shows its absolute number in the gutter; move onto a line to read it. Line 1 counts even if it is blank (a file that starts with an empty line has its first real line at number 2).
 - **Relative addresses**: `.` is the current line and `+N` / `-N` are N lines after/before it, so they match the relative numbers in the gutter. Tested: `;.t.` duplicated the current line and left the cursor on the new copy. Also tested: `;.m+2` moves the current line to below the line 2 lines further down, and `;.,+3d` deletes the current line and the next 3 (4 lines in total).
 - **Blank lines hide the effect**: moving or copying a blank line next to another blank line changes nothing you can see. Use a line with text to check `m` and `t`.
-- **Same spot on adjacent lines**: `<Ctrl-v>` block mode, but only for adjacent lines (see the Visual Block Editing section).
-- **Matching by content instead of number**: the `:g` command (see its section).
+- **Same spot on adjacent lines**: `<Ctrl-v>` block mode, but only for adjacent lines (see the [Visual Block Editing](#62-visual-block-editing-multi-cursor-like) section).
+- **Matching by content instead of number**: the `:g` command (see [its section](#71-the-global-command-g)).
 
 ---
 
@@ -642,7 +642,7 @@ This section covers everything about matching, jumping to, selecting inside, cha
 
 ## Selecting inside/around pairs
 
-See the full table in the Selection section above (with a sample line and the selected text for each key, under "Example for the text objects above"). Quick summary:
+See the full table in the [Selection section](#5-selection-visual-mode) above (with a sample line and the selected text for each key, under "[Example for the text objects above](#example-for-the-text-objects-above)"). Quick summary:
 
 | Pattern | Inside | Around (including delimiters) |
 | --- | --- | --- |
@@ -1197,7 +1197,7 @@ Example: in a Lua buffer the lines `if x then` / `print(1)` / `end` become `if x
 
 1. `:%g/^$/d` -- globally delete lines matching "empty"
 
-Careful: `^$` only matches truly empty lines. On `a`, empty, `b`, a line with two spaces, `c` it leaves the whitespace-only line (`a`, `b`, `  `, `c`). To remove those too use `:g/^\s*$/d` (see section 71), which gives `a`, `b`, `c`.
+Careful: `^$` only matches truly empty lines. On `a`, empty, `b`, a line with two spaces, `c` it leaves the whitespace-only line (`a`, `b`, `  `, `c`). To remove those too use `:g/^\s*$/d` (see [section 71](#71-the-global-command-g)), which gives `a`, `b`, `c`.
 
 ## Sort lines
 
@@ -1525,7 +1525,7 @@ Sample for the commands below: lines `a`, `TODO b`, `c`, `TODO d` (tested).
 :g/import/m 0                   -- move all import lines to the top of the file
 ```
 
-This does not sort: each match is moved to line 0 in turn, so several matches end up in REVERSE order (tested). Lines `a`, `TODO b`, `c`, `TODO d` with `:g/TODO/m 0` give `TODO d`, `TODO b`, `a`, `c`. To sort lines, use `:sort` (see "Sort lines" in section 64).
+This does not sort: each match is moved to line 0 in turn, so several matches end up in REVERSE order (tested). Lines `a`, `TODO b`, `c`, `TODO d` with `:g/TODO/m 0` give `TODO d`, `TODO b`, `a`, `c`. To sort lines, use `:sort` (see "[Sort lines](#sort-lines)" in [section 64](#64-everyday-editing-scenarios)).
 
 ---
 
@@ -1546,7 +1546,7 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `C` | Change from cursor to end of line | Deletes the rest of the line and enters insert mode: `foo bar` with the cursor on `b` -> type `baz` -> `foo baz` |
 | `c$` | Same as `C` | `foo bar` with the cursor on `b` -> type `baz` -> `foo baz` |
 | `ct)` | Change from cursor to before `)` (useful inside function arguments) | `f(old, x)` with the cursor on `o` -> type `new` -> `f(new)` (`old, x` is replaced) |
-| `cf,` + char + label | Change from the cursor through a `,` picked with hop: `f` is hop's 2-character jump, so type `,` and the character after it, then the label (may be several lines away; see "Precision Selection") | `f` is hop.nvim here, not the built-in |
+| `cf,` + char + label | Change from the cursor through a `,` picked with hop: `f` is hop's 2-character jump, so type `,` and the character after it, then the label (may be several lines away; see "[Precision Selection](#precision-selection-from-the-cursor-to-an-exact-spot)") | `f` is hop.nvim here, not the built-in |
 
 ## Deleting text
 
@@ -1607,11 +1607,11 @@ Quick-reference card of the most powerful editing combinations for daily use.
 
 | Pattern | How it works | Example |
 | --- | --- | --- |
-| `*` then `ciw` then `n.n.n.` | Find-and-replace one at a time with full control | `foo a foo b foo`: `*ciwbar<Esc>n.` -> `bar a bar b foo` (section 61) |
-| `Qa` ... `q` then `@a` | Record and replay any sequence of actions | `a`, `b`, `c`, `d`: record `A;<Esc>j` on `a`, then `3@a` -> `a;`, `b;`, `c;`, `d;` (section 60) |
-| `V` select then `:norm @a` | Run a macro on selected lines | `a`, `b`, `c` with the macro `A;<Esc>`: `ggVG` `:normal @a` -> `a;`, `b;`, `c;` (section 60) |
+| `*` then `ciw` then `n.n.n.` | Find-and-replace one at a time with full control | `foo a foo b foo`: `*ciwbar<Esc>n.` -> `bar a bar b foo` ([section 61](#61-the-dot-command-----repeating-actions)) |
+| `Qa` ... `q` then `@a` | Record and replay any sequence of actions | `a`, `b`, `c`, `d`: record `A;<Esc>j` on `a`, then `3@a` -> `a;`, `b;`, `c;`, `d;` ([section 60](#60-macros-in-depth)) |
+| `V` select then `:norm @a` | Run a macro on selected lines | `a`, `b`, `c` with the macro `A;<Esc>`: `ggVG` `:normal @a` -> `a;`, `b;`, `c;` ([section 60](#60-macros-in-depth)) |
 | `:g/pattern/command` | Run a command on every matching line | `:g/TODO/d` on `a`, `TODO b`, `c` -> `a`, `c` |
-| `:grep "text"` then `:cfdo ...` | Project-wide search and replace (the substitute + `\| update` recipe is in section 67) | see section 67 |
+| `:grep "text"` then `:cfdo ...` | Project-wide search and replace (the substitute + `\| update` recipe is in [section 67](05-search-and-files.md#67-multi-file-search-and-replace-complete-guide)) | see [section 67](05-search-and-files.md#67-multi-file-search-and-replace-complete-guide) |
 | `<Space>rn` | Intelligent rename across project | N/A (an LSP rename: the symbol is renamed in every file that uses it) |
 | `qf` list + `:cnext`/`:cprev` | Jump through search results or errors | N/A (moves the cursor to the next / previous entry of the quickfix list) |
 | `.` | Repeat last change (combine with `n` for find-and-repeat) | `foo x foo`: `ciw` + `bar` + `<Esc>`, `ww`, `.` -> `bar x bar` |

@@ -3,7 +3,7 @@
 
 # 80. LaTeX (vimtex, texlab, ltex, PDF viewer)
 
-This section covers everything that is specific to LaTeX in this config: what each tool is for, how it works, the keys, and what to do when something fails. Global things (LSP keys, completion menu, windows, spell checking) are only mentioned with a pointer to their own section. Typst and Markdown have their own sections.
+This section covers everything that is specific to LaTeX in this config: what each tool is for, how it works, the keys, and what to do when something fails. Global things (LSP keys, completion menu, windows, spell checking) are only mentioned with a pointer to their own section. [Typst](typst.md#82-typst-typstvim-tinymist-watch-and-preview) and [Markdown](markdown.md#81-markdown-writing-preview-footnotes-pdf) have their own sections.
 
 Everything marked "(tested)" was run in a real Neovim inside the LaTeX devShell with a scratch project (October 2026).
 
@@ -27,7 +27,7 @@ In a `.tex` buffer the config also sets `textwidth = 120`, `wrap` on and a colum
 
 vimtex is **enabled only when `latex` is on PATH**:
 
-The real spec head (`lua/plugin_specs.lua`; the `init` function is shown in pieces under "How vimtex is set up" below):
+The real spec head (`lua/plugin_specs.lua`; the `init` function is shown in pieces under ["How vimtex is set up"](#how-vimtex-is-set-up-the-real-code) below):
 
 ```lua
 -- LaTeX support: loaded on every platform whenever `latex` is on PATH (on Linux via the LaTeX devShell)
@@ -45,7 +45,7 @@ The real spec head (`lua/plugin_specs.lua`; the `init` function is shown in piec
 In plain words:
 
 - `enabled`: the plugin only exists when `latex` is on PATH, as described above.
-- `lazy = false`: vimtex is **not** lazy-loaded on `ft = "tex"`. The PDF viewer's Ctrl+click starts a separate headless Neovim with no `tex` file, and that Neovim needs the `:VimtexInverseSearch` command, which only exists once vimtex is loaded (see "The viewer").
+- `lazy = false`: vimtex is **not** lazy-loaded on `ft = "tex"`. The PDF viewer's Ctrl+click starts a separate headless Neovim with no `tex` file, and that Neovim needs the `:VimtexInverseSearch` command, which only exists once vimtex is loaded (see ["The viewer"](#the-viewer)).
 - `init` runs before the plugin loads and sets its options (the next section).
 
 Outside a LaTeX environment the plugin does not load: no `<Space>rf`, no `<F9>`, no `\ll`, no `:Vimtex*` commands. The environment comes from the flake `~/nix/templates/krit/dev-environments/language-specific/latex/flake.nix`. Its packages: `texlive.combined.scheme-full` (gives `latex`, `latexmk`, all packages), `texlab`, `zathura`, `pandoc`, `tectonic`, `latex2html`, `latex2mathml`.
@@ -57,7 +57,7 @@ Outside a LaTeX environment the plugin does not load: no `<Space>rf`, no `<F9>`,
 
 Check inside the folder: `which latex latexmk texlab zathura` must print four paths.
 
-**Option 1: `:DevEnv latex` in the running Neovim.** Type `:DevEnv latex` then `<CR>`. It evaluates the LaTeX flake in the background (about 10 seconds the first time, then cached), adds its programs to `PATH` for this session, enables texlab, loads vimtex and replays the file type for open `.tex` buffers. A notification `DevEnv: latex ready: ...` lists what started. Opening a `.tex` file without `latex` shows a one-time hint, `latex not found on PATH: run :DevEnv latex to enter its devShell`. Details and the list of all devShells: section 43. It affects this session only.
+**Option 1: `:DevEnv latex` in the running Neovim.** Type `:DevEnv latex` then `<CR>`. It evaluates the LaTeX flake in the background (about 10 seconds the first time, then cached), adds its programs to `PATH` for this session, enables texlab, loads vimtex and replays the file type for open `.tex` buffers. A notification `DevEnv: latex ready: ...` lists what started. Opening a `.tex` file without `latex` shows a one-time hint, `latex not found on PATH: run :DevEnv latex to enter its devShell`. Details and the list of all devShells: [section 43](../07-code.md#43-how-the-development-toolchain-fits-together). It affects this session only.
 
 **Option 2: start Neovim from inside the devShell.** The tools are looked up when Neovim starts; entering the shell with direnv or `nix develop` afterwards does not enable vimtex in an already running Neovim (use Option 1 for that).
 
@@ -65,7 +65,7 @@ Outside the devShell a `.tex` file still gets syntax colours, `ltex_plus`, `typo
 
 ## How vimtex is set up (the real code)
 
-All of it is the `init` function of the vimtex spec in `lua/plugin_specs.lua`, quoted verbatim in four pieces plus a short closing block (the spec head is shown in "What it needs"). Each piece is dedented to its own left margin (the original is indented 10 spaces inside `vim.cmd`); only the indentation differs from the file. The VimL part sits inside `vim.cmd([[ ... ]])` and only runs when `latex` is on PATH.
+All of it is the `init` function of the vimtex spec in `lua/plugin_specs.lua`, quoted verbatim in four pieces plus a short closing block (the spec head is shown in "[What it needs](#what-it-needs-the-devshell)"). Each piece is dedented to its own left margin (the original is indented 10 spaces inside `vim.cmd`); only the indentation differs from the file. The VimL part sits inside `vim.cmd([[ ... ]])` and only runs when `latex` is on PATH.
 
 **1. Viewer choice and inverse-search helper**
 
@@ -90,7 +90,7 @@ vim.cmd([[
 In plain words:
 
 - `vimtex_view_method` is `zathura` when zathura is installed, otherwise `general` (the system default PDF program).
-- `s:write_server_name` writes Neovim's address (`v:servername`) into `/tmp/vimtexserver.txt` (`%TEMP%` on Windows) every time a `tex` file is opened. The viewer's inverse search (Ctrl+click) uses it to find the right Neovim; see "The viewer".
+- `s:write_server_name` writes Neovim's address (`v:servername`) into `/tmp/vimtexserver.txt` (`%TEMP%` on Windows) every time a `tex` file is opened. The viewer's inverse search (Ctrl+click) uses it to find the right Neovim; see ["The viewer"](#the-viewer).
 - The autocommand sets the compile key twice, buffer-local, for `tex` files only: `<F9>` and `<leader>rf` both map to `<Plug>(vimtex-compile)`. `remap = true` is required because the target is a `<Plug>` mapping; it is set from Lua so the key can carry a `desc`.
 
 **2. latexmk build directory and the table of contents**
@@ -115,8 +115,8 @@ let g:vimtex_toc_config = {
 
 In plain words:
 
-- `build_dir = 'build'` is in the config but has no effect: see "Where the output goes" under "Compiling". vimtex's current option is called `out_dir`.
-- `g:vimtex_toc_config` configures the `\lt` / `\lT` table of contents (section "Table of contents"): `layers` = what is listed (document content, todo comments, included files); `split_width = 30` = a 30-column window; `resize = 1` = Vim is resized automatically when that vertical window opens (vimtex default 0); `mode = 2` = separate window **and** a location list (1 = window only, 3/4 = location list only); `show_numbers = 1` = section numbers; `show_help = 1` = the key hint lines at the top; `todo_sorted = 0` = todo entries stay in file order. Meanings checked against vimtex's `:help vimtex-toc` upstream text.
+- `build_dir = 'build'` is in the config but has no effect: see "Where the output goes" under ["Compiling"](#compiling). vimtex's current option is called `out_dir`.
+- `g:vimtex_toc_config` configures the `\lt` / `\lT` table of contents (section ["Table of contents"](#table-of-contents)): `layers` = what is listed (document content, todo comments, included files); `split_width = 30` = a 30-column window; `resize = 1` = Vim is resized automatically when that vertical window opens (vimtex default 0); `mode = 2` = separate window **and** a location list (1 = window only, 3/4 = location list only); `show_numbers = 1` = section numbers; `show_help = 1` = the key hint lines at the top; `todo_sorted = 0` = todo entries stay in file order. Meanings checked against vimtex's `:help vimtex-toc` upstream text.
 
 **3. Viewers on Windows and macOS**
 
@@ -182,7 +182,7 @@ One more cross-plugin setting belongs to vimtex: `vim.g.matchup_override_vimtex 
    \end{document}
    ```
 3. Wait until the statusline shows `texlab (+2)`. `:LspAttached` lists the clients.
-4. `<Space>rf` (or `<F9>`) starts continuous compiling. After the first successful compile **zathura opens by itself** with the PDF (see "The viewer").
+4. `<Space>rf` (or `<F9>`) starts continuous compiling. After the first successful compile **zathura opens by itself** with the PDF (see ["The viewer"](#the-viewer)).
 5. Edit, then `:w`. The compiler notices the saved file, recompiles, zathura reloads. (Auto-save never saves `.tex`; save yourself.)
 6. `\lv` shows or re-opens the PDF at the cursor position.
 7. `<Space>rf` / `<F9>` again stops compiling; `\lc` removes the auxiliary files.
@@ -219,7 +219,7 @@ All `\l...` keys above were checked in the live buffer; each points at the `<Plu
 
 ### Errors
 
-When a compile fails vimtex opens the **quickfix list** by itself, titled "VimTeX errors (LaTeX logfile)", and shows "VimTeX: Compilation failed!" (tested with a file containing `\foobar`; the entry was `Undefined control sequence. \foobar`, with the line number). texlab also puts the problem in the text as a diagnostic (`]d` / `[d`, `<Space>dd`; see the LSP section).
+When a compile fails vimtex opens the **quickfix list** by itself, titled "VimTeX errors (LaTeX logfile)", and shows "VimTeX: Compilation failed!" (tested with a file containing `\foobar`; the entry was `Undefined control sequence. \foobar`, with the line number). texlab also puts the problem in the text as a diagnostic (`]d` / `[d`, `<Space>dd`; see the [LSP section](../07-code.md#13-lsp-language-server-protocol)).
 
 | Key / command | What it does |
 | --- | --- |
@@ -336,8 +336,8 @@ These do not clash with the vim-sandwich keys of the config (`sa`, `sd`, `sr`).
 
 texlab attaches to `tex` files when `texlab` is on PATH. It reads the whole project, so it also knows labels and citations of other files.
 
-- **Completion**: commands, environments, `\ref{` labels, `\cite{` keys. The menu opens while you type; `<Ctrl-n>` opens it manually, `<Tab>` / `<Ctrl-n>` move down, `<CR>` confirms only an item you picked, `<Ctrl-e>` or `<Esc>` closes it (see section 14).
-- **Diagnostics** (including errors from the build log), hover (`K`), symbols, rename, code actions (`<Space>ca`): the global LSP keys, see the LSP section.
+- **Completion**: commands, environments, `\ref{` labels, `\cite{` keys. The menu opens while you type; `<Ctrl-n>` opens it manually, `<Tab>` / `<Ctrl-n>` move down, `<CR>` confirms only an item you picked, `<Ctrl-e>` or `<Esc>` closes it (see [section 14](../04-completion-snippets.md#14-autocompletion-nvim-cmp)).
+- **Diagnostics** (including errors from the build log), hover (`K`), symbols, rename, code actions (`<Space>ca`): the global LSP keys, see the [LSP section](../07-code.md#13-lsp-language-server-protocol).
 - `:LspTexlabBuild`: one build (tested).
 
 The server entry (`lua/config/lsp.lua`):
@@ -420,11 +420,11 @@ The file is quoted in full (`after/lsp/ltex_plus.lua`). `enabled` lists language
   | `Use 'sentence'` | Replaces the word. Works (tested) |
   | `Use 'sen tense'` | Other suggestion |
   | `Add 'sentense' to dictionary` | **Had no effect in my test**: the LTeX diagnostic stayed (the config has no handler for ltex's client commands). Do not rely on it |
-  | `Hide false positive`, `Disable rule` | No effect, same as `Add to dictionary` (tested, see section 81) |
+  | `Hide false positive`, `Disable rule` | No effect, same as `Add to dictionary` (tested, see [section 81](markdown.md#81-markdown-writing-preview-footnotes-pdf)) |
   | `sentence`, `Ignore ... in the project` (typos_lsp) | typos fix; "Ignore" is a typos command |
 
 - **What works for false positives**: ltex magic comments in the file (tested). `% LTeX: enabled=false` on a line of its own switches ltex off for the file (the LTeX underlines disappeared, typos stayed). `% LTeX: language=de-DE` makes the file checked as German (tested: German messages). Remove the line to undo.
-- **Built-in spell checker** (different thing): `<Space>cz` toggles, `]s` / `[s`, `z=`, `zg` (adds to `spell/en.utf-8.add`, a file in the public repo). More in section 31.
+- **Built-in spell checker** (different thing): `<Space>cz` toggles, `]s` / `[s`, `z=`, `zg` (adds to `spell/en.utf-8.add`, a file in the public repo). More in [section 31](../09-ai-and-writing.md#31-spell-checking).
 
 ## Snippets
 
@@ -459,7 +459,7 @@ Example: `label` = `eq:energy`, `content` = `E = mc^2`; later `\ref{eq:energy}` 
 | --- | --- |
 | `<Space>rf`, `<F9>` and `\ll` do nothing, `:VimtexCompile` unknown | vimtex not loaded: `latex` not on PATH. Run `:DevEnv latex`, or start Neovim inside the devShell (`which latex`, `direnv allow`). Check `:set ft?` is `tex` |
 | Compile fails, quickfix opened | Read the first entry (`\le`), fix that line, `:w`; the compiler retries. Raw output: `\lo` |
-| No PDF | Look next to `main.tex` (not in `build/`), see "Where the output goes". A fatal error stops the PDF |
+| No PDF | Look next to `main.tex` (not in `build/`), see "[Where the output goes](#compiling)". A fatal error stops the PDF |
 | Viewer did not open | `zathura` not on PATH, or the compile failed, or `g:vimtex_view_automatic` is 0. Try `\lv` |
 | A viewer opened that I did not expect | Normal after the first successful compile; `:let g:vimtex_view_automatic = 0` |
 | "Undefined control sequence" | Misspelled command or missing package: add `\usepackage{...}` (snippet `use`) |
@@ -476,7 +476,7 @@ Example: `label` = `eq:energy`, `content` = `E = mc^2`; later `\ref{eq:energy}` 
 
 ## Related sections
 
-Typst (`<Space>tw`), Markdown, 28 (LaTeX and Typst, older summary), 31 (spell checking), the LSP and completion sections (diagnostic and completion keys), snippets (UltiSnips), windows (`<Ctrl-w>` moves).
+[Typst](typst.md#82-typst-typstvim-tinymist-watch-and-preview) (`<Space>tw`), [Markdown](markdown.md#81-markdown-writing-preview-footnotes-pdf), [28](../09-ai-and-writing.md#28-latex-and-typst-support) (LaTeX and Typst, older summary), [31](../09-ai-and-writing.md#31-spell-checking) (spell checking), the [LSP](../07-code.md#13-lsp-language-server-protocol) and [completion](../04-completion-snippets.md#14-autocompletion-nvim-cmp) sections (diagnostic and completion keys), [snippets](../04-completion-snippets.md#15-snippets-ultisnips) (UltiSnips), [windows](../06-windows-terminal-sessions.md#7-windows-splits-and-buffers) (`<Ctrl-w>` moves).
 
 
 ---

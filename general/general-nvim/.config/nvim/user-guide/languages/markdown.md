@@ -3,7 +3,7 @@
 
 # 81. Markdown (writing, preview, footnotes, PDF)
 
-This section covers everything your config does that is specific to `.md` files: what each tool is for, how it works, the exact keys, and what to do when it fails. Global things (diagnostics keys, code actions, the spell keys, `gc` comments) are only mentioned briefly with a pointer. Section 27 is the short key list; this one is the full story.
+This section covers everything your config does that is specific to `.md` files: what each tool is for, how it works, the exact keys, and what to do when it fails. Global things (diagnostics keys, code actions, the spell keys, `gc` comments) are only mentioned briefly with a pointer. Section [27](../09-ai-and-writing.md#27-markdown-support) is the short key list; this one is the full story.
 
 Most results below were checked in a real Neovim session today (marked "tested"). The few things that could not be tested say so where they appear.
 
@@ -100,7 +100,7 @@ All keys work only in Markdown buffers unless stated. `<Space>` is the leader ke
 | Keymap | Mode | What it does |
 | --- | --- | --- |
 | `<Alt-m>` | n | Toggle the browser preview. In another file type: one warning `Markdown preview: only in markdown buffers` |
-| `<Space>mf` | n | Add a footnote after the character under the cursor (see Footnotes). Elsewhere: one warning |
+| `<Space>mf` | n | Add a footnote after the character under the cursor (see [Footnotes](#footnotes-vim-markdownfootnotes)). Elsewhere: one warning |
 | `<Space>mr` | n | Return from the footnote to the text. Elsewhere: one warning |
 | `^^` | n, i | Add a footnote before the character under the cursor (see the off-by-one note below) |
 | `@@` | n, i | Return from the footnote (replaces the macro replay `@@` in Markdown) |
@@ -113,7 +113,7 @@ All keys work only in Markdown buffers unless stated. `<Space>` is the leader ke
 | `]]` / `[[` | n, x | Next / previous heading (levels 1 to 5) |
 | `gO` | n | Outline: opens a location list window with one line per heading, indented by level (tested: `Heading One`, `  Heading Two`, `    Heading Three`). `<CR>` jumps to the heading, `:lclose` closes it |
 | `<Space>t` | n | Aerial symbol outline panel; `]t` / `[t` next / previous symbol |
-| `<Space>cz` | n | Toggle spell checking (global key, see Writing quality) |
+| `<Space>cz` | n | Toggle spell checking (global key, see [Writing quality](#writing-quality)) |
 | `<Space><Space>` | n | Trailing-space remover, but in Markdown it only warns `markdown: trailing spaces are hard line breaks, not stripped` (tested) |
 | `:AddRef <label> <url>` | cmd | Add a reference link at the end of the file |
 | `:Tabularize /\|` | cmd | Align table columns |
@@ -395,7 +395,7 @@ In plain words:
 - `changedtick` is remembered before the job starts and compared when it ends: if you typed in between, the result is thrown away with a warning.
 - `vim.text.diff` with `result_type = "indices"` compares old and new text and returns the changed hunks. They are applied from the bottom up so the line numbers of the hunks still to do stay valid. Only changed lines are replaced, which is why marks survive and `u` undoes it in one step.
 - The `fm_cursor` helpers (not quoted) move the cursor of every window showing the buffer back to the same text, even when lines above it changed.
-- The same hunk-applying idea is used for Lua in `after/ftplugin/lua.lua` (stylua), see "Lua: lua_ls and stylua" in the LSP chapter.
+- The same hunk-applying idea is used for Lua in `after/ftplugin/lua.lua` (stylua), see ["Lua: lua_ls and stylua"](../07-code.md#lua-lua_ls-and-stylua) in the LSP chapter.
 
 Trailing spaces: two spaces at the end of a line are a Markdown hard line break, so they are never stripped here. The whitespace plugin excludes `markdown` (`trailing_whitespace_exclude_filetypes`), and `<Space><Space>` only warns. The other hard-break form is a trailing backslash; `<Space>mb` adds it. For rewrapping long paragraphs use `gq` after `:set textwidth=80` yourself.
 
@@ -480,7 +480,7 @@ In plain words:
 
 ## Snippets
 
-Source: `my_snippets/markdown.snippets` (17 snippets, UltiSnips). Type the trigger in insert mode in a Markdown buffer and expand it with `<Ctrl-j>` (section 15); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. The text in quotes after each trigger is its description as the completion menu shows it. Placeholders are shown in tab-stop order; after the last one the cursor leaves the block (`$0`).
+Source: `my_snippets/markdown.snippets` (17 snippets, UltiSnips). Type the trigger in insert mode in a Markdown buffer and expand it with `<Ctrl-j>` (section [15](../04-completion-snippets.md#15-snippets-ultisnips)); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. The text in quotes after each trigger is its description as the completion menu shows it. Placeholders are shown in tab-stop order; after the last one the cursor leaves the block (`$0`).
 
 Things to know first:
 
@@ -558,7 +558,7 @@ tl;dr: summary
 [text](url)
 ```
 
-**`rlink`**: "Markdown reference link `[text][label]`". The matching definition `[label]: url` is written by hand elsewhere in the file (see "Reference links and tables").
+**`rlink`**: "Markdown reference link `[text][label]`". The matching definition `[label]: url` is written by hand elsewhere in the file (see ["Reference links and tables"](#reference-links-and-tables)).
 
 ```markdown
 [link_text][label]
@@ -679,7 +679,7 @@ Checks common typos in every normal buffer (not help, terminal, quickfix, or sta
 | `:ToPDF` does nothing visible | Normal: silent, 30 s or more the first time, no viewer on Linux. Look for the PDF next to the file |
 | `@@` does not replay my macro | In Markdown it means "return from footnote". Use `@a` (register name) |
 | Typing `^` or `@` has a delay | The `^^` / `@@` insert maps wait 500 ms for a second key. Accepted |
-| `^^` puts the mark one letter early | At the end of a line in insert mode (see Footnotes). Use `<Space>mf` in normal mode |
+| `^^` puts the mark one letter early | At the end of a line in insert mode (see [Footnotes](#footnotes-vim-markdownfootnotes)). Use `<Space>mf` in normal mode |
 | `<Space><Space>` does not remove trailing spaces | Intended in Markdown (hard line breaks) |
 | Grammar warnings on Italian or German text | ltex_plus is `en-US` only |
 | `^^` does nothing | The footnote plugin is not loaded: `:echo exists(':FootnoteNumber')` must give `2` (tested) |
@@ -687,7 +687,7 @@ Checks common typos in every normal buffer (not help, terminal, quickfix, or sta
 
 ## Related sections
 
-Section 15 and 52 (snippets), section 16 (Code commenting: `gc` in Markdown writes `<!-- -->`; `gcs` / `gcr` use the comment style of the fence language inside a fenced block), section 27 (short Markdown key list), section 28 (LaTeX and Typst: same latex dev shell and ltex_plus), and the sections on spelling, LSP diagnostics and big-file mode.
+Section [15](../04-completion-snippets.md#15-snippets-ultisnips) and [52](../04-completion-snippets.md#52-snippets-for-developers-ultisnips) (snippets), section [16](../03-editing.md#16-code-commenting) (Code commenting: `gc` in Markdown writes `<!-- -->`; `gcs` / `gcr` use the comment style of the fence language inside a fenced block), section [27](../09-ai-and-writing.md#27-markdown-support) (short Markdown key list), section [28](../09-ai-and-writing.md#28-latex-and-typst-support) (LaTeX and Typst: same latex dev shell and ltex_plus), and the sections on [spelling](../09-ai-and-writing.md#31-spell-checking), [LSP diagnostics](../07-code.md#13-lsp-language-server-protocol) and big-file mode.
 
 
 ---
