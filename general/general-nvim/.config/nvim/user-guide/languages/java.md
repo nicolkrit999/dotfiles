@@ -7,7 +7,7 @@ This section is one complete walk through everything that is specific to Java in
 
 Everything marked "tested" below was tried with real keys in a Maven test project (JDK 25 devShell, `Main`, `Calc`, `CalcTest`).
 
-## 1. What You Get And Why
+## 1. What you get and why
 
 | Part | Why it is in the setup | What it does | Where it comes from |
 | --- | --- | --- | --- |
@@ -89,7 +89,7 @@ direnv loads the devShell when you `cd` into the folder. The devShell (template 
 
 `java` is not on PATH, so jdtls and spring-boot do not start. `.java` files still open with syntax highlighting, snippets and typos_lsp, but without Java language features. Every `<Space>j...` key shows ONE warning, `Java: jdtls not attached (open nvim inside the Java devShell)`. These global keys are fallbacks: without them `<Space>jrr` would fall through to plain Vim keys (`<Space>`, `j`, `rr`). The universal run key `<Space>rr` (section 19) then runs plain `java <file>` if `java` exists, otherwise gives one warning.
 
-## 2. Quick Start
+## 2. Quick start
 
 1. In a terminal: `cd` into the project folder (the one with `pom.xml`). direnv loads the devShell and prints `Java Environment Active (JDK 25)`. First time: `direnv allow`.
 2. `nvim src/main/java/demo/Main.java`
@@ -98,7 +98,7 @@ direnv loads the devShell when you `cd` into the folder. The devShell (template 
 5. Test: open `CalcTest.java` and press `<Space>jtc`, then `<Space>jtr` for the result tree.
 6. Debug: `:DapToggleBreakpoint` on a line, then `<Space>jtC`. The window stops at the line with a `→` sign.
 
-## 3. Project Layout Rules
+## 3. Project layout rules
 
 ### The root folder
 
@@ -124,7 +124,7 @@ Consequences:
 - jdtls workspace data goes to `~/.cache/nvim/jdtls/` (`config_<hash>` and `workspace/proj_<hash>`), never into the project. The workspace folder name is a hash of the folder where Neovim was STARTED (`vim.fn.getcwd()` at startup), not of the jdtls root. Always start Neovim from the same project folder, otherwise jdtls builds a second workspace.
 - Saving: the auto-save plugin saves a buffer when you leave it or when Neovim loses focus. Refactor results and edits are therefore written to disk without `:w` once you switch windows (tested: a refactor was saved this way).
 
-## 4. Keys And Commands
+## 4. Keys and commands
 
 All `<Space>j` keys are normal mode only. The real maps are created per buffer when jdtls attaches and removed when it detaches (`LspAttach` / `LspDetach` in `lua/mappings.lua`); before that, the global fallback shows the warning. which-key shows the groups `j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
 
@@ -219,7 +219,7 @@ A profile stores VM arguments and program arguments for the runner of one main c
 
 Tested: in the test project it only shows a notification: `No configured runtimes available` plus a link to the nvim-java README. The list of JDKs comes from jdtls setting `java.configuration.runtimes`, which this config does not set (only `java.home = $JAVA_HOME`). So `<Space>jj` is a no-op here; the JDK in use is the devShell JDK.
 
-## 5. Language Server Features In A Java Buffer
+## 5. Language server features in a Java buffer
 
 All need jdtls attached. The general keys are described elsewhere (section 13 for LSP); here is what they do in Java.
 
@@ -321,7 +321,7 @@ Notes:
 - If a debug window stays open after `:DapTerminate`, close it with `<Space>q` in that window.
 - See section 36 and section 56 for the general DAP notes.
 
-## 8. Refactoring (Extract)
+## 8. Refactoring (extract)
 
 How it works: each `<Space>je...` key runs `vim.lsp.buf.code_action` filtered to one kind (`refactor.extract.variable`, `.constant`, `.function`, `.field`). So `<Space>je...` and `<Space>ca` use the same jdtls actions; the keys just pick the right one for you.
 
@@ -397,7 +397,7 @@ Source: `my_snippets/java.snippets`. Type the trigger in insert mode in a Java b
 | `jtryfinally` | `try / catch / finally` |
 | `jwhilescannerbreak` | `Scanner` loop that reads values until a stop value, then closes the scanner |
 
-## 10. Windows While Running, Testing And Debugging
+## 10. Windows while running, testing and debugging
 
 | Keys | What it does |
 | --- | --- |
@@ -434,7 +434,7 @@ See section 7 (windows) and the cheat sheet in section 2 for the same rows.
 | `<Space>jj` says `No configured runtimes available` | No `java.configuration.runtimes` set | Expected here; nothing to fix |
 
 
-## Related Sections
+## Related sections
 
 Section 35 (Java keys), 54 (Java in depth), 36 and 56 (debugging), 19 and 55 (running code, `<Space>rr`), 13 (LSP), 14 (completion), 15 (snippets), 7 (windows), 8 (terminal), 20 (git; the git root decides the jdtls root), 2 (quick reference and cheat sheet).
 

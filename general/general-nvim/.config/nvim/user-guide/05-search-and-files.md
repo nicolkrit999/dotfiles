@@ -1,11 +1,11 @@
 <!-- chapter: Searching, replacing, files and the file tree -->
 [Back to the guide index](README.md)
 
-# 10. Searching, Replacing, and Refactoring Text
+# 10. Searching, replacing, and refactoring text
 
 This is one of the most important sections in the guide. It covers searching within a file, replacing text with various levels of control, and doing all of this across the entire project.
 
-## Searching in the Current File
+## Searching in the current file
 
 | Keymap | Description |
 | --- | --- |
@@ -17,7 +17,7 @@ This is one of the most important sections in the guide. It covers searching wit
 | `#` | Search **backward** for the exact word under cursor |
 | `;noh<Enter>` (`;` is `:` here) | Clear the yellow search highlight (tested). The search itself is kept, so `n` / `N` still work; the highlight comes back on the next search or `*`. |
 
-### Search Modifiers
+### Search modifiers
 
 | Modifier | Where to put it | What it does | Example |
 | --- | --- | --- | --- |
@@ -28,7 +28,7 @@ This is one of the most important sections in the guide. It covers searching wit
 
 By default, search is case-insensitive but becomes case-sensitive if you type any uppercase letter (smart case). This is for `/` and `?` only: while you type a `:` command, smart case is off, so `:s` and `:g` ignore case completely (use `\C` or the `I` flag of `:s` for an exact match).
 
-### Search Examples
+### Search examples
 
 | Search | What it finds |
 | --- | --- |
@@ -39,13 +39,35 @@ By default, search is case-insensitive but becomes case-sensitive if you type an
 | `/\<user\>` | Only the word `user`, not `username` or `superuser` |
 | `/error\c` | `error`, `Error`, `ERROR` (forced case-insensitive) |
 
+The same searches on a sample file (tested: the match counts are the ones the search reports):
+
+```
+1  Hello world
+2  hello again
+3  HELLO
+4  user, username, superuser
+5  error Error ERROR
+6  TODO: x
+7  FIXME: y
+8  def foo(a):
+```
+
+| Search | Matches |
+| --- | --- |
+| `/hello` | 3: lines 1, 2 and 3 (smart case: all lowercase ignores case) |
+| `/Hello` | 1: only line 1 (a capital makes it exact) |
+| `/\<user\>` | 1: only the first word on line 4; `username` and `superuser` are not matched |
+| `/error\c` | 3: the three words on line 5 |
+| `/\v(TODO\|FIXME)` | 2: lines 6 and 7 |
+| `/\vdef \w+\(` | 1: `def foo(` on line 8 |
+
 ---
 
-## Substitution (Find & Replace in Current File)
+## Substitution (find & replace in current file)
 
 The substitute command has this structure: `:[range]s/old/new/[flags]`
 
-### Understanding the Range (Where to Replace)
+### Understanding the range (where to replace)
 
 The range tells Vim which lines to search. If omitted, only the current line is affected.
 
@@ -54,14 +76,14 @@ The range tells Vim which lines to search. If omitted, only the current line is 
 | (none) | Current line only | `:s/old/new/` |
 | `%` | **Entire file** (all lines) | `:%s/old/new/g` |
 | `.` | Current line (same as no range) | `:.s/old/new/g` |
-| `$` | Last line of file | |
+| `$` | Last line of file | `:$s/old/new/` (replaces on the last line only; tested) |
 | `.,$` | From current line to end of file | `:.,$s/old/new/g` |
 | `1,.` | From first line to current line | `:1,.s/old/new/g` |
 | `20,30` | From line 20 to line 30 (absolute) | `:20,30s/old/new/g` |
 | `-3,+3` | From 3 lines above to 3 lines below cursor (relative) | `:-3,+3s/old/new/g` |
 | `'<,'>` | Current visual selection (auto-filled when you press `:` in visual mode) | `:'<,'>s/old/new/g` |
 
-### Understanding the Flags (How to Replace)
+### Understanding the flags (how to replace)
 
 Flags go at the very end, after the last `/`.
 
@@ -75,7 +97,7 @@ Flags go at the very end, after the last `/`.
 | `n` | **Count only**: show how many matches there are without replacing anything |
 | `e` | Suppress "pattern not found" error |
 
-### Flag Combinations
+### Flag combinations
 
 | Command | What happens |
 | --- | --- |
@@ -85,6 +107,22 @@ Flags go at the very end, after the last `/`.
 | `:%s/old/new/gi` | Replace every `old` case-insensitively (`Old`, `OLD`, `old` all match) |
 | `:%s/old/new/gn` | **Count** how many `old` exist in the file (no replacement) |
 | `:%s/old/new/gce` | Confirm each, and don't error if not found |
+
+Results on the two lines `old old` / `old` (tested):
+
+| Command | Result |
+| --- | --- |
+| `:%s/old/new/` | `new old` / `new` |
+| `:%s/old/new/g` | `new new` / `new` (message `3 substitutions on 2 lines`) |
+| `:%s/old/new/gn` | no change, message `3 matches on 2 lines` |
+
+And on the single line `old Old OLD` (`:s` ignores case here, see the `I` flag above):
+
+| Command | Result |
+| --- | --- |
+| `:%s/old/X/gi` | `X X X` |
+| `:%s/Old/X/g` | `X X X` (the capital in the pattern does not matter) |
+| `:%s/Old/X/gI` | `old X OLD` (only the exact `Old` changed) |
 
 **Quick difference between the three common endings** (same `:%s/old/new` start, only the end changes):
 
@@ -96,7 +134,7 @@ Flags go at the very end, after the last `/`.
 
 Do not confuse `/gcc` with the normal-mode `gcc` (toggle comment on the current line): inside `:s/…/…/` the letters are flags, outside it `gcc` is a command.
 
-### Confirmation Mode (`c` Flag) Controls
+### Confirmation mode (`c` flag) controls
 
 When you use the `c` flag, Vim highlights each match and asks what to do:
 
@@ -110,7 +148,15 @@ When you use the `c` flag, Vim highlights each match and asks what to do:
 | `<Ctrl-e>` | Scroll down to see more context |
 | `<Ctrl-y>` | Scroll up to see more context |
 
-### Changing the Delimiter
+Example (tested): on the lines `old old` / `old`, `:%s/old/new/gc` highlights the first `old` and the bottom line asks
+
+```
+replace with new? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)
+```
+
+Press `y` (first `old` becomes `new`), `n` (the second stays `old`), `a` (the last one and everything after it is replaced without asking): the result is `new old` / `new`.
+
+### Changing the delimiter
 
 If your search/replace text contains `/`, use a different delimiter to avoid confusion:
 
@@ -121,7 +167,9 @@ If your search/replace text contains `/`, use a different delimiter to avoid con
 
 You can use almost any character as a delimiter. Just use the same character for all three separators.
 
-### Special Replacement Patterns
+Example (tested): on the line `/usr/local/bin/x`, `:s#/usr/local/bin#/opt/bin#` gives `/opt/bin/x`.
+
+### Special replacement patterns
 
 | Pattern in replacement | What it means |
 | --- | --- |
@@ -133,7 +181,19 @@ You can use almost any character as a delimiter. Just use the same character for
 | `\L` | Lowercase everything after this |
 | `\r` | Newline (line break) |
 
-### Substitution Examples
+Examples (tested):
+
+| Command | Before | After |
+| --- | --- | --- |
+| `:s/cat/[&]/` | `cat dog` | `[cat] dog` |
+| `:s/\w\+/\U&/` | `foo bar` | `FOO bar` |
+| `:s/\w\+/\L&/` | `FOO BAR` | `foo BAR` |
+| `:s/\w\+/\l&/` | `FOO BAR` | `fOO BAR` |
+| `:s/, /\r/g` | `a, b, c` | `a` / `b` / `c` (3 lines) |
+| `:%s/\v(\w+), (\w+)/\2 \1/g` | `Smith, John` / `Doe, Jane` | `John Smith` / `Jane Doe` |
+| `:%s/\v(\w+), (\w+)/\2, \1/g` | `Smith, John` / `Doe, Jane` | `John, Smith` / `Jane, Doe` (the comma stays) |
+
+### Substitution examples
 
 | Command | What it does |
 | --- | --- |
@@ -148,9 +208,20 @@ You can use almost any character as a delimiter. Just use the same character for
 | `:20,30s/TODO/DONE/g` | Replace only between lines 20-30 |
 | `:'<,'>s/old/new/g` | Replace only in the visual selection |
 
+Results (tested):
+
+| Command | Before | After |
+| --- | --- | --- |
+| `:%s/foo//g` | `foo foo x` | `  x` (two spaces are left) |
+| `:%s/\<foo\>/bar/g` | `foo foobar` | `bar foobar` |
+| `:%s/\<\(\w\)/\u\1/g` | `hello big world` | `Hello Big World` |
+| `:%s/$/;/` | `a` / `b` | `a;` / `b;` |
+| `:%s/^\s*$\n//g` | `a` / (empty) / `b` / (only spaces) / `c` | `a` / `b` / `c` |
+| `:2,3s/x/y/` | `x` / `x` / `x` / `x` | `x` / `y` / `y` / `x` |
+
 ---
 
-## Searching in the Current Buffer with `*` and `#`
+## Searching in the current buffer with `*` and `#`
 
 These are the fastest ways to search for a word:
 
@@ -163,7 +234,7 @@ This is often combined with `ciw` + `.` for selective replacement (see below).
 
 ---
 
-## Using `ciw` + `.` for Selective Single-File Replacement
+## Using `ciw` + `.` for selective single-file replacement
 
 This is the **most practical replacement method** for everyday use. It gives you full control, replacing one occurrence at a time:
 
@@ -175,15 +246,22 @@ This is the **most practical replacement method** for everyday use. It gives you
 6. Decide: press `.` to replace this one too, or `n` to skip it
 7. Repeat step 5-6 until done
 
+Example (tested): the line is `foo a foo b foo`, the cursor is on the first `foo`.
+
+1. `*` (all three `foo` highlight, the cursor stays on the first)
+2. `ciw`, type `bar`, `<Esc>`: `bar a foo b foo`
+3. `n` jumps to the second `foo`: you decide to skip it, so `n` again jumps to the third `foo`
+4. `.` repeats the change there: `bar a foo b bar`. The middle `foo` was left alone.
+
 **Why this is great**: Unlike `:%s`, you see each occurrence in context and can decide whether to replace it. Unlike `:%s/old/new/gc`, you stay in normal mode between replacements and can scroll around.
 
 ---
 
-# 67. Multi-File Search and Replace (Complete Guide)
+# 67. Multi-file search and replace (complete guide)
 
 This is the section you need when you want to find or replace text across your entire project -- not just the current file.
 
-## Quick Decision Guide: Which Method to Use
+## Quick decision guide: which method to use
 
 | Scenario | Best method |
 | --- | --- |
@@ -195,7 +273,7 @@ This is the section you need when you want to find or replace text across your e
 
 ---
 
-## Method 1: LSP Rename (Best for Code Symbols)
+## Method 1: LSP rename (best for code symbols)
 
 If you're renaming a function, variable, class, or any code symbol, this is the best method because it understands scope and language semantics.
 
@@ -204,26 +282,28 @@ If you're renaming a function, variable, class, or any code symbol, this is the 
 3. Type the new name
 4. Press `<Enter>`
 
+Example (tested with pyright): `a.py` contains `def load():` and `b.py` contains `from a import load` and `print(load())`. With the cursor on `load` in `a.py`, `<Space>rn` opens a small prompt with `load` already in it; clear it (`<Ctrl-w>`), type `read` and press `<Enter>`. All three places are renamed (`def read():`, `from a import read`, `print(read())`), including the other file (it is changed in a buffer: save it with `:wa`). This works across files only in a project with a root marker such as `.git` or `pyproject.toml`; without one pyright only sees the open file (tested: only `a.py` was renamed). A same-named symbol in another scope is left alone (tested in a project with a `pyproject.toml`: with `count` in two functions `f` and `g`, renaming `count` to `total` inside `f` changed only `f`).
+
 **What happens**: The LSP server finds every reference to that symbol across the entire project and renames them all. It's smart: renaming `count` in one function won't affect `count` in another function.
 
 **Limitations**: Only works for code symbols (not arbitrary text), and requires an LSP server that supports rename.
 
 ---
 
-## Method 2: `:grep` + `:cfdo` (Best for Plain Text)
+## Method 2: `:grep` + `:cfdo` (best for plain text)
 
 This is the most versatile method. It uses ripgrep (very fast) to search the entire project, puts results in the quickfix list, then runs a command on each file of the list.
 
 **Why `:cfdo` and not `:cdo`**: `:grep` here creates ONE quickfix entry per match. `:cdo s/x/y/g` visits a line once per match; after the first visit replaced every `x` on the line, the next visit finds nothing and stops with `E486: Pattern not found` (tested), so the rest is NOT replaced. `:cfdo %s/x/y/g` runs once per file and avoids this. If you prefer `:cdo`, add the `e` flag: `:cdo s/x/y/ge | update`.
 
-### Step-by-Step: Replace All Without Confirmation
+### Step-by-step: replace all without confirmation
 
 ```
 :grep "oldFunction"                       -- search entire project
 :cfdo %s/oldFunction/newFunction/g | update   -- replace in every matching file and save it
 ```
 
-### Step-by-Step: Replace with Confirmation for Each Occurrence
+### Step-by-step: replace with confirmation for each occurrence
 
 ```
 :grep "oldFunction"                       -- search entire project
@@ -236,7 +316,7 @@ When the `c` flag is active, for each match you see it highlighted and can press
 - `a` to replace all remaining in this file (then moves to the next file, where you are prompted again; tested)
 - `q` to stop entirely
 
-### Step-by-Step: Review Results Before Replacing
+### Step-by-step: review results before replacing
 
 ```
 :grep "oldFunction"                       -- search entire project
@@ -249,7 +329,7 @@ Now you can see every file and line that matches. Use `:cnext`/`:cprev` (or `j`/
 :cfdo %s/oldFunction/newFunction/g | update   -- replace and save
 ```
 
-### Using Regex with `:grep`
+### Using regex with `:grep`
 
 `:grep` passes the pattern directly to ripgrep, so you can use ripgrep regex. It is smart-case: an all-lowercase pattern ignores case, a pattern with a capital is exact (add `-s` to force exact case):
 
@@ -261,7 +341,17 @@ Now you can see every file and line that matches. Use `:cnext`/`:cprev` (or `j`/
 | `:grep "def \w+\("` | Python function definitions |
 | `:grep "console\.log"` | All `console.log` calls |
 
-### Limiting to Specific File Types
+What `:grep "TODO"` puts in the quickfix list (tested; the list has one row per match: file, line number and the text of the line):
+
+```
+src/c.py ┃ 1┃# TODO: fix
+src/c.py ┃ 2┃print(1)  # TODO later
+src/d.py ┃ 1┃# TODO: three
+```
+
+`:grep "TODO\|FIXME"` (tested on a small project with `TODO` and `FIXME` in three files) fills the list with every line containing either word. The order of the files can vary, because ripgrep searches in parallel. A line with two matches (such as `x and x` for `:grep "x"`) appears twice in the list: this is why `:cfdo` is used below.
+
+### Limiting to specific file types
 
 Ripgrep supports file type filters:
 
@@ -275,7 +365,7 @@ Ripgrep supports file type filters:
 
 ---
 
-## Method 3: `:vimgrep` + `:cfdo` (Built-in, Slower but Portable)
+## Method 3: `:vimgrep` + `:cfdo` (built-in, slower but portable)
 
 `:vimgrep` is Vim's built-in search (doesn't require ripgrep). It's slower but lets you use Vim regex and file glob patterns:
 
@@ -295,7 +385,7 @@ Then use `:cfdo` as before:
 
 ---
 
-## Method 4: `<Space>fg` for Finding (No Replace)
+## Method 4: `<Space>fg` for finding (no replace)
 
 `<Space>fg` (live grep via fzf-lua) is the fastest way to **find** where something is used, but it doesn't directly support replace. Use it for:
 
@@ -307,9 +397,9 @@ After reviewing results in fzf, you can then use `:grep` + `:cfdo` for the actua
 
 ---
 
-## Complete Examples
+## Complete examples
 
-### Example 1: Rename an API Endpoint Across the Project
+### Example 1: rename an API endpoint across the project
 
 You renamed `/api/users` to `/api/v2/users`:
 
@@ -319,14 +409,14 @@ You renamed `/api/users` to `/api/v2/users`:
 :cfdo %s#/api/users#/api/v2/users#g | update   -- replace (using # as delimiter since / is in the text) and save
 ```
 
-### Example 2: Replace a Deprecated Function Name (with Confirmation)
+### Example 2: replace a deprecated function name (with confirmation)
 
 ```
 :grep "getUser"
 :cfdo %s/getUser/fetchUser/gc | update   -- confirm each one ('y' to replace, 'n' to skip)
 ```
 
-### Example 3: Delete All Console.log Statements in JavaScript Files
+### Example 3: delete all `console.log` statements in JavaScript files
 
 ```
 :grep "console\.log" --type js            -- find them
@@ -334,21 +424,21 @@ You renamed `/api/users` to `/api/v2/users`:
 :cfdo update                              -- save the files
 ```
 
-### Example 4: Add a Comment Before Every TODO
+### Example 4: add a comment before every TODO
 
 ```
 :grep "TODO"
 :cfdo %s/TODO/NOTE: was TODO/g | update
 ```
 
-### Example 5: Replace Only in Python Files in the src/ Directory
+### Example 5: replace only in Python files in the src/ directory
 
 ```
 :grep "old_function" --type py src/
 :cfdo %s/old_function/new_function/g | update
 ```
 
-### Example 6: Case-Insensitive Project-Wide Replace
+### Example 6: case-insensitive project-wide replace
 
 ```
 :grep -i "oldname"                        -- ripgrep's -i flag for case-insensitive
@@ -367,9 +457,18 @@ You renamed `/api/users` to `/api/v2/users`:
 
 For search-and-replace use `:cfdo %s/old/new/g` (see Method 2 for why a plain `:cdo s/old/new/g` can stop early). `:cdo` is fine for commands that act on the entry's line once, or with the `e` flag.
 
+Example (tested): the file `x.txt` has the single line `x and x`.
+
+| Steps | What happens |
+| --- | --- |
+| `:grep "x" x.txt` | The quickfix list has TWO entries, both for line 1 (one per `x`) |
+| `:cdo s/x/y/g` | Entry 1 (`(1 of 2)`): the line becomes `y and y`. Entry 2 (`(2 of 2)`): nothing is left to replace, so it stops with `E486: Pattern not found: x` |
+| `:cdo s/x/y/ge` | The same, but the `e` flag hides the error: no message |
+| `:cfdo %s/x/y/g` | One visit per file: `y and y` |
+
 ---
 
-## Undoing a Multi-File Replace
+## Undoing a multi-file replace
 
 If the replace went wrong, each file has its own undo history:
 
@@ -380,11 +479,11 @@ Or use `:cfdo earlier 1f` to go back one save-state in each file (both recipes t
 
 ---
 
-# 12. Fuzzy Finding & Project-Wide Search (`fzf-lua`)
+# 12. Fuzzy finding & project-wide search (`fzf-lua`)
 
 Plugin: **fzf-lua**. A powerful popup interface that connects to FZF (a command-line fuzzy finder). It lets you search file names, search text inside files, browse buffers, and more. The popup opens centered on screen at 70% height.
 
-## Moving Inside Any Picker (Lists With a Search Bar)
+## Moving inside any picker (lists with a search bar)
 
 Several things look the same: a search bar on top and a filtered list below it. They are the fzf-lua pickers (`<Space>ff`, `<Space>fg`, `<Space>fb`, `<Space>fr`, `<Space>gbl` ...), the snacks pickers (the branch menu you get by clicking the branch in the statusline, the code-action menu `<Space>ca`, every other `vim.ui.select` list) and Telescope (`:Telescope`, `<Space>db`, the devdocs commands). The search bar takes your typing, so `j` and `k` type the letters `j` and `k` there. Move through the list with these keys (all tested in a real terminal):
 
@@ -413,7 +512,7 @@ The same `<Ctrl-n>` / `<Ctrl-p>` also move through the completion menu (section 
 
 `<Space>ff` has no preview window and shows git status icons next to modified/untracked files; `.gitignore` is respected.
 
-## Inside the FZF Popup
+## Inside the fzf-lua popup
 
 | Key | What it does |
 | --- | --- |
@@ -423,11 +522,11 @@ The same `<Ctrl-n>` / `<Ctrl-p>` also move through the completion menu (section 
 | `<Ctrl-j>` / `<Ctrl-k>` | Move down / up in the results list |
 | `<Ctrl-n>` / `<Ctrl-p>` | Move down / up (alternative keys) |
 
-## `<Space>fg` -- Live Grep (Project-Wide Text Search) In Depth
+## `<Space>fg` -- Live grep (project-wide text search) in depth
 
 This is one of the most important keymaps for developers. It searches inside every file in your project directory using **ripgrep** (`rg`) under the hood.
 
-### What It Does
+### What it does
 
 1. Press `<Space>fg`
 2. A popup appears with a search prompt
@@ -435,11 +534,28 @@ This is one of the most important keymaps for developers. It searches inside eve
 4. Results show: file path, line number, and the matching line
 5. Press `<Enter>` to jump directly to that file and line
 
-### Plain Text Search
+What the popup looks like after typing `TODO` (tested; the list is on top, the preview of the highlighted match below; move with `<Ctrl-n>` / `<Ctrl-p>` or `<Down>` / `<Up>`, open with `<Enter>`):
+
+```
++---------------------------- Grep -----------------------------+
+| > TODO                                                  3/3 (0) |
+|  :: <ctrl-g> to Fuzzy Search                                    |
+| > src/c.py:1:3:# TODO: fix                                      |
+|   src/c.py:2:13:print(1)  # TODO later                          |
+|   src/d.py:1:3:# TODO: three                                    |
++---------------------- buf 1: c.py ----------------------------+
+|  1 # TODO: fix                                                  |
+|  2 print(1)  # TODO later                                       |
++-----------------------------------------------------------------+
+```
+
+Each result is `file:line:column:text`.
+
+### Plain text search
 
 Just type normal text. For example, typing `getUserById` finds every file and line containing that string.
 
-### Regex Search
+### Regex search
 
 Live grep supports **full regex** (ripgrep regex syntax). You don't need to learn all of regex, but here are the most useful patterns:
 
@@ -456,7 +572,7 @@ Live grep supports **full regex** (ripgrep regex syntax). You don't need to lear
 | `https?://` | URLs (http or https) | `https://example.com` |
 | `v[0-9]+\.[0-9]+` | Version strings | `v1.0`, `v2.13` |
 
-### Use Cases for Live Grep
+### Use cases for live grep
 
 | Scenario | What to search |
 | --- | --- |
@@ -468,7 +584,7 @@ Live grep supports **full regex** (ripgrep regex syntax). You don't need to lear
 | Find environment variable usage | Type `process.env` or `os.environ` |
 | Find hardcoded strings | Type the string in quotes |
 
-## `<Space>ff` -- Find Files (File Name Search)
+## `<Space>ff` -- Find files (file name search)
 
 Searches **file names** (not content). Useful when you know the file you want but not the exact path.
 
@@ -477,7 +593,7 @@ Searches **file names** (not content). Useful when you know the file you want bu
 - Type `.env` to find environment files (only if they are not git-ignored: `.gitignore` is respected; a `.ignore` file containing `!.env` makes them visible)
 - Type `test` to see all test files
 
-## The Difference Between Search Methods
+## The difference between search methods
 
 | Method | Keymap | What it searches | Best for |
 | --- | --- | --- | --- |
@@ -491,7 +607,7 @@ Searches **file names** (not content). Useful when you know the file you want bu
 
 ---
 
-# 26. Quickfix & Location List
+# 26. Quickfix & location list
 
 ## Commands
 
@@ -506,7 +622,7 @@ Searches **file names** (not content). Useful when you know the file you want bu
 | `:lopen` / `:lclose` | Location list (per-window) |
 | `\x` | Close quickfix and location list windows |
 
-## Inside the Quickfix Window (nvim-bqf, quicker.nvim)
+## Inside the quickfix window (nvim-bqf, quicker.nvim)
 
 quicker.nvim formats the list (grouped by file, file-name column at most 40 characters or half the screen); the list cannot be edited as a buffer. nvim-bqf adds these keys inside the quickfix window (the preview does not start by itself):
 
@@ -520,17 +636,19 @@ quicker.nvim formats the list (grouped by file, file-name column at most 40 char
 | `zf` | Fuzzy filter the list (fzf) |
 | `<` / `>` | Go to the older / newer quickfix list |
 | `o` | Open the item and close the quickfix window |
-| `O` | Open the item in a window that already shows the buffer (otherwise open it); the list stays open |
+| `O` | Open the item in a window that already shows the buffer (otherwise open it) and close the quickfix window, like `o` (tested: the quickfix window was closed afterwards; `<Enter>` is the key that keeps the list open) |
 | `t` / `T` | Open in a new tab (`T` stays in the quickfix window) |
 | `<Ctrl-x>` / `<Ctrl-v>` / `<Ctrl-t>` | Open in a horizontal split / vertical split / new tab |
 
+Example (tested): `:grep "TODO"` gives 3 hits and `:copen` opens the list. Press `<Tab>` twice: the first two hits are marked (each `<Tab>` marks and moves down). Press `zn`: a NEW list is made with just those 2 hits (the old list is kept). `<` goes back to the older list with all 3 hits, `>` forward to the new one. `o` on a hit opens it and closes the quickfix window (tested), `<Enter>` opens it and keeps the list open.
+
 ---
 
-# 51. Quickfix Workflows for Developers
+# 51. Quickfix workflows for developers
 
 The quickfix list is a central tool for developers. It's a list of locations (file + line number) that you can jump through. Many features populate it.
 
-## What Populates the Quickfix List
+## What populates the quickfix list
 
 | Source | How to populate | Description |
 | --- | --- | --- |
@@ -540,7 +658,7 @@ The quickfix list is a central tool for developers. It's a list of locations (fi
 | Build errors | `:make` | Compiler output |
 | Grep | `:grep pattern` | Uses ripgrep (configured in this setup) |
 
-## Navigating the Quickfix List
+## Navigating the quickfix list
 
 | Command / Keymap | What it does |
 | --- | --- |
@@ -552,7 +670,7 @@ The quickfix list is a central tool for developers. It's a list of locations (fi
 | `:cc 5` | Jump to item number 5 |
 | `:colder` / `:cnewer` | Go to the previous / next quickfix list (history) |
 
-## Batch Operations on Quickfix Items
+## Batch operations on quickfix items
 
 | Command | What it does |
 | --- | --- |
@@ -563,20 +681,20 @@ The quickfix list is a central tool for developers. It's a list of locations (fi
 1. `:grep "oldName"` to populate quickfix with all occurrences
 2. `:cfdo %s/oldName/newName/g | update` to replace in all files and save them
 
-## Trouble (Better Quickfix UI)
+## trouble.nvim: better quickfix UI
 
 Plugin: **trouble.nvim**. A nicer interface for browsing diagnostics and quickfix items.
 
 | Keymap / Command | What it does |
 | --- | --- |
-| `<Space>dw` | Toggle Trouble with the diagnostics of every loaded buffer, grouped by file (`:Trouble diagnostics toggle`; see "Diagnostics In Depth" in the code chapter) |
+| `<Space>dw` | Toggle Trouble with the diagnostics of every loaded buffer, grouped by file (`:Trouble diagnostics toggle`; see "Diagnostics in depth" in the code chapter) |
 | `:Trouble` | Open Trouble window |
 
 Trouble shows diagnostics grouped by file with icons and colors, making it easier to triage errors.
 
 ---
 
-# 11. File Explorer (`nvim-tree`)
+# 11. File explorer (`nvim-tree`)
 
 Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or the first `:NvimTreeToggle`, `:NvimTreeOpen`, `:NvimTreeFocus`, `:NvimTreeFindFile` or `:NvimTreeFindFileToggle`; `nvim <dir>` and the dashboard entry open it too. Which folder it shows: `nvim` or `nvim .` shows the folder you started in; `nvim <folder>` shows that folder; `nvim <folder>/file` shows the folder you started in (not the file's folder). From then on it keeps that folder until the working folder changes: after `:cd`, `:tcd`, `:Z` or `:z` it shows the new folder (also when it is open, or was closed and is opened again).
 
@@ -610,7 +728,7 @@ Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or 
 
 ---
 
-# 30. Working with Directories
+# 30. Working with directories
 
 | Keymap / Command | Description |
 | --- | --- |
@@ -621,7 +739,7 @@ Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or 
 | `:pwd` | Print current working directory |
 | `:Z {keywords}` (or `:z {keywords}`) | `cd` to the best zoxide match (e.g. `:z nix nixos`) and print `cd <dir>`; without arguments it opens the fuzzy zoxide directory picker; without zoxide installed one warning |
 
-### Path Modifiers (for use in commands)
+### Path modifiers (for use in commands)
 
 | Modifier | Meaning | Example |
 | --- | --- | --- |
@@ -632,20 +750,32 @@ Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or 
 
 ---
 
-# 57. File Management for Developers
+# 57. File management for developers
 
-## File Operations
+## File operations
 
 | Plugin / Feature | What it does |
 | --- | --- |
 | **nvim-tree** (`<Space>s`) | Visual file browser. Create (`a`), delete (`d`), rename (`r`), copy (`c`), cut (`x`), paste (`p`). |
-| **vim-eunuch** | Unix file commands, all available from a fresh start (lazy `cmd` list): `:Rename <newname>`, `:Move <path>` (move the file, creating directories), `:Duplicate <name>`, `:Copy <path>`, `:Delete` / `:Remove` / `:Unlink` (delete the file; `:Delete` also the buffer), `:Mkdir <dir>` (always creates the missing parent folders, like `mkdir -p`; do NOT type `-p`, it would become part of the folder name; a `!` makes no difference; with no argument it creates the folder of the current file; an existing folder only gives the message "Directory already exists"), `:Chmod <mode>`, `:Cfind` / `:Lfind` / `:Clocate` / `:Llocate` (find / locate into the quickfix / location list), `:SudoEdit`, `:SudoWrite`, `:Wall` (write all) and `:W` (= `:Wall`). |
+| **vim-eunuch** | Unix file commands, all available from a fresh start (lazy `cmd` list): `:Rename <newname>`, `:Move <path>` (move the file, creating directories), `:Duplicate <name>`, `:Copy <path>`, `:Delete` / `:Remove` / `:Unlink` (delete the file; `:Delete` also the buffer, and it needs `!` for a file that has content; tested), `:Mkdir <dir>` (always creates the missing parent folders, like `mkdir -p`; do NOT type `-p`, it would become part of the folder name; a `!` makes no difference; with no argument it creates the folder of the current file; an existing folder only gives the message "Directory already exists"), `:Chmod <mode>`, `:Cfind` / `:Lfind` / `:Clocate` / `:Llocate` (find / locate into the quickfix / location list), `:SudoEdit`, `:SudoWrite`, `:Wall` (write all) and `:W` (= `:Wall`). |
 | **gx.nvim** (`gx`) | Open the URL or file path under cursor in a browser. |
 | `:CopyPath absolute` | Copy the full file path to clipboard. |
 | `:CopyPath relative` | Copy path relative to project root. |
 | `:CopyPath nameonly` | Copy just the filename. |
 
-## Project Structure Navigation
+Examples of the vim-eunuch commands (all tested in a scratch project, checking the files on disk and the buffer afterwards; the cursor is in the buffer `lua/old.lua` and Neovim was started in the project root):
+
+| Command | Result on disk |
+| --- | --- |
+| `:Rename new.lua` | `lua/old.lua` becomes `lua/new.lua` (a bare name is relative to the file's folder); the buffer follows the file |
+| `:Duplicate copy.lua` | `lua/copy.lua` is written next to it, and the buffer now shows `lua/copy.lua` (the original stays) |
+| `:Mkdir a/b/c` | the folders `a/b/c` are created, relative to the folder Neovim was started in (here the project root), NOT to the file's folder |
+| `:Delete` | refuses with `File not empty (add ! to override)` as long as the file has content |
+| `:Delete!` | the file is deleted from disk and its buffer is closed (Neovim shows the previous buffer) |
+| `:Move lua/sub/m2.lua` | the file is moved there (the missing folder `lua/sub` is created) and the buffer is renamed to `lua/sub/m2.lua`, with its text intact |
+| `:Remove` | the file is deleted from disk; the buffer keeps its name but is reloaded EMPTY and unmodified (tested: `u` brings the TEXT back into the buffer, marked modified, but the file stays deleted until you save it with `:w`) |
+
+## Project structure navigation
 
 | Keymap | What it does |
 | --- | --- |
@@ -657,9 +787,9 @@ Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or 
 
 ---
 
-# 63. Working with Multiple Files
+# 63. Working with multiple files
 
-## Opening Several Files
+## Opening several files
 
 | Method | How |
 | --- | --- |
@@ -669,18 +799,32 @@ Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or 
 | Tab open | `:tabe file2.py` opens in a new tab |
 | From file tree | `<Space>s`, navigate to file, press `<Tab>` to open without leaving the tree |
 
-## Comparing Two Files Side by Side
+## Comparing two files side by side
 
 1. Open the first file
 2. `:vs second_file.py` -- open the second file in a vertical split
 3. Now both files are visible side-by-side
 4. Use `<Ctrl-w>h` / `<Ctrl-w>l` to switch between them
 5. Use `:diffthis` in each window to enable diff mode (highlights differences)
-6. `:diffoff` to turn diff off
+6. Leave diff mode (tested): `:diffoff` turns it off only in the window you are in, so the other window still shows the diff until you run it there too. `:diffoff!` turns it off in all windows of the tab at once. To get rid of the second file as well, close its window with `:q` (or `<Ctrl-w>c`); with one window left diff mode ends by itself. `:only` / `<Ctrl-w>o` keeps just the current window.
+
+What it looks like for two files that differ in two lines (tested; the changed lines are highlighted in colour, `*` marks them here):
+
+```
+ d1.txt                      |  d2.txt
+   1  one                    |    1  one
+*  2  two                    | *  2  TWO
+   3  three                  |    3  three
+   ...                       |    ...
+* 15  fifteen                | * 15  15
+  16  sixteen                |   16  sixteen
+```
+
+In the real window, a line that exists only in one file is highlighted in green there (an added line), and the other window shows diagonal hatching (`/////`) at that position: these are filler lines that keep both windows aligned (seen on screen: the left file had one line, the right file three, so the left window showed hatching under its line and the right window showed line 3 in green). The bar at the top of the screen (the buffer tabs) lists buffers in the order they were opened, not the positions of the windows: after `nvim d1.txt` then `:vs d2.txt`, `d2.txt` is the second tab even though its window is on the left or right of the split.
 
 Or use the diffview plugin: `:DiffviewOpen` for git diffs.
 
-## Copying Between Files
+## Copying between files
 
 1. In file A: select text with `V` or `v`, then `y` to yank
 2. Switch to file B: `<Ctrl-w>l` or `gb` or `<Space>bp`
@@ -689,14 +833,14 @@ Or use the diffview plugin: `:DiffviewOpen` for git diffs.
 
 Since clipboard is `unnamedplus`, yanked text is shared across all buffers and even with external applications.
 
-## Running the Same Edit Across Multiple Files
+## Running the same edit across multiple files
 
 Use the quickfix list:
 
 1. `:grep "TODO"` -- find all files with "TODO"
 2. `:cfdo %s/TODO/DONE/g | update` -- replace in every file of the list and save it
 
-## Closing Files You're Done With
+## Closing files you're done with
 
 | Keymap | What it does |
 | --- | --- |

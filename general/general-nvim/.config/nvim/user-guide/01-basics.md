@@ -1,7 +1,7 @@
 <!-- chapter: Basics: modes, saving, recovering, getting help -->
 [Back to the guide index](README.md)
 
-# 1. Understanding Modes
+# 1. Understanding modes
 
 Neovim is a modal editor. You are always in one of these modes:
 
@@ -13,7 +13,7 @@ Neovim is a modal editor. You are always in one of these modes:
 | **Command** | `;` or `:` from Normal | Type commands at the bottom of the screen (e.g., `:w` to save). |
 | **Terminal** | When inside a terminal buffer | Interact with a shell. Press `<Esc>` to go to Normal mode (in the Claude Code panel `<Esc>` goes to Claude: use `<Ctrl-\><Ctrl-n>` there). |
 
-### Entering Insert Mode
+### Entering insert mode
 
 | Keymap | Description |
 | --- | --- |
@@ -24,14 +24,14 @@ Neovim is a modal editor. You are always in one of these modes:
 | `o` | Open new line below and insert |
 | `O` | Open new line above and insert |
 
-### Leaving Insert Mode
+### Leaving insert mode
 
 | Keymap | Description |
 | --- | --- |
 | `<Esc>` | Return to Normal mode |
 | `jk` (typed quickly) | Return to Normal mode (via better-escape.vim plugin, 200ms window) |
 
-### Visual Mode Variants
+### Visual mode variants
 
 | Keymap | Description |
 | --- | --- |
@@ -39,11 +39,20 @@ Neovim is a modal editor. You are always in one of these modes:
 | `V` | Line-wise visual (select entire lines) |
 | `<Ctrl-v>` | Block visual (select a rectangular block of text) |
 
+What each one selects, on `alpha beta gamma` with the cursor on the `b` of `beta` (the selection is shown in `[ ]`):
+
+```
+alpha beta gamma        cursor on the b of beta
+v e         ->  alpha [beta] gamma         characters from the cursor to the end of the word
+V           ->  [alpha beta gamma]         the whole line
+<Ctrl-v> j  ->  a rectangle: the same columns on this line and on the next one
+```
+
 ---
 
-# 69. Tips for Vim Beginners
+# 69. Tips for Vim beginners
 
-## The Most Important Habits
+## The most important habits
 
 1. **Stay in Normal mode**. Only enter Insert mode to type, then immediately `<Esc>` back. Normal mode is where all the power lives.
 2. **Think in verbs + nouns**. `d` (delete) + `iw` (inner word) = delete word. `c` (change) + `i"` (inside quotes) = change quoted text. `y` (yank) + `ap` (around paragraph) = copy paragraph.
@@ -52,20 +61,22 @@ Neovim is a modal editor. You are always in one of these modes:
 5. **Use text objects**. `ciw`, `di(`, `va"` are faster than selecting character-by-character.
 6. **Press `<Space>` and wait**. The which-key popup shows you all available keybindings.
 
-## Common Mistakes and How to Fix Them
+Example for habit 2: on `x = compute("old", 5)` with the cursor anywhere inside `"old"`, press `ci"`, type `new` and press `<Esc>`: the line becomes `x = compute("new", 5)` (tested).
+
+## Common mistakes and how to fix them
 
 | Problem | Cause | Fix |
 | --- | --- | --- |
 | Typing random commands instead of text | You're in Normal mode | Press `i` to enter Insert mode first |
 | Text won't stop appearing | You're in Insert mode | Press `<Esc>` to go back to Normal |
 | Screen looks weird / frozen | You pressed `<Ctrl-s>` (terminal freeze) | Press `<Ctrl-q>` to unfreeze. (In kitty + tmux with this config `<Ctrl-s>` did not freeze the screen: tested. In Insert/Select mode `<Ctrl-s>` is LSP signature help.) |
-| Can't exit Neovim | | Type `<Space>Q` and answer `y` to the confirmation, or `;qa!<Enter>` (no confirmation) |
+| Can't exit Neovim | `:q` only closes the current window, and with unsaved changes it asks "Save changes?" instead of quitting (the `confirm` option is on) | Type `<Space>Q` and answer `y` to the confirmation, or `;qa!<Enter>` (no confirmation) |
 | Pasted text looks wrong | Paste from outside with `<Ctrl-v>` in terminal mode | Use `"+p` in Normal mode, or the terminal paste key |
 | Search highlight won't go away | Yellow boxes left over from a search or `*` | Type `;noh<Enter>` (tested). `<Esc>` does **not** clear it in this config |
 | Accidentally opened a macro | Pressed `Q` | Press `q` to stop recording |
 | A key like `"` does nothing until you press another key, or an accented letter appears (`ë`, `è`) | Your keyboard layout uses **dead keys** (see below) | Press `<Space>` right after the key |
 
-## Keyboard Layouts With Dead Keys (for example US International)
+## Keyboard layouts with dead keys (for example US International)
 
 Some layouts (for example US International, used on the main machine) treat certain keys as **dead keys**: the key does not type anything by itself, it waits for the next key to decide. `"` followed by `e` gives `ë`; `"` followed by `<Space>` gives a plain `"`. Neovim only receives the character after that decision, so commands that need `"` look like they do nothing.
 
@@ -75,7 +86,7 @@ Some layouts (for example US International, used on the main machine) treat cert
 - **This is not Neovim**: it happens in any application with that layout. A different PC may have a different layout, so if a key does nothing or types a strange character, check the layout before suspecting the config.
 - **Quick test in Insert mode**: type the key, then a letter (`"e`); if you get an accented letter, it is a dead key on your layout.
 
-## Learning Path
+## Learning path
 
 1. First week: `h j k l`, `i`, `<Esc>`, `:w`, `:q`, `dd`, `yy`, `p`, `u`
 2. Second week: `w`, `b`, `e`, `0`, `$`, `gg`, `G`, `/search`, `n`, `N`
@@ -85,7 +96,7 @@ Some layouts (for example US International, used on the main machine) treat cert
 
 ---
 
-# 70. The Verb + Noun System (How Vim Commands Work)
+# 70. The verb + noun system (how Vim commands work)
 
 This is the single most important mental model for understanding Vim. Almost every command follows this pattern:
 
@@ -96,24 +107,24 @@ This is the single most important mental model for understanding Vim. Almost eve
 - **Text object** (noun): A structural unit to act on (`iw` inner word, `i(` inside parentheses, `at` around an HTML tag, etc.)
 - **Count**: How many times (optional)
 
-## Operators (Verbs)
+## Operators (verbs)
 
-| Operator | What it does |
-| --- | --- |
-| `d` | **Delete** (and cut to register) |
-| `c` | **Change** (delete and enter insert mode) |
-| `y` | **Yank** (copy) |
-| `>` | **Indent** right |
-| `<` | **Indent** left |
-| `=` | **Auto-indent** (fix indentation) |
-| `gU` | Convert to **UPPERCASE** |
-| `gu` | Convert to **lowercase** |
-| `~` | **Toggle case** (in this config `~` is an operator because `tildeop` is set) |
-| `gc` | **Toggle comment** (vim-commentary) |
-| `gcs` / `gcr` | **Comment** / **uncomment** whole rows (smart commenting) |
-| `gq` | **Format/wrap** text |
+| Operator | What it does | Example |
+| --- | --- | --- |
+| `d` | **Delete** (and cut to register) | `dw` on `foo bar` -> `bar` |
+| `c` | **Change** (delete and enter insert mode) | `cw`, type `x` on `foo bar` -> `x bar` |
+| `y` | **Yank** (copy) | `yw` on `foo bar` copies `foo `; `p` pastes it |
+| `>` | **Indent** right | `>>` on `foo` -> `  foo` (2 spaces: this config's shiftwidth) |
+| `<` | **Indent** left | `<<` on `    foo` -> `  foo` |
+| `=` | **Auto-indent** (fix indentation) | `=ip` on the Lua lines `if a then` / `x` / `end` -> the `x` line gets 2 spaces |
+| `gU` | Convert to **UPPERCASE** | `gUw` on `foo bar` -> `FOO bar` |
+| `gu` | Convert to **lowercase** | `guw` on `FOO BAR` -> `foo BAR` |
+| `~` | **Toggle case** (in this config `~` is an operator because `tildeop` is set) | `~w` on `foo bar` -> `FOO bar` |
+| `gc` | **Toggle comment** (vim-commentary) | `gcc` on `x = 1` in a Lua file -> `-- x = 1` |
+| `gcs` / `gcr` | **Comment** / **uncomment** whole rows (smart commenting) | `gcsip` on the Lua lines `a = 1` / `b = 2` -> `-- a = 1` / `-- b = 2`; `gcrip` removes the markers again |
+| `gq` | **Format/wrap** text | `gqq` on one very long line re-wraps it into several lines of at most 79 columns |
 
-## Motions (Nouns)
+## Motions (nouns)
 
 | Motion | What it means |
 | --- | --- |
@@ -131,23 +142,33 @@ This is the single most important mental model for understanding Vim. Almost eve
 | `j` | Down one line |
 | `k` | Up one line |
 
-## Text Objects (Structured Nouns)
+Where the cursor ends up, on the line `  total = price * 3;` (two leading spaces) with the cursor on the `t` of `total` (tested):
 
-| Text Object | What it selects |
+| Keys | Cursor lands on |
 | --- | --- |
-| `iw` / `aw` | Inner word / a word (with whitespace) |
-| `iW` / `aW` | Inner WORD / a WORD |
-| `is` / `as` | Inner sentence / a sentence (with trailing whitespace) |
-| `iS` / `aS` | vim-sandwich "query" object: type the surrounding character after it, e.g. `diS(`, `caS"`, `viS[` (inside / around that surrounding pair) |
-| `ip` / `ap` | Inner paragraph / a paragraph |
-| `i(` / `a(` | Inside / around parentheses |
-| `i{` / `a{` | Inside / around braces |
-| `i[` / `a[` | Inside / around brackets |
-| `i"` / `a"` | Inside / around double quotes |
-| `i'` / `a'` | Inside / around single quotes |
-| `it` / `at` | Inside / around HTML tags |
+| `w` | the `=` (start of the next word) |
+| `e` | the last `l` of `total` (end of the word) |
+| `$` | the `;` (end of the line) |
+| `0` | the first space (column 1) |
+| `^` | the `t` of `total` (first non-blank character) |
 
-## Combining Verbs and Nouns
+## Text objects (structured nouns)
+
+| Text Object | What it selects | Example (with `d`) |
+| --- | --- | --- |
+| `iw` / `aw` | Inner word / a word (with whitespace) | `diw` on `foo bar` (cursor in `foo`) -> ` bar`; `daw` -> `bar` |
+| `iW` / `aW` | Inner WORD / a WORD | `diW` on `a.b c` (cursor on `a`) -> ` c`; plain `diw` would only delete `a` |
+| `is` / `as` | Inner sentence / a sentence (with trailing whitespace) | `das` on `One. Two. Three.` (cursor in `Two.`) -> `One. Three.`; `dis` -> `One.  Three.` |
+| `iS` / `aS` | vim-sandwich "query" object: type the surrounding character after it, e.g. `diS(`, `caS"`, `viS[` (inside / around that surrounding pair) | `diS(` on `f(old)` (cursor in `old`) -> `f()` |
+| `ip` / `ap` | Inner paragraph / a paragraph | `dip` on the lines `a` / `b` / (blank) / `c` -> (blank) / `c`; `dap` -> `c` |
+| `i(` / `a(` | Inside / around parentheses | `di(` on `f(old)` -> `f()`; `da(` on `f(old) x` -> `f x` |
+| `i{` / `a{` | Inside / around braces | `di{` on `{old}` -> `{}`; `da{` on `x {old} y` -> `x  y` |
+| `i[` / `a[` | Inside / around brackets | `di[` on `x [old] y` -> `x [] y` |
+| `i"` / `a"` | Inside / around double quotes | `di"` on `x "y" z` -> `x "" z`; `da"` -> `x  z` |
+| `i'` / `a'` | Inside / around single quotes | `di'` on `x 'old' y` -> `x '' y` |
+| `it` / `at` | Inside / around HTML tags | `dit` on `<p>old</p>` -> `<p></p>`; `dat` on `a <b>old</b> c` -> `a  c` |
+
+## Combining verbs and nouns
 
 Every operator works with every motion and every text object. This creates hundreds of commands from a small set of building blocks:
 
@@ -176,25 +197,40 @@ Every operator works with every motion and every text object. This creates hundr
 | `gcip` | comment | inner paragraph | Comment out the paragraph |
 | `gc3j` | comment | 3 lines down | Comment out 3 lines |
 
-## Using Counts
+Worked example (tested) on the line `call(foo, "bar baz", [1, 2])`; the cursor is on the word named in the first column:
+
+| Cursor | Keys | After |
+| --- | --- | --- |
+| on `foo` | `di(` | `call()` |
+| on `foo` | `da(` | `call` |
+| on `bar` | `di"` | `call(foo, "", [1, 2])` |
+| on `bar` | `da"` | `call(foo, , [1, 2])` |
+| on `bar` | `ci"` + `X` + `<Esc>` | `call(foo, "X", [1, 2])` |
+| on `foo` | `dt,` | `call(, "bar baz", [1, 2])` |
+| `<p>old</p>`, on `old` | `cit` + `new` + `<Esc>` | `<p>new</p>` |
+| `<p>old</p>`, on `old` | `dit` | `<p></p>` |
+| `a` / `b` / (blank) / `c`, on `a` | `>ip` | `  a` / `  b` / (blank) / `c` |
+| `a` / `b` / `c` / `d` in a Lua file, on `a` | `gc2j` | `-- a` / `-- b` / `-- c` / `d` |
+
+## Using counts
 
 Counts multiply the action:
 
-| Command | What it does |
-| --- | --- |
-| `3dw` | Delete 3 words |
-| `5dd` | Delete 5 lines |
-| `2yy` | Yank 2 lines |
-| `3>>` | Indent 3 lines |
-| `10j` | Move down 10 lines |
+| Command | What it does | Example |
+| --- | --- | --- |
+| `3dw` | Delete 3 words | `3dw` on `a b c d e` -> `d e` |
+| `5dd` | Delete 5 lines | `5dd` on 7 lines deletes the first 5; lines 6 and 7 remain |
+| `2yy` | Yank 2 lines | `2yy` on the lines `1`, `2`, `3` copies `1` and `2` |
+| `3>>` | Indent 3 lines | `3>>` on the lines `a`, `b`, `c`, `d` indents `a`, `b`, `c`; `d` is unchanged |
+| `10j` | Move down 10 lines | `10j` from line 1 puts the cursor on line 11 |
 
-## Why This Matters
+## Why this matters
 
 Once you learn a few operators and a few motions/text-objects, you can combine them freely. Learning one new operator (e.g., `gU` for uppercase) instantly gives you dozens of new commands (`gUiw`, `gUi"`, `gU$`, `gUap`, etc.) without memorizing anything extra.
 
 ---
 
-# 72. Saving, Quitting, and File State
+# 72. Saving, quitting, and file state
 
 All the ways to save and quit, consolidated in one place.
 
@@ -225,7 +261,7 @@ Auto-save is also active: files save on `FocusLost` (switching to another app) a
 | `ZZ` | Save and quit (same as `:wq`) |
 | `ZQ` | Quit without saving (same as `:q!`) |
 
-## Closing Buffers (Without Quitting Neovim)
+## Closing buffers (without quitting Neovim)
 
 | Keymap | What it does |
 | --- | --- |
@@ -234,9 +270,9 @@ Auto-save is also active: files save on `FocusLost` (switching to another app) a
 
 ---
 
-# 73. Recovering from Mistakes
+# 73. Recovering from mistakes
 
-## Undo and Redo
+## Undo and redo
 
 | Keymap | What it does |
 | --- | --- |
@@ -244,7 +280,17 @@ Auto-save is also active: files save on `FocusLost` (switching to another app) a
 | `<Ctrl-r>` | Redo (undo the undo) |
 | `U` | Undo all changes on the current line (rarely used) |
 
-## Undo Tree (builtin)
+Example (tested): on the line `one two three`, `ciw` + `A` + `<Esc>`, `w`, `ciw` + `B` + `<Esc>` give `A B three`. Then:
+
+| Keys | Result |
+| --- | --- |
+| `u` | `A two three` (only the last change is undone) |
+| `uu` | `one two three` |
+| `uu` then `<Ctrl-r>` | `A two three` (the first change is redone) |
+| `U` | `one two three` (the whole line is back in one step) |
+| `U` then `u` | `A B three` (`U` is itself a change, so `u` undoes the `U`) |
+
+## Undo tree (builtin)
 
 Vim's undo history is a tree, not a linear stack. If you undo several times and then make a new edit, the old states aren't lost -- they become branches. Neovim's builtin undo tree (`nvim.undotree`) shows this tree.
 
@@ -254,7 +300,22 @@ Vim's undo history is a tree, not a linear stack. If you undo several times and 
 
 Inside the panel just move the cursor (`j`/`k`): the buffer switches to that undo state. Close it with `<Space>u` again or `:q`.
 
-## Time-Based Undo
+Example of a branch (tested, including the panel, in a real terminal):
+
+1. In an empty buffer press `ione<Esc>`, then `ccTWO<Esc>`: the buffer is `TWO`.
+2. Press `u`: the buffer is `one` again.
+3. Now `ccTHREE<Esc>`: the buffer is `THREE`. `TWO` is not on the undo path any more (`u` from here goes back to `one`), but it is not lost: it is a side branch of the tree.
+4. `g-` (go back in time, builtin) shows `TWO` again. In the panel the fork is drawn like this, and the buffer text follows the row the cursor is on (cursor on the `| *` row: `TWO`; one row up: `one`; on the last row: `THREE`):
+
+```
+ *    0    (origin)
+ *    1    (9 seconds ago)
+ |\
+ | *    2    (7 seconds ago)      <- TWO, the side branch
+ *    3    (3 seconds ago)        <- THREE, where you are
+```
+
+## Time-based undo
 
 | Command | What it does |
 | --- | --- |
@@ -266,17 +327,25 @@ Inside the panel just move the cursor (`j`/`k`): the buffer switches to that und
 
 This works because Neovim stores persistent undo history (the `undofile` option is enabled). Even if you close and reopen a file, you can still undo.
 
-## If You Accidentally Deleted a File
+## If you accidentally deleted a file
 
 The `auto-save.nvim` plugin saves when you leave a buffer or Neovim loses focus, and Neovim creates backups in `~/.local/share/nvim/backup/`. You may be able to recover from there.
 
 ---
 
-# 74. Discovering Keymaps and Getting Help
+# 74. Discovering keymaps and getting help
 
-## Which-Key: See Available Keybindings
+## See available keybindings with which-key.nvim
 
-Press **`<Space>`** (the leader key) and **wait about 200ms**. A popup appears showing every available `<Space>+...` keybinding organized by category.
+Press **`<Space>`** (the leader key) and **wait about 200ms**. A popup appears showing every available `<Space>+...` keybinding organized by category. A single key is shown with its description, a key that starts several keymaps is shown as `+` and a count. Below is a simplified sketch (the real popup lists many more keys, draws a small arrow glyph instead of `->` and its counts change whenever keymaps are added):
+
+```
+ w -> save buffer
+ u -> toggle undo tree
+ f -> +N keymaps
+ g -> +N keymaps
+ j -> +Java
+```
 
 You can also press any partial key sequence and wait:
 - `g` then wait -- shows all `g...` keybindings
@@ -284,7 +353,7 @@ You can also press any partial key sequence and wait:
 - `<Ctrl-w>` then wait -- shows all window management keybindings
 - `"` then wait -- shows all registers
 
-## Browse All Keymaps
+## Browse all keymaps
 
 | Command | What it does |
 | --- | --- |
@@ -294,9 +363,19 @@ You can also press any partial key sequence and wait:
 | `:nmap` | Show normal-mode mappings |
 | `:imap` | Show insert-mode mappings |
 | `:vmap` | Show visual-mode mappings |
-| `:verbose nmap <Space>fg` | Show exactly where a specific mapping was defined (file + line) |
+| `:verbose nmap <Space>fg` | Show exactly where a specific mapping was defined (the file; for a mapping written in Lua there is no line number unless Neovim runs with `-V1`) |
 
-## Getting Help
+Real output of `:verbose nmap <Space>fg` (tested):
+
+```
+n  <Space>fg   * <Cmd>FzfLua live_grep<CR>
+                 Fuzzy grep files
+        Last set from .../nvim/init.lua (run Nvim with -V1 for more details)
+```
+
+The first line is the mode and the key with what it runs, the second line is its description, the last line is the file that defined it.
+
+## Getting help
 
 | Command | What it does |
 | --- | --- |
@@ -308,7 +387,7 @@ You can also press any partial key sequence and wait:
 | `<Space>a` | Ask Claude how to do something in Neovim (vertical split with the skill loaded, always Sonnet) |
 | `K` (on a symbol) | LSP hover documentation |
 
-## Checking System Health
+## Checking system health
 
 | Command | What it does |
 | --- | --- |

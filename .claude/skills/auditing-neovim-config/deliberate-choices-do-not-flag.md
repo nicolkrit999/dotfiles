@@ -113,7 +113,7 @@ Rule of thumb the owner uses: if a behaviour is wanted AND default, keep it; if 
 - neovim.nix carries global tools: git, curl (even though other modules provide them), `xdg-utils` on Linux only, fzf, wl-clipboard, ripgrep, fd, universal-ctags (so `<Space>ft` btags works), nodejs, stylua, prettier. pandoc is in the LATEX devShell only (not global). Rule: remove what is not needed globally after checking a devShell that needs it, and ask to add it there.
 - devShell additions the owner approved: fullstack += typescript-language-server, gopls, ruff; cs-cheat-sheets += tinymist; jupyter += ruff; R devShell += `rPackages.languageserver`; php devShell ships phpactor; devShells for all languages the config enables servers for.
 - `~/nix` stray file named `;` has a staged deletion that stays. The unrelated nix commit (gh + claude-code line) goes along with the later develop->main merge. Never touch `~/nix` or dotfiles-private from nvim work.
-- nvim automated checks inside devShells only with 101% certainty (3 retries); unsure ones become manual checks.
+- nvim automated checks inside devShells only with 101% certainty (3 retries); unsure ones become manual checks. Run them as fake repos in `/tmp` with `nix develop` (verification doc 6.1) before declaring one manual; global vs devShell-only tools: same section.
 
 ## 7. Git workflow and repo hygiene
 
@@ -138,7 +138,7 @@ Rule of thumb the owner uses: if a behaviour is wanted AND default, keep it; if 
 
 ## 9. Guide and documentation
 
-- The guide is the `user-guide/` folder: README.md (contents with GitHub-slug anchors + Day-to-Day Cheat Sheet of 16+ topics, Quick Reference merged into it), 10 chapters, 5 language guides; `<Space>?` (and the dashboard item) opens `neovim-user-guide.pdf`, built from the markdown by `user-guide/build-pdf.py`; `<Space>a` starts a Claude session with the `answering-neovim-usage-questions` skill (vertical split; own tab on the dashboard). Both keys are deliberate and verified clash-free (no longer `<Space>a...`/`<Space>?...` map exists). Every change updates the guide and runs applicable verification.
+- The guide is the `user-guide/` folder: README.md (contents with GitHub-slug anchors + Day-to-day cheat sheet of 16+ topics, Quick Reference merged into it), 10 chapters, 5 language guides; `<Space>?` (and the dashboard item) opens `neovim-user-guide.pdf`, built from the markdown by `user-guide/build-pdf.py`; `<Space>a` starts a Claude session with the `answering-neovim-usage-questions` skill (vertical split; own tab on the dashboard). Both keys are deliberate and verified clash-free (no longer `<Space>a...`/`<Space>?...` map exists). Every change updates the guide and runs applicable verification.
 - Never add examples to the guide that the owner did not approve; the built-in `gr*` LSP keys get a one-line "built-in alternatives" note; `an`/`in` treesitter node selection example in the pair-programming step was approved.
 - Every own (non-third-party) keymap that can easily have a desc has one; descs follow the "Area: text" style ("Git: get permalink", "LSP: hover"); which-key desc consistency is checked, key conflicts must be zero except the allowlisted overlaps.
 - Manual check lists: exact command alone on its line, no trailing punctuation, expectation after each, batches of 8, quickest first.

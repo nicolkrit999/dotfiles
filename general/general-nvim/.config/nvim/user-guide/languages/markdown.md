@@ -148,11 +148,37 @@ Notes: `+` keeps existing indentation (`  + text`). `<Space>mb` skips blank line
 
 The `+` map is built so a count works (`3+j`): the file explains that a plain `:set` style map would turn the count into a range and give error E481.
 
-## Footnotes
+## Footnotes (vim-markdownfootnotes)
 
 Why: you write the sentence, press a key, write the note, jump back, without scrolling to the end and counting numbers.
 
 How it works: vim-markdownfootnotes inserts `[^N]` in the text and a line `[^N]: ` at the end of the file, numbering them in order. Your config adds the keys `^^` and `@@` and removes the plugin's own `<Space>f` and `<Space>r` maps in Markdown, because with Space as leader they swallowed `<Space>f...` typed quickly.
+
+The real code (`after/ftplugin/markdown.vim`, verbatim):
+
+```vim
+" Fix minor issue with footnote, see https://github.com/vim-pandoc/vim-markdownfootnotes/issues/22
+" Also remove the plugin's default <Leader>f insert-mode mapping which
+" hijacks Space+f when typed quickly (since leader = space).
+if exists(':FootnoteNumber')
+  for [s:mode, s:lhs] in [['i', '<Leader>f'], ['n', '<Leader>f'], ['i', '<Leader>r'], ['n', '<Leader>r']]
+    if get(maparg(s:lhs, s:mode, 0, 1), 'buffer', 0)
+      execute 'silent! ' . s:mode . 'unmap <buffer> ' . s:lhs
+    endif
+  endfor
+
+  lua vim.keymap.set("n", "^^", ":<C-U>call markdownfootnotes#VimFootnotes('i')<CR>", { buffer = true, silent = true, desc = "markdown: insert footnote" })
+  lua vim.keymap.set("i", "^^", "<C-O>:<C-U>call markdownfootnotes#VimFootnotes('i')<CR>", { buffer = true, silent = true, desc = "markdown: insert footnote" })
+  lua vim.keymap.set("i", "@@", "<Plug>ReturnFromFootnote", { buffer = true, silent = true, remap = true, desc = "markdown: return from footnote" })
+  lua vim.keymap.set("n", "@@", "<Plug>ReturnFromFootnote", { buffer = true, silent = true, remap = true, desc = "markdown: return from footnote" })
+endif
+```
+
+In plain words:
+
+- `exists(':FootnoteNumber')`: everything here runs only when the vim-markdownfootnotes plugin is loaded.
+- The loop removes the plugin's buffer-local `<Leader>f` and `<Leader>r` maps (insert and normal mode). With Space as leader they would swallow the start of `<Space>f...` and `<Space>r...` keys typed quickly. The `get(maparg(...), 'buffer', 0)` check makes it unmap only the plugin's buffer-local map, never a global one.
+- `^^` (normal and insert) inserts a footnote; `@@` returns from the footnote. They are set from Lua so they get a `desc` for which-key; `remap = true` on `@@` is needed because the right side is a `<Plug>` map.
 
 Tested flow (normal mode):
 
@@ -232,20 +258,52 @@ Config (from `lua/plugin_specs.lua`):
 - Outside Markdown buffers `<Alt-m>` shows one warning (the real map is buffer-local in `after/ftplugin/markdown.lua`).
 - After a fresh install the server may not be built: `:Lazy build markdown-preview.nvim` (needs `npm`).
 
+In plain words:
+
+- `build = "cd app && npm install && git restore ."`: lazy.nvim runs this when the plugin is installed or updated. It installs the node dependencies of the preview server (so `npm` must be on PATH), then `git restore .` throws away the lockfile change that `npm install` makes, so the plugin's git checkout stays clean and updates do not conflict.
+- `ft = { "markdown" }`: the plugin loads only for Markdown files.
+- `init` runs at startup (before the plugin loads) and sets the one option, `mkdp_auto_close = 0`.
+- The key `<Alt-m>` is not in this spec. It is one line in `after/ftplugin/markdown.lua` (`vim.keymap.set("n", "<A-m>", "<cmd>MarkdownPreviewToggle<cr>", { buffer = true, ... })`), buffer-local because the plugin defines `:MarkdownPreviewToggle` only for Markdown buffers.
+
 ## Rendering inside the buffer (render-markdown.nvim)
 
 Why: you read Markdown all day; rendered headings and tables are easier on the eyes, and the raw text is one `<Esc>`-then-`i` away.
 
-Config (from `lua/plugin_specs.lua`):
+The real spec (`lua/plugin_specs.lua`, verbatim, comments included):
 
 ```lua
-opts = {
-  debounce = 500,
-  render_modes = { "n", "c" },
-  max_file_size = 1.5,
-  anti_conceal = { enabled = true },
+{
+  "MeanderingProgrammer/render-markdown.nvim",
+  main = "render-markdown",
+  ft = { "markdown" },
+  opts = {
+    -- 1. Increase update delay (Default is 100ms).
+    -- Waits half a second after you stop typing before recalculating graphics.
+    debounce = 500,
+
+    -- 2. Strict Mode Limits.
+    -- Ensures it ONLY renders in Normal ('n') and Command ('c') mode.
+    -- When you enter Insert ('i') mode to type, rendering pauses completely.
+    render_modes = { "n", "c" },
+
+    -- 3. Limit processing on huge files.
+    -- Stops trying to render if a markdown file is over 1.5MB.
+    max_file_size = 1.5,
+
+    -- 4. Anti-conceal tuning.
+    -- Anti-conceal hides graphical elements on the exact line your cursor is on.
+    -- If the UI still feels slow when moving the cursor up/down, change enabled to `false`.
+    anti_conceal = {
+      enabled = true,
+    },
+  },
 },
 ```
+
+In plain words:
+
+- `ft = { "markdown" }`: loaded only when a Markdown file is opened; `main = "render-markdown"` tells lazy.nvim which module to call `setup(opts)` on.
+- Only four options are changed from the plugin defaults; everything else (heading icons, table borders, checkbox icons) is the plugin's default. The table below explains each of the four.
 
 | Setting | Meaning |
 | --- | --- |
@@ -285,6 +343,60 @@ The code block and the `plain one` / `plain two` lines (two lines, no blank betw
 
 Why not `:%!prettier --parser markdown`? It would replace the whole buffer: one giant change, all marks lost, and the cursor jumps. The key changes only the differing lines, in one undo step (tested: `u` restores everything), keeps marks and puts the cursor back on the same text. Nothing is written to disk. If you type while prettier runs, the result is discarded with a warning (`prettier: buffer changed while formatting, result discarded`): press the key again. A prettier error appears as `prettier failed: ...`.
 
+The core of the real code (`after/ftplugin/markdown.lua`, abridged: the cursor-restoring helpers `fm_cursor`, `squash` and `remap_col` above it, lines 15-90, and the two places marked `-- ...` that save and restore the cursors are left out; read the file for them):
+
+```lua
+if vim.fn.executable("prettier") == 1 then
+  vim.keymap.set("n", "<Space>fm", function()
+    local buf = vim.api.nvim_get_current_buf()
+    local tick = vim.b[buf].changedtick
+    local old = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local cmd = { "prettier", "--parser", "markdown" }
+    local name = vim.api.nvim_buf_get_name(buf)
+    if name ~= "" then
+      -- lets prettier find the project's .prettierrc / .prettierignore
+      vim.list_extend(cmd, { "--stdin-filepath", name })
+    end
+    vim.system(cmd, { stdin = table.concat(old, "\n") .. "\n", text = true }, function(res)
+      vim.schedule(function()
+        if res.code ~= 0 then
+          vim.notify("prettier failed: " .. vim.trim(res.stderr or ""), vim.log.levels.ERROR)
+          return
+        end
+        if not vim.api.nvim_buf_is_valid(buf) or vim.b[buf].changedtick ~= tick then
+          vim.notify("prettier: buffer changed while formatting, result discarded", vim.log.levels.WARN)
+          return
+        end
+        local new = vim.split(res.stdout:gsub("\n$", ""), "\n", { plain = true })
+        local diff = (vim.text and vim.text.diff) or vim.diff
+        local hunks = diff(table.concat(old, "\n") .. "\n", table.concat(new, "\n") .. "\n", { result_type = "indices" })
+        -- ... (cursors of all windows are saved here)
+        -- apply bottom-up so the earlier line numbers stay valid
+        for i = #hunks, 1, -1 do
+          local a_start, a_count, b_start, b_count = unpack(hunks[i])
+          local first = a_count == 0 and a_start or a_start - 1
+          vim.api.nvim_buf_set_lines(buf, first, first + a_count, false, vim.list_slice(new, b_start, b_start + b_count - 1))
+        end
+        -- ... (cursors of all windows are restored here)
+      end)
+    end)
+  end, { buffer = true, desc = "Format file (prettier)" })
+else
+  vim.keymap.set("n", "<Space>fm", function()
+    vim.notify("Markdown: prettier not found on PATH", vim.log.levels.WARN)
+  end, { buffer = true, desc = "Format file (needs prettier)" })
+end
+```
+
+In plain words:
+
+- The whole map exists in two versions, chosen when the Markdown file is opened: with `prettier` on PATH it formats; without it the key shows ONE warning (`Markdown: prettier not found on PATH`) instead of falling through to plain `<Space>` + `f` + `m`.
+- The buffer text goes to prettier through stdin (`vim.system` with `stdin = ...`), so the file on disk is never touched and unsaved text is formatted too. `--stdin-filepath` is added only for a named buffer; it is what lets prettier find `.prettierrc` and `.prettierignore`.
+- `changedtick` is remembered before the job starts and compared when it ends: if you typed in between, the result is thrown away with a warning.
+- `vim.text.diff` with `result_type = "indices"` compares old and new text and returns the changed hunks. They are applied from the bottom up so the line numbers of the hunks still to do stay valid. Only changed lines are replaced, which is why marks survive and `u` undoes it in one step.
+- The `fm_cursor` helpers (not quoted) move the cursor of every window showing the buffer back to the same text, even when lines above it changed.
+- The same hunk-applying idea is used for Lua in `after/ftplugin/lua.lua` (stylua), see "Lua: lua_ls and stylua" in the LSP chapter.
+
 Trailing spaces: two spaces at the end of a line are a Markdown hard line break, so they are never stripped here. The whitespace plugin excludes `markdown` (`trailing_whitespace_exclude_filetypes`), and `<Space><Space>` only warns. The other hard-break form is a trailing backslash; `<Space>mb` adds it. For rewrapping long paragraphs use `gq` after `:set textwidth=80` yourself.
 
 ## PDF export (`:ToPDF`)
@@ -308,6 +420,63 @@ pandoc --pdf-engine=xelatex --highlight-style=zenburn --table-of-content
 - Failure: one warning `ToPDF: pandoc failed (exit N)`. The usual reason is that xelatex is missing because Neovim was not started in the latex dev shell. To see the real LaTeX error, run the pandoc command in a terminal.
 
 To use it: `cd` into a folder with the latex shell (direnv), run `nvim "my notes.md"`, then `:ToPDF`.
+
+The real code (`plugin/command.vim`, verbatim):
+
+```vim
+" Convert Markdown file to PDF
+command! ToPDF call s:md_to_pdf()
+
+function! s:md_to_pdf() abort
+  " check if pandoc is installed
+  if executable('pandoc') != 1
+    echoerr "pandoc not found"
+    return
+  endif
+
+  let l:md_path = expand("%:p")
+  if l:md_path ==# ''
+    echohl WarningMsg | echomsg 'ToPDF: save the buffer to a file first' | echohl None
+    return
+  endif
+  let l:pdf_path = fnamemodify(l:md_path, ":r") .. ".pdf"
+
+  let l:header_path = stdpath('config') . '/resources/head.tex'
+
+  " argv list: no shell, so spaces, $ and ; in paths are safe
+  let l:cmd = ['pandoc', '--pdf-engine=xelatex', '--highlight-style=zenburn', '--table-of-content',
+        \ '--include-in-header=' . l:header_path, '-V', 'fontsize=10pt', '-V', 'colorlinks',
+        \ '-V', 'toccolor=NavyBlue', '-V', 'linkcolor=red', '-V', 'urlcolor=teal',
+        \ '-V', 'filecolor=magenta', '-s', l:md_path, '-o', l:pdf_path]
+
+  let l:id = jobstart(l:cmd, {'on_exit': function('s:md_to_pdf_done', [l:pdf_path])})
+
+  if l:id == 0 || l:id == -1
+    echoerr "Error running command"
+  endif
+endfunction
+
+" open the PDF after a successful run (mac / windows only, as before)
+function! s:md_to_pdf_done(pdf_path, job_id, code, event) abort
+  if a:code != 0
+    echohl WarningMsg | echomsg 'ToPDF: pandoc failed (exit ' . a:code . ')' | echohl None
+    return
+  endif
+  if g:is_mac
+    call jobstart(['open', a:pdf_path])
+  elseif g:is_win
+    call jobstart(['cmd', '/c', 'start', '', a:pdf_path])
+  endif
+endfunction
+```
+
+In plain words:
+
+- `:ToPDF` is a global command (not Markdown-only), but it works on the current file whatever its type, so use it in Markdown buffers.
+- It checks the two things that can be missing (pandoc, a saved file) and shows one message each.
+- The command is a list passed to `jobstart`, not a shell string: no quoting problems with spaces or `$` in file names.
+- The header file is found through `stdpath('config')`, i.e. `resources/head.tex` inside the Neovim config, so it works wherever the config is deployed.
+- `on_exit` runs `s:md_to_pdf_done`: a non-zero exit gives the warning, a zero exit is silent except on macOS (`open`) and Windows (`start`) where the PDF is opened.
 
 ## Writing quality
 
@@ -372,7 +541,7 @@ Checks common typos in every normal buffer (not help, terminal, quickfix, or sta
 
 ## Related sections
 
-Section 16 (Code Commenting: `gc` in Markdown writes `<!-- -->`; `gcs` / `gcr` use the comment style of the fence language inside a fenced block), section 27 (short Markdown key list), section 28 (LaTeX and Typst: same latex dev shell and ltex_plus), and the sections on spelling, LSP diagnostics and big-file mode.
+Section 16 (Code commenting: `gc` in Markdown writes `<!-- -->`; `gcs` / `gcr` use the comment style of the fence language inside a fenced block), section 27 (short Markdown key list), section 28 (LaTeX and Typst: same latex dev shell and ltex_plus), and the sections on spelling, LSP diagnostics and big-file mode.
 
 
 ---

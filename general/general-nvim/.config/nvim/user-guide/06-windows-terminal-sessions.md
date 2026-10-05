@@ -1,11 +1,11 @@
 <!-- chapter: Windows, buffers, terminal, sessions and the interface -->
 [Back to the guide index](README.md)
 
-# 7. Windows, Splits, and Buffers
+# 7. Windows, splits, and buffers
 
 This section explains how to open, navigate, resize, and close split windows entirely with the keyboard.
 
-## Key Concepts
+## Key concepts
 
 - **Buffer**: A file loaded into memory. You can have many buffers open but only see some of them.
 - **Window**: A visible area showing a buffer. You can split your screen into multiple windows.
@@ -13,7 +13,7 @@ This section explains how to open, navigate, resize, and close split windows ent
 
 **Panel layout**: short single-task panels open on the LEFT (undo tree `<Space>u`, `<Space>rr` output, `:help` on a screen of at least 200 columns, which then opens as a full-height split on the far left), persistent panels on the RIGHT (Claude Code). Inactive windows are dimmed (vimade); the current window is always full colour.
 
-## Creating Splits
+## Creating splits
 
 | Keymap / Command | Description |
 | --- | --- |
@@ -26,7 +26,17 @@ This section explains how to open, navigate, resize, and close split windows ent
 
 **Config note**: `splitbelow` and `splitright` are set, so new splits always open below/right.
 
-## Navigating Between Windows
+```
+<Ctrl-w>s  (or <Space>-)       <Ctrl-w>v  (or <Space>|)
+
++------------------+           +---------+---------+
+| old (above)      |           | old     | new     |
++------------------+           |         | (focus) |
+| new (focus)      |           |         |         |
++------------------+           +---------+---------+
+```
+
+## Navigating between windows
 
 | Keymap | Description |
 | --- | --- |
@@ -38,7 +48,17 @@ This section explains how to open, navigate, resize, and close split windows ent
 | `<Ctrl-w>W` | Cycle to the **previous** window |
 | `<Ctrl-w>p` | Jump to the **previously active** window |
 
-## Resizing Windows
+```
++-----+-----+    from A: <Ctrl-w>l -> B,  <Ctrl-w>j -> C
+|  A  |  B  |    from B: <Ctrl-w>h -> A,  <Ctrl-w>j -> C
++-----+-----+    from C: <Ctrl-w>k -> A or B (see below)
+|     C     |    <Ctrl-w>p from C -> back to the window you came from
++-----------+
+```
+
+C spans the full width, so `<Ctrl-w>k` from C goes to the window that lies above the cursor's screen column: A while the cursor is in the left half, B in the right half (tested with the cursor at columns 0 to 39 and 45 to 70 of an 80 column screen). `<Ctrl-w>j` from A or B always lands in C.
+
+## Resizing windows
 
 | Keymap | Description |
 | --- | --- |
@@ -54,9 +74,11 @@ This section explains how to open, navigate, resize, and close split windows ent
 | `:resize 20` | Set window height to 20 lines |
 | `:vertical resize 80` | Set window width to 80 columns |
 
+Example (two windows, one above the other, the cursor in the upper one): `<Ctrl-w>_` makes the upper window as tall as possible and squeezes the lower one down to a single line; `<Ctrl-w>=` gives both the same height again.
+
 **Auto-resize**: When you resize your terminal, all windows resize equally, except the Claude Code panel, which goes back to 30% of the screen width.
 
-## Moving Windows Around
+## Moving windows around
 
 | Keymap | Description |
 | --- | --- |
@@ -69,7 +91,22 @@ This section explains how to open, navigate, resize, and close split windows ent
 | `<Ctrl-w>x` | **Swap** current window with the next one |
 | `<Ctrl-w>T` | Move current window to a **new tab** |
 
-## Buffer Tabs (the Top Line)
+Example, starting with A and B side by side and C below them, the cursor in A (tested):
+
+```
+start                 <Ctrl-w>L on A          <Ctrl-w>J on A          <Ctrl-w>x on A
++-----+-----+         +-----+-----+           +-----------+           +-----+-----+
+|  A  |  B  |         |  B  |     |           |     B     |           |  B  |  A  |
++-----+-----+         +-----+  A  |           +-----------+           +-----+-----+
+|     C     |         |  C  |     |           |     C     |           |     C     |
++-----------+         +-----+-----+           +-----------+           +-----------+
+                                              |     A     |
+                                              +-----------+
+```
+
+`<Ctrl-w>x` swaps A with the next window in the same row (B). `<Ctrl-w>H` is like `<Ctrl-w>L` but puts A on the far left, `<Ctrl-w>K` is like `<Ctrl-w>J` but puts A at the very top.
+
+## Buffer tabs (the top line, bufferline.nvim)
 
 The top line shows one tab per open buffer (bufferline). Click a tab to switch to it. The `x` at the right of a tab closes it; while that buffer has unsaved changes the `x` is replaced by a `●`, and clicking the `●` closes it too. For a changed file Vim then asks `Save changes to "name"? [Y]es, (N)o, (C)ancel`: Yes saves and closes, No discards and closes, Cancel keeps the buffer and shows the warning "unsaved changes, buffer kept". A terminal whose program is still running is kept ("running terminal, buffer kept"). A right-click opens Neovim's own menu (see the Mouse table in the cheat sheet).
 
@@ -77,9 +114,29 @@ The top line shows one tab per open buffer (bufferline). Click a tab to switch t
 | --- | --- |
 | `<Space>bp` | Pick a buffer (`:BufferLinePick`): per the plugin's docs every visible tab shows a character, and typing that character jumps to that buffer |
 
+Example (README.md is the current buffer and has unsaved changes; the second line is what you see after `<Space>bp`, then pressing `b` jumps to notes.txt):
+
+```
+  a.lua   ▕ notes.txt  ▕▎README.md ●
+  a a.lua   ▕ b notes.txt  ▕▎R README.md ●
+```
+
 Quickfix, fugitive and git buffers never get a tab. The tabs show no file icons and no diagnostics, and they are ordered by buffer number.
 
-## Closing Windows
+### Changing the order of the tabs
+
+The tabs are sorted by buffer number, which is the order in which the files were first opened, so a new file always appears on the right. There is no key for reordering; use these commands (type them after `:`):
+
+| Command | Effect |
+| --- | --- |
+| `:BufferLineMovePrev` | Move the current tab one place to the left |
+| `:BufferLineMoveNext` | Move the current tab one place to the right |
+
+Example (tested): you opened `hello.java` and then `calculator.java`, so the tabs read `hello.java | calculator.java` and `calculator.java` is the current buffer. `:BufferLineMovePrev` makes them `calculator.java | hello.java`; `:BufferLineMoveNext` puts them back. The new order stays while you switch between the buffers (tested within one Neovim session).
+
+This only changes the order of the tabs. If the two files are shown side by side in two split windows and you want to swap which one is on the left, that is a window operation: `<Ctrl-w>x` (see "Moving windows around" above); tested: with `hello.java` on the left and `calculator.java` on the right, `<Ctrl-w>x` gives `calculator.java | hello.java`.
+
+## Closing windows
 
 | Keymap / Command | Description |
 | --- | --- |
@@ -90,7 +147,7 @@ Quickfix, fugitive and git buffers never get a tab. The tabs show no file icons 
 | `:only` or `<Ctrl-w>o` | Close ALL other windows, keep only the current one |
 | `\x` | Close the quickfix window and all location lists of the tab (the cursor stays in the current window) |
 
-## Buffer Management
+## Buffer management
 
 | Keymap / Command | Description |
 | --- | --- |
@@ -115,7 +172,9 @@ Quickfix, fugitive and git buffers never get a tab. The tabs show no file icons 
 | `:tabclose` or `\t` | Close the current tab |
 | `:tabonly` or `\T` | Close all other tabs |
 
-## Closing Floating Windows
+With exactly two tabs `gt` toggles between them: `:tabnew` (you are now in tab 2), `gt` goes back to tab 1, `gt` again to tab 2.
+
+## Closing floating windows
 
 Some plugins open floating windows (diagnostics, hover docs, etc.):
 
@@ -125,9 +184,9 @@ Some plugins open floating windows (diagnostics, hover docs, etc.):
 
 ---
 
-# 8. Terminal Integration
+# 8. Terminal integration
 
-## Opening a Terminal
+## Opening a terminal
 
 | Command / Keymap | Description |
 | --- | --- |
@@ -138,7 +197,7 @@ Some plugins open floating windows (diagnostics, hover docs, etc.):
 
 The terminal automatically starts in insert mode (you can type immediately) and hides line numbers. (tested in a real terminal: both start in insert mode).
 
-## Navigating In and Out of Terminal
+## Navigating in and out of terminal
 
 | Keymap | Context | Description |
 | --- | --- | --- |
@@ -149,19 +208,19 @@ The terminal automatically starts in insert mode (you can type immediately) and 
 
 **Workflow example**: You run code with `<Space>rr`. A terminal opens showing output. To go back to your code: press `<Esc>` to exit terminal mode, then `<Ctrl-w>l` (or `<Right>`) to move to the code window (the output is on the left). To close the terminal: `<Space>q` while in the terminal window.
 
-## Closing a Terminal
+## Closing a terminal
 
 | Method | Description |
 | --- | --- |
 | `<Space>q` | While the terminal window is focused (press `<Esc>` first), close the window. A program that is still running keeps running in a hidden buffer (`\D` keeps such buffers) |
-| Type `exit` | In an interactive shell terminal (`:term`), `exit` ends the shell and the window closes. A `<Space>rr` run does NOT close its window when the program ends: the output stays (tested, no exit-code line is shown) until you close it with `<Space>q` |
+| Type `exit` | In an interactive shell terminal (`:term`), `exit` ends the shell and the window closes. A `<Space>rr` run does NOT close its window when the program ends: the output stays (tested: it ends with the line `[Process exited 0]`) until you close it with `<Space>q` |
 | `\d` | Delete the terminal buffer If the program is still running, Vim asks `Close "term://..."? [Y]es, (N)o, (C)ancel` first (tested in a real terminal). |
 
 ---
 
-# 58. Session and Productivity
+# 58. Session and productivity
 
-## Auto-Save
+## Auto-save (auto-save.nvim)
 
 Plugin: **auto-save.nvim**. Files are automatically saved when you:
 - Switch to another application (`FocusLost`)
@@ -169,7 +228,7 @@ Plugin: **auto-save.nvim**. Files are automatically saved when you:
 
 It never saves unnamed, read-only or special buffers (terminals, help, ...) and never saves Typst and LaTeX files (their watchers would recompile on every save). After each save the message "AutoSave: saved at HH:MM:SS" appears.
 
-## Session Management
+## Session management (persistence.nvim, vim-obsession)
 
 Plugin: **persistence.nvim** saves a session for the current folder (and git branch) automatically when you quit, once a real file was opened. It is never restored by itself: restore it from the dashboard (`r` this folder, `L` last session). Windows of Claude Code, terminals, nvim-tree, the outline, help and quickfix are left out of the saved session. `<Space>sv` (restart) brings windows, tabs and files back on its own.
 
@@ -181,12 +240,14 @@ Plugin: **vim-obsession** (manual alternative). Save and restore your entire Neo
 | `:Obsession!` | Stop recording and delete the session file |
 | `nvim -S Session.vim` | Restore the session from the command line |
 
-## Collaborative Editing
+## Collaborative editing (instant.nvim)
 
 Plugin: **instant.nvim**. Real-time collaborative editing.
 
 - The plugin loads on its first `:Instant...` command. Host and port are arguments of `:InstantStartServer` / `:InstantStartSession` / `:InstantJoinSession` (e.g. `:InstantStartSession 127.0.0.1 8081`); the built-in server defaults to port 8080.
 - Uses your system username automatically
+
+Example (tested with two Neovim instances on one machine): the host runs `:InstantStartServer 127.0.0.1 8081`, then `:InstantStartSession 127.0.0.1 8081`; the guest runs `:InstantJoinSession 127.0.0.1 8081` and sees "Connected!" (the host sees "Peer connected! 2 connected."). The host's open buffers appear in the guest's buffer list (`:ls`; the buffer numbers are the guest's own). What either side types in a shared buffer shows up in the other one at once (tested in both directions), together with the other person's name at their cursor line.
 
 ---
 
@@ -201,9 +262,18 @@ Plugin: **instant.nvim**. Real-time collaborative editing.
 | Y | Right | Encoding (only when not UTF-8) and file format (only when not unix), both in red; `[CN]` input-method badge on macOS |
 | Z | Rightmost | Progress through the file (%). The line:column position is shown only in inactive windows |
 
+Example (tested in a git repo, the cursor in the first line of a Lua file with one added, one changed and one removed line; the Nerd Font icons are left out, the real line has a branch icon before `main`, a diagnostic icon before the count `5` and a gear before `lua_ls`):
+
+```
+ a.lua   main \ +1 ~1 -1 \ <icon> 5                      lua_ls (+1)  Top
+ A       B                                               X            Z
+```
+
+`Top` is the progress through the file (`Top`, a percentage or `Bot`).
+
 ---
 
-# 33. UI Features
+# 33. UI features
 
 | Feature | Description |
 | --- | --- |
@@ -220,7 +290,7 @@ Plugin: **instant.nvim**. Real-time collaborative editing.
 | **vimade** | Dims inactive windows |
 | **Borders** | Floating windows and the completion menu have a single-line border (exceptions: `:Lazy` and the DevDocs float use rounded corners) |
 
-## Breadcrumb Bar (dropbar.nvim)
+## Breadcrumb bar (dropbar.nvim)
 
 Plugin: **dropbar.nvim**. A line at the top of a window shows the path to the code under the cursor: the file path, then the class and function you are in. It follows the cursor by itself and appears for files that have a Treesitter parser or a language server with symbols (and for markdown and terminal buffers). Files over 1 MB, help buffers, floating windows and windows that already have their own winbar do not get it. This config loads the plugin with its default settings and maps no key for it.
 
@@ -231,7 +301,7 @@ Plugin: **dropbar.nvim**. A line at the top of a window shows the path to the co
 
 For a keyboard-driven view of the same information use the symbol outline (`<Space>t`, "Symbol Outline" in the navigation chapter).
 
-## LSP Progress Messages (fidget.nvim)
+## LSP progress messages (fidget.nvim)
 
 Plugin: **fidget.nvim**. While a language server is busy (starting up, indexing a project), a small progress message appears in the bottom-right corner and disappears when the server is done. It is only informational: there is nothing to press, and the config calls `setup {}` with the default settings. If the message stays for a while after opening a file, the server is still working; wait until it vanishes before expecting completion or go-to-definition.
 
@@ -268,43 +338,59 @@ The UI colours of this config (yank flash, cursor and float borders, hop hint ke
 
 | Plugin | Colorscheme loaded at startup | Other names the plugin provides |
 | --- | --- | --- |
-| onedark.nvim | `onedark` (style "darker") | |
-| edge | `edge` (default style, italics on) | |
-| sonokai | `sonokai` (italics on) | |
-| gruvbox-material | `gruvbox-material` (hard background, original foreground, italics on) | |
-| everforest | `everforest` (hard background, italics on) | |
+| onedark.nvim | `onedark` (style "darker") | N/A (the plugin has only this one colorscheme file) |
+| edge | `edge` (default style, italics on) | N/A (the plugin has only this one colorscheme file) |
+| sonokai | `sonokai` (italics on) | N/A (the plugin has only this one colorscheme file) |
+| gruvbox-material | `gruvbox-material` (hard background, original foreground, italics on) | N/A (the plugin has only this one colorscheme file) |
+| everforest | `everforest` (hard background, italics on) | N/A (the plugin has only this one colorscheme file) |
 | nightfox.nvim | `carbonfox` | `nightfox`, `dayfox`, `dawnfox`, `duskfox`, `nordfox`, `terafox` |
 | onedarkpro.nvim | `onedark_dark` | `onedark`, `onedark_vivid`, `onelight`, `vaporwave` |
 | material.nvim | `material` (style "darker") | `material-darker`, `material-lighter`, `material-oceanic`, `material-palenight`, `material-deep-ocean` |
-| arctic | `arctic` (needs lush.nvim) | |
+| arctic | `arctic` (needs lush.nvim) | N/A (the plugin has only this one colorscheme file) |
 | kanagawa.nvim | `kanagawa-dragon` | `kanagawa`, `kanagawa-wave`, `kanagawa-lotus` |
 | modus-themes.nvim | `modus` | `modus_operandi`, `modus_vivendi` |
 | jellybeans.nvim | `jellybeans` | `jellybeans-default`, `-hc`, `-mono`, `-muted`, `-warm` and light variants |
 | github-theme | `github_dark_default` | `github_dark`, `github_dark_dimmed`, `github_dark_high_contrast`, `github_dark_colorblind`, `github_dark_tritanopia`, `github_light*` |
-| ashen.nvim | `ashen` | |
-| melange-nvim | `melange` | |
+| ashen.nvim | `ashen` | N/A (the plugin has only this one colorscheme file) |
+| melange-nvim | `melange` | N/A (the plugin has only this one colorscheme file) |
 | makurai-nvim | `makurai_dark` | `makurai_autumn`, `makurai_light` |
-| vague.nvim | `vague` | |
+| vague.nvim | `vague` | N/A (the plugin has only this one colorscheme file) |
 | kanso.nvim | `kanso` | `kanso-ink`, `kanso-mist`, `kanso-pearl`, `kanso-zen` |
-| citruszest.nvim | `citruszest` | |
+| citruszest.nvim | `citruszest` | N/A (the plugin has only this one colorscheme file) |
 
 The "other names" are the colorscheme files found in the installed plugin folders, so they depend on the plugin version.
 
-Not in the random list: catppuccin (`catppuccin`, `catppuccin-mocha`, `-macchiato`, `-frappe`, `-latte`) and nvim-base16 (many `base16-<name>` themes; the one used on Nix). lush.nvim is only a library that arctic needs; it provides no colorscheme (see "Libraries and Dependencies" in "39. Other Plugins" in `10-various.md`).
+Not in the random list: catppuccin (`catppuccin`, `catppuccin-mocha`, `-macchiato`, `-frappe`, `-latte`) and nvim-base16 (many `base16-<name>` themes; the one used on Nix). lush.nvim is only a library that arctic needs; it provides no colorscheme (see "Libraries and dependencies" in "39. Other plugins" in `10-various.md`).
 
-## Line Number Column (`statuscol.nvim`)
+## Line number column (`statuscol.nvim`)
 
 The column at the left of every window is drawn by statuscol.nvim as one column with three parts, from left to right: the sign column, the line number and the fold column. Each part has a click handler of the plugin (its default handlers; not described further here).
 
 | Part | What it shows |
 | --- | --- |
 | Signs | The sign column is one cell wide (`signcolumn=yes:1`). The config defines signs for git changes (gitsigns) and for diagnostics (error, warning, info, hint glyphs) |
-| Number | The line number; `number` and `relativenumber` are both on (see "Automatic Behaviors" for which window gets relative numbers). `relculright` is off, so the number of the cursor line is not right-aligned |
+| Number | The line number; `number` and `relativenumber` are both on (see "Automatic behaviors" for which window gets relative numbers). `relculright` is off, so the number of the cursor line is not right-aligned |
 | Folds | The fold markers; fold levels deeper than 3 show a blank instead |
 
-The fold keys are in "Code Folding (`nvim-ufo`)".
+Example (tested in a git repository, the cursor in line 1 of a file with no diagnostics; compared with the last commit, line 3 was changed, one line below it was deleted and two lines were added at the end; the cursor line shows its absolute number, the other lines their distance from the cursor):
 
-## Icons and UI Libraries
+```
+ sign number text
+        1    return {          <- cursor line: absolute number
+        1      a = 1,
+ ~      2      b = 20,         <- git sign: changed line
+ _      3      c = 3,          <- git sign: lines deleted below
+        4      e = 5,
+ +      5      f = 6,          <- git sign: added line
+ +      6      g = 7,          <- git sign: added line
+        7    }
+```
+
+The sign column is one cell wide: when a line also has a diagnostic (for example a lua_ls hint such as "unused local"), the diagnostic sign is drawn instead of the git sign.
+
+The fold keys are in "Code folding (`nvim-ufo`)".
+
+## Icons and UI libraries
 
 These plugins have no keys and no commands of their own; other plugins use them. Icons need a Nerd Font in the terminal.
 
@@ -315,7 +401,7 @@ These plugins have no keys and no commands of their own; other plugins use them.
 | nui.nvim | Popup, menu and layout building blocks. Needed by nvim-java, nvim-dbee and ascii.nvim |
 | ascii.nvim | A collection of ASCII-art pictures, only needed by the dashboard, which takes a random one for its header at each start |
 
-## Input Popups and Big Files (`snacks.nvim`)
+## Input popups and big files (`snacks.nvim`)
 
 Plugin: **snacks.nvim**. Loaded at startup; three of its parts are enabled, with no keys or commands of their own.
 
@@ -325,7 +411,7 @@ Plugin: **snacks.nvim**. Loaded at startup; three of its parts are enabled, with
 | picker | Replaces `vim.ui.select` (the snacks picker option `ui_select` is on by default and the config does not turn it off), so selection lists such as the branch menu or code actions are filterable pickers. The keys inside them are in "Moving Inside Any Picker" (`05-search-and-files.md`) |
 | bigfile | A file over 1.5 MB, or one whose lines average more than 5000 characters, gets the filetype `bigfile`: no Treesitter and no filetype keys. The language server of the real filetype starts a little later, without semantic tokens or completion. `:lsp stop` drops it; `:set ft=<language>` (for example `:set ft=json`) returns to full mode |
 
-## Dashboard (Start Screen)
+## Dashboard (start screen, dashboard-nvim)
 
 The dashboard opens for a bare `nvim` (no file, no directory, no stdin) or with `:Dashboard`. `<Enter>` runs the item under the cursor. These single-letter keys work only inside the dashboard (the items that show `[<Leader> ...]` on the right are the global keys, they work everywhere, see "Help keys" below):
 
@@ -340,6 +426,26 @@ The dashboard opens for a bare `nvim` (no file, no directory, no stdin) or with 
 | `q` | Quit Neovim |
 
 The other items show their normal key: Find File `<Space>ff`, Recently opened files `<Space>fr`, Project grep `<Space>fg`, Open tree view `<Space>s`, Search help `<Space>fh`, Claude Code `<Space>cc`, Open Nvim config `<Space>ev`. With nothing saved, `r` / `L` show one warning ("no saved session for this folder" / "no saved session"). Sessions are never restored automatically.
+
+What a bare `nvim` shows (tested in a terminal; the header picture is random, here a penguin, and the Nerd Font icons before each item are left out; the real list continues below "Open tree view"):
+
+```
+                  .---.
+                 /     \
+                 \.@-@./
+                 /`\_/`\
+                //  _  \\
+               | \     )|_
+
+        Restore session (this folder)                        [r]
+        Restore last session                                 [L]
+        Find File                                 [<Leader> f f]
+        Recent files here                                    [o]
+        Recently opened files                     [<Leader> f r]
+        Recent directories                                   [d]
+        Project grep                              [<Leader> f g]
+        Open tree view                              [<Leader> s]
+```
 
 | Keymap | Description |
 | --- | --- |

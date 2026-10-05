@@ -1,7 +1,7 @@
 <!-- chapter: Various: custom commands, other plugins, configuration, Neovide -->
 [Back to the guide index](README.md)
 
-# 34. Custom Commands
+# 34. Custom commands
 
 | Command | Description |
 | --- | --- |
@@ -13,14 +13,25 @@
 | `:Edit <pattern>...` | Open every file matching the glob patterns (`:Edit src/*.lua`); `:edit` typed as the first word expands to `:Edit` |
 | `:Datetime [format]` | Show date and time (optional format argument) |
 | `:ToPDF` | Convert markdown to PDF (requires pandoc) |
-| `:Z {keywords}` | zoxide jump (see Working with Directories) |
+| `:Z {keywords}` | zoxide jump (see Working with directories) |
 | `:TermHL` | Show the current buffer (e.g. a log with ANSI colour codes) rendered with its colours in a read-only terminal buffer |
 | `:LogAutocmds` | Toggle logging of all autocommand events to `~/.local/state/nvim/log-autocmds.log` (the file is emptied each time logging starts) |
 | `:StripTrailingWhitespace` | Remove trailing whitespace (same as `<Space><Space>`) |
 | `:Notifications` | Show the notification history (nvim-notify) |
 | `:Inspect` / `:InspectTree` | Show the highlight groups / the Treesitter tree at the cursor |
 
-### Plugin Manager Shortcuts
+Examples (tested, in the file `lua/mappings.lua` of a git repository at `/tmp/demo`):
+
+| Command | Result |
+| --- | --- |
+| `:CopyPath nameonly` | The clipboard (register `+`) holds `mappings.lua`; Neovim prints "Filepath copied to clipboard!" |
+| `:CopyPath relative` | `<project-root>/lua/mappings.lua` |
+| `:CopyPath absolute` | `/tmp/demo/lua/mappings.lua` |
+| `:Datetime` | Prints the date and time, for example `2026-10-05 10:57:32+0200` |
+| `:Edit lua/*.lua` | With `lua/mappings.lua`, `lua/x.lua` and `lua/y.lua` on disk, all three are in the buffer list (the last one, `lua/y.lua`, is shown) |
+| `:Redir echo 1` | A new tab opens with a scratch buffer that contains the output (`1`); the buffer is wiped when the tab is closed |
+
+### Plugin manager shortcuts (lazy.nvim)
 
 Type these in command mode, then press space (or Enter) to expand:
 
@@ -33,7 +44,7 @@ Type these in command mode, then press space (or Enter) to expand:
 
 ---
 
-# 39. Other Plugins
+# 39. Other plugins
 
 | Plugin | Trigger | Description |
 | --- | --- | --- |
@@ -58,7 +69,7 @@ Type these in command mode, then press space (or Enter) to expand:
 | `vim-scriptease` | `:Messages`, `:Scriptnames`, `:Verbose {command}` | Vim-script debugging helpers |
 | `nvim-dbee`, `vim-dadbod-ui` | `<Space>D...` | SQL clients (see below) |
 
-## Telescope (second picker)
+## telescope.nvim (second picker)
 
 Plugins: **telescope.nvim** and **telescope-symbols.nvim**. Telescope is a second popup picker next to fzf-lua (the file, grep and buffer pickers are fzf-lua, see `05-search-and-files.md`). It is lazy: it loads only on its first `:Telescope` command, so nothing starts at launch. nvim-devdocs lists it as a dependency too.
 
@@ -70,7 +81,7 @@ Plugins: **telescope.nvim** and **telescope-symbols.nvim**. Telescope is a secon
 
 telescope-symbols.nvim has no command, key or setup of its own; it only ships the symbol lists (JSON files) that the built-in `:Telescope symbols` picker reads from the runtime path. Lazy.nvim loads it together with Telescope. The keys inside the picker (and the ways Telescope differs from fzf-lua) are in "Moving Inside Any Picker" in `05-search-and-files.md`. `:Telescope symbols` was read from the plugin code, not tried.
 
-## Copying Over SSH (vim-oscyank)
+## Copying over SSH (vim-oscyank)
 
 Plugin: **vim-oscyank** (enabled on Linux only; loaded on its first command). It wraps text in an OSC 52 escape sequence and writes it to the terminal, which then puts it into the system clipboard of the machine you sit at, also when Neovim runs on another machine over SSH. Your terminal (and tmux, if used) must allow OSC 52 clipboard writes. This configuration maps no key for it.
 
@@ -80,7 +91,9 @@ Plugin: **vim-oscyank** (enabled on Linux only; loaded on its first command). It
 | `:OSCYankVisual` | Copy the Visual selection (run it from Visual mode) |
 | `:OSCYankRegister {reg}` | Copy the content of a register |
 
-## Keyboard Layout Switching (vim-xkbswitch)
+Example (tested inside tmux with `set-clipboard on` and `allow-passthrough on`): `:OSCYank hello` shows `[oscyank] 5 characters copied` and the text `hello` arrives in the terminal's clipboard (in tmux it appeared in tmux's own paste buffer). Pasting on the local machine then gives `hello`.
+
+## Keyboard layout switching (vim-xkbswitch)
 
 Plugin: **vim-xkbswitch** (`lyokha/vim-xkbswitch`). It switches the keyboard layout automatically when you enter and leave Insert mode, so that Normal-mode keys keep working while you type text in another layout (for example a non-Latin one).
 
@@ -88,7 +101,7 @@ Plugin: **vim-xkbswitch** (`lyokha/vim-xkbswitch`). It switches the keyboard lay
 - It loads on the first `InsertEnter` and the config only turns it on (`XkbSwitchEnabled = 1`); there are no keys and no commands of our own.
 - **Unverified:** this plugin is declared in the config but not installed or run on this Linux machine, so nothing in this section was tested. It is written as a best effort from the plugin's documented purpose and the spec in `lua/plugin_specs.lua`.
 
-## Neovim in the Browser (firenvim)
+## Neovim in the browser (firenvim)
 
 Plugin: **firenvim**. With the Firenvim browser extension installed, a browser text area can be edited in a Neovim window. The config applies the following only when Neovim was started by Firenvim:
 
@@ -102,7 +115,7 @@ Plugin: **firenvim**. With the Firenvim browser extension installed, a browser t
 
 The plugin build (`:Lazy build firenvim`) installs the native part for the browser, using the `PATH` of the running Neovim. The browser-side button or shortcut for a manual takeover belongs to the extension, not to this config.
 
-## Live Preview of :norm (live-command.nvim)
+## Live preview of :norm (live-command.nvim)
 
 Plugin: **live-command.nvim**. When `norm` is typed as an Ex command (at the start of the command line, after a range, after `|`, after `:g/pattern/` or `:v/pattern/`, or after a command modifier such as `:silent!`), a command-line abbreviation turns it into `:Norm`. `:Norm` behaves like `:norm` but shows the effect in the buffer, with the changed text highlighted inline, while you are still typing. The word `norm` inside a pattern, a string or other text is left alone.
 
@@ -112,9 +125,9 @@ Plugin: **live-command.nvim**. When `norm` is typed as an Ex command (at the sta
 | `:g/<pattern>/norm dd` | The preview also works after `:g/.../` and `:v/.../` |
 | `:silent! norm ...` | The preview also works after command modifiers |
 
-The examples are standard `:norm` uses; the preview itself was read from the config, not tried here.
+Example (tested in a terminal): with the three lines `a` / `b` / `c`, typing `:%norm Atext` (without `<Enter>`) turns the buffer into `atext` / `btext` / `ctext` while you type, and the command line shows `:%Norm Atext`. `<Enter>` keeps the result, `<Esc>` restores `a` / `b` / `c`. The other rows of the table are standard `:norm` uses.
 
-## Vim-script Debugging (vim-scriptease)
+## Vim-script debugging (vim-scriptease)
 
 Plugin: **vim-scriptease**. Loaded on the first use of one of its three commands (the lazy list names `:Scriptnames`, `:Messages`, `:Verbose`). The plugin has more commands; only these three are loaded on demand here.
 
@@ -124,7 +137,7 @@ Plugin: **vim-scriptease**. Loaded on the first use of one of its three commands
 | `:Scriptnames` | Load the list of `:scriptnames` into the quickfix list and open it |
 | `:Verbose {command}` | Like `:verbose {command}`, but the output goes to a file and is shown in the preview window (handy for noisy commands; a count in front raises the verbosity) |
 
-## Libraries and Dependencies
+## Libraries and dependencies
 
 These plugins have no commands or keys. Other plugins need them, and lazy.nvim loads them when one of those plugins starts or asks for them.
 
@@ -133,10 +146,10 @@ These plugins have no commands or keys. Other plugins need them, and lazy.nvim l
 | plenary.nvim | Lua helper library (async, paths, jobs) | claude-code.nvim, neogit, nvim-devdocs and Telescope |
 | promise-async | Promise and async library | nvim-ufo (code folding) |
 | lush.nvim | Library for writing colour themes in Lua | the arctic colorscheme (see "Colorschemes" in `06-windows-terminal-sessions.md`) |
-| nui.nvim | Popup, menu and layout building blocks | nvim-java, nvim-dbee, ascii.nvim (see "Icons and UI Libraries" in `06-windows-terminal-sessions.md`) |
-| nvim-web-devicons, mini.icons | File and kind icons | see "Icons and UI Libraries" in `06-windows-terminal-sessions.md` |
+| nui.nvim | Popup, menu and layout building blocks | nvim-java, nvim-dbee, ascii.nvim (see "Icons and UI libraries" in `06-windows-terminal-sessions.md`) |
+| nvim-web-devicons, mini.icons | File and kind icons | see "Icons and UI libraries" in `06-windows-terminal-sessions.md` |
 
-## SQL Databases (nvim-dbee, vim-dadbod-ui)
+## SQL databases (nvim-dbee, vim-dadbod-ui)
 
 Two independent SQL clients. Neither has connections by default: this repo is public, so connections are never stored in the config.
 
@@ -159,18 +172,18 @@ Connections come from the environment (set them in an untracked shell file, dire
 
 | Where | Keys | What it does |
 | --- | --- | --- |
-| dbee (`<Space>Do`) | opens four windows: drawer, SQL editor, result, call log | `<Space>Dt` toggles, `<Space>Dc` closes |
-| dbee drawer | `<CR>` select / expand, `o` toggle, `r` refresh, `cw` rename, `dd` delete | the drawer's own help is listed inside it |
-| dbee editor | `BB` run the whole file (Visual: the selection), `<CR>` run the statement under the cursor | the rows appear in the result window |
-| dbee result | `L` / `H` next / previous page, `E` / `F` last / first page, `yaj` / `yac` yank the row as JSON / CSV, `<C-c>` cancel | |
-| dadbod (`<Space>Du`) | drawer: `o` open/toggle, `S` open in a vertical split, `R` redraw, `A` add a connection, `H` toggle details, `d` delete, `r` rename, `q` close, `?` help | the drawer tree: connection, New query, Saved queries, Tables |
-| dadbod SQL buffer | `<Space>S` run, `<Space>W` save, `<Space>E` edit bind parameters | `:DB sqlite:/path select ...` runs one query and shows the rows (tested) |
+| dbee | `<Space>Do` open, `<Space>Dt` toggle, `<Space>Dc` close | `<Space>Do` opens four windows: drawer, SQL editor, result, call log |
+| dbee drawer | `<CR>`, `o`, `r`, `cw`, `dd` | select / expand, toggle, refresh, rename, delete; the drawer's own help is listed inside it |
+| dbee editor | `BB`, `<CR>` | `BB` runs the whole file (Visual: the selection), `<CR>` runs the statement under the cursor; the rows appear in the result window |
+| dbee result | `L` / `H`, `E` / `F`, `yaj` / `yac`, `<C-c>` | next / previous page, last / first page, yank the row as JSON / CSV, cancel |
+| dadbod (`<Space>Du`) | `o`, `S`, `R`, `A`, `H`, `d`, `r`, `q`, `?` | in the drawer: open/toggle, open in a vertical split, redraw, add a connection, toggle details, delete, rename, close, help; the drawer tree shows connection, New query, Saved queries, Tables |
+| dadbod SQL buffer | `<Space>S`, `<Space>W`, `<Space>E` | run, save, edit bind parameters; `:DB sqlite:/path select ...` runs one query and shows the rows (tested) |
 
 In an automated test the dadbod result window opened after `<Space>S` but stayed empty, so check that step in a real terminal.
 
 ---
 
-# 40. Configuration Management
+# 40. Configuration management
 
 | Keymap / Command | Description |
 | --- | --- |
@@ -181,7 +194,7 @@ In an automated test the dadbod result window opened after `<Space>S` but stayed
 
 ---
 
-# 41. Filetype-Specific Settings
+# 41. Filetype-specific settings
 
 | Filetype | Settings |
 | --- | --- |
@@ -194,7 +207,7 @@ In an automated test the dadbod result window opened after `<Space>S` but stayed
 | Vim script | `<Space>rf` (or `<F9>`) sources the file |
 | Line-length marker | The coloured column marker (`colorcolumn`) sits at 100 by default and, per language, exactly at that language's convention: 80 for C, C++, shell, YAML, Vim script, Haskell, R, JavaScript and TypeScript (also jsx/tsx); 88 for Python (black); 100 for Java, Rust, Swift, Nix, Typst; 120 for Lua, PHP, TeX; plain `.txt` files show none. A line touching the marker is over that language's limit. Nothing wraps or reflows. |
 
-## Filetype Syntax Plugins (vim-tmux, vim-toml)
+## Filetype syntax plugins (vim-tmux, vim-toml)
 
 These two plugins add syntax highlighting and filetype settings. They have no keys or commands in this configuration and load only when a file of that type is opened.
 
@@ -205,7 +218,7 @@ These two plugins add syntax highlighting and filetype settings. They have no ke
 
 ---
 
-# 42. Automatic Behaviors
+# 42. Automatic behaviors
 
 These happen without any keypress:
 
@@ -232,15 +245,15 @@ These happen without any keypress:
 ---
 ---
 
-# Part II: Developer Guide
+# Part II: developer guide
 
 Everything below is aimed at developers. It explains the plugins and tools in this config that make Neovim a full development environment, what they do under the hood, why they matter, and how to use them effectively.
 
 ---
 
-# 66. Shell Commands from Inside Neovim
+# 66. Shell commands from inside Neovim
 
-## Running a Shell Command
+## Running a shell command
 
 | Command | What it does |
 | --- | --- |
@@ -249,7 +262,7 @@ Everything below is aimed at developers. It explains the plugins and tools in th
 | `:!git diff` | Run git diff without leaving Neovim |
 | `:!mkdir -p src/utils` | Create directories |
 
-## Inserting Command Output into the Buffer
+## Inserting command output into the buffer
 
 | Command | What it does |
 | --- | --- |
@@ -259,13 +272,23 @@ Everything below is aimed at developers. It explains the plugins and tools in th
 | `:%!sort` | Replace the entire buffer with its sorted version |
 | `:%!python -m json.tool` | Format the entire buffer as JSON with 4-space indent (`:JSONFormat` does the same with 2 spaces and leaves invalid JSON untouched) |
 
-## Filtering a Selection Through a Command
+Examples (tested):
+
+| Command | Before | After |
+| --- | --- | --- |
+| `:read !echo hi` (cursor on line 1) | `a` / `b` | `a` / `hi` / `b` |
+| `:%!sort` | `b` / `c` / `a` | `a` / `b` / `c` |
+| `:%!python3 -m json.tool` | `{"a":1,"b":[2,3]}` | 7 lines: `{`, `    "a": 1,`, `    "b": [`, `        2,`, `        3`, `    ]`, `}` |
+
+## Filtering a selection through a command
 
 1. Select lines with `V`
 2. Type `:!sort` -- the selected lines are replaced with the sorted result
 3. Or `:!awk '{print $2}'` -- replace with second column only
 
-## The AsyncRun Plugin
+Examples (tested): the four lines `z` / `c` / `b` / `a` with `Vj` on lines 2 and 3, then `:!sort` (the command line shows `:'<,'>!sort`): the result is `z` / `b` / `c` / `a`, only the selected lines are sorted. The two lines `1 x` / `2 y` selected with `Vj` and `:!awk '{print $2}'` become `x` / `y`.
+
+## The asyncrun.vim plugin
 
 Plugin: **asyncrun.vim**. Runs commands asynchronously (non-blocking) and sends output to the quickfix list.
 
@@ -276,9 +299,11 @@ Plugin: **asyncrun.vim**. Runs commands asynchronously (non-blocking) and sends 
 
 The quickfix window auto-opens (6 lines tall) when AsyncRun starts.
 
+Example (tested): `:AsyncRun echo hi` opens the quickfix window with three lines: `[echo hi]`, `hi` and `[Finished in 0 seconds]`.
+
 ---
 
-# 77. Neovide (Graphical Neovim)
+# 77. Neovide (graphical Neovim)
 
 Neovide is a graphical program that runs Neovim in its own desktop window, instead of inside a terminal such as kitty and tmux. It is the same Neovim and the same configuration (`~/.config/nvim`); only the window around it changes. Nothing in this guide depends on it: everything works in the terminal.
 

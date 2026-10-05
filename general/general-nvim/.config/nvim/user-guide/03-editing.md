@@ -3,7 +3,7 @@
 
 # 4. Editing
 
-## Entering Insert Mode for Editing
+## Entering insert mode for editing
 
 | Keymap | Description |
 | --- | --- |
@@ -18,7 +18,7 @@
 | `C` | Delete from cursor to end of line and enter insert mode (without polluting register) |
 | `cc` | Delete entire line and enter insert mode (without polluting register) |
 
-## Deleting Text
+## Deleting text
 
 All delete operations also **cut** (yank) the text into a register, so you can paste it with `p`. Exception: `c`, `C`, `cc` (also `c` on a selection) in this config send to the black hole register (they do NOT save to paste register). `S` is NOT redirected: it fills the paste register.
 
@@ -38,7 +38,20 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 | `dgg` | n | Delete from current line to start of file |
 | `5dd` | n | Delete 5 lines starting from current |
 
-## Copying (Yanking) Text
+Example on `The quick brown fox` with the cursor on the `u` of `quick`:
+
+| Keys | Result |
+| --- | --- |
+| `x` | `The qick brown fox` |
+| `X` | `The uick brown fox` |
+| `dw` | `The qbrown fox` (from the cursor to the start of the next word) |
+| `db` | `The uick brown fox` (from the start of the word to just before the cursor) |
+| `diw` | `The  brown fox` (both spaces stay) |
+| `daw` | `The brown fox` (the space after the word goes too) |
+| `d$` or `D` | `The q` |
+| `d0` | `uick brown fox` |
+
+## Copying (yanking) text
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -52,7 +65,7 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 
 **Note**: The clipboard is set to `unnamedplus` whenever a clipboard tool (wl-clipboard, xclip, ...) is installed, so yanking also copies to the system clipboard.
 
-## Pasting Text
+## Pasting text
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -66,28 +79,38 @@ All delete operations also **cut** (yank) the text into a register, so you can p
 
 yanky.nvim loads right after the first screen (VeryLazy), so every yank of the session is recorded in its history. `p`/`P` (Normal and Visual) are then yanky's paste with a 300 ms highlight of the pasted text, and `[y`/`]y` exist (after a paste).
 
-## Changing (Delete + Enter Insert)
+**Example: the Visual `p` swaps** (text `one two`):
+
+1. `yiw` on `one` copies `one`.
+2. `w`, `viw`, `p` replaces `two` with `one`: the text is now `one one`, and the register now holds `two` (the replaced word).
+3. `$p` pastes it: `one onetwo`.
+
+**Example: `<Space>p` and `<Space>y`.** With the cursor on `foo` in `foo bar`, `yiw` then `<Space>p` puts `foo` on a new line below (the text is now two lines, `foo bar` and `foo`; the cursor stays on line 1). `<Space>y` copies the whole buffer, so on a two-line buffer `<Space>y` then `G` `p` pastes both lines again below the last one (4 lines).
+
+## Changing (delete + enter insert)
 
 `c` (change) deletes text and puts you into insert mode. In this config, `c`/`C`/`cc` do NOT save the deleted text to the paste register (they use the black hole register).
 
-| Keymap | Description |
-| --- | --- |
-| `cw` | Change from cursor to end of word |
-| `ciw` | Change the entire word under cursor |
-| `caw` | Change the word + surrounding whitespace |
-| `cc` | Change the entire line |
-| `C` | Change from cursor to end of line |
-| `c$` | Same as `C` |
-| `c0` | Change from cursor to beginning of line |
+| Keymap | Description | Example |
+| --- | --- | --- |
+| `cw` | Change from cursor to end of word | `foo bar` with the cursor on `f` -> `cw`, type `x` -> `x bar` |
+| `ciw` | Change the entire word under cursor | `foo bar` with the cursor on `f` -> `ciw`, type `x` -> `x bar` |
+| `caw` | Change the word + surrounding whitespace | `foo bar baz` with the cursor on `b` of `bar` -> `caw`, type `x` -> `foo xbaz` (the space after `bar` is gone too) |
+| `cc` | Change the entire line | `old line` -> `cc`, type `new` -> `new` |
+| `C` | Change from cursor to end of line | `foo bar` with the cursor on `b` -> `C`, type `baz` -> `foo baz` |
+| `c$` | Same as `C` | `foo bar` with the cursor on `b` -> `c$`, type `baz` -> `foo baz` |
+| `c0` | Change from cursor to beginning of line | `foo bar` with the cursor on `b` -> `c0`, type `baz` -> `bazbar` |
 
-## Replacing Text
+**Example: what `p` pastes after a change.** Text `alpha beta`: `yiw` copies `alpha`, then `w`, `ciw`, type `gamma`, `<Esc>`, `$p` gives `alpha gammaalpha`. The `ciw` did not touch the register, so `p` pastes the yanked `alpha`, not the `beta` that was removed. With `dw` instead of `ciw`, the register would hold `beta` and `p` would paste that.
 
-| Keymap | Description |
-| --- | --- |
-| `r<char>` | Replace the single character under cursor with `<char>` |
-| `R` | Enter **Replace mode** (overtype mode): every character you type replaces the existing one |
+## Replacing text
 
-## Undo / Redo
+| Keymap | Description | Example |
+| --- | --- | --- |
+| `r<char>` | Replace the single character under cursor with `<char>` | `cat` with the cursor on `c` -> `rx` -> `xat` |
+| `R` | Enter **Replace mode** (overtype mode): every character you type replaces the existing one | `cat` with the cursor on `c` -> `R`, type `ab`, `<Esc>` -> `abt` |
+
+## Undo / redo
 
 | Keymap | Description |
 | --- | --- |
@@ -97,13 +120,15 @@ yanky.nvim loads right after the first screen (VeryLazy), so every yank of the s
 
 **Undo breakpoints**: Typing `,` `.` `!` `?` `;` `:` in insert mode creates undo checkpoints. This means pressing `u` after a long insert session will undo in smaller chunks instead of reverting everything at once.
 
-## Repeating Actions
+## Repeating actions
 
 | Keymap | Description |
 | --- | --- |
 | `.` | Repeat the last change. Works with most editing commands. Extremely powerful: e.g., `ciw` + type new word + `<Esc>`, then move to another word and press `.` to repeat. |
 
-## Line Operations
+Example: `foo x foo`: `ciw`, type `bar`, `<Esc>`, `ww` (to the second `foo`), `.` -> `bar x bar`. More scenarios are in section 61 (the dot command).
+
+## Line operations
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -117,13 +142,36 @@ yanky.nvim loads right after the first screen (VeryLazy), so every yank of the s
 | `gJ` | n | Join lines without inserting a space (cursor stays in place) |
 | `gS` | n | Toggle split / join of the list, argument list, table, dict or block under the cursor (treesj, Treesitter based) |
 
-### Split and Join Code (treesj)
+Examples:
+
+| Before | Keys | After |
+| --- | --- | --- |
+| lines `one`, `two`, `three`, cursor on `one` | `<Alt-j>` | `two`, `one`, `three` (the cursor follows the moved line) |
+| lines `1` to `5`, cursor on `1` | `3<Alt-j>` | `2`, `3`, `4`, `1`, `5` |
+| lines `1` to `4`, `Vj` on `1` and `2` | `<Alt-j>` | `3`, `1`, `2`, `4` (the selection stays) |
+| lines `a`, `b`, cursor on `a` | `]<Space>` | `a`, an empty line, `b` (the cursor stays on `a`) |
+| lines `a`, `b`, cursor on `b` | `3]<Space>` | `a`, `b`, then three empty lines |
+| `hello` / `  world` | `J` | `hello world` |
+| `hello` / `  world` | `gJ` | `hello  world` (the indent is kept, no space is inserted) |
+| lines `a`, `b`, `c`, `d` | `3J` | `a b c` and `d` |
+
+### Split and join code (treesj)
 
 Plugin: **treesj**. Put the cursor inside a list, the arguments of a call, a table, a dict or a block and press `gS`. If the construct is on one line it is split with one item per line; if it is already split over several lines it is joined back to one line (one key toggles both ways). A normal `u` undoes either change.
 
-| Key | Mode | Effect |
-| --- | --- | --- |
-| `gS` | n | Toggle split / join of the construct under the cursor |
+| Key | Mode | Effect | Example |
+| --- | --- | --- | --- |
+| `gS` | n | Toggle split / join of the construct under the cursor | Lua `foo(a, b, c)` with the cursor on `a`: `gS` -> `foo(` / `  a,` / `  b,` / `  c` / `)` (one item per line); `gS` again joins it back to `foo(a, b, c)` (tested) |
+
+```
+foo(a, b, c)   --gS-->   foo(
+                           a,
+                           b,
+                           c
+                         )          (the cursor lands on line 2)
+```
+
+Join it back with `gS` from any of the lines between the brackets or from the closing `)`; it does not join when the cursor is on the opening `foo(` line (tested).
 
 - It works from the Treesitter syntax tree, so it needs a parser for the file type, and treesj needs a rule ("preset") for that language: it ships rules for many languages (for example Lua, Python, Java, JavaScript / TypeScript, JSON, Nix, Rust, C / C++, YAML, TOML), not for every file type.
 - The plugin's own default keys are switched off in `lua/config/treesj.lua`; `gS` is the only one.
@@ -131,16 +179,16 @@ Plugin: **treesj**. Put the cursor inside a list, the arguments of a call, a tab
 
 ## Indentation
 
-| Keymap | Mode | Description |
-| --- | --- | --- |
-| `>>` | n | Indent the current line to the right |
-| `<<` | n | Indent the current line to the left |
-| `>` | x | Indent selection right (stays in visual mode so you can press `>` again) |
-| `<` | x | Indent selection left (stays in visual mode) |
-| `=` | n, x | Auto-indent: fix indentation of the current line or selection |
-| `gg=G` | n | Auto-indent the entire file |
+| Keymap | Mode | Description | Example |
+| --- | --- | --- | --- |
+| `>>` | n | Indent the current line to the right | `foo` -> `>>` -> `  foo` (2 spaces: shiftwidth is 2) |
+| `<<` | n | Indent the current line to the left | `    foo` -> `<<` -> `  foo` |
+| `>` | x | Indent selection right (stays in visual mode so you can press `>` again) | lines `a` and `b`: `Vj>` -> `  a` / `  b`, still selected |
+| `<` | x | Indent selection left (stays in visual mode) | `    a`: `V<` -> `  a`, still selected |
+| `=` | n, x | Auto-indent: fix indentation of the current line or selection | Lua `if a then` / `x` / `end` with the cursor on `x`: `==` -> `x` becomes `  x` |
+| `gg=G` | n | Auto-indent the entire file | the same three Lua lines: `gg=G` -> `x` becomes `  x` |
 
-## Insert Mode Shortcuts
+## Insert mode shortcuts
 
 | Keymap | Description |
 | --- | --- |
@@ -155,7 +203,16 @@ Plugin: **treesj**. Put the cursor inside a list, the arguments of a call, a tab
 | `<Ctrl-h>` | Delete the character before the cursor (like backspace) |
 | `<Ctrl-s>` | Show the LSP signature help of the function call you are typing |
 
-## Miscellaneous Editing
+Examples (all in Insert mode):
+
+| Text, cursor position | Keys | After |
+| --- | --- | --- |
+| `say hello`, cursor at the end | `<Ctrl-u>` | `say HELLO` (you stay in Insert mode) |
+| `foo bar`, cursor at the end | `<Ctrl-t>` | `foo Bar` |
+| `foo bar`, cursor right after `foo` | `<Ctrl-t>` | `Foo bar` (the cursor keeps its place) |
+| `x = 1`, cursor anywhere | `<Alt-;>` | `x = 1;` (the semicolon goes to the end of the line; the cursor stays where it was) |
+
+## Miscellaneous editing
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -165,13 +222,15 @@ Plugin: **treesj**. Put the cursor inside a list, the arguments of a call, a tab
 | `<Space>cb` | n | Blink the cursor (helps find it on screen) |
 | `~` | n | Toggle case of character(s) (tilde is set as operator, so use `~w` for word, `~e`, etc.) |
 
+Example: `<Space><Space>` on the lines `a` plus three trailing spaces and `b` plus a trailing Tab gives `a` and `b`. `~w` on `Hello World` gives `hELLO World`.
+
 ---
 
-# 5. Selection (Visual Mode)
+# 5. Selection (visual mode)
 
 Press `v`, `V`, or `<Ctrl-v>` to enter visual mode, then use any motion to extend the selection. Once selected, you can act on the selection with `d` (delete), `y` (yank), `c` (change), `>` (indent), `<` (deindent), etc.
 
-## Selecting Characters
+## Selecting characters
 
 | Keymap | Description |
 | --- | --- |
@@ -186,7 +245,13 @@ Press `v`, `V`, or `<Ctrl-v>` to enter visual mode, then use any motion to exten
 | `v` + `gg` | Extend selection to start of file |
 | `v` + `}` | Extend selection to next blank line |
 
-## Selecting Lines
+Example: cursor on the `b` of `beta`, then `v` `e` selects the rest of the word (the selection is shown in brackets):
+
+```
+alpha beta gamma      alpha [beta] gamma
+```
+
+## Selecting lines
 
 | Keymap | Description |
 | --- | --- |
@@ -195,7 +260,14 @@ Press `v`, `V`, or `<Ctrl-v>` to enter visual mode, then use any motion to exten
 | `V` + `5j` | Select current line + 5 lines below |
 | `ggVG` | Select the entire file |
 
-## Selecting Blocks (Columns)
+Example: `V` `j` with the cursor anywhere on the first line selects both whole lines:
+
+```
+[alpha beta gamma]
+[delta zeta omega]
+```
+
+## Selecting blocks (columns)
 
 | Keymap | Description |
 | --- | --- |
@@ -208,11 +280,18 @@ Press `v`, `V`, or `<Ctrl-v>` to enter visual mode, then use any motion to exten
 
 This is extremely useful for editing columns of text, adding prefixes to multiple lines, etc.
 
-## Selecting Inside/Around Delimiters (Text Objects)
+Example: cursor on the `b` of `beta`, then `<Ctrl-v>` `j` `l` selects a 2x2 rectangle (two characters on each of two lines):
+
+```
+alpha [be]ta gamma
+delta [ze]ta omega
+```
+
+## Selecting inside/around delimiters (text objects)
 
 These are the most powerful selection commands. They work with `v` (select), `d` (delete), `c` (change), `y` (yank), and any other operator.
 
-### Parentheses, Brackets, Braces
+### Parentheses, brackets, braces
 
 | Keymap | Description |
 | --- | --- |
@@ -237,7 +316,7 @@ These are the most powerful selection commands. They work with `v` (select), `d`
 | `` vi` `` | Select everything inside `` `...` `` |
 | `` va` `` | Select everything including the `` ` `` characters |
 
-### Words, Lines, Paragraphs
+### Words, lines, paragraphs
 
 | Keymap | Description |
 | --- | --- |
@@ -258,7 +337,20 @@ These are the most powerful selection commands. They work with `v` (select), `d`
 | `vit` | Select everything inside the nearest HTML/XML tag pair |
 | `vat` | Select the entire tag pair including the tags |
 
-### Using with Operators (d, c, y)
+### Example for the text objects above
+
+One sample line, `call(foo, "bar baz", [1, 2])`, and what is selected (and so what `y` would copy):
+
+| Cursor on | Keys | Selected text |
+| --- | --- | --- |
+| `foo` | `vi(` | `foo, "bar baz", [1, 2]` |
+| `foo` | `va(` | `(foo, "bar baz", [1, 2])` |
+| `bar` | `vi"` | `bar baz` |
+| `bar` | `va"` | `"bar baz"` |
+| `1` | `vi[` | `1, 2` |
+| `1` | `vab` | `[1, 2]` (the nearest bracket pair of any kind) |
+
+### Using with operators (d, c, y)
 
 All the `vi` and `va` patterns above work with any operator, not just `v`:
 
@@ -275,7 +367,17 @@ All the `vi` and `va` patterns above work with any operator, not just `v`:
 | `ci'` | Change text inside single quotes |
 | `dip` | Delete the entire paragraph |
 
-### Treesitter Node Selection (builtin)
+On the sample line `call(foo, "bar baz", [1, 2])`:
+
+| Cursor on | Keys | Result |
+| --- | --- | --- |
+| `foo` | `di(` | `call()` |
+| `foo` | `da(` | `call` |
+| `bar` | `ci"` + type `X` + `<Esc>` | `call(foo, "X", [1, 2])` |
+| lines `if x {` / `  y` / `}`, cursor on line 1 | `yi{`, then `G` `p` | `  y` is copied and pasted below the last line |
+| `old` in `<p>old</p>` | `dit` | `<p></p>` |
+
+### Treesitter node selection (builtin)
 
 Neovim 0.12 can grow and shrink a selection along the syntax tree (needs a Treesitter parser; otherwise it uses the LSP selection range):
 
@@ -286,7 +388,19 @@ Neovim 0.12 can grow and shrink a selection along the syntax tree (needs a Trees
 | `]n` / `[n` | x | Select the next / previous node |
 | `]N` / `[N` | x | Select the next / previous sibling node |
 
-### More Text Objects
+Example: Lua line `local x = foo(a, b)`, cursor on `a`, then `v` and `an` pressed repeatedly (tested; the selection after each press):
+
+| Keys | Selected |
+| --- | --- |
+| `v` | `a` |
+| `an` | `(a, b)` |
+| `an` | `foo(a, b)` |
+| `an` | `x = foo(a, b)` |
+| `an` | `local x = foo(a, b)` |
+
+`in` goes back one step (after three `an` presses, `in` shows `foo(a, b)` again).
+
+### More text objects
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -299,7 +413,21 @@ Neovim 0.12 can grow and shrink a selection along the syntax tree (needs a Trees
 | `<Space>iu` | x, o | The URL under the cursor (`d<Space>iu`) |
 | `<Alt-i>` | x, o | The LSP/Treesitter reference under the cursor (vim-illuminate; the key is the plugin's default, not set in this config) |
 
-### Markdown Code Block Text Objects
+Examples (all tested):
+
+| Before | Keys | After |
+| --- | --- | --- |
+| `f(a, bb, c)`, cursor on `bb` | `daa` | `f(a, c)` |
+| `say 'hi there' now`, cursor on `say` | `ciq` + type `X` + `<Esc>` | `say 'X' now` |
+| `x(a, b, c)`, cursor on `b` | `di,` | `x(a,, c)` (the item between the separators goes, with the space before it) |
+| lines `x`, `y` | `y<Space>iB`, then `G` `p` | the whole buffer is pasted again below (4 lines) |
+| `see https://x.org/a now`, cursor on the URL | `d<Space>iu` | `see  now` |
+| Python `def f():` / `    a = 1` / `    b = 2` / `x = 3`, cursor on `a = 1` | `dii` | `def f():` / `x = 3` (only the indented body goes) |
+| the same lines | `dai` | the buffer is empty: the border lines count, so the `def f():` line and the first line below the block (`x = 3`) go too |
+
+Careful with `cia`: it also takes the space in front of the argument (`f(a, bb, c)` with the cursor on `bb`: `ciaX` gives `f(a,X, c)`), so type the space again or use `ciw` for a plain word.
+
+### Markdown code block text objects
 
 In markdown files only:
 
@@ -308,7 +436,9 @@ In markdown files only:
 | `vic` | Select inside a fenced code block (the object is `ic`, so `dic`, `yic` and `cic` work too) |
 | `vac` | Select the code block including the fences (the object is `ac`: `dac`, `yac`, `cac`) |
 
-## Precision Selection: From the Cursor to an Exact Spot
+Worked examples: [Text objects and operators](languages/markdown.md#text-objects-and-operators) in the Markdown chapter.
+
+## Precision selection: from the cursor to an exact spot
 
 How to select (or delete/copy/change) from the cursor to a specific character, word, or place, including on another line.
 
@@ -345,6 +475,7 @@ How to select (or delete/copy/change) from the cursor to a specific character, w
 - It finds the next occurrence, not the last. The character under the cursor is not counted as a match.
 - To **include** the target, add `l` after it: `vt:l` (up to and including the next `:`).
 - `f` cannot be used for this, because `f` is hop.nvim here (it asks for 2 characters and shows labels). `vf:` does not do what you expect. After an operator `f` is still hop, but it is **not limited to the current line**: see the `df,` note below.
+- Example: `a, b, c` with the cursor on `a`: `dt,` -> `, b, c` (everything up to, not including, the first comma).
 - Works with operators: `dt)` deletes up to before `)`, `yt"` copies up to before `"`, `ct)` changes up to before `)`. To include the target character with an operator, use `v` first: `vt)l` then `d`.
 - **`f` after an operator (`df,`, `cf,`) is hop, not the built-in `f`** (tested): `df,` deleted from the cursor through a comma several lines below (it was the only comma in the visible text), so it is **not limited to the current line** and the target character is **deleted too**. `cf,` deleted the same kind of range (tested with one match on screen: `cf,` deleted the same range as `df,` and left you in Insert mode; with several matches you pick the label first). With several matches on screen, hop shows labels and you choose the target, so the deleted range depends on the label you press; check what you typed before pressing `d`/`c` on a big range (`u` undoes it).
 
@@ -410,7 +541,7 @@ Searching with `/` (forward) or `?` (backward) works as a motion after `v`:
 - `/` is not remapped in this config.
 - With operators, `d/foo<Enter>` deletes up to (not including) the match; `d/foo/e<Enter>` includes the last letter of the match (tested: with the cursor on the start of `two words`, `d/words/e<Enter>` deleted everything up to and including the last letter of `words`).
 
-### Hop: select to something you can see (no counting)
+### hop.nvim: select to something you can see (no counting)
 
 1. `v` starts the selection at the cursor.
 2. `f` then type **2 characters**. Every matching place on screen gets a label (case insensitive).
@@ -432,6 +563,16 @@ Example: to select from the cursor to the end of a 4-letter word you can see: `v
 ### Target on another line, count unknown: use the relative numbers
 
 With relative line numbers the gutter shows how far each line is from the cursor (the current line shows its absolute number).
+
+```
+  3   foo
+  2   bar
+  1   baz
+ 12   the cursor line shows its absolute number
+  1   target
+```
+
+Here `1j` (or just `j`) moves onto `target`, and `3k` would move onto `foo`.
 
 1. `Nj` moves down `N` lines, where `N` is the number shown next to the target line (with a count, `j` moves real lines, not wrapped ones). Use `Nk` to go up.
 2. `L` goes to the end of that line.
@@ -480,7 +621,7 @@ Not possible. Vim has no selection of separate pieces, and this config has no mu
 
 ---
 
-## Line Range Yanking (Command Mode)
+## Line range yanking (command mode)
 
 | Command | Description |
 | --- | --- |
@@ -489,19 +630,19 @@ Not possible. Vim has no selection of separate pieces, and this config has no mu
 
 ---
 
-# 6. Working with Parentheses, Quotes, and Brackets
+# 6. Working with parentheses, quotes, and brackets
 
 This section covers everything about matching, jumping to, selecting inside, changing, adding, and removing surrounding characters.
 
-## Jumping to Matching Pair
+## Jumping to matching pair
 
 | Keymap | Description |
 | --- | --- |
 | `%` | Jump between matching `()`, `[]`, `{}`, `<>`, and language keywords. The vim-matchup plugin extends this to work with `if`/`else`/`end`, `do`/`while`, `try`/`catch`, etc. If the match is offscreen, a popup shows the matching line. |
 
-## Selecting Inside/Around Pairs
+## Selecting inside/around pairs
 
-See the full table in the Selection section above. Quick summary:
+See the full table in the Selection section above (with a sample line and the selected text for each key, under "Example for the text objects above"). Quick summary:
 
 | Pattern | Inside | Around (including delimiters) |
 | --- | --- | --- |
@@ -515,28 +656,28 @@ See the full table in the Selection section above. Quick summary:
 | HTML/XML tags | `vit` | `vat` |
 | Nearest of `()` `[]` `{}` (targets.vim) | `vib` | `vab` |
 
-## Changing Text Inside Pairs
+## Changing text inside pairs
 
-| Keymap | Description |
-| --- | --- |
-| `ci(` | Delete everything inside `()` and enter insert mode to type replacement |
-| `ci"` | Delete everything inside `""` and enter insert mode |
-| `ci{` | Delete everything inside `{}` and enter insert mode |
-| `ci[` | Delete everything inside `[]` and enter insert mode |
-| `ci'` | Delete everything inside `''` and enter insert mode |
-| `cit` | Delete everything inside an HTML tag and enter insert mode |
+| Keymap | Description | Example |
+| --- | --- | --- |
+| `ci(` | Delete everything inside `()` and enter insert mode to type replacement | `f(old)` with the cursor in `old` -> `ci(`, type `new` -> `f(new)` |
+| `ci"` | Delete everything inside `""` and enter insert mode | `a "old" b` with the cursor in `old` -> `ci"`, type `new` -> `a "new" b` |
+| `ci{` | Delete everything inside `{}` and enter insert mode | `{old}` -> `ci{`, type `new` -> `{new}` |
+| `ci[` | Delete everything inside `[]` and enter insert mode | `[old]` -> `ci[`, type `new` -> `[new]` |
+| `ci'` | Delete everything inside `''` and enter insert mode | `a 'old' b` with the cursor in `old` -> `ci'`, type `new` -> `a 'new' b` |
+| `cit` | Delete everything inside an HTML tag and enter insert mode | `<p>old</p>` with the cursor in `old` -> `cit`, type `new` -> `<p>new</p>` |
 
-## Deleting Text Inside Pairs
+## Deleting text inside pairs
 
-| Keymap | Description |
-| --- | --- |
-| `di(` | Delete everything inside `()` (parentheses remain empty) |
-| `di"` | Delete everything inside `""` |
-| `di{` | Delete everything inside `{}` |
-| `da(` | Delete everything including the `()` themselves |
-| `da"` | Delete everything including the `""` themselves |
+| Keymap | Description | Example |
+| --- | --- | --- |
+| `di(` | Delete everything inside `()` (parentheses remain empty) | `f(old)` with the cursor in `old` -> `f()` |
+| `di"` | Delete everything inside `""` | `x "y" z` with the cursor on `y` -> `x "" z` |
+| `di{` | Delete everything inside `{}` | `{old}` -> `{}` |
+| `da(` | Delete everything including the `()` themselves | `f(old) x` with the cursor in `old` -> `f x` |
+| `da"` | Delete everything including the `""` themselves | `x "y" z` with the cursor on `y` -> `x  z` |
 
-## Adding Surrounding Pairs (vim-sandwich Plugin)
+## Adding surrounding pairs (vim-sandwich plugin)
 
 The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl` instead).
 
@@ -547,10 +688,10 @@ The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl
 | `saiw{` | Add curly braces around the current word | `hello` becomes `{hello}` |
 | `saiw[` | Add square brackets around the current word | `hello` becomes `[hello]` |
 | `saiw'` | Add single quotes around the current word | `hello` becomes `'hello'` |
-| `sa$"` | Add quotes from cursor to end of line | |
-| (visual) `sa"` | First select text with `v`, then `sa"` adds quotes around selection | |
+| `sa$"` | Add quotes from cursor to end of line | `hello world` with the cursor on `w` becomes `hello "world"` (tested) |
+| (visual) `sa"` | First select text with `v`, then `sa"` adds quotes around selection | `foo bar`: `vee` selects both words, then `sa"` gives `"foo bar"` (tested) |
 
-## Removing Surrounding Pairs (vim-sandwich Plugin)
+## Removing surrounding pairs (vim-sandwich plugin)
 
 | Keymap | Description | Example |
 | --- | --- | --- |
@@ -561,7 +702,7 @@ The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl
 | `sdb` | Delete the nearest surrounding pair, whatever it is (`()`, `[]`, `{}` or quotes) | `[hello]` becomes `hello` |
 | `sd[` | Delete surrounding square brackets | `[hello]` becomes `hello` |
 
-## Replacing Surrounding Pairs (vim-sandwich Plugin)
+## Replacing surrounding pairs (vim-sandwich plugin)
 
 | Keymap | Description | Example |
 | --- | --- | --- |
@@ -571,45 +712,66 @@ The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl
 | `sr'(` | Replace `'` with `()` | `'hello'` becomes `(hello)` |
 | `srb'` | Replace the nearest surrounding pair, whatever it is | `"hello"` becomes `'hello'` |
 
-## Auto-Pairing (nvim-autopairs Plugin)
+## Auto-pairing (nvim-autopairs plugin)
 
 When typing in insert mode, opening characters automatically insert their closing pair:
 - Type `(` and `)` appears: `(|)` (cursor between them)
 - Type `"` and closing `"` appears: `"|"`
 - Type `{` and `}` appears: `{|}`
 - Type `[` and `]` appears: `[|]`
+- Pressing `<BS>` right after typing `(` removes both brackets (tested: `(` `<BS>` `x` gives `x`).
 
 ---
 
-# 16. Code Commenting
+# 16. Code commenting
 
-## vim-commentary (Plugin)
+## vim-commentary (plugin)
 
-| Keymap | Mode | Description |
-| --- | --- | --- |
-| `gcc` | n | Toggle comment on current line |
-| `gc` + motion | n | Toggle comment on a motion (e.g., `gcip` comments a paragraph) |
-| `gc` | v | Toggle comment on selected lines |
-| `gc` | o | Comment text object: `dgc` deletes the comment block under the cursor, `ygc` yanks it |
-| `gcu` | n | Uncomment the adjacent commented lines |
-| `:[range]Commentary` | cmd | Toggle comment on a range (`:2,3Commentary`) |
+| Keymap | Mode | Description | Example |
+| --- | --- | --- | --- |
+| `gcc` | n | Toggle comment on current line | Lua `x = 1` -> `gcc` -> `-- x = 1`; `gcc` again removes the marker |
+| `gc` + motion | n | Toggle comment on a motion (e.g., `gcip` comments a paragraph) | Lua lines `a` / `b` with the cursor on `a`: `gcip` -> `-- a` / `-- b` |
+| `gc` | v | Toggle comment on selected lines | Lua lines `a`, `b`, `c`: `Vjgc` -> `-- a`, `-- b`, `c` |
+| `gc` | o | Comment text object: `dgc` deletes the comment block under the cursor, `ygc` yanks it | Lua lines `-- a`, `-- b`, `c` with the cursor on `-- a`: `dgc` -> `c`; `ygc` copies the two comment lines |
+| `gcu` | n | Uncomment the adjacent commented lines | Lua lines `-- a`, `-- b`, `c` with the cursor on `-- a`: `gcu` -> `a`, `b`, `c` |
+| `:[range]Commentary` | cmd | Toggle comment on a range (`:2,3Commentary`) | Lua lines `a`, `b`, `c`: `:2,3Commentary` -> `a`, `-- b`, `-- c` |
 
 vim-commentary loads right after the first screen (VeryLazy), so these commands and the `gc` text object exist from then on.
 
-## Smart Commenting (Custom)
+More examples (Python buffers; `gcc` and `gc` are plain vim-commentary: they use the filetype's comment marker and do not look inside embedded languages, so use the smart `gcs` / `gcr` below there):
+
+| Before | Keys | After |
+| --- | --- | --- |
+| `a = 1` / `b = 2` | `gcc` on line 1 | `# a = 1` / `b = 2` |
+| `a = 1` / `b = 2` / blank / `c = 3` | `gcip` | `# a = 1` / `# b = 2` / blank / `c = 3` |
+| `# a = 1` / `# b = 2` / blank / `c = 3`, cursor on line 1 | `gcu` | `a = 1` / `b = 2` / blank / `c = 3` |
+| the same | `dgc` | `c = 3` only (the comment block is deleted; the blank line goes with it) |
+
+## Smart commenting (custom)
 
 String-aware, multi-line-capable comment add/remove (`lua/smart_comment/`).
 
-| Keymap | Mode | Description |
+| Keymap | Mode | Description | Example |
+| --- | --- | --- | --- |
+| `gcs` + motion | n | Comment the rows a motion covers (`gcsip`, `gcs3j`, `gcsG`); `.` repeats | Lua lines `a`, `b`, `c`, `d`, `e`: `gcs3j` -> `-- a`, `-- b`, `-- c`, `-- d`, `e` |
+| `{count}gcs` | n | Comment count rows from the cursor down (`200gcs`) | Lua lines `a`, `b`, `c`: `2gcs` -> `-- a`, `-- b`, `c` |
+| `gcss` | n | Comment current line(s) (`3gcss` = 3 rows); `.` repeats | Lua lines `a`, `b`: `gcss` -> `-- a`, `b` |
+| `gcs` | x | Comment the selected rows | Lua lines `a`, `b`, `c`: `Vjgcs` -> `-- a`, `-- b`, `c` |
+| `gcr` + motion | n | Uncomment the rows a motion covers (`gcrip`, `gcr200j`); `.` repeats | Lua lines `-- a`, `-- b`: `gcrip` -> `a`, `b` |
+| `{count}gcr` | n | Uncomment count rows from the cursor down (`200gcr`) | Lua lines `-- a`, `-- b`, `-- c`: `2gcr` -> `a`, `b`, `-- c` |
+| `gcrr` | n | Uncomment current line(s) (`3gcrr` = 3 rows); `.` repeats | Lua lines `-- a`, `b`: `gcrr` -> `a`, `b` |
+| `gcr` | x | Uncomment the selected rows | Lua lines `-- a`, `-- b`, `-- c`: `Vjgcr` -> `a`, `b`, `-- c` |
+
+`gcc` against `gcs` on the same lines:
+
+| Before | Keys | After |
 | --- | --- | --- |
-| `gcs` + motion | n | Comment the rows a motion covers (`gcsip`, `gcs3j`, `gcsG`); `.` repeats |
-| `{count}gcs` | n | Comment count rows from the cursor down (`200gcs`) |
-| `gcss` | n | Comment current line(s) (`3gcss` = 3 rows); `.` repeats |
-| `gcs` | x | Comment the selected rows |
-| `gcr` + motion | n | Uncomment the rows a motion covers (`gcrip`, `gcr200j`); `.` repeats |
-| `{count}gcr` | n | Uncomment count rows from the cursor down (`200gcr`) |
-| `gcrr` | n | Uncomment current line(s) (`3gcrr` = 3 rows); `.` repeats |
-| `gcr` | x | Uncomment the selected rows |
+| Python `# # a` | `gcrr` | `a` (every marker level is removed) |
+| Python `color = "#ff0000"` / `x = 1  # keep` | `gcss` on line 1 | `# color = "#ff0000"` (the `#` inside the string is not mistaken for a comment; line 2 is untouched) |
+| HTML: `<script>` / `let a = 1` / `</script>`, cursor on the middle line | `gcc` | `<!-- let a = 1 -->` (vim-commentary only knows the HTML marker) |
+| the same | `gcss` | `// let a = 1` (smart comment finds the JavaScript inside `<script>`; inside `<style>` it writes `/* ... */`) |
+
+Where smart comment does not follow the embedded language: in a `.tsx` file a JSX line gets `//` (not `{/* */}`), and in a `.vue` file `<!-- -->` is used everywhere (no Treesitter parser attached).
 
 Rule: `gcs` adds one marker per row and never nests (redundant markers already
 in the rows are removed); `gcr` removes every marker level (`# # a` -> `a`).
@@ -641,9 +803,9 @@ non-blank character of the row.
 
 ---
 
-# 17. Surrounding Pairs (`vim-sandwich` + `nvim-autopairs`)
+# 17. Surrounding pairs (`vim-sandwich` + `nvim-autopairs`)
 
-See [Section 6: Working with Parentheses, Quotes, and Brackets](#6-working-with-parentheses-quotes-and-brackets) for the complete guide.
+See [Section 6: Working with parentheses, quotes, and brackets](#6-working-with-parentheses-quotes-and-brackets) for the complete guide.
 
 Quick reference:
 
@@ -656,7 +818,7 @@ Quick reference:
 
 ---
 
-# 24. Yank History (`yanky.nvim`)
+# 24. Yank history (`yanky.nvim`)
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -668,7 +830,7 @@ Command: `:YankyRingHistory` to browse all yank history. yanky.nvim loads right 
 
 ---
 
-# 25. Undo History
+# 25. Undo history
 
 | Keymap | Description |
 | --- | --- |
@@ -678,7 +840,7 @@ Inside the panel there are no extra keys: moving the cursor onto an entry switch
 
 ---
 
-# 29. Registers & Macros
+# 29. Registers & macros
 
 ## Registers
 
@@ -690,6 +852,14 @@ Inside the panel there are no extra keys: moving the cursor onto an entry switch
 | `:reg` | View all registers |
 
 **Note**: When a clipboard tool (wl-clipboard, xclip, ...) is installed, `clipboard` is `unnamedplus`, so `y`/`p` already use the system clipboard by default.
+
+**Example: two things at once** (text `foo bar`):
+
+1. `"ayiw` copies `foo` into register `a`.
+2. `w"byiw` copies `bar` into register `b`.
+3. `$"ap"bp` pastes both after the end of the line: `foo barfoobar`.
+
+`:reg` shows `a` and `b`. Naming a register with `"a` does not touch the default yank register.
 
 ## Macros
 
@@ -705,20 +875,20 @@ Inside the panel there are no extra keys: moving the cursor onto an entry switch
 
 ---
 
-# 60. Macros In Depth
+# 60. Macros in depth
 
 Macros record a sequence of keystrokes and replay them. They are one of the most powerful features in Vim for repetitive editing.
 
 **Key mapping**: In this config `Q` is mapped to `q`, so `Q` and `q` both start recording (tested: plain `q` works too). Stopping is always `q`.
 
-## Recording a Macro
+## Recording a macro
 
 1. Press `Q` followed by a register letter (e.g., `Qa` to record into register `a`)
 2. The command line (bottom line) shows `recording @a` (tested in a real terminal) -- everything you do now is being recorded
 3. Perform the editing actions you want to repeat
 4. Press `q` to stop recording
 
-## Playing a Macro
+## Playing a macro
 
 | Keymap | What it does |
 | --- | --- |
@@ -727,7 +897,7 @@ Macros record a sequence of keystrokes and replay them. They are one of the most
 | `@@` | Replay the last played macro |
 | `100@a` | Play 100 times (stops early if it hits an error, e.g., end of file) |
 
-## Scenario: Add Semicolons to the End of 20 Lines
+## Scenario: add semicolons to the end of 20 lines
 
 1. Place cursor on the first line
 2. `Qa` -- start recording to register `a`
@@ -736,7 +906,9 @@ Macros record a sequence of keystrokes and replay them. They are one of the most
 5. `q` -- stop recording
 6. `19@a` -- replay 19 more times (20 lines total)
 
-## Scenario: Wrap Each Line in Double Quotes
+Small version (tested): lines `a`, `b`, `c`, `d`; do steps 2 to 5 on `a`, then `3@a` (4 lines: 1 recorded + 3 replays) gives `a;`, `b;`, `c;`, `d;`. With only `2@a` the last line `d` stays as it is.
+
+## Scenario: wrap each line in double quotes
 
 Starting with:
 ```
@@ -760,7 +932,7 @@ Result:
 "cherry"
 ```
 
-## Scenario: Append the Same Text to a Block of Lines (Tested)
+## Scenario: append the same text to a block of lines (tested)
 
 Starting with 4 consecutive lines that each end with `;`, add ` // ok` to the end of every one.
 
@@ -778,7 +950,7 @@ Result: all 4 lines end with `; // ok`.
 - **Count**: use `number of lines - 1`, because the recording already did the first line. A count that goes past the last line stops early with an error, which is harmless.
 - **Undo**: one `u` undoes the whole replay (lines 2-4); the line you edited by hand while recording needs a second `u` (tested).
 
-## Scenario: Convert a List of Variables to Assignments
+## Scenario: convert a list of variables to assignments
 
 Starting with:
 ```
@@ -797,7 +969,7 @@ Turn each into `self.name = name`:
 6. `j` -- next line
 7. `q`, then `2@a` (tested: gives `self.name = name`, `self.age = age`, `self.email = email`)
 
-## Scenario: Turn CSV into SQL VALUES
+## Scenario: turn CSV into SQL VALUES
 
 Starting with `John,30,john@email.com`:
 
@@ -808,7 +980,14 @@ Starting with `John,30,john@email.com`:
 5. `j` -- next line
 6. `q` then replay
 
-## Tips for Writing Macros
+Result on the first line: `John,30,john@email.com` becomes `('John','30','john@email.com'),`. With two lines (`John,30,john@email.com` and `Amy,25,amy@email.com`), recording on line 1 and then `@a` once gives:
+
+```
+('John','30','john@email.com'),
+('Amy','25','amy@email.com'),
+```
+
+## Tips for writing macros
 
 - **Start from a consistent position**: Begin each macro from a fixed position in the line (`0` start of the line, `H` first non-blank) or from a search result. This makes the macro repeatable.
 - **Use word motions, not character motions**: `w`, `e`, `b` work regardless of word length. `3l` only works for a specific column.
@@ -817,7 +996,7 @@ Starting with `John,30,john@email.com`:
 - **Check existing registers**: `:reg` shows what's stored in each register. Macros and yanks share registers, so recording to `a` overwrites whatever was yanked to `a`.
 - **Use a high count**: `999@a` will replay until it fails (e.g., end of file). Vim stops automatically on error.
 
-## Visual Mode Macros
+## Visual mode macros
 
 You can apply a macro to every line in a visual selection:
 
@@ -825,13 +1004,15 @@ You can apply a macro to every line in a visual selection:
 2. Type `:normal @a` and press Enter
 3. The macro runs on each selected line
 
+Example: lines `a`, `b`, `c` and a macro `a` that does `A;<Esc>` (without the `j`: the Ex command already moves from line to line). `ggVG`, then `:normal @a` (the command line shows `:'<,'>normal @a`) gives `a;`, `b;`, `c;`. Selecting only `b` and `c` (`jVj`) leaves `a` untouched. The macro-free form `:%norm A;` gives the same result.
+
 ---
 
-# 61. The Dot Command (`.`) -- Repeating Actions
+# 61. The dot command (`.`) -- repeating actions
 
 The `.` key repeats the last change. This is arguably the most important efficiency tool in Vim.
 
-## What Counts as a "Change"
+## What counts as a "change"
 
 - Any editing in insert mode between `i`...`<Esc>` (typed text, deletions, etc.)
 - Any operator command: `dd`, `dw`, `ciw`, `>>`, `gcc`, etc.
@@ -841,7 +1022,7 @@ The `.` key repeats the last change. This is arguably the most important efficie
 
 **vim-repeat** is a small helper plugin with no keys or commands of its own. It tells `.` how to repeat the last action of a plugin mapping, which Vim alone would repeat only as its last built-in command. In the installed copies of this config's plugins, targets.vim, vim-matchup (its `ds%` / `cs%` surround actions) and gitsigns (its stage-hunk and reset-hunk actions) call it, so pressing `.` after them repeats the whole action. Whether `.` really repeats a given plugin key was not tried here; if a plugin does not register with vim-repeat, `.` repeats only the last built-in step. vim-repeat loads right after the first screen (VeryLazy).
 
-## Scenario: Change a Variable Name One-by-One
+## Scenario: change a variable name one-by-one
 
 1. Place cursor on the word `oldName`
 2. `*` -- search for it (highlights all occurrences)
@@ -854,38 +1035,49 @@ The `.` key repeats the last change. This is arguably the most important efficie
 
 This gives you manual control over each replacement, unlike `:%s` which replaces all at once.
 
-## Scenario: Add a Prefix to Multiple Lines
+Example (tested; here `*` only highlights the word and leaves the cursor in place): `foo a foo b foo` with the cursor on the first `foo`:
+
+| Keys | Result |
+| --- | --- |
+| `*ciwbar<Esc>n.` | `bar a bar b foo` (first and second changed) |
+| `*ciwbar<Esc>nn.` | `bar a foo b bar` (the second is skipped with an extra `n`) |
+
+## Scenario: add a prefix to multiple lines
 
 1. On the first line: `I// <Esc>` (insert `// ` at start)
 2. `j` -- move down
 3. `.` -- repeat (adds `// ` to this line too)
 4. `j.j.j.` -- keep going
 
-## Scenario: Delete the First Word on Several Lines
+Example: lines `a`, `b`, `c` -> `I// <Esc>`, `j.`, `j.` -> `// a`, `// b`, `// c`.
+
+## Scenario: delete the first word on several lines
 
 1. On the first line: `0dw` (go to start, delete word)
 2. `j` -- move down
 3. `.` -- repeat
 4. Continue `j.` as needed
 
-## Scenario: Indent Multiple Blocks
+Example: lines `one x`, `two y` -> `0dw`, `j.` -> `x`, `y`.
+
+## Scenario: indent multiple blocks
 
 1. On a line: `>>` (indent right)
 2. `.` -- indent again (double indent)
 3. Move to another line, `.` -- indent that line too
 
-## Combining `.` with Counts
+## Combining `.` with counts
 
-- `3.` repeats the last change 3 times
+- `3.` repeats the last change 3 times (more exactly: the count replaces the one the change had). Example (tested): `a b c d e f`, `ciw` + `X` + `<Esc>`, `w`, `3.` -> `X X d e f`: the repeat is `c3iw`, and `3iw` covers `b`, the space and `c`.
 - `5>>` then `.` repeats the 5-line indent
 
 ---
 
-# 62. Visual Block Editing (Multi-Cursor-Like)
+# 62. Visual block editing (multi-cursor-like)
 
 Visual block mode (`<Ctrl-v>`) lets you edit rectangular columns of text. This is the closest thing to multi-cursor editing.
 
-## Scenario: Add a Prefix to Multiple Lines at Once
+## Scenario: add a prefix to multiple lines at once
 
 ```
 line one
@@ -907,7 +1099,7 @@ Result:
 // line three
 ```
 
-## Scenario: Append Text to Multiple Lines
+## Scenario: append text to multiple lines
 
 ```
 item1
@@ -928,7 +1120,7 @@ item2,
 item3,
 ```
 
-## Scenario: Delete a Column
+## Scenario: delete a column
 
 If you have aligned text and want to remove a column:
 
@@ -936,18 +1128,28 @@ If you have aligned text and want to remove a column:
 2. Move to select the rectangular region (e.g., `3j10l`)
 3. `d` -- delete the block
 
-## Scenario: Replace a Column
+Example (tested): with the cursor on the `n` of `name`, `<Ctrl-v>jj4ld` removes the first 5 columns of all three lines:
+
+| Before | After |
+| --- | --- |
+| `name  age` | ` age` |
+| `bob   30` | ` 30` |
+| `amy   25` | ` 25` |
+
+## Scenario: replace a column
 
 1. `<Ctrl-v>` -- select the column
 2. `c` -- change (deletes the block and enters insert mode)
 3. Type the replacement
 4. `<Esc>` -- applied to all lines
 
+Example (tested): lines `a1 b`, `a2 b`, `a3 b`, cursor on the first `a`: `<Ctrl-v>jjlcXY<Esc>` gives `XY b` on all three lines.
+
 ---
 
-# 64. Everyday Editing Scenarios
+# 64. Everyday editing scenarios
 
-## Swap Two Lines
+## Swap two lines
 
 1. On the first line: `dd` (cut it)
 2. Move to where you want it: `j` or `k`
@@ -955,7 +1157,9 @@ If you have aligned text and want to remove a column:
 
 Or use `<Alt-j>` / `<Alt-k>` to move lines up/down without cutting.
 
-## Swap Two Words
+Example (tested): lines `a`, `b`, `c`, cursor on `a`: `dd` then `p` gives `b`, `a`, `c`.
+
+## Swap two words (vim-swap)
 
 Plugin: **vim-swap**. Put the cursor on an item of a comma-separated list (function arguments) and press `gs`: this starts "swap mode". There `h`/`l` move the current item left/right (swap with its neighbour), `j`/`k` choose another item, `1`-`9` choose the nth item, `s`/`S` sort ascending/descending, `r` reverses, `u`/`<Ctrl-r>` undo/redo, `<Esc>` leaves swap mode.
 
@@ -963,30 +1167,39 @@ For manual word swap:
 1. On the first word: `diw` (delete inner word)
 2. Move to the second word: `w` or `f`
 3. `viwp` -- select the second word and paste (swaps them)
+4. `0P` -- go to the start of the line and paste the word that `viwp` put in the register (before the first character)
 
-## Duplicate a Line
+Tested on `one two` with the cursor on `one`: `diw` leaves ` two`; `w` jumps to `two`; `viwp` replaces it with `one` (the line is now ` one` and the register holds `two`); `0P` puts `two` in front: `two one`. Without step 4 the second word is lost. For function arguments or list items, `gs` above is simpler.
+
+## Duplicate a line
 
 1. `yy` -- yank the line
 2. `p` -- paste below
 
-Or: `yyp` (same thing).
+Or: `yyp` (same thing). Example: lines `a`, `b`, cursor on `a`: `yyp` gives `a`, `a`, `b`.
 
-## Duplicate a Block of Code
+## Duplicate a block of code
 
 1. Select the block with `V` + `j`/`k`
 2. `y` -- yank
 3. Navigate to destination
 4. `p` -- paste
 
-## Fix Indentation of Entire File
+Example (tested): lines `a`, `b`, `c`, cursor on `a`: `Vjy` copies `a` and `b`, `j` `p` pastes them below `b`: `a`, `b`, `a`, `b`, `c`.
+
+## Fix indentation of entire file
 
 1. `gg=G` -- go to top, auto-indent everything to bottom
 
-## Remove All Blank Lines
+Example: in a Lua buffer the lines `if x then` / `print(1)` / `end` become `if x then` / `  print(1)` / `end` (2 spaces: shiftwidth is 2).
+
+## Remove all blank lines
 
 1. `:%g/^$/d` -- globally delete lines matching "empty"
 
-## Sort Lines
+Careful: `^$` only matches truly empty lines. On `a`, empty, `b`, a line with two spaces, `c` it leaves the whitespace-only line (`a`, `b`, `  `, `c`). To remove those too use `:g/^\s*$/d` (see section 71), which gives `a`, `b`, `c`.
+
+## Sort lines
 
 1. Select lines with `V` + movement
 2. `:sort` -- sort alphabetically
@@ -994,22 +1207,34 @@ Or: `yyp` (same thing).
 4. `:sort n` -- numeric sort
 5. `:sort u` -- sort and remove duplicates
 
-## Convert Tabs to Spaces (or Vice Versa)
+| Before | Command | After |
+| --- | --- | --- |
+| `pear` / `apple` / `fig` | `:sort` | `apple` / `fig` / `pear` |
+| `pear` / `apple` / `fig` | `:sort!` | `pear` / `fig` / `apple` |
+| `item 10` / `item 9` / `item 100` | `:sort n` | `item 9` / `item 10` / `item 100` (numbers by value) |
+| `b` / `a` / `b` | `:sort u` | `a` / `b` |
+| `c` / `b` / `a` / `z` / `y`, `Vjj` on the first three | `:sort` | `a` / `b` / `c` / `z` / `y` (only the selection is sorted) |
+
+## Convert tabs to spaces (or vice versa)
 
 1. `:set expandtab` (already set by default)
 2. `:retab` -- convert all tabs to spaces in the file
 3. Or `:set noexpandtab` then `:retab!` for spaces-to-tabs
 
-## Wrap a Selection in a Tag/Function
+Example: lines `<Tab>a` and `<Tab><Tab>b` become `  a` and `    b` (tabstop is 2 here).
+
+## Wrap a selection in a tag/function
 
 1. Select text with `v` or `V`
 2. `sa` + the surrounding character (vim-sandwich)
 3. For example: select `myVar`, then `sa"` wraps it as `"myVar"`
-4. For function: type `sa` then `f` then the function name -- wraps as `funcName(myVar)`
+4. For function: type `sa`, then `f`, then the function name at the prompt that appears, then `<Enter>` -- wraps as `funcName(myVar)`
+
+Tested on `myVar`: `saiwf`, type `fn`, `<Enter>` gives `fn(myVar)`.
 
 ---
 
-# 65. Swapping Function Arguments (`vim-swap`)
+# 65. Swapping function arguments (`vim-swap`)
 
 Plugin: **vim-swap**. Swap delimited items (function arguments, list elements, etc.) without cutting and pasting.
 
@@ -1027,29 +1252,39 @@ Works with any comma-separated list: function arguments, array literals, diction
 
 ---
 
-# 68. Useful Vim Tricks
+# 68. Useful Vim tricks
 
-## Run a Normal-Mode Command on Every Line
+## Run a normal-mode command on every line
 
 `:g/pattern/normal @a` -- run macro `a` on every line matching `pattern`
 `:g/pattern/normal dd` -- delete every line matching `pattern`
 `:v/pattern/normal dd` -- delete every line NOT matching `pattern` (inverse)
 
-## Execute a Command on a Range
+Examples (tested):
+
+| Before | Command | After |
+| --- | --- | --- |
+| `x` / `import a` / `y` / `import b` | `:g/^import/normal A;` | `x` / `import a;` / `y` / `import b;` |
+| the same | `:g/^import/normal >>` | both `import` lines indented by 2 spaces |
+| `TODO a` / `b` / `TODO c` | `:g/TODO/normal I[URGENT] ` | `[URGENT] TODO a` / `b` / `[URGENT] TODO c` |
+
+## Execute a command on a range
 
 `:10,20normal A;` -- append semicolons to lines 10-20
 `:10,20normal I// ` -- comment out lines 10-20
 `:'<,'>normal @a` -- run macro `a` on visually selected lines
 
-## Increment/Decrement Numbers
+Example (tested): lines `a`, `b`, `c`: `:2,3normal I// ` gives `a`, `// b`, `// c`.
 
-| Keymap | What it does |
-| --- | --- |
-| `<Ctrl-a>` | Increment the number under cursor |
-| `<Ctrl-x>` | Decrement the number under cursor |
-| `10<Ctrl-a>` | Add 10 to the number |
-| `g<Ctrl-a>` (visual block) | Sequential increment: line 1 gets +1, line 2 gets +2, line 3 gets +3... |
-| `g<Ctrl-x>` (visual block) | Sequential decrement (same idea, subtracting) |
+## Increment/decrement numbers
+
+| Keymap | What it does | Example |
+| --- | --- | --- |
+| `<Ctrl-a>` | Increment the number under cursor | `x = 7` with the cursor on the line: `<Ctrl-a>` -> `x = 8` |
+| `<Ctrl-x>` | Decrement the number under cursor | `x = 7`: `<Ctrl-x>` -> `x = 6` |
+| `10<Ctrl-a>` | Add 10 to the number | `x = 7`: `10<Ctrl-a>` -> `x = 17` |
+| `g<Ctrl-a>` (visual block) | Sequential increment: line 1 gets +1, line 2 gets +2, line 3 gets +3... | three lines `0.`, select the column with `<Ctrl-v>2j`, `g<Ctrl-a>` -> `1.`, `2.`, `3.` |
+| `g<Ctrl-x>` (visual block) | Sequential decrement (same idea, subtracting) | three lines `9`, select the column with `<Ctrl-v>2j`, `g<Ctrl-x>` -> `8`, `7`, `6` |
 
 **Scenario**: Generate a numbered list. Type `0.` on 5 lines, select them with `<Ctrl-v>`, then `g<Ctrl-a>` turns them into `1. 2. 3. 4. 5.`
 
@@ -1128,7 +1363,7 @@ Warning: a block that covers only part of the digits increments only those digit
 
 If you want it to start at `001` instead of `002`, apply the same Example 3 shift: reselect the block, plain `<Ctrl-x>` once.
 
-## Letter Sequences (a, b, c...) Instead of Numbers
+## Letter sequences (a, b, c...) instead of numbers
 
 `<Ctrl-a>`/`<Ctrl-x>` and their `g`-prefixed block variants also work on **letters**, but only once you opt in, since alphabetic increment isn't in Neovim's default `nrformats`:
 
@@ -1158,7 +1393,7 @@ e          d
 
 `<Ctrl-a>`/`<Ctrl-x>` do NOT wrap at the alphabet boundary: `<Ctrl-a>` on `z` (or `Z`) leaves it unchanged (tested). Case is kept (`a` -> `b`, `A` -> `B`).
 
-## Open the File Under Cursor
+## Open the file under cursor
 
 | Keymap | What it does |
 | --- | --- |
@@ -1166,30 +1401,40 @@ e          d
 | `<Ctrl-w>f` | Open file under cursor in a split |
 | `gx` | Open the URL **or file** under the cursor (gx.nvim; also on a Visual selection) |
 
-## Change Case
+For `gf`, put the cursor on a path such as `lua/mappings.lua` inside a string: if the file exists it opens in the current window. The path is looked up only from the current working directory ('path' is just that directory here, not the folder of the open file; in a Lua file `gf` on `lua.mappings` inside `require(...)` works too, because `.lua` is added and the dots become `/`) (tested: started in the folder that contains `lua/` it opens; started in another folder, with the file open from the first, it finds nothing).
 
-| Keymap | What it does |
-| --- | --- |
-| `~` | Toggle case of character(s). Since `tildeop` is set, use with a motion: `~w` toggles case of a word, `~e` to end of word. |
-| `gUiw` | Uppercase the entire word |
-| `guiw` | Lowercase the entire word |
-| `gUU` | Uppercase the entire line |
-| `guu` | Lowercase the entire line |
-| (in insert mode) `<Ctrl-u>` | Uppercase the current word (custom; the word touching the cursor, or the previous word if only spaces are before the cursor) |
-| (in insert mode) `<Ctrl-t>` | Toggle the case of the first letter of the current word (custom; `foo` <-> `Foo`) |
+## Change case
 
-## Align Text
+| Keymap | What it does | Example |
+| --- | --- | --- |
+| `~` | Toggle case of character(s). Since `tildeop` is set, use with a motion: `~w` toggles case of a word, `~e` to end of word. | `foo bar`: `~w` -> `FOO bar`; `Foo bar`: `~e` -> `fOO bar` |
+| `gUiw` | Uppercase the entire word | `hello world` -> `gUiw` -> `HELLO world` |
+| `guiw` | Lowercase the entire word | `HELLO world` -> `guiw` -> `hello world` |
+| `gUU` | Uppercase the entire line | `foo bar` -> `gUU` -> `FOO BAR` |
+| `guu` | Lowercase the entire line | `FOO BAR` -> `guu` -> `foo bar` |
+| (in insert mode) `<Ctrl-u>` | Uppercase the current word (custom; the word touching the cursor, or the previous word if only spaces are before the cursor) | `foo` with Insert mode at its end: `<Ctrl-u>` -> `FOO` |
+| (in insert mode) `<Ctrl-t>` | Toggle the case of the first letter of the current word (custom; `foo` <-> `Foo`) | `foo bar` with Insert mode inside `foo`: `<Ctrl-t>` -> `Foo bar` |
+
+## Align text with tabular
 
 Plugin: **tabular**. Aligns text around a character. `:Tabularize` works in every filetype from a fresh start (it loads on the first `:Tabularize`, and with the first Markdown file).
 
-| Command | What it does |
-| --- | --- |
-| `:Tabularize /=` | Align all `=` signs in a selection or file |
-| `:Tabularize /:` | Align colons (for JSON/YAML-like structures) |
+| Command | What it does | Example |
+| --- | --- | --- |
+| `:Tabularize /=` | Align all `=` signs in a selection or file | lines `a = 1` / `bb = 22` -> `a  = 1` / `bb = 22` |
+| `:Tabularize /:` | Align colons (for JSON/YAML-like structures) | lines `a: 1` / `bbb: 22` -> `a   : 1` / `bbb : 22` (the colon column is aligned, with a space before each colon) |
+
+Full example with `VG:Tabularize /=` on three lines (tested):
+
+```
+x = 1                x         = 1
+long_name = 22  -->  long_name = 22
+yy = 333             yy        = 333
+```
 
 To align the pipes of a Markdown table, type `:Tabularize /|` (shown outside the table because a pipe breaks a table row).
 
-## Command Abbreviations
+## Command abbreviations
 
 This config sets some command abbreviations (type the short form as the first word of the command line, then press space or Enter):
 
@@ -1209,7 +1454,7 @@ Two insert-mode abbreviations fix typos: `reqire` -> `require`, `serveral` -> `s
 
 ---
 
-# 71. The Global Command (`:g`)
+# 71. The global command (`:g`)
 
 The global command runs an Ex command on every line matching a pattern. It's one of the most powerful built-in features.
 
@@ -1217,25 +1462,34 @@ The global command runs an Ex command on every line matching a pattern. It's one
 
 The inverse (`:v`) runs on lines that do NOT match: `:v/pattern/command`
 
-## Common Uses
+## Common uses
 
-| Command | What it does |
+| Command | What it does | Result |
+| --- | --- | --- |
+| `:g/TODO/d` | Delete every line containing `TODO` | lines `a TODO`, `b`, `c` -> `b`, `c` |
+| `:v/TODO/d` | Delete every line that does NOT contain `TODO` (keep only TODO lines) | lines `a TODO`, `b`, `c TODO` -> `a TODO`, `c TODO` |
+| `:g/^$/d` | Delete all blank lines | lines `a`, blank, `b` -> `a`, `b` |
+| `:g/^\s*$/d` | Delete all blank lines (including whitespace-only) | lines `a`, a line with only spaces, `b` -> `a`, `b` |
+| `:g/console\.log/d` | Delete all console.log lines | JavaScript lines `a()`, `console.log(1)`, `b()` -> `a()`, `b()` |
+| `:g/pattern/normal @a` | Run macro `a` on every matching line | lines `a x`, `b`, `c x` with macro `a` = `A!<Esc>` (pattern `x`) -> `a x!`, `b`, `c x!` |
+| `:g/pattern/normal A;` | Append semicolon to every matching line | lines `a x`, `b`, `c x` (pattern `x`) -> `a x;`, `b`, `c x;` |
+| `:g/pattern/normal I// ` | Comment out every matching line | lines `a x`, `b`, `c x` (pattern `x`) -> `// a x`, `b`, `// c x` |
+| `:g/pattern/t $` | Copy every matching line to the end of file | lines `a x`, `b` (pattern `x`) -> `a x`, `b`, `a x` |
+| `:g/pattern/m 0` | Move every matching line to the top of file | lines `a`, `b x`, `c` (pattern `x`) -> `b x`, `a`, `c` |
+| `:g/^import/normal >>` | Indent all import lines | lines `import a`, `b`, `import c` -> `  import a`, `b`, `  import c` |
+
+## Everyday scenarios
+
+Sample for the commands below: lines `a`, `TODO b`, `c`, `TODO d` (tested).
+
+| Command | Result |
 | --- | --- |
-| `:g/TODO/d` | Delete every line containing `TODO` |
-| `:v/TODO/d` | Delete every line that does NOT contain `TODO` (keep only TODO lines) |
-| `:g/^$/d` | Delete all blank lines |
-| `:g/^\s*$/d` | Delete all blank lines (including whitespace-only) |
-| `:g/console\.log/d` | Delete all console.log lines |
-| `:g/pattern/normal @a` | Run macro `a` on every matching line |
-| `:g/pattern/normal A;` | Append semicolon to every matching line |
-| `:g/pattern/normal I// ` | Comment out every matching line |
-| `:g/pattern/t $` | Copy every matching line to the end of file |
-| `:g/pattern/m 0` | Move every matching line to the top of file |
-| `:g/^import/normal >>` | Indent all import lines |
+| `:g/TODO/d` | `a` / `c` |
+| `:v/TODO/d` | `TODO b` / `TODO d` |
+| `:g/TODO/t $` | `a` / `TODO b` / `c` / `TODO d` / `TODO b` / `TODO d` (copies of the matches at the end) |
+| `:g/TODO/m 0` | `TODO d` / `TODO b` / `a` / `c` |
 
-## Everyday Scenarios
-
-### Delete All Print/Debug Statements
+### Delete all print/debug statements
 
 ```
 :g/print(/d                     -- Python: delete all print() lines
@@ -1244,40 +1498,42 @@ The inverse (`:v`) runs on lines that do NOT match: `:v/pattern/command`
 :g/fmt\.Print/d                 -- Go: delete all fmt.Print lines
 ```
 
-### Keep Only Lines Matching a Pattern
+### Keep only lines matching a pattern
 
 ```
 :v/error/d                      -- keep only lines containing "error"
 :v/\v(import|from)/d            -- keep only import statements
 ```
 
-### Extract All Function Signatures
+### Extract all function signatures
 
 ```
 :v/\vdef \w+\(/d                -- Python: keep only function definitions
 :v/\v(public|private|protected)/d  -- Java: keep only method/field declarations
 ```
 
-### Add Prefix/Suffix to Matching Lines
+### Add prefix/suffix to matching lines
 
 ```
 :g/TODO/normal I[URGENT] 	     -- add "[URGENT] " before every TODO line
 :g/^#/normal A <!---->          -- add comment marker after every markdown heading
 ```
 
-### Sort Lines Matching a Pattern to Top
+### Move lines matching a pattern to the top
 
 ```
 :g/import/m 0                   -- move all import lines to the top of the file
 ```
 
+This does not sort: each match is moved to line 0 in turn, so several matches end up in REVERSE order (tested). Lines `a`, `TODO b`, `c`, `TODO d` with `:g/TODO/m 0` give `TODO d`, `TODO b`, `a`, `c`. To sort lines, use `:sort` (see "Sort lines" in section 64).
+
 ---
 
-# 76. Common Editing Power Combos
+# 76. Common editing power combos
 
 Quick-reference card of the most powerful editing combinations for daily use.
 
-## Changing Text
+## Changing text
 
 | Combo | What it does | Example |
 | --- | --- | --- |
@@ -1286,78 +1542,78 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `ci(` | Change text in parentheses | `func(old)` -> type `new` -> `func(new)` |
 | `ci{` | Change text in braces | `{old}` -> type `new` -> `{new}` |
 | `cit` | Change text in HTML tag | `<p>old</p>` -> type `new` -> `<p>new</p>` |
-| `cc` | Change entire line | Clears line, insert mode |
-| `C` | Change from cursor to end of line | Deletes rest of line, insert mode |
-| `c$` | Same as `C` | |
-| `ct)` | Change from cursor to before `)` | Useful inside function arguments |
+| `cc` | Change entire line | Clears the line and enters insert mode: `old line` -> type `new` -> `new` |
+| `C` | Change from cursor to end of line | Deletes the rest of the line and enters insert mode: `foo bar` with the cursor on `b` -> type `baz` -> `foo baz` |
+| `c$` | Same as `C` | `foo bar` with the cursor on `b` -> type `baz` -> `foo baz` |
+| `ct)` | Change from cursor to before `)` (useful inside function arguments) | `f(old, x)` with the cursor on `o` -> type `new` -> `f(new)` (`old, x` is replaced) |
 | `cf,` + char + label | Change from the cursor through a `,` picked with hop: `f` is hop's 2-character jump, so type `,` and the character after it, then the label (may be several lines away; see "Precision Selection") | `f` is hop.nvim here, not the built-in |
 
-## Deleting Text
+## Deleting text
 
-| Combo | What it does |
-| --- | --- |
-| `diw` | Delete word under cursor |
-| `daw` | Delete word + surrounding spaces |
-| `di"` | Empty out double-quoted string |
-| `da"` | Delete the entire quoted string including quotes |
-| `di(` | Empty out parentheses |
-| `da(` | Delete parentheses and their contents |
-| `dip` | Delete paragraph |
-| `dd` | Delete line |
-| `D` | Delete from cursor to end of line |
-| `dt)` | Delete from cursor to before `)` |
+| Combo | What it does | Example |
+| --- | --- | --- |
+| `diw` | Delete word under cursor | `foo bar` with the cursor in `foo` -> ` bar` |
+| `daw` | Delete word + surrounding spaces | `foo bar baz` with the cursor on `bar` -> `foo baz` |
+| `di"` | Empty out double-quoted string | `x "y" z` with the cursor on `y` -> `x "" z` |
+| `da"` | Delete the entire quoted string including quotes | `x "y" z` with the cursor on `y` -> `x  z` |
+| `di(` | Empty out parentheses | `f(old)` with the cursor in `old` -> `f()` |
+| `da(` | Delete parentheses and their contents | `f(old) x` with the cursor in `old` -> `f x` |
+| `dip` | Delete paragraph | lines `a`, `b`, (blank), `c` with the cursor on `a` -> (blank), `c` |
+| `dd` | Delete line | lines `a`, `b` with the cursor on `a` -> `b` |
+| `D` | Delete from cursor to end of line | `foo bar` with the cursor on `b` -> `foo ` |
+| `dt)` | Delete from cursor to before `)` | `f(old, x)` with the cursor on `o` -> `f()` |
 
-## Copying Text
+## Copying text
 
-| Combo | What it does |
-| --- | --- |
-| `yiw` | Copy word under cursor |
-| `yi"` | Copy text inside double quotes |
-| `yi(` | Copy text inside parentheses |
-| `yap` | Copy paragraph |
-| `yy` | Copy line |
-| `y$` | Copy from cursor to end of line |
+| Combo | What it does | Register `0` afterwards holds |
+| --- | --- | --- |
+| `yiw` | Copy word under cursor | `foo` (for `foo bar`, cursor in `foo`) |
+| `yi"` | Copy text inside double quotes | `foo` (for `x "foo" y`, cursor in `foo`) |
+| `yi(` | Copy text inside parentheses | `a, b` (for `f(a, b)`, cursor inside) |
+| `yap` | Copy paragraph | `a`, `b` and the blank line (for the lines `a`, `b`, (blank), `c`) |
+| `yy` | Copy line | the whole line `a` (for the lines `a`, `b`) |
+| `y$` | Copy from cursor to end of line | `bar` (for `foo bar`, cursor on `b`) |
 
-## Selecting Text
+## Selecting text
 
-| Combo | What it does |
-| --- | --- |
-| `viw` | Select word |
-| `vi"` | Select inside quotes |
-| `vi(` | Select inside parentheses |
-| `vip` | Select paragraph |
-| `V5j` | Select 5 lines down |
-| `ggVG` | Select entire file |
+| Combo | What it does | Selected text |
+| --- | --- | --- |
+| `viw` | Select word | `foo` (for `foo bar`, cursor in `foo`) |
+| `vi"` | Select inside quotes | `foo` (for `x "foo" y`, cursor in `foo`) |
+| `vi(` | Select inside parentheses | `a, b` (for `f(a, b)`, cursor inside) |
+| `vip` | Select paragraph | `a`, `b` (for the lines `a`, `b`, (blank), `c`; the blank line is not included) |
+| `V5j` | Select 5 lines down | the current line and the 5 lines below it (6 lines) |
+| `ggVG` | Select entire file | every line of the file |
 
-## Quick Transformations
+## Quick transformations
 
-| Combo | What it does |
-| --- | --- |
-| `gUiw` | Uppercase word |
-| `guiw` | Lowercase word |
-| `~w` | Toggle case of word |
-| `>>` | Indent line |
-| `<<` | Deindent line |
-| `==` | Auto-indent line |
-| `gg=G` | Auto-indent entire file |
-| `gcc` | Comment/uncomment line |
-| `gcip` | Comment/uncomment paragraph |
-| `saiw"` | Surround word with `"` |
-| `sd"` | Remove surrounding `"` |
-| `sr"'` | Replace `"` with `'` around current text |
-| `J` | Join current line with next |
+| Combo | What it does | Example |
+| --- | --- | --- |
+| `gUiw` | Uppercase word | `hello world` -> `HELLO world` |
+| `guiw` | Lowercase word | `HELLO world` -> `hello world` |
+| `~w` | Toggle case of word | `foo bar` -> `FOO bar` |
+| `>>` | Indent line | `foo` -> `  foo` |
+| `<<` | Deindent line | `    foo` -> `  foo` |
+| `==` | Auto-indent line | Lua `if a then` / `x` / `end` with the cursor on `x` -> `x` becomes `  x` |
+| `gg=G` | Auto-indent entire file | the same three Lua lines -> `x` becomes `  x` |
+| `gcc` | Comment/uncomment line | Lua `x = 1` -> `-- x = 1` |
+| `gcip` | Comment/uncomment paragraph | Lua lines `a`, `b`, (blank), `c` with the cursor on `a` -> `-- a`, `-- b`, (blank), `c` |
+| `saiw"` | Surround word with `"` | `hello` -> `"hello"` |
+| `sd"` | Remove surrounding `"` | `"foo"` with the cursor on `foo` -> `foo` |
+| `sr"'` | Replace `"` with `'` around current text | `"foo"` with the cursor on `foo` -> `'foo'` |
+| `J` | Join current line with next | lines `foo`, `bar` -> `foo bar` |
 
-## The Most Powerful Patterns
+## The most powerful patterns
 
-| Pattern | How it works |
-| --- | --- |
-| `*` then `ciw` then `n.n.n.` | Find-and-replace one at a time with full control |
-| `Qa` ... `q` then `@a` | Record and replay any sequence of actions |
-| `V` select then `:norm @a` | Run a macro on selected lines |
-| `:g/pattern/command` | Run a command on every matching line |
-| `:grep "text"` then `:cfdo ...` | Project-wide search and replace (the substitute + `\| update` recipe is in section 67) |
-| `<Space>rn` | Intelligent rename across project |
-| `qf` list + `:cnext`/`:cprev` | Jump through search results or errors |
-| `.` | Repeat last change (combine with `n` for find-and-repeat) |
+| Pattern | How it works | Example |
+| --- | --- | --- |
+| `*` then `ciw` then `n.n.n.` | Find-and-replace one at a time with full control | `foo a foo b foo`: `*ciwbar<Esc>n.` -> `bar a bar b foo` (section 61) |
+| `Qa` ... `q` then `@a` | Record and replay any sequence of actions | `a`, `b`, `c`, `d`: record `A;<Esc>j` on `a`, then `3@a` -> `a;`, `b;`, `c;`, `d;` (section 60) |
+| `V` select then `:norm @a` | Run a macro on selected lines | `a`, `b`, `c` with the macro `A;<Esc>`: `ggVG` `:normal @a` -> `a;`, `b;`, `c;` (section 60) |
+| `:g/pattern/command` | Run a command on every matching line | `:g/TODO/d` on `a`, `TODO b`, `c` -> `a`, `c` |
+| `:grep "text"` then `:cfdo ...` | Project-wide search and replace (the substitute + `\| update` recipe is in section 67) | see section 67 |
+| `<Space>rn` | Intelligent rename across project | N/A (an LSP rename: the symbol is renamed in every file that uses it) |
+| `qf` list + `:cnext`/`:cprev` | Jump through search results or errors | N/A (moves the cursor to the next / previous entry of the quickfix list) |
+| `.` | Repeat last change (combine with `n` for find-and-repeat) | `foo x foo`: `ciw` + `bar` + `<Esc>`, `ww`, `.` -> `bar x bar` |
 
 ---

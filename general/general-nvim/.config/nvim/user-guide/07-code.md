@@ -1,11 +1,11 @@
 <!-- chapter: Code: LSP, running, debugging, folding, treesitter -->
 [Back to the guide index](README.md)
 
-# 13. LSP: Language Server Protocol
+# 13. LSP: language server protocol
 
 Plugin: nvim-lspconfig (default server definitions; Neovim's builtin `vim.lsp` does the rest). Provides IDE features. The keys below work per buffer according to what the attached servers support: if no attached server supports it, `K` and `gd` fall back to Vim's builtin versions and `<Space>rn` / `<Space>ca` show one warning.
 
-### Configured Language Servers
+### Configured language servers
 
 | Server | Language | Program(s) that must be on PATH |
 | --- | --- | --- |
@@ -31,7 +31,7 @@ Plugin: nvim-lspconfig (default server definitions; Neovim's builtin `vim.lsp` d
 
 A server is enabled only when ALL its programs are on PATH; otherwise it is skipped silently (no warning when you open a file of that language outside its devShell). The programs come from the Nix system or the language's devShell; nothing is downloaded by Neovim. `:LspStart <name>` tells you which program is missing.
 
-### LSP Keymaps
+### LSP keymaps
 
 | Keymap | Description |
 | --- | --- |
@@ -41,7 +41,32 @@ A server is enabled only when ALL its programs are on PATH; otherwise it is skip
 | `<Space>ca` | **Code action**: show available fixes/refactors |
 | `<Space>fm` | **Format** the file on demand (LSP formatter, async). Lua: stylua. Markdown: prettier. Lua, Python and JSON have `<Space>f` (stylua / black / `:JSONFormat`) |
 
-### Built-in Neovim LSP and Diagnostic Keys
+Example (tested with pyright; the same file is used for the next examples):
+
+```python
+def load(path):          # line 1
+    ...
+x = load("a.txt")        # line 10, the cursor is on "load"
+```
+
+| Keys | What happens |
+| --- | --- |
+| `gd` | The cursor jumps to line 1, `def load(path):`; `<Ctrl-o>` brings it back to line 10 |
+| `K` | A small bordered float shows the signature: `(function) def load(path: Unknown) -> str` (the type text comes from pyright); it closes when you move |
+| `<Space>rn` | A "New Name" popup opens with `load` in it; erase it with `<BS>`, type `read`, `<Enter>`: line 1 becomes `def read(path):` and line 10 `x = read("a.txt")`. To cancel: `<Esc>` only leaves Insert mode (the popup stays open, in Normal mode); then `:q<Enter>` closes it with nothing renamed and your file still open |
+
+**Why press `K` twice (going into the hover float).** The first `K` shows the documentation in a small float and leaves your cursor where it was; the float disappears as soon as you move. A second `K` moves the cursor INTO the float, where it stays until you close it. The float is then a read-only Markdown window (tested in a Lua file with `lua_ls`), so you can use normal Neovim keys on the documentation:
+
+| Keys in the float | What happens |
+| --- | --- |
+| `j` `k`, `gg`, `G` | Move and scroll through a long documentation text that does not fit in the small float |
+| `V` then `j`, then `y` | Copy lines of the documentation into a register, to paste them into your code or notes (it is read-only, so nothing in the float can be changed) |
+| `/word<Enter>` | Search inside the documentation (tested: `/Returns` jumped to the line with that word) |
+| `q` or `<Esc>` | Close the float; the cursor is back in your file on the same spot |
+
+So going inside is not only "more readable": it is how you scroll long docs, search them and copy from them. For a short signature the first `K` is enough.
+
+### Built-in Neovim LSP and diagnostic keys
 
 Neovim's own LSP keys also work next to the custom ones (in every buffer with a server that supports them):
 
@@ -59,7 +84,7 @@ Neovim's own LSP keys also work next to the custom ones (in every buffer with a 
 | `]D` / `[D` | n | Last / first diagnostic in the buffer |
 | `<Ctrl-w>d` | n | Show the diagnostics under the cursor |
 
-### LSP Commands
+### LSP commands
 
 | Command | What it does |
 | --- | --- |
@@ -71,7 +96,7 @@ Neovim's own LSP keys also work next to the custom ones (in every buffer with a 
 | `:LspStart [name...]` | Start the enabled servers of this buffer that are not running, or the named ones |
 | `:LspInlayHints enable` / `disable` | Switch inlay hints on / off globally (off by default) |
 
-### Glance: Peek Without Jumping
+### glance.nvim: peek without jumping
 
 Plugin: glance.nvim. Preview definitions/references in a popup, without leaving your current file.
 
@@ -81,14 +106,24 @@ Plugin: glance.nvim. Preview definitions/references in a popup, without leaving 
 | `<Space>gr` | Peek at all references |
 | `<Space>gi` | Peek at implementations |
 
-### Diagnostics (Errors, Warnings)
+Example (tested; `<Space>gr` with the cursor on `load` in `x = load("a.txt")`): a panel opens across the window with two panes. The left pane previews the code (the file with its line numbers), the right pane is titled `References (2)` and lists `def load(path):` and `x = load("a.txt")`. `<Esc>` closes the panel and the cursor is back on the line where it was.
+
+```
++----------------------------------+-------------------------+
+| preview of the selected entry    | References (2)          |
+| (the whole file, left)           |   def load(path):       |
+|                                  |   x = load("a.txt")     |
++----------------------------------+-------------------------+
+```
+
+### Diagnostics (errors, warnings)
 
 Nerd Font signs in the gutter: 󰅚 (error), 󰀪 (warning), 󰋽 (info), 󰌶 (hint). No underline and no inline text: the message appears in a floating window when the cursor rests on the line (it closes when you move, leave the window or enter Insert mode).
 
 | Keymap | Description |
 | --- | --- |
 | `<Space>db` | Telescope picker with the diagnostics of the current file |
-| `<Space>dw` | Toggle the Trouble diagnostics list (the diagnostics of every buffer Neovim has loaded, grouped by file; see "Diagnostics In Depth") |
+| `<Space>dw` | Toggle the Trouble diagnostics list (the diagnostics of every buffer Neovim has loaded, grouped by file; see "Diagnostics in depth") |
 | `<Space>de` | Jump to next error |
 | `<Space>dE` | Jump to previous error |
 | `<Space>dd` | Show diagnostic detail in floating window |
@@ -96,11 +131,23 @@ Nerd Font signs in the gutter: 󰅚 (error), 󰀪 (warning), 󰋽 (info), 󰌶 (
 | `<Space>qw` | Send the diagnostics of all open buffers to the quickfix list |
 | `<Space>qb` | Send buffer diagnostics to quickfix list |
 
+Example (tested with pyright on a file whose last line is `print(undefined_name)`): the line gets a 󰅚 sign in the gutter, and after a moment a float appears under it:
+
+```
+ 󰅚 11   print(undefined_name)
+        +--------------------------------------------------------------------+
+        | Diagnostics:                                                       |
+        |  Pyright: "undefined_name" is not defined [reportUndefinedVariable]|
+        +--------------------------------------------------------------------+
+```
+
+`<Space>de` from the top of the file jumps to that line; `<Space>qw` opens the quickfix list with one entry for it (`hello.py ┃11┃"undefined_name" is not defined`).
+
 ---
 
-# 44. Language Server Protocol (LSP) In Depth
+# 44. Language server protocol (LSP) in depth
 
-## What LSP Is
+## What LSP is
 
 LSP is a protocol that lets Neovim communicate with language-specific servers (programs that understand your code). The server analyzes your code and provides:
 
@@ -112,11 +159,11 @@ LSP is a protocol that lets Neovim communicate with language-specific servers (p
 - **Formatting**: Auto-format your code according to language standards
 - **Completion**: Suggestions as you type
 
-## How LSP Is Managed
+## How LSP is managed (nvim-lspconfig)
 
 Each server is configured in `lua/config/lsp.lua` (plus `after/lsp/<name>.lua`) with Neovim's builtin `vim.lsp.config` / `vim.lsp.enable`. **nvim-lspconfig** only supplies the default server definitions. A server is enabled only when its program is on PATH: the programs come from the Nix system (`neovim.nix`) or from the language's devShell, nothing is downloaded by Neovim. Java (jdtls) is managed by nvim-java.
 
-## Configured Servers and What They Provide
+## Configured servers and what they provide
 
 | Server | Language | What it provides |
 | --- | --- | --- |
@@ -143,7 +190,279 @@ Each server is configured in `lua/config/lsp.lua` (plus `after/lsp/<name>.lua`) 
 
 Each server starts only when its program is installed (see the table in section 13); `:LspAttached` (or a click on the LSP name in the statusline) shows what is attached.
 
-## LSP Keymaps (All Languages)
+## How language servers are registered (lua/config/lsp.lua)
+
+One file registers every server, so there is no separate chapter for languages such as Rust, Go, TypeScript, Haskell, Swift, PHP, R or Nix: their whole setup is the entry quoted below. There is no Mason in this config: no tool installer manages servers. The programs come from the Nix system or from a devShell (see section 43), and a server is started only if its program is found on PATH.
+
+### Shared capabilities
+
+Verbatim (`lua/config/lsp.lua`, top of the file):
+
+```lua
+-- Capabilities shared by every server
+vim.lsp.config("*", {
+  capabilities = require("lsp_utils").get_default_capabilities(),
+})
+```
+
+`vim.lsp.config("*", ...)` is the wildcard: every server gets these client capabilities in addition to its own settings. `lsp_utils.get_default_capabilities()` currently returns Neovim's own `vim.lsp.protocol.make_client_capabilities()`, whose 0.12 defaults already include what nvim-ufo needs for folding.
+
+### The server table
+
+Abridged: the Python, Lua, Nix, LaTeX, Rust, Go, Haskell, Swift, TypeScript and PHP, R entries are quoted verbatim; the entries for bashls, clangd, yamlls, marksman, ltex_plus, typos_lsp and tinymist are left out (tinymist is quoted in the Typst chapter). Lines starting with `-- ...` mark the cuts.
+
+```lua
+-- Servers: configured here (plus after/lsp/<name>.lua), enabled only when the binary exists
+---@type table<string, vim.lsp.Config>
+local servers = {
+  pyright = { cmd = { "pyright-langserver", "--stdio" } },
+  ruff = { cmd = { "ruff", "server" } },
+  -- ...
+
+  -- Lua setup
+  lua_ls = {
+    cmd = { "lua-language-server" },
+    -- lua_ls still advertises formatting with format.enable = false: hide it, so nothing (LSP
+    -- format, 'formatexpr' for gq) uses lua_ls's formatter next to stylua
+    on_init = function(client)
+      client.server_capabilities.documentFormattingProvider = false
+      client.server_capabilities.documentRangeFormattingProvider = false
+    end,
+    settings = {
+      Lua = {
+        -- one Lua formatter: stylua (<Space>f / <Space>fm in after/ftplugin/lua.lua)
+        format = { enable = false },
+        diagnostics = {
+          disable = { "duplicate-set-field" },
+          globals = { "vim" },
+        },
+        workspace = {
+          checkThirdParty = false,
+        },
+      },
+    },
+  },
+
+  -- ...
+
+  -- Nix setup
+  nixd = {
+    -- --log=error: the default level writes every request to stderr, i.e. into lsp.log
+    cmd = { "nixd", "--log=error" },
+    settings = {
+      nixd = {
+        formatting = { command = { "nixpkgs-fmt" } },
+      },
+    },
+  },
+
+  -- ...
+
+  -- LaTeX (texlab comes from the LaTeX devShell; enabled only when executable)
+  texlab = { cmd = { "texlab" } },
+
+  -- Rust (rust-analyzer + cargo: rust devShell); binaries checked in `needs` below
+  rust_analyzer = { cmd = { "rust-analyzer" } },
+
+  -- Go (gopls + go: go devShell); binaries checked in `needs` below
+  gopls = {
+    cmd = { "gopls" },
+    -- nvim-lspconfig's list also has gotmpl: no filetype detection sets it (:checkhealth vim.lsp
+    -- warns "Unknown filetype 'gotmpl'")
+    filetypes = { "go", "gomod", "gowork" },
+  },
+
+  -- Haskell (haskell-language-server: haskell devShell; nixpkgs ships only the -wrapper binary
+  -- (+ haskell-language-server-<ghc version>), no plain haskell-language-server)
+  hls = { cmd = { "haskell-language-server-wrapper", "--lsp" } },
+
+  -- Swift (sourcekit-lsp: swift devShell, or Xcode on macOS). nvim-lspconfig also lists c/cpp:
+  -- dropped, clangd serves those (no second client next to clangd)
+  sourcekit = { cmd = { "sourcekit-lsp" }, filetypes = { "swift", "objc", "objcpp" } },
+
+  -- JavaScript/TypeScript (typescript-language-server: node devShell). No cmd here: nvim-lspconfig's
+  -- cmd is a function that prefers the project's node_modules/.bin copy; binary checked in `needs`
+  ts_ls = {},
+
+  -- PHP (phpactor: php devShell). nvim-lspconfig's filetypes/root_markers are kept; the config only
+  -- pins the command, so the binary check below is exactly executable("phpactor")
+  phpactor = { cmd = { "phpactor", "language-server" }, filetypes = { "php" } },
+
+  -- R (languageserver R package: R devShell). Enabled lazily by the one-time probe below, never
+  -- by the loop that enables the other servers
+  r_language_server = { cmd = { "R", "--no-echo", "-e", "languageserver::run()" } },
+}
+```
+
+In plain words:
+
+- Each entry is `name = { cmd = {...}, ... }`. Only what differs from nvim-lspconfig's default definition is written; anything left out (filetypes, root markers) is the default. More settings of a server live in `after/lsp/<name>.lua`.
+- **Python:** `pyright` and `ruff`, see the Python chapter.
+- **Nix (`nixd`):** `--log=error` because the default level writes every request into the LSP log file; the formatter is `nixpkgs-fmt`.
+- **LaTeX (`texlab`):** only the command; texlab comes from the LaTeX devShell.
+- **Rust (`rust_analyzer`) and Go (`gopls`):** the comment says which devShell supplies them. `gopls` trims nvim-lspconfig's filetype list to `go`, `gomod`, `gowork` (the default also lists `gotmpl`, which no filetype detection sets, and `:checkhealth vim.lsp` would warn about it).
+- **Haskell (`hls`):** the command is `haskell-language-server-wrapper --lsp`, because nixpkgs ships only the `-wrapper` binary (and a per-GHC-version one), no plain `haskell-language-server`.
+- **Swift (`sourcekit`):** filetypes are `swift`, `objc`, `objcpp`. The default list also has `c` and `cpp`; they are dropped so clangd serves those and no second client attaches next to it.
+- **TypeScript / JavaScript (`ts_ls`):** the entry is empty (`{}`) on purpose. nvim-lspconfig's `cmd` is a function that prefers the project's `node_modules/.bin` copy of the server; setting `cmd` here would replace it. The binary check for it is in `needs` (next section).
+- **PHP (`phpactor`):** only the command is pinned; the default filetypes and root markers are kept.
+- **R (`r_language_server`):** starts R and runs the `languageserver` package. It is never enabled by the plain loop, only by the probe described below.
+- **Lua (`lua_ls`):** see "Lua: lua_ls and stylua" below.
+
+### When is a server enabled
+
+Verbatim:
+
+```lua
+-- servers that are NOT enabled at startup (something else enables them later)
+local deferred = { r_language_server = true }
+
+-- binaries a server needs, when that is not just cmd[1]
+local needs = {
+  -- nvim-lspconfig's rust_analyzer root_dir runs `cargo metadata` (it warns "cargo not found")
+  rust_analyzer = { "rust-analyzer", "cargo" },
+  -- nvim-lspconfig's gopls root_dir runs `go env` (it would fail without `go`)
+  gopls = { "gopls", "go" },
+  ts_ls = { "typescript-language-server" },
+}
+
+--- first binary the server needs that is not on PATH (nil: all present, or nothing known to check)
+---@param name string
+---@return string?
+local function missing_binary(name)
+  local config = vim.lsp.config[name]
+  local cmd = config and config.cmd
+  local bins = needs[name] or (type(cmd) == "table" and { cmd[1] }) or {}
+  return vim.iter(bins):find(function(bin)
+    return not utils.executable(bin)
+  end)
+end
+
+for name, config in pairs(servers) do
+  vim.lsp.config(name, config)
+  if not deferred[name] and not missing_binary(name) then
+    vim.lsp.enable(name)
+  end
+end
+```
+
+In plain words:
+
+- `deferred`: servers that the loop must not enable. Only `r_language_server`.
+- `needs`: servers that need more than their own `cmd[1]`. `rust_analyzer` also needs `cargo` (its root detection runs `cargo metadata`), `gopls` also needs `go` (it runs `go env`), and `ts_ls` has no `cmd` here, so its binary `typescript-language-server` is named explicitly.
+- `missing_binary(name)` returns the first required program that is not on PATH, or `nil`.
+- The loop at the end registers every server (`vim.lsp.config`) and calls `vim.lsp.enable` only if nothing is missing. So outside a devShell nothing starts and nothing warns; `:LspStart <name>` tells you which program is missing.
+
+### R: the one-time probe
+
+`R` on PATH is not enough, the R package `languageserver` must be installed too, and starting R to find out is slow. So the config asks once, at the first R-like file. Abridged: the comment, the state variables and the autocommand are quoted verbatim; the probe function (the `vim.system` call that runs R and, on success, enables the server and re-triggers `FileType` for R buffers already open) is left out and described below.
+
+```lua
+-- r_language_server: `R` alone is not enough, the `languageserver` R package must be installed, and
+-- starting R to find out is slow. So: ONE probe, at the first R-ish file, async, cached for the
+-- session. Silent when R or the package is missing, or when the probe fails or times out. When it
+-- succeeds the server is enabled and started for the R buffers already open (vim.lsp.enable only
+-- hooks FileType events that come later; the buffer that triggered the probe is already past it).
+local r_probe = nil ---@type "running"|"ok"|"no"|nil
+local R_PROBE_TIMEOUT_MS = 10000
+
+-- ... local function probe_r_language_server() ... end
+
+vim.api.nvim_create_autocmd("FileType", {
+  group = lsp_keys_group,
+  pattern = { "r", "rmd", "quarto" }, -- the filetypes of r_language_server
+  desc = "One-time probe for the R languageserver package",
+  callback = probe_r_language_server,
+})
+```
+
+In plain words:
+
+- The probe runs R in the background (`quit(status = !requireNamespace("languageserver", quietly=TRUE))`) with a 10 second timeout. Exit code 0 means the package is there.
+- The answer is cached for the session (`r_probe` is `"running"`, `"ok"` or `"no"`). Missing R, a missing package, an error and a timeout are all silent.
+- On success the server is enabled and started for the R buffers that are already open (`vim.lsp.enable` alone only hooks later `FileType` events, and the buffer that triggered the probe is already past that point). After you install the package, restart nvim, because a `"no"` stays for the session.
+
+## Lua: lua_ls and stylua
+
+Two things stop `lua_ls` from formatting, so that stylua is the only Lua formatter: `format = { enable = false }` in the settings, and `on_init` removes the formatting capabilities (lua_ls still advertises them with the setting off). Both are in the `lua_ls` entry above. The rest of the Lua server settings are in `after/lsp/lua_ls.lua` (verbatim):
+
+```lua
+-- settings for lua-language-server can be found on https://luals.github.io/wiki/settings/
+---@type vim.lsp.Config
+return {
+  ---@type lspconfig.settings.lua_ls
+  settings = {
+    Lua = {
+      runtime = {
+        -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
+        version = "LuaJIT",
+      },
+      hint = {
+        enable = true,
+      },
+    },
+  },
+}
+```
+
+In plain words: `runtime.version = "LuaJIT"` (Neovim runs LuaJIT), `hint.enable = true` turns on inlay hints (shown with `:LspInlayHints enable`), and the `lua_ls` entry adds `globals = { "vim" }` and ignores `duplicate-set-field`. lazydev.nvim (below) supplies the Neovim API types.
+
+The keys live in `after/ftplugin/lua.lua`. Abridged (the hunk helper `new_row` and the body of `stylua_format`, lines 8-86, are left out and described below):
+
+```lua
+-- Disable inserting comment leader after hitting o/O/<Enter>
+vim.opt_local.formatoptions:remove { "o", "r" }
+
+for _, lhs in ipairs({ "<F9>", "<leader>rf" }) do -- <leader>rf: the same without function keys
+  vim.keymap.set("n", lhs, "<cmd>luafile %<CR>", { buffer = true, silent = true, desc = "run lua file" })
+end
+
+-- ... local function stylua_format() ... end
+
+vim.keymap.set("n", "<Space>f", stylua_format, { buffer = true, silent = true, desc = "Format file (stylua)" })
+-- one Lua formatter: <Space>fm (global: LSP format) runs stylua too; lua_ls formatting is off
+vim.keymap.set("n", "<Space>fm", stylua_format, { buffer = true, silent = true, desc = "Format file (stylua)" })
+```
+
+In plain words:
+
+- `<F9>` and `<Space>rf` run the file with `:luafile %`.
+- `<Space>f` and `<Space>fm` both run `stylua_format`. In Lua buffers `<Space>fm` is stylua, not the LSP formatter, because lua_ls formatting is off.
+- `stylua_format` formats the buffer (not the file on disk) through stdin: `stylua --search-parent-directories --stdin-filepath <name> -` (so a project `stylua.toml` is honoured), compares old and new text, and applies only the changed hunks, bottom-up, in one undo step. Every window showing the buffer keeps its cursor and view. A missing stylua or a stylua error (for example a syntax error) gives ONE warning and leaves the buffer untouched. The Markdown prettier key uses the same idea (see the Markdown chapter).
+
+## typos_lsp: where it attaches
+
+typos_lsp is registered like the others (`cmd = { "typos-lsp" }` in the server table). Its extra rules are in `after/lsp/typos_lsp.lua` (verbatim):
+
+```lua
+local root_markers = { "typos.toml", "_typos.toml", ".typos.toml", "pyproject.toml", "Cargo.toml", ".gitignore" }
+
+-- filetypes typos_lsp must never attach to
+local skip_ft = {
+  -- Snacks.bigfile buffers: would receive the whole file (see lua/config/bigfile.lua)
+  bigfile = true,
+  -- start screens
+  dashboard = true,
+  alpha = true,
+  snacks_dashboard = true,
+}
+
+---@type vim.lsp.Config
+return {
+  root_markers = root_markers,
+  -- typos_lsp has no filetype list, so it would start on every buffer that gets a filetype:
+  -- skip special buffers (buftype ~= "": help, terminal, quickfix, plugin panels...) and skip_ft
+  root_dir = function(bufnr, on_dir)
+    if vim.bo[bufnr].buftype ~= "" or skip_ft[vim.bo[bufnr].filetype] then
+      return
+    end
+    on_dir(vim.fs.root(bufnr, root_markers))
+  end,
+}
+```
+
+In plain words: typos_lsp has no filetype list, so left alone it would start on every buffer with a filetype. The `root_dir` function refuses special buffers (`buftype ~= ""`: help, terminal, quickfix, plugin panels) and the filetypes in `skip_ft` (the big-file buffers and start screens). For real files the root is the nearest folder with one of the `root_markers`, where a `typos.toml` can hold your own accepted words.
+
+## LSP keymaps (all languages)
 
 These keys work per buffer according to what the attached servers support: `K` and `gd` fall back to Vim's builtin versions when no attached server supports hover / definition; `<Space>rn` and `<Space>ca` show one warning instead ("rename: no attached language server supports it", or "... no language server attached to this buffer").
 
@@ -155,7 +474,9 @@ These keys work per buffer according to what the attached servers support: `K` a
 | `<Space>ca` | **Code action**. Shows a menu of available fixes and refactorings. | When the lightbulb icon appears, or when you want to auto-import, extract a variable, fix a lint warning, etc. |
 | `<Space>fm` | **Format file**. Runs the LSP formatter asynchronously (ruff, nixd, ...); in Markdown buffers Prettier, in Lua buffers stylua. | Before committing, or whenever you want clean formatting. |
 
-## Peeking Without Jumping (Glance)
+A worked example of `gd`, `K` and `<Space>rn` on a small Python file is in section 13 ("LSP keymaps").
+
+## Peeking without jumping (glance.nvim)
 
 Plugin: **glance.nvim**. Instead of jumping away to a definition (which changes your context), you can peek at it in an inline popup:
 
@@ -169,7 +490,7 @@ Neovim's builtin `grn`, `gra`, `grr`, `gri`, `grt` and `gO` also work (see secti
 
 **When to use Glance vs `gd`**: Use Glance when you want to quickly check something and come back. Use `gd` when you want to actually navigate to the definition and work there.
 
-## Diagnostics In Depth
+## Diagnostics in depth
 
 Diagnostics are the errors, warnings, and hints that the LSP server reports about your code.
 
@@ -198,13 +519,13 @@ Diagnostics are the errors, warnings, and hints that the LSP server reports abou
 
 Then use `:cnext`/`:cprev` to jump through them one by one.
 
-## The Lightbulb
+## The lightbulb (nvim-lightbulb)
 
 Plugin: **nvim-lightbulb**. A lightbulb icon appears in the sign column whenever the LSP has code actions available for the current line. This is your cue to press `<Space>ca`.
 
 The lightbulb filters out noisy ruff actions (`source.fixAll.ruff`, `source.organizeImports.ruff`) to avoid false positives.
 
-## Editing the Neovim Config in Lua (lazydev.nvim)
+## Editing the Neovim config in Lua (lazydev.nvim)
 
 Plugin: **lazydev.nvim**. When you edit a Lua file (for example this config), the Lua language server (`lua_ls`) must know the Neovim API. lazydev adds those definitions to the server's workspace, so `vim.*` gets completion, hover (`K`) and signature help instead of "undefined global" warnings. It also adds the modules you `require(...)` in the open file as you go, so only what is used is loaded.
 
@@ -216,11 +537,11 @@ Plugin: **lazydev.nvim**. When you edit a Lua file (for example this config), th
 | Needs | `lua_ls` attached to the buffer (see the server table above) |
 | Not set up | lazydev's optional nvim-cmp source for `require("...")` module names is not configured here, so module-name completion inside `require(...)` only lists modules that are already loaded in the workspace |
 
-How the results reach the menu: the names come from `lua_ls` through the normal LSP source (see section 45, "Completion Sources and Helpers"); it was not verified here that every lazydev-provided name shows up in the menu.
+How the results reach the menu: the names come from `lua_ls` through the normal LSP source (see section 45, "Completion sources and helpers"); it was not verified here that every lazydev-provided name shows up in the menu.
 
 ---
 
-# 18. Code Folding (`nvim-ufo`)
+# 18. Code folding (`nvim-ufo`)
 
 Plugin: nvim-ufo. Folds code blocks using the LSP folding ranges, falling back to indentation.
 
@@ -237,21 +558,39 @@ Plugin: nvim-ufo. Folds code blocks using the LSP folding ranges, falling back t
 | `<Space>K` | Preview folded lines in a popup |
 | `zi` | Toggle folding feature on/off |
 
+Example (tested, a Python file; `zM` closes every fold). Before:
+
+```
+ 1  def load(path):
+ 2      with open(path) as f:
+ 3          data = f.read()
+ 4      parse(data)
+ 5      return data
+```
+
+After `zM` the whole function is one line: the first line of the fold, then `󰁂  4` at the right edge, the number of hidden lines:
+
+```
+ 1  def load(path):                                         󰁂  4
+```
+
+`za` on that line opens it again, `zR` opens every fold, and `<Space>K` shows the hidden lines in a popup without opening the fold.
+
 ---
 
-# 47. Code Folding In Depth
+# 47. Code folding in depth (`nvim-ufo`)
 
-## What It Is
+## What it is
 
 Plugin: **nvim-ufo** + **promise-async**. Code folding collapses blocks of code (functions, classes, if-blocks, etc.) into a single line to help you see the big picture.
 
-## How It Works
+## How it works
 
 nvim-ufo uses the LSP server's folding ranges to determine what can be folded, and falls back to indentation when no server provides folds.
 
 Folded lines show a preview: the first line of the fold + a count like `󰁂 42` showing how many lines are hidden.
 
-## Folding Keymaps
+## Folding keymaps
 
 | Keymap | What it does | When to use |
 | --- | --- | --- |
@@ -265,42 +604,92 @@ Folded lines show a preview: the first line of the fold + a count like `󰁂 42`
 | `<Space>K` | Preview folded lines in popup | See what's inside without unfolding |
 | `zi` | Toggle folding on/off globally | Temporarily disable all folding |
 
+See "Code folding" (section 18) for a before/after picture.
+
 **Workflow tip**: Press `zM` to close all folds when you open a large file. This gives you an outline view. Then use `za` to open only the sections you care about. Use `<Space>K` to peek inside folds without opening them.
 
 ---
 
-# 21. Treesitter & Text Objects
+# 21. Treesitter & text objects
 
-## Treesitter (Plugin)
+## nvim-treesitter (plugin)
 
 Provides tree-sitter syntax highlighting (started automatically per filetype when a parser exists). On Nix systems the parsers come from the nix store and nothing is installed by Neovim; on other systems these parsers are installed automatically: cpp, diff, dockerfile, git_config, git_rebase, gitcommit, html, json, lua, python, toml, vim.
 
-## targets.vim (Plugin)
+The real setup (`lua/config/treesitter.lua`, verbatim):
+
+```lua
+-- nvim-treesitter `main` branch API (the old `nvim-treesitter.configs` module no longer exists).
+local ok, ts = pcall(require, "nvim-treesitter")
+if not ok then
+  return
+end
+
+ts.setup({})
+
+-- On Nix systems grammars come from the nix store (neovim.nix, nvim-treesitter.withPlugins)
+-- and the filesystem is read-only, so only install parsers on non-Nix systems.
+local is_nix = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
+if not is_nix then
+  ts.install({ "cpp", "diff", "dockerfile", "git_config", "git_rebase", "gitcommit", "html", "json", "lua", "python", "toml", "vim" })
+end
+
+-- Highlighting is no longer a module option: start it per buffer when a parser exists.
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup("treesitter_highlight", { clear = true }),
+  callback = function(args)
+    if vim.bo[args.buf].filetype == "help" then
+      return
+    end
+    pcall(vim.treesitter.start, args.buf)
+  end,
+})
+```
+
+In plain words:
+
+- This uses the `main` branch API of nvim-treesitter; the old `nvim-treesitter.configs` module no longer exists. If the plugin cannot be loaded, the file stops silently.
+- On Nix systems (`/etc/nixos` or `/etc/nix` exists) nothing is installed: the grammars come from the nix store (`neovim.nix`, `withPlugins`) and the file system is read-only. On other systems the twelve listed parsers are installed.
+- Highlighting is started per buffer by a `FileType` autocommand: `pcall(vim.treesitter.start, buf)`. The `pcall` makes a filetype without a parser a silent no-op, and the `help` filetype is skipped.
+
+## targets.vim (plugin)
 
 Adds many additional text objects for quotes, brackets, arguments, separators. Works automatically with `d`, `c`, `y`, `v`. If the cursor is not inside the pair, `i(`, `i"` and friends look forward on the line.
 
-## vim-matchup (Plugin)
+## vim-matchup (plugin)
 
 Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, etc.). Shows offscreen match in popup. Also: `g%` (backwards `%`), `[%` / `]%` (start / end of the enclosing pair), `z%` (into the next pair), text objects `i%` / `a%`. `g%` and `[%` / `]%` were tested (`g%` from `if` goes backwards to `end`). `z%` was tested in a real terminal: from `if` it moves to the closing `)` of the next pair inside the block.
 
+Example (tested in a real `.lua` file):
+
+```lua
+if x then      -- line 1
+  a()          -- line 2
+else           -- line 3
+  b()          -- line 4
+end            -- line 5
+```
+
+With the cursor on `if`, `%` goes to `else` (line 3), the next `%` to `end` (line 5), the next one back to `if`. `g%` from `if` goes backwards, to `end`.
+
 ---
 
-# 46. Treesitter In Depth
+# 46. Treesitter in depth (`nvim-treesitter`)
 
-## What Treesitter Is
+## What treesitter is
 
 Plugin: **nvim-treesitter**. It parses your code into a syntax tree (like an AST) and uses that for:
 
 - **Syntax highlighting**: More accurate than regex-based highlighting. Understands the actual structure of the code.
 - **Symbols**: the aerial outline (`<Space>t`) can read the symbols from the tree.
 
-## Installed Parsers
+## Installed parsers
 
 On Nix-managed systems (a folder `/etc/nixos` or `/etc/nix` exists) the parsers come from the nix store (home-manager); Neovim installs nothing. On other systems Neovim installs this fixed set at startup: cpp, diff, dockerfile, git_config, git_rebase, gitcommit, html, json, lua, python, toml, vim. Neovim itself bundles the parsers for c, lua, vim, vimdoc, query and markdown, so those highlight everywhere. Other languages get no tree-sitter highlighting there until you run `:TSInstall <lang>`. Tested on a simulated non-nix system: each of the 12 grammars is downloaded, but the install needs the `tree-sitter` command and a C compiler (`gcc`/`cc`); without the `tree-sitter` command every grammar fails with `Error during "tree-sitter build": ... ENOENT ... 'tree-sitter'` and nothing is installed (the error lines appear again at every start). So on a non-nix machine install `tree-sitter` (the CLI) and a C compiler first.
 
 ---
 
-# 19. Code Running
+# 19. Code running
 
 Custom function in `lua/mappings.lua`. Opens the output in a vertical split terminal on the left. If the file has no name (the buffer was never saved), the filetype has no runner, or the needed program is not on PATH, you get one warning (naming the devShell to start nvim in) instead of a terminal. A named buffer with unsaved changes runs the version on disk, so save first (`:w`).
 
@@ -310,9 +699,20 @@ Custom function in `lua/mappings.lua`. Opens the output in a vertical split term
 
 Supported: Python, Java, C, C++, C#, JavaScript, TypeScript, Go, Rust, Bash, Lua, Ruby, PHP. Special cases: Java with jdtls attached runs `:JavaRunnerRunMain` (nvim-java's own runner split at the bottom, not the `<Space>rr` terminal on the left); Rust inside a cargo project runs `cargo run`; C# with a `.csproj` runs `dotnet run --project`; Go runs `go run .` for the whole package.
 
-After running, the terminal output appears in a split. See [Terminal Integration](06-windows-terminal-sessions.md#8-terminal-integration) for how to navigate to/from it and close it.
+Example (tested): in a saved `hi.py` containing `print("hi")`, `<Space>rr` opens the output on the left and keeps your code on the right. The output stays after the program ends, with a line `[Process exited 0]` below it, until you close it with `<Space>q`:
 
-### Filetype-Specific
+```
++---------------------------+----------------------+
+| hi                        | print("hi")          |
+|                           |                      |
+| [Process exited 0]        |                      |
++---------------------------+----------------------+
+   output (left)               your code (right)
+```
+
+After running, the terminal output appears in a split. See [Terminal integration](06-windows-terminal-sessions.md#8-terminal-integration) for how to navigate to/from it and close it.
+
+### Filetype-specific
 
 | Keymap | Filetype | Description |
 | --- | --- | --- |
@@ -324,9 +724,9 @@ After running, the terminal output appears in a split. See [Terminal Integration
 
 ---
 
-# 55. Code Running In Depth
+# 55. Code running in depth
 
-## The Universal Runner
+## The universal runner
 
 The `<Space>rr` keymap detects the current filetype and runs the appropriate command in a **vertical split terminal** on the left. If the file is unsaved, the filetype has no runner, or the compiler/interpreter is not on PATH, you get ONE warning and no terminal opens (the message names the devShell to start nvim in).
 
@@ -344,25 +744,25 @@ The `<Space>rr` keymap detects the current filetype and runs the appropriate com
 - Close the terminal window with `<Space>q`, or delete its buffer with `\d`
 - Run again with `<Space>rr` (it opens a new terminal each time)
 
-## Language-Specific Details
+## Language-specific details
 
 | Language | Command used | Notes |
 | --- | --- | --- |
-| Python | `python3 <file>` | |
+| Python | `python3 <file>` | N/A (plain run; needs `python3` on PATH) |
 | Java | `:JavaRunnerRunMain` when jdtls (nvim-java) is attached; otherwise `java <file>` | With jdtls nvim-java opens its own runner split at the bottom (not the `<Space>rr` terminal on the left) |
 | C | `gcc -Wall -Wextra -std=c11 <file> -o <binary> && <binary>` | Compiles and runs; the binary sits next to the source; needs gcc (c-cpp devShell) |
 | C++ | `g++ -Wall -Wextra -std=c++20 <file> -o <binary> && <binary>` | Compiles and runs; needs g++ (c-cpp devShell) |
 | C# | `dotnet run --project <nearest .csproj>` | Without a project file: `dotnet run <file>` |
-| JavaScript | `node <file>` | |
+| JavaScript | `node <file>` | N/A (plain run; needs `node` on PATH) |
 | TypeScript | `node <file>` | Node runs `.ts` directly |
 | Go | `go run .` in the file's directory | Runs the whole package |
 | Rust | `cargo run` when a `Cargo.toml` is above the file | Otherwise `rustc <file>` and runs the binary |
-| Bash | `bash <file>` | |
+| Bash | `bash <file>` | N/A (plain run; needs `bash` on PATH) |
 | Lua | `nvim -l <file>` | Neovim's own LuaJIT |
-| Ruby | `ruby <file>` | |
-| PHP | `php <file>` | |
+| Ruby | `ruby <file>` | N/A (plain run; needs `ruby` on PATH) |
+| PHP | `php <file>` | N/A (plain run; needs `php` on PATH) |
 
-## Filetype-Specific Runners
+## Filetype-specific runners
 
 Some filetypes have an additional `<Space>rf` runner (also `<F9>`):
 
@@ -383,9 +783,9 @@ Some filetypes have an additional `<Space>rf` runner (also `<F9>`):
 
 ---
 
-# 56. Debugging In Depth
+# 56. Debugging in depth
 
-## Debug Adapter Protocol (DAP)
+## Debug adapter protocol (DAP, nvim-dap)
 
 Plugin: **nvim-dap**. DAP is a standardized protocol (created by Microsoft) for communication between an editor and a debugger. It's the same protocol used by VS Code.
 
@@ -393,7 +793,7 @@ Plugin: **nvim-dap**. DAP is a standardized protocol (created by Microsoft) for 
 
 **Python**: In Python buffers `<Space>dp` starts `python -m pdb` on the current file through nvim-gdb. Only available on Linux/Windows. During the session use `<Space>dc` (continue), `dn` (next), `ds` (step), `df` (finish), `dB` (breakpoint), `du` (until) and `dv` (evaluate); the full table is in section 2 ("Python debugger keys").
 
-## GDB Integration
+## GDB integration (nvim-gdb)
 
 Plugin: **nvim-gdb**. A visual front end for GDB, LLDB, pdb and a few other debuggers: it starts the debugger in a terminal pane under your code and marks the current line in the source window. Available on Linux and Windows only (disabled on macOS). It loads the first time one of the start commands below runs.
 
@@ -406,6 +806,14 @@ Plugin: **nvim-gdb**. A visual front end for GDB, LLDB, pdb and a few other debu
 | `:GdbStartRR` | Replay a recording made with `rr` |
 
 The command forms are the plugin's documented usage (its README); the pdb one is what `<Space>dp` runs, the others were not run for this guide.
+
+Example (tested with gdb 17 on a small C file): compile with `gcc -g a.c -o a.out`, open `a.c` in Neovim and run `:GdbStart gdb -q ./a.out`. A gdb terminal opens below the source. Move to the source window (`<Ctrl-\><Ctrl-n>`, then `<Ctrl-w>k`), put the cursor on `int y = x * 3;` and press `<F8>`: a `●` appears in the sign column. `<F5>` (continue) only works while the program runs: before that it prints "The program is not being run." in the gdb pane; start it with `:GdbRun`. It stops at the breakpoint and the line is marked with `▶`. `<F10>` steps over to the next line (the `▶` moves down one line).
+
+```
+ ●  5   int y = x * 3;          before :GdbRun: breakpoint
+ ▶  5   int y = x * 3;          stopped at the breakpoint
+ ▶  6   printf("%d\n", y);      after <F10>
+```
 
 The plugin's own start keys (`<Space>dd`, `dl`, `dp`, `db`, `dr`) are switched off in `lua/plugin_specs.lua` so they do not replace the diagnostic keys; `<Space>dp` is a Python-buffer key defined in `after/ftplugin/python.lua`. During a session the plugin sets these keys in the source window (buffer-local, removed again when the session ends):
 
@@ -424,7 +832,7 @@ Two commands without a key: `:GdbCreateWatch <command>` (for example `info local
 
 ---
 
-# 43. How the Development Toolchain Fits Together
+# 43. How the development toolchain fits together
 
 When you open a code file in Neovim, several systems activate automatically behind the scenes:
 
@@ -454,9 +862,9 @@ You don't need to start any of this manually. It all happens on file open.
 
 ---
 
-# 53. Documentation Lookup
+# 53. Documentation lookup
 
-## DevDocs (Plugin)
+## nvim-devdocs (plugin)
 
 Plugin: **nvim-devdocs**. Browse programming documentation without leaving Neovim.
 
@@ -475,16 +883,26 @@ Plugin: **nvim-devdocs**. Browse programming documentation without leaving Neovi
 
 The plugin loads only when you run one of these commands. Without an argument, `:DevdocsOpen`, `:DevdocsInstall` and the others use a Telescope picker. Installing builds the documentation synchronously (large sets can block input for a while) and needs the network; `:DevdocsFetch`, `:DevdocsInstall` and the updates download, reading an installed set is local. The command descriptions follow the plugin's README (not run for this guide). No keys are mapped; the plugin's own "open in browser" key is disabled in `lua/config/devdocs.lua`.
 
-## Hover Documentation (LSP)
+Example (tested with the Python 3.9 set; downloading and building it took about 40 seconds and freezes Neovim meanwhile, after the question "Building large docs can freeze neovim, continue? y/n"; answer `y` and `<Enter>`):
+
+1. `:DevdocsFetch` downloads the list of available sets.
+2. `:DevdocsInstall` opens a picker; type `python`, move to the set you want (the list offers `python-3.9`, `python-3.14`, ...) and press `<Enter>`.
+3. In a Python buffer `:DevdocsOpenCurrentFloat` opens a picker over all entries of the installed set (`[python-3.9] print()`, ...) with a preview on the right. Type `print()`, press `<Enter>`: a float (100 columns wide) shows `print(*objects, sep=' ', end='\n', file=sys.stdout, flush=False)` and its description.
+
+The picker filters on the entry names, so typing a file name such as `functions.html print` finds nothing.
+
+## Hover documentation (LSP)
 
 Press `K` on any symbol to see its documentation in a floating window. This pulls from:
 - Function signatures and return types
 - Docstrings / JSDoc / Javadoc
 - Type information
 
+Example (tested, Python buffer): `K` on `open` in `with open(path) as f:` shows a bordered float with the signature, one parameter per line (`(function) def open(` / `file: FileDescriptorOrPath,` / `mode: OpenTextMode = "r",` / ... / `) -> TextIOWrapper[_WrappedBuffer]`). On a keyword such as `with` there is nothing to show and the message "No information available" appears instead.
+
 ---
 
-# 59. Useful Developer Commands
+# 59. Useful developer commands
 
 | Command | What it does |
 | --- | --- |
@@ -512,17 +930,17 @@ Press `K` on any symbol to see its documentation in a floating window. This pull
 ---
 ---
 
-# Part III: Everyday Scenarios & Recipes
+# Part III: everyday scenarios & recipes
 
 Practical, step-by-step walkthroughs for common tasks.
 
 ---
 
-# 75. Real-World Developer Workflows
+# 75. Real-world developer workflows
 
 Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 
-## Workflow: Investigating a Bug
+## Workflow: investigating a bug
 
 1. `<Space>fg` -- search for the error message text across the project
 2. `<Enter>` on the relevant result -- jumps to the file and line
@@ -535,7 +953,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 9. `<Space>hp` -- preview what the hunk changed
 10. Fix the issue, `<Space>w` to save, `<Space>rr` to run and test
 
-## Workflow: Code Review (Reviewing Your Own Changes)
+## Workflow: code review (reviewing your own changes)
 
 1. `<Space>gs` -- open git status
 2. Navigate to a changed file, press `<Enter>` to open it
@@ -545,7 +963,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 6. `:DiffviewOpen` -- for a full side-by-side diff of all changes
 7. When satisfied: `<Space>gw` to stage, `<Space>gc` to commit
 
-## Workflow: Refactoring a Function Name Across the Project
+## Workflow: refactoring a function name across the project
 
 **If it's a code symbol (function, class, variable):**
 
@@ -560,7 +978,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 3. `:copen` -- review the matches
 4. `:cfdo %s/oldText/newText/gc | update` -- replace with confirmation (`y`/`n` each) and save all files
 
-## Workflow: Adding a Feature in a New Branch
+## Workflow: adding a feature in a new branch
 
 1. `<Space>gbn` -- create a new branch (type name, Enter)
 2. `<Space>s` -- open file tree, navigate to where you'll add files
@@ -572,14 +990,14 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 8. `<Space>gc` -- commit
 9. `<Space>gpu` -- push
 
-## Workflow: Quickly Editing a Config File
+## Workflow: quickly editing a config file
 
 1. `<Space>ff` -- fuzzy find the config file by name
 2. Make your changes
 3. `<Space>w` -- save
 4. If it's the Neovim config: `<Space>sv` to restart Neovim (writes all buffers, restores windows/tabs/files; terminals such as Claude Code are not restarted)
 
-## Workflow: Working with JSON
+## Workflow: working with JSON
 
 1. Open the JSON file
 2. If it's messy: `:JSONFormat` to pretty-print it
@@ -588,7 +1006,19 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 5. `ci"` to change a value inside quotes
 6. `<Space>w` to save
 
-## Workflow: Writing Documentation (Markdown)
+Result of step 2 (tested): the one-line file `{"a":1,"b":[2,3]}` becomes seven lines with two-space indentation:
+
+```json
+{
+  "a": 1,
+  "b": [
+    2,
+    3
+  ]
+}
+```
+
+## Workflow: writing documentation (Markdown)
 
 1. Open the `.md` file
 2. `<Alt-m>` -- live preview in browser
@@ -601,7 +1031,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 9. `]s` / `[s` -- navigate misspelled words
 10. `z=` -- fix spelling
 
-## Workflow: Pair Programming with Split Views
+## Workflow: pair programming with split views
 
 1. `:vs <file>` -- open another file side-by-side
 2. `<Ctrl-w>l` / `<Ctrl-w>h` -- switch between the two files
@@ -613,11 +1043,11 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 
 ---
 
-# 35. Java Development (`nvim-java`)
+# 35. Java development (`nvim-java`)
 
 The Java keys work only in a Java buffer with the Java language server (jdtls) attached: open nvim inside the Java devShell (`java` on PATH). Everywhere else the same keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell)". which-key groups: `<Space>j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
 
-### Build & Run
+### Build & run
 
 | Keymap | Description |
 | --- | --- |
@@ -650,15 +1080,17 @@ The Java keys work only in a Java buffer with the Java language server (jdtls) a
 | `<Space>jj` | Change JDK runtime |
 | `<Space>jd` | Configure debugger (DAP) |
 
+Worked examples of these keys are in section 78 (`languages/java.md`).
+
 ---
 
-# 54. Java Development In Depth
+# 54. Java development in depth
 
 Plugin: **nvim-java**.
 
 This is the most feature-rich language setup in this config. It provides a full Java IDE experience. nvim-java loads when you open the first Java file of the session (not at startup), so opening a Java file takes a moment longer the first time; non-Java sessions do not pay for it.
 
-## How It Works
+## How it works
 
 nvim-java wraps the Eclipse JDT Language Server (jdtls) and adds:
 - Build system integration
@@ -671,7 +1103,7 @@ All of this only starts inside the Java devShell (`java` on PATH). Elsewhere `.j
 
 On Nix systems the JDK comes from the Java devShell (`JAVA_HOME`) and nvim-java never downloads one. On other systems nvim-java auto-installs a JDK.
 
-## Build & Run
+## Build & run
 
 | Keymap | Command | What it does |
 | --- | --- | --- |
@@ -712,5 +1144,7 @@ DAP is configured automatically when jdtls starts. Debugging uses the nvim-dap c
 | `<Space>jj` | `:JavaSettingsChangeRuntime` | Switch the JDK version |
 
 Only the `:JavaBuild*` and `:JavaRefactor*` commands exist after jdtls has attached; the other `:Java*` commands exist as soon as nvim-java is loaded but do nothing useful without jdtls.
+
+Worked examples of these keys are in section 78 (`languages/java.md`).
 
 ---
