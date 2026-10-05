@@ -377,6 +377,48 @@ On the sample line `call(foo, "bar baz", [1, 2])`:
 | lines `if x {` / `  y` / `}`, cursor on line 1 | `yi{`, then `G` `p` | `  y` is copied and pasted below the last line |
 | `old` in `<p>old</p>` | `dit` | `<p></p>` |
 
+### Select a whole block, from its first line to the closing brace (method, function, if, class)
+
+Cursor anywhere on the line that ends with the opening `{` (for example `int foo(int a, int b) {`):
+
+| Keys | Mode | What happens |
+| --- | --- | --- |
+| `$` | Normal | Jump to the last character of the line, the `{` |
+| `V` | Normal | Start line-wise Visual mode |
+| `%` | Visual | Jump to the matching `}` (vim-matchup): every line from the signature line to the closing `}` is selected |
+
+Tested (headless, a Java class, block of 4 lines on lines 10 to 13, cursor at column 0 of the signature line):
+
+| Keys | Selected |
+| --- | --- |
+| `$V%` | lines 10 to 13: the whole method, signature line included |
+| `V%` | only line 10: without `$`, `%` finds the first `(` on the line and jumps to its `)` on the same line |
+| `va{` | lines 3 to 27, the WHOLE CLASS: the cursor is before the method's own `{`, so the nearest `{ }` pair around it is the outer one |
+| `$va{` | lines 10 to 13, but character-wise from the `{`: the signature text before the `{` is not selected |
+| `$V%ok` | lines 9 to 13: `o` jumps to the other end of the selection, `k` extends it one line up (use it to include an annotation line such as `@Test`; a doc comment needs several `k`) |
+
+Notes:
+
+- In Normal mode `$` is the normal end-of-line. Only in Visual mode `$` is remapped to `g_` (last non-blank character); here `$` is pressed before `V`, so it is the Normal one. `%` is provided by vim-matchup.
+- Works for any `{ }` block (function, class, `if`, `for`, a JSON or CSS block). For a `( )` or `[ ]` block that opens at the end of a line, the same idea works with that bracket (assumption, not tested).
+- If the line has trailing spaces after the `{`, `$` lands on a space and `%` may not find the bracket (assumption, not tested): remove the spaces or use `g_` instead of `$`.
+- Without braces (Python): use the indent objects `ii` / `ai` in [More text objects](#more-text-objects). `V%` on `if` ... `end` keywords should work through vim-matchup (assumption, not tested).
+- Cursor INSIDE the block: `va{` / `vaB` selects the braces of that level only (character-wise, not the signature line). `[{` jumps to the enclosing opening `{`; from there continue with `V%` because you are already on the `{` (assumption, not tested).
+
+What to do with the selected block (the selection from `$V%` stays active until you press one of these):
+
+| Keys | Effect | Status |
+| --- | --- | --- |
+| `y` | Copy the block; move the cursor, then `p` pastes it BELOW the cursor line (after `$V%y<Esc>`, `G`, `k`, `p` the 4 lines appeared a second time, 27 to 31 lines) | tested |
+| `d` | Delete the block (27 to 23 lines) | tested |
+| `<Alt-j>` / `<Alt-k>` | Move the whole block down / up ONE line per press; the selection stays, so press again | tested |
+| `5<Alt-j>` | Move the block 5 lines: type the count BEFORE the key, see [Line operations](#line-operations) | documented elsewhere (not tested with a block) |
+| `>` / `<` | Indent / outdent the block (the line count is unchanged) | tested (the command runs) |
+| `gc` | Comment the whole block out, see [vim-commentary](#vim-commentary-plugin) | documented elsewhere (not re-tested; headless runs do not load VeryLazy plugins) |
+| `=` | Re-indent the block | assumption, not tested |
+| `J` | JOINS all lines of the block into ONE line (4 lines to 1, 27 to 24): usually not what you want, a trap while the selection is still active | tested |
+| `<Esc>` | Cancel the selection | tested |
+
 ### Treesitter node selection (builtin)
 
 Neovim 0.12 can grow and shrink a selection along the syntax tree (needs a Treesitter parser; otherwise it uses the LSP selection range):
@@ -1669,7 +1711,7 @@ Quick-reference card of the most powerful editing combinations for daily use.
 | `Qa` ... `q` then `@a` | Record and replay any sequence of actions | `a`, `b`, `c`, `d`: record `A;<Esc>j` on `a`, then `3@a` -> `a;`, `b;`, `c;`, `d;` ([section 60](#60-macros-in-depth)) |
 | `V` select then `:norm @a` | Run a macro on selected lines | `a`, `b`, `c` with the macro `A;<Esc>`: `ggVG` `:normal @a` -> `a;`, `b;`, `c;` ([section 60](#60-macros-in-depth)) |
 | `:g/pattern/command` | Run a command on every matching line | `:g/TODO/d` on `a`, `TODO b`, `c` -> `a`, `c` |
-| `:grep "text"` then `:cfdo ...` | Project-wide search and replace (the substitute + `\| update` recipe is in [section 67](05-search-and-files.md#67-multi-file-search-and-replace-complete-guide)) | see [section 67](05-search-and-files.md#67-multi-file-search-and-replace-complete-guide) |
+| `:grep "text"` then `:cfdo ...` | Project-wide search and replace; `:cfdo` only walks a quickfix list you filled first (the other do-commands `:ldo`, `:bufdo`, `:argdo`, `:windo`, `:tabdo` are in [section 67](05-search-and-files.md#understanding-cdo-vs-cfdo-vs-bufdo)); (the substitute + `\| update` recipe is in [section 67](05-search-and-files.md#67-multi-file-search-and-replace-complete-guide)) | see [section 67](05-search-and-files.md#67-multi-file-search-and-replace-complete-guide) |
 | `<Space>rn` | Intelligent rename across project | N/A (an LSP rename: the symbol is renamed in every file that uses it) |
 | `qf` list + `:cnext`/`:cprev` | Jump through search results or errors | N/A (moves the cursor to the next / previous entry of the quickfix list) |
 | `.` | Repeat last change (combine with `n` for find-and-repeat) | `foo x foo`: `ciw` + `bar` + `<Esc>`, `ww`, `.` -> `bar x bar` |

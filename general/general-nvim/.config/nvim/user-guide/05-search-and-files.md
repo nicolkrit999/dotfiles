@@ -124,6 +124,18 @@ And on the single line `old Old OLD` (`:s` ignores case here, see the `I` flag a
 | `:%s/Old/X/g` | `X X X` (the capital in the pattern does not matter) |
 | `:%s/Old/X/gI` | `old X OLD` (only the exact `Old` changed) |
 
+The same holds with word boundaries: in a typed `:s` the case is always ignored unless you add `\C` (inside the pattern) or the `I` flag; a capital in the pattern does not help. (Reason: while you type a `:` command, smart case is switched off by an autocmd in `lua/custom-autocmd.lua`.) Tested with typed keys in tmux 2026-10-05, real Neovim with this config, on the line `Result and result and RESULT`:
+
+| Command | Matches | Result |
+| --- | --- | --- |
+| `:%s/\<result\>/X/ge` | all three words (case ignored) | `X and X and X` |
+| `:%s/\<Result\>/X/ge` | all three words (a capital does NOT make it exact) | `X and X and X` |
+| `:%s/\C\<result\>/X/ge` | only the exact lowercase `result` (`\C` forces exact case) | `Result and X and RESULT` |
+| `:%s/\<result\>/X/gIe` | only the exact lowercase `result` (the `I` flag) | `Result and X and RESULT` |
+| `:%s/\<Result\>/X/gIe` | only the exact `Result` (`I` plus the exact-case word) | `X and result and RESULT` |
+
+Take care with renames: because `:s` ignores case, renaming a variable `calc` also changes the class `Calc`, `Result`, `RESULT` and similar. Use `\C` (or the `I` flag) when only the exact case is meant. This applies equally to `:cfdo`, `:bufdo` and `:argdo` renames (see "Using regex with `:grep`" and "Example 6" below). `/` and `?` searches keep smart case.
+
 **Quick difference between the three common endings** (same `:%s/old/new` start, only the end changes):
 
 | Ending | Replaces | Asks you? |
@@ -288,11 +300,40 @@ Example (tested with pyright): `a.py` contains `def load():` and `b.py` contains
 
 **Limitations**: Only works for code symbols (not arbitrary text), and requires an LSP server that supports rename.
 
+### LSP rename versus `:grep` + `:cfdo`: can the fast text rename replace a slow `<Space>rn`?
+
+Short answer: NOT a drop-in replacement. It is a fast alternative only when the word is unique enough, and only if you review what it matches first. `:cfdo` is a plain text substitution (like `:%s/old/new/g`), not a semantic rename. It does NOT run over the whole workspace and NOT over the open buffers: it runs over the FILES IN THE QUICKFIX LIST, that is exactly the files in which ripgrep (`:grep`) found a match (`:cfdo` opens each one, runs the command, and `| update` saves it). Open buffers are irrelevant (`:bufdo` is the one that walks open buffers).
+
+| | LSP rename (`<Space>rn`) | `:grep` + `:cfdo` |
+| --- | --- | --- |
+| What it understands | Code: changes the symbol only (its declaration and real usages); a same-named method or variable in another class is NOT touched; strings and comments are not touched; knows overloads and scopes | Text: changes every occurrence of the characters or word: comments, strings, same-named but unrelated symbols, other file types (`pom.xml`, `.md`) |
+| Speed | Java with jdtls: 10 to 17 s when healthy (tested); can be slower or fail with a stale index (see [When a rename does nothing](languages/java.md#when-a-rename-does-nothing)) | About a second |
+| Needs | An attached language server with a healthy index | Only ripgrep |
+| Review before | No preview: the buffers change after the answer arrives | `:copen` to read every match first; the `c` flag confirms each change: `:cfdo %s/\<old\>/new/gc \| update` |
+| Undo | Several files change: see [Undoing a multi-file replace](#undoing-a-multi-file-replace) | The same |
+
+Tested example (scratch copy of a small Java project, headless Neovim with this config): `:grep "add"` then `:cfdo %s/\<add\>/addition/ge | update`. The method `add` of class `Calc` exists in `Calc.java` and is called from three other files. The text rename ALSO changed a comment that mentioned `add`, and a `names.add("apple")` line in another file, which is `java.util.List.add`, not `Calc.add`. In real code a `list.add(...)` call would be a compile error after the rename. `<Space>rn` on `Calc.add` changed only the method and its calls.
+
+- The word-boundary form `\<word\>` avoids matching inside longer words (tested).
+- Tested with a local variable `total`: `:grep "total"` then `:cfdo %s/\<total\>/result/g | update` also changed a string literal `"total is "` and a comment. Fine when you want that, wrong when the string is output text.
+- Tested in a folder WITHOUT a `.git` directory: a `.gitignore` entry (`target`) was NOT honored; `:grep` also listed a file in the ignored `target/` folder, so `:cfdo` would have changed it too. Ripgrep honors `.gitignore` only inside a git repository (inside one: assumption, not tested here). Check build output folders such as `target/` in the `:copen` list before running `:cfdo`.
+
+Which to use (rule of thumb):
+
+- A method, field, class or local variable whose name also occurs elsewhere (`add`, `get`, `name`, `size`, `value`): `<Space>rn`.
+- A long, unique name (`calculateInvoiceTotal`), or a name in non-code text (config key, string, docs, comment wording): `:grep`, review with `:copen`, then `:cfdo`.
+- `<Space>rn` fails or hangs: first the repair `<Space>jbc` (Java: [When a rename does nothing](languages/java.md#when-a-rename-does-nothing)); the text rename is a fallback only when the matches are reviewed.
+- Renaming a class by text does NOT rename its file. (Whether the LSP rename of a public class renames the file too: assumption, not tested.)
+
+Status: reported by the user, not verified here: `<Space>rn` stays slow even after `<Space>jbc`; slow jdtls rename is a known issue reported online.
+
 ---
 
 ## Method 2: `:grep` + `:cfdo` (best for plain text)
 
 This is the most versatile method. It uses ripgrep (very fast) to search the entire project, puts results in the quickfix list, then runs a command on each file of the list.
+
+**Requirement: fill the quickfix list FIRST.** `:cfdo` (and `:cdo`) has no search of its own. It only runs a command on the files (or entries) that are ALREADY in the quickfix list, so the order is always: 1. fill the list (`:grep`, `:vimgrep`, `:make`, diagnostics: see [What populates the quickfix list](#what-populates-the-quickfix-list)), 2. check it with `:copen`, 3. run `:cfdo`. With an EMPTY list `:cfdo` and `:cdo` do nothing and print no error (tested in headless Neovim: the commands returned without error; a visible message in a UI session was not seen). So "nothing happened" usually means the list was empty: look with `:copen`. The sibling commands for other file sets (location list, buffers, argument list, windows, tabs) are in [Understanding `:cdo` vs `:cfdo` vs `:bufdo`](#understanding-cdo-vs-cfdo-vs-bufdo).
 
 **Why `:cfdo` and not `:cdo`**: `:grep` here creates ONE quickfix entry per match. `:cdo s/x/y/g` visits a line once per match; after the first visit replaced every `x` on the line, the next visit finds nothing and stops with `E486: Pattern not found` (tested), so the rest is NOT replaced. `:cfdo %s/x/y/g` runs once per file and avoids this. If you prefer `:cdo`, add the `e` flag: `:cdo s/x/y/ge | update`.
 
@@ -331,7 +372,7 @@ Now you can see every file and line that matches. Use `:cnext`/`:cprev` (or `j`/
 
 ### Using regex with `:grep`
 
-`:grep` passes the pattern directly to ripgrep, so you can use ripgrep regex. It is smart-case: an all-lowercase pattern ignores case, a pattern with a capital is exact (add `-s` to force exact case):
+`:grep` passes the pattern directly to ripgrep, so you can use ripgrep regex. It is smart-case: an all-lowercase pattern ignores case, a pattern with a capital is exact (add `-s` to force exact case). For an exact-case project-wide rename BOTH sides must be exact: `:grep -s "word"` to collect the files and `\C` (or the `I` flag) in the substitution, for example `:cfdo %s/\Cword/new/g | update`. Otherwise `:s` still changes `Word` and `WORD` in those files (tested in a single file, see "Substitution" above):
 
 | Command | What it finds |
 | --- | --- |
@@ -442,18 +483,49 @@ You renamed `/api/users` to `/api/v2/users`:
 
 ```
 :grep -i "oldname"                        -- ripgrep's -i flag for case-insensitive
-:cfdo %s/oldname/newname/g | update       -- :s already ignores case in this config
+:cfdo %s/oldname/newname/g | update       -- :s ignores case in this config anyway; for exact case use :grep -s and \C
 ```
 
 ---
 
 ## Understanding `:cdo` vs `:cfdo` vs `:bufdo`
 
-| Command | What it does |
+These are the "do-command family": each runs `{cmd}` over a different list. None of them searches by itself; they only walk a list that already exists (the quickfix and location commands need it filled first, see the requirement in [Method 2](#method-2-grep--cfdo-best-for-plain-text)).
+
+| Command | Which list it walks | Filled by / source |
+| --- | --- | --- |
+| `:cdo {cmd}` | Every **entry (line)** of the quickfix list; may visit the same file several times | `:grep`, `:vimgrep`, `:make`, diagnostics keys `<Space>qw` / `<Space>qb` (see [What populates the quickfix list](#what-populates-the-quickfix-list)) |
+| `:cfdo {cmd}` | Once per **file** of the quickfix list | The same sources |
+| `:ldo {cmd}` / `:lfdo {cmd}` | Like `:cdo` / `:cfdo`, but over the **location list** (one per window); open it with `:lopen` | `:lgrep`, `:lvimgrep`, `:lmake` |
+| `:bufdo {cmd}` | Every buffer in the **buffer list** (see `:ls`), shown in a window or not. Project files that are not open are NOT visited (documented `:bufdo` behaviour) | Files you opened |
+| `:argdo {cmd}` | Every file of the **argument list**: the files given on the command line (`nvim a b c`) or set with `:args <glob>`, e.g. `:args src/**/*.java` | `:args` |
+| `:windo {cmd}` | Every **window of the current tab page** | Your splits |
+| `:tabdo {cmd}` | Every **tab page** (runs in the current window of each tab) | Your tabs |
+
+Which one when:
+
+| I want to change... | Use |
 | --- | --- |
-| `:cdo {cmd}` | Run `{cmd}` on every **line** in the quickfix list (may visit the same file multiple times) |
-| `:cfdo {cmd}` | Run `{cmd}` once per **file** in the quickfix list (visits each file only once) |
-| `:bufdo {cmd}` | Run `{cmd}` on every **open buffer** (not just quickfix results) |
+| Project text found by a search | `:grep "old"` then `:cfdo ...` |
+| Per-window results (several searches at once, each in its own window) | `:lgrep "old" .` then `:lfdo ...` |
+| The files I already have open | `:bufdo ...` |
+| An explicit set of files | `:args <files or glob>` then `:argdo ...` |
+| The windows I see now | `:windo ...` |
+| Every tab | `:tabdo ...` |
+
+Tested (scratch Java project, headless Neovim):
+
+- `:lgrep "total" .` then `:lfdo %s/\<total\>/loc/ge | update` changed both files that had matches (13 entries, 6 + 7 substitutions).
+- With two files loaded and a third never opened, `:bufdo %s/\<total\>/buf/ge | update` changed the two loaded ones. The third had no match anyway, so this alone does not prove it would be skipped; that a file outside the buffer list is not visited is the documented behaviour of `:bufdo`.
+- `nvim a b`, then `:argdo %s/\<total\>/arg/ge | update` changed both files.
+- With two split windows `:windo ...` and with two tabs `:tabdo ...` (same substitution with `| update`) changed both files.
+- With an EMPTY quickfix or location list, `:cdo`, `:cfdo` and `:lfdo` do nothing and print no error (headless; a visible message in a UI session was not seen). "Nothing happened" usually means an empty list: check with `:copen` / `:lopen`.
+
+**Gotcha (tested): always add the `e` flag** for `:bufdo`, `:argdo`, `:windo` and `:tabdo` substitutions: `%s/old/new/ge`. Without it, `:bufdo %s/\<total\>/buf/g | update` STOPPED at the first buffer without a match with `E486: Pattern not found` and the following buffers were not processed (the same stop rule as the `:cdo` stop below). `:cfdo` after `:grep` is safe without `e` only because every file in the list has a match.
+
+The `|` chain: `{cmd} | update` runs the command and then saves the buffer. Without `update` (or `set hidden` / autowrite) a modified buffer may refuse to be left (`E37: No write since last change`). The auto-save plugin of this config saves when you leave a buffer, but do not rely on it for these commands (assumption, not tested).
+
+`:argdo` as a project-wide file set without grep: `:args **/*.java` (assumption, not tested), then `:argdo %s/old/new/ge | update`.
 
 For search-and-replace use `:cfdo %s/old/new/g` (see [Method 2](#method-2-grep--cfdo-best-for-plain-text) for why a plain `:cdo s/old/new/g` can stop early). `:cdo` is fine for commands that act on the entry's line once, or with the `e` flag.
 

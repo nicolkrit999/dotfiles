@@ -418,6 +418,24 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end
   end,
 })
+
+-- Java debugging (nvim-dap, which nvim-java loads with the first Java file). Plain global maps:
+-- they only call nvim-dap Lua functions (require() loads the plugin if needed), so they work in
+-- any buffer while a debug session runs. Stepping and continuing stay typed commands
+-- (:DapStepOver, :DapContinue, ...), deliberately without keys.
+keymap.set("n", "<leader>jh", function()
+  require("dap.ui.widgets").hover()
+end, { desc = "Java debug: show value under cursor (paused)" })
+keymap.set("n", "<leader>jp", function()
+  require("dap").toggle_breakpoint()
+end, { desc = "Java debug: toggle breakpoint" })
+-- Capital P on purpose (mirrors jp): removes ALL breakpoints in ALL files, no undo
+keymap.set("n", "<leader>jP", function()
+  require("dap").clear_breakpoints()
+end, { desc = "Java debug: clear all breakpoints" })
+keymap.set("n", "<leader>jx", function()
+  require("dap").terminate()
+end, { desc = "Java debug: terminate session" })
 -- jdtls detached (stopped/crashed): remove the buffer-local maps, the global fallbacks apply again
 vim.api.nvim_create_autocmd("LspDetach", {
   group = java_group,

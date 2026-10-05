@@ -36,6 +36,39 @@ This section explains how to open, navigate, resize, and close split windows ent
 +------------------+           +---------+---------+
 ```
 
+### Put two chosen buffers side by side or one above the other
+
+The rows above split with the SAME buffer (`<Space>|`, `<Space>-`, `<Ctrl-w>v`) or open a file PATH (`:vs <file>`). To show two buffers that are already open, chosen by name or number, use `:sbuffer`. The two buffers do not have to be neighbours in the buffer list: you address them by name or number, never by "next/previous". Typical use: a window was closed by accident, or you want two of several open files next to each other.
+
+Side by side (vertical split):
+
+1. `:ls`  Lists the buffers with their NUMBERS and names. The number is stable and is not the position in the list.
+2. `:b <name>` or `:b <number>`  Shows the wanted LEFT buffer in the current window. `<Tab>` completes the name, and a partial unique name is enough (e.g. `:b a`).
+3. `:vert sbuffer <name or number>`  Splits vertically and shows the second buffer in the NEW window on the RIGHT (`splitright` is set). The cursor is in the new window.
+4. `<Ctrl-w>h` / `<Ctrl-w>l`  Move between the two windows.
+
+One above the other: the same, but `:sbuffer <name or number>` without `vert`. The new window opens BELOW (`splitbelow` is set) and gets the cursor. Move with `<Ctrl-w>k` / `<Ctrl-w>j`.
+
+| Command | Effect |
+| --- | --- |
+| `:b <name\|number>` | Show that buffer in the current window |
+| `:sbuffer <name\|number>` | New horizontal split below showing that buffer |
+| `:vert sbuffer <name\|number>` | New vertical split to the right showing that buffer |
+| `:vs <file>` / `:sp <file>` | Split and open a FILE PATH (loaded if needed); not a buffer name or number |
+| `<Ctrl-^>` or `:b#` | Flip the current window between the current and the previously used buffer (see "Buffer management") |
+| `:ls` or `:buffers` | List the buffers with their numbers |
+
+`:bn` / `:bp` only move to the neighbours in the list, so they do not help when the two wanted buffers are far apart.
+
+Example with four open buffers (`:ls` shows `1 a.txt`, `2 b.txt`, `3 c.txt`, `4 d.txt`): to see `a.txt` and `d.txt` side by side, run `:b 1` then `:vert sbuffer 4`, or by name `:b a` then `:vert sbuffer d`. No need to go through 2 and 3.
+
+Tested (headless Neovim with this config, 4 buffers open): `:vert sbuffer <name>` with another buffer in the current window gave two windows side by side (current buffer left, requested buffer right, cursor in the new right window); `:sbuffer <name>` gave a stacked layout (new window below, cursor in it); `:vs <file>` gave side by side; `:sbuffer 99` (no such buffer) gives `E86: Buffer 99 does not exist`.
+
+Gotchas:
+
+- If the current window already shows the buffer you name, you get the same buffer twice (tested for the horizontal case).
+- Closing one of the windows (`:q`, or `<Space>q`, which also saves) does not close the buffer: it stays in `:ls`. Only `\d` closes the buffer (see "Buffer management").
+
 ## Navigating between windows
 
 | Keymap | Description |
@@ -157,9 +190,30 @@ This only changes the order of the tabs. If the two files are shown side by side
 | `\d` | Close/delete the current buffer (window stays open, shows previous buffer). On the last buffer an empty buffer is left. A named file with changes is saved first by auto-save (BufLeave); a buffer auto-save does not save (unnamed, read-only, Typst/LaTeX) is not deleted: you land in the previous buffer and the unsaved one stays loaded. On the only, unnamed buffer with typed text, Vim's confirm dialog "Save changes?" appears (the unsaved buffer is shown for a moment while it asks); your answer decides whether it is closed (tested in a real terminal). |
 | `\D` | Close all other buffers, but **keep** buffers with unsaved changes and terminals that are still running (one message "kept N buffer(s) (unsaved or running terminal)") |
 | `<Ctrl-^>` | Switch to the **alternate buffer**: the buffer you were in before this one. Press it again to come back, so you can flip between two files. It is the same as `:b#` or `:e #`. On a US keyboard `^` is Shift-6, so the keys are Ctrl-Shift-6; many terminals cannot send that, which is why Neovide gets the plain `<Ctrl-6>` as well (see [section 77](10-various.md#77-neovide-graphical-neovim)) |
-| `:ls` or `:buffers` | List all open buffers |
+| `:ls` or `:buffers` | List all open buffers; the flag columns are explained below ("Reading the `:ls` flags") |
 | `:b <name>` | Switch to a buffer by (partial) name |
 | `:b 3` | Switch to buffer number 3 |
+
+### Reading the `:ls` flags
+
+Each `:ls` line shows the buffer number, then up to four flag columns, then the name. Example (tested, headless Neovim): ` 1 #a + "a.txt"`, ` 2  h   "b.txt"`, ` 3 %aF "term://..."`.
+
+| Flag | Meaning | Status |
+| --- | --- | --- |
+| `%` | The buffer in the current window (tested: line 3 above) | tested |
+| `#` | The alternate buffer, the one `<Ctrl-^>` flips to (tested: line 1) | tested |
+| `a` | Active: loaded and visible in a window (tested) | tested |
+| `h` | Hidden: loaded but shown in no window (tested: line 2) | tested |
+| `+` | Modified, unsaved changes (tested: line 1) | tested |
+| `F` | Terminal buffer whose job has finished (tested: a terminal showing `Process exited`) | tested |
+| `u` | Unlisted buffer; only shown with `:ls!` | from `:help :ls`, not tested |
+| `R` | Terminal buffer with a running job | from `:help :ls`, not tested |
+| `?` | Terminal buffer without a job (`:terminal NONE`) | from `:help :ls`, not tested |
+| `-` | Buffer with `modifiable` off | from `:help :ls`, not tested |
+| `=` | Read-only buffer | from `:help :ls`, not tested |
+| `x` | Buffer with read errors | from `:help :ls`, not tested |
+
+Use these when choosing buffers for [Put two chosen buffers side by side or one above the other](#put-two-chosen-buffers-side-by-side-or-one-above-the-other): `h` buffers are loaded but not on screen. A closed test terminal that shows `hF` is the case described in [The test terminal window does not come back after you close it](languages/java.md#the-test-terminal-window-does-not-come-back-after-you-close-it). `:help :ls` also lists `:ls` filter flags (for example `:ls h` for hidden buffers only; from help, not tested).
 
 ## Tabs
 

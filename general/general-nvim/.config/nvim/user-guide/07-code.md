@@ -795,7 +795,7 @@ Some filetypes have an additional `<Space>rf` runner (also `<F9>`):
 
 Plugin: **nvim-dap**. DAP is a standardized protocol (created by Microsoft) for communication between an editor and a debugger. It's the same protocol used by VS Code.
 
-**Java**: Debugging is auto-configured via nvim-java (only inside the Java devShell, where `java` is on PATH). Open a Java file, set breakpoints, and use `<Space>jtC` (debug the current test class) or `<Space>jtM` (debug the current test method).
+**Java**: Debugging is auto-configured via nvim-java (only inside the Java devShell, where `java` is on PATH). Open a Java file, set a breakpoint with `<Space>jp`, and use `<Space>jtC` (debug the current test class) or `<Space>jtM` (debug the current test method). For a `main` class use `:DapContinue`; stepping commands and the other debug keys: [Java section 7](languages/java.md#7-debugging).
 
 **Python**: In Python buffers `<Space>dp` starts `python -m pdb` on the current file through nvim-gdb. Only available on Linux/Windows. During the session use `<Space>dc` (continue), `dn` (next), `ds` (step), `df` (finish), `dB` (breakpoint), `du` (until) and `dv` (evaluate); the full table is in [section 2](README.md#2-day-to-day-cheat-sheet) ("[Python debugger keys](README.md#python-debugger-keys-pdb-through-nvim-gdb)").
 
@@ -1098,7 +1098,7 @@ Result of step 2 (tested): the one-line file `{"a":1,"b":[2,3]}` becomes seven l
 
 # 35. Java development (`nvim-java`)
 
-The Java keys work only in a Java buffer with the Java language server (jdtls) attached: open nvim inside the Java devShell (`java` on PATH) or run `:DevEnv java` ([section 43](#43-how-the-development-toolchain-fits-together)). Everywhere else the same keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)". which-key groups: `<Space>j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
+The Java keys work only in a Java buffer with the Java language server (jdtls) attached: open nvim inside the Java devShell (`java` on PATH) or run `:DevEnv java` ([section 43](#43-how-the-development-toolchain-fits-together)). Everywhere else the same keys (except the four global debug keys `<Space>jp`, `<Space>jP`, `<Space>jh`, `<Space>jx`) show one warning "Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)". which-key groups: `<Space>j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
 
 ### Build & run
 
@@ -1132,6 +1132,10 @@ The Java keys work only in a Java buffer with the Java language server (jdtls) a
 | `<Space>jef` | Extract field |
 | `<Space>jj` | Change JDK runtime |
 | `<Space>jd` | Configure debugger (DAP) |
+| `<Space>jp` | Toggle breakpoint (global map, works in any buffer) |
+| `<Space>jh` | Show value under cursor while the debugger is paused |
+| `<Space>jP` | Clear ALL breakpoints in all files (no undo; capital P) |
+| `<Space>jx` | Terminate the debug session |
 
 Worked examples of these keys are in [section 78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging) ([`languages/java.md`](languages/java.md#78-java-nvim-java-jdtls-tests-debugging)).
 
@@ -1183,7 +1187,16 @@ On Nix systems the JDK comes from the Java devShell (`JAVA_HOME`) and nvim-java 
 | --- | --- | --- |
 | `<Space>jd` | `:JavaDapConfig` | Configure the debug adapter (auto-runs on Java file open, but can be re-triggered) |
 
-DAP is configured automatically when jdtls starts. Debugging uses the nvim-dap commands (`:DapToggleBreakpoint`, `:DapContinue`, `:DapStepOver`, `:DapStepInto`, `:DapStepOut`, `:DapTerminate`); this config has no keys for them.
+DAP is configured automatically when jdtls starts. Four global keys (all tested in a scratch copy of the config and confirmed by the owner):
+
+| Keymap | Same as | What it does |
+| --- | --- | --- |
+| `<Space>jp` | `:DapToggleBreakpoint` | Toggle a breakpoint on the cursor line |
+| `<Space>jP` | `:DapClearBreakpoints` | Remove ALL breakpoints in all files at once; no undo (capital P on purpose) |
+| `<Space>jh` | `:lua require("dap.ui.widgets").hover()` | While paused: value of the variable under the cursor in a float |
+| `<Space>jx` | `:DapTerminate` | End the debug session |
+
+Stepping and continuing deliberately have no keys: type `:DapContinue`, `:DapStepOver`, `:DapStepInto`, `:DapStepOut`. Workflow: [Java section 7](languages/java.md#7-debugging).
 
 ## Refactoring
 

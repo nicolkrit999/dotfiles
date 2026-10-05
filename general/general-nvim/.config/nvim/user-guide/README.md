@@ -71,6 +71,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
     - [Spell checking](README.md#spell-checking)
     - [Run code and terminal](README.md#run-code-and-terminal)
     - [Python debugger keys (pdb through nvim-gdb)](README.md#python-debugger-keys-pdb-through-nvim-gdb)
+    - [Java debugger keys (nvim-dap through nvim-java)](README.md#java-debugger-keys-nvim-dap-through-nvim-java)
     - [Keyboards without function keys, Insert or Page keys](README.md#keyboards-without-function-keys-insert-or-page-keys)
     - [Folding (nvim-ufo)](README.md#folding-nvim-ufo)
     - [Text tricks](README.md#text-tricks)
@@ -156,6 +157,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
             - [Tags (HTML/XML)](03-editing.md#tags-htmlxml)
             - [Example for the text objects above](03-editing.md#example-for-the-text-objects-above)
             - [Using with operators (d, c, y)](03-editing.md#using-with-operators-d-c-y)
+            - [Select a whole block, from its first line to the closing brace (method, function, if, class)](03-editing.md#select-a-whole-block-from-its-first-line-to-the-closing-brace-method-function-if-class)
             - [Treesitter node selection (builtin)](03-editing.md#treesitter-node-selection-builtin)
             - [More text objects](03-editing.md#more-text-objects)
             - [Markdown code block text objects](03-editing.md#markdown-code-block-text-objects)
@@ -286,6 +288,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
     - [67. Multi-file search and replace (complete guide)](05-search-and-files.md#67-multi-file-search-and-replace-complete-guide)
         - [Quick decision guide: which method to use](05-search-and-files.md#quick-decision-guide-which-method-to-use)
         - [Method 1: LSP rename (best for code symbols)](05-search-and-files.md#method-1-lsp-rename-best-for-code-symbols)
+            - [LSP rename versus :grep + :cfdo: can the fast text rename replace a slow <Space>rn?](05-search-and-files.md#lsp-rename-versus-grep--cfdo-can-the-fast-text-rename-replace-a-slow-spacern)
         - [Method 2: :grep + :cfdo (best for plain text)](05-search-and-files.md#method-2-grep--cfdo-best-for-plain-text)
             - [Step-by-step: replace all without confirmation](05-search-and-files.md#step-by-step-replace-all-without-confirmation)
             - [Step-by-step: replace with confirmation for each occurrence](05-search-and-files.md#step-by-step-replace-with-confirmation-for-each-occurrence)
@@ -339,6 +342,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
     - [7. Windows, splits, and buffers](06-windows-terminal-sessions.md#7-windows-splits-and-buffers)
         - [Key concepts](06-windows-terminal-sessions.md#key-concepts)
         - [Creating splits](06-windows-terminal-sessions.md#creating-splits)
+            - [Put two chosen buffers side by side or one above the other](06-windows-terminal-sessions.md#put-two-chosen-buffers-side-by-side-or-one-above-the-other)
         - [Navigating between windows](06-windows-terminal-sessions.md#navigating-between-windows)
         - [Resizing windows](06-windows-terminal-sessions.md#resizing-windows)
         - [Moving windows around](06-windows-terminal-sessions.md#moving-windows-around)
@@ -346,6 +350,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
             - [Changing the order of the tabs](06-windows-terminal-sessions.md#changing-the-order-of-the-tabs)
         - [Closing windows](06-windows-terminal-sessions.md#closing-windows)
         - [Buffer management](06-windows-terminal-sessions.md#buffer-management)
+            - [Reading the :ls flags](06-windows-terminal-sessions.md#reading-the-ls-flags)
         - [Tabs](06-windows-terminal-sessions.md#tabs)
         - [Closing floating windows](06-windows-terminal-sessions.md#closing-floating-windows)
     - [8. Terminal integration](06-windows-terminal-sessions.md#8-terminal-integration)
@@ -548,6 +553,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
             - [Runner (<Space>jr)](languages/java.md#runner-spacejr)
             - [Test (<Space>jt)](languages/java.md#test-spacejt)
             - [Refactor / extract (<Space>je)](languages/java.md#refactor--extract-spaceje)
+            - [Debug (<Space>jh, <Space>jp, <Space>jP, <Space>jx)](languages/java.md#debug-spacejh-spacejp-spacejp-spacejx)
             - [Settings and debugger setup](languages/java.md#settings-and-debugger-setup)
             - [The :Java* commands](languages/java.md#the-java-commands)
             - [The runner window](languages/java.md#the-runner-window)
@@ -557,14 +563,21 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [5. Language server features in a Java buffer](languages/java.md#5-language-server-features-in-a-java-buffer)
             - [Go to definition, back, hover, references](languages/java.md#go-to-definition-back-hover-references)
             - [When a rename does nothing](languages/java.md#when-a-rename-does-nothing)
+            - [Rename: :grep + :cfdo instead of <Space>rn?](languages/java.md#rename-grep--cfdo-instead-of-spacern)
             - [Add a missing import (auto-import)](languages/java.md#add-a-missing-import-auto-import)
             - [Generate getters, setters and constructors](languages/java.md#generate-getters-setters-and-constructors)
         - [6. Tests (JUnit)](languages/java.md#6-tests-junit)
             - [Why and how](languages/java.md#why-and-how)
             - [Using it](languages/java.md#using-it)
+            - [cursor is not on a test method](languages/java.md#cursor-is-not-on-a-test-method)
+            - [The test terminal window does not come back after you close it](languages/java.md#the-test-terminal-window-does-not-come-back-after-you-close-it)
             - [Needs](languages/java.md#needs)
         - [7. Debugging](languages/java.md#7-debugging)
             - [Why and how](languages/java.md#why-and-how-1)
+            - [Debug workflow](languages/java.md#debug-workflow)
+            - [Learning exercise (try it)](languages/java.md#learning-exercise-try-it)
+            - [Learning exercise: debug a test](languages/java.md#learning-exercise-debug-a-test)
+            - [The Configuration picker](languages/java.md#the-configuration-picker)
         - [8. Refactoring (extract)](languages/java.md#8-refactoring-extract)
         - [9. Snippets](languages/java.md#9-snippets)
         - [10. Windows while running, testing and debugging](languages/java.md#10-windows-while-running-testing-and-debugging)
@@ -788,6 +801,7 @@ More: section [5](03-editing.md#5-selection-visual-mode) ("ii / ai").
 | `di(` / `da(` | The text inside the parentheses / with the parentheses |
 | `diS(` / `daS(` | Sandwich: empty the surrounding `(` `)` / remove them with their content |
 | `ii` / `ai` | The indented block (see above) |
+| `$V%` | Select a whole `{ }` block from its first line to the closing `}` (cursor on the line that ends with `{`; then `y`, `d`, `<Alt-j>` / `<Alt-k>` to copy, delete, move; [details](03-editing.md#select-a-whole-block-from-its-first-line-to-the-closing-brace-method-function-if-class)) |
 
 The same objects work after `c`, `y` and `v`. More: sections [5](03-editing.md#5-selection-visual-mode), [6](03-editing.md#6-working-with-parentheses-quotes-and-brackets), [17](03-editing.md#17-surrounding-pairs-vim-sandwich--nvim-autopairs) and [70](01-basics.md#70-the-verb--noun-system-how-vim-commands-work).
 
@@ -873,6 +887,7 @@ More: sections [10](05-search-and-files.md#10-searching-replacing-and-refactorin
 | `<Ctrl-^>` (in Neovide also `<Ctrl-6>`) | Jump to the previous buffer and back again, like Alt-Tab for files |
 | `\d` / `\D` | Close this buffer / close all other buffers |
 | `<Space>-` / `<Space>\|` | Split below / to the right (same file) |
+| `:b <name\|number>` then `:vert sbuffer <name\|number>` | Two chosen open buffers side by side (`:sbuffer` without `vert`: one above the other) |
 | `<Ctrl-w>h` `j` `k` `l` | Move between windows |
 | `<Left>` `<Down>` `<Up>` `<Right>` | The same, with the arrow keys (normal mode) |
 | From a terminal window (run output, `:term`) | `<Esc>`, then `<Ctrl-w>h` (or an arrow key) to go to the code; `i` to type in the terminal again |
@@ -1020,7 +1035,7 @@ Full explanation: [section 77](10-various.md#77-neovide-graphical-neovim).
 | `p` / `zf` in the list | Preview the item / filter the list with fzf |
 | `<Tab>` in the list | Mark the item |
 | `<Ctrl-x>` / `<Ctrl-v>` in the list | Open the item in a horizontal / vertical split |
-| `:cfdo %s/old/new/g \| update` | Replace in every file of the list |
+| `:cfdo %s/old/new/g \| update` | Replace in every file of the list (fill the list first with `:grep`; other file sets: `:bufdo`, `:argdo`, see [do-commands](05-search-and-files.md#understanding-cdo-vs-cfdo-vs-bufdo)) |
 
 More: sections [26](05-search-and-files.md#26-quickfix--location-list) and [51](05-search-and-files.md#51-quickfix-workflows-for-developers).
 
@@ -1065,6 +1080,22 @@ Start with `<Space>dp` in a Python buffer (pdb through nvim-gdb); the keys work 
 | `:GdbDebugStop` | Quit the debugger |
 
 More: section [79](languages/python.md#79-python-pyright-ruff-black-uv-running-and-debugging).
+
+### Java debugger keys (nvim-dap through nvim-java)
+
+Global keys; all four (`<Space>jp`, `<Space>jh`, `<Space>jP`, `<Space>jx`) confirmed by the owner. Stepping and continuing have no keys: type the commands.
+
+| Keys | What it does |
+| --- | --- |
+| `<Space>jp` | Toggle a breakpoint on this line (put it on a line with code) |
+| `:DapContinue` | Start the debugger on a `main` class (pick an entry in the `Configuration` list) or run on while paused |
+| `:DapStepOver` / `:DapStepInto` / `:DapStepOut` | Next line / into the call / back to the caller |
+| `<Space>jh` | While paused: show the value of the variable under the cursor |
+| `<Space>jx` | Stop the debug session |
+| `<Space>jP` | Remove ALL breakpoints in all files at once (capital P; no undo; confirmed by the owner) |
+| `:DapClearBreakpoints` | Same as `<Space>jP` (confirmed by the owner; `<Space>jp` removes only the one on the line) |
+
+More: section [78](languages/java.md#7-debugging).
 
 ### Keyboards without function keys, Insert or Page keys
 

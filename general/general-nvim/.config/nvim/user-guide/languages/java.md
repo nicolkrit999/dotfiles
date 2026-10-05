@@ -102,10 +102,10 @@ The other option is unchanged: quit, `cd` into the project and start `nvim` from
 
 1. In a terminal: `cd` into the project folder (the one with `pom.xml`). direnv loads the devShell and prints `Java Environment Active (JDK 25)`. First time: `direnv allow`.
 2. `nvim src/main/java/demo/Main.java`
-3. Wait about 10 seconds. The statusline shows `jdtls (+2)` (jdtls, spring-boot, typos_lsp). Tested: all three attach: `jdtls,spring-boot,typos_lsp`. Before that the `<Space>j` keys only show the warning. A big project's first start is slower.
+3. Wait for `jdtls (+2)` in the statusline (jdtls, spring-boot, typos_lsp). Tested: all three attach: `jdtls,spring-boot,typos_lsp`. Tested start times in fresh scratch copies were about 20 to 50 seconds (a cold first start); the owner reports that in his everyday session jdtls starts fast, and that the slow part is a project-wide rename (`<Space>rn`, see [When a rename does nothing](#when-a-rename-does-nothing)). A big project's first start is slower. Before that, keys such as `<Space>jtm` or `:DapContinue` show a warning or do nothing.
 4. Run: `<Space>jrr`. A full-width, 15-line terminal split opens at the bottom with the program output. If the project has more than one class with a `main` method, a picker opens first (see [The runner window](#the-runner-window)).
 5. Test: open `CalcTest.java` and press `<Space>jtc`, then `<Space>jtr` for the result tree.
-6. Debug: `:DapToggleBreakpoint` on a line, then `<Space>jtC`. The window stops at the line with a `→` sign.
+6. Debug: `<Space>jp` on a line with code, then `<Space>jtC`. The window stops at the line with a `→` sign. Step by step: [section 7](#7-debugging).
 
 ## 3. Project layout rules
 
@@ -135,7 +135,7 @@ Consequences:
 
 ## 4. Keys and commands
 
-All `<Space>j` keys are normal mode only. The real maps are created per buffer when jdtls attaches and removed when it detaches (`LspAttach` / `LspDetach` in `lua/mappings.lua`); before that, the global fallback shows the warning. which-key shows the groups `j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
+All `<Space>j` keys are normal mode only. The real maps are created per buffer when jdtls attaches and removed when it detaches (`LspAttach` / `LspDetach` in `lua/mappings.lua`); before that, the global fallback shows the warning. Exception: the four debug keys `<Space>jh`, `<Space>jp`, `<Space>jP` and `<Space>jx` (see below) are plain global maps without that warning. which-key shows the groups `j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
 
 ### Build (`<Space>jb`)
 
@@ -174,6 +174,19 @@ All `<Space>j` keys are normal mode only. The real maps are created per buffer w
 | `<Space>jef` | `:JavaRefactorExtractField` | Extract a field | n |
 
 `<Space>jev`, `<Space>jeo` and `<Space>jec` need no selection (cursor on the expression is enough). To extract a whole statement or several lines with `<Space>jem`, select the code first, press `<Esc>`, then `<Space>jem` (details in [section 8](#8-refactoring-extract)).
+
+### Debug (`<Space>jh`, `<Space>jp`, `<Space>jP`, `<Space>jx`)
+
+Global maps (not buffer-local), so they work in any buffer, also when jdtls is not attached (where the other `<Space>j` keys only show the warning); they load nvim-dap on demand. Tested in a scratch copy of the config (breakpoint sign, debugger paused, value float, session ended) and confirmed by the owner (all four keys `<Space>jh`, `<Space>jp`, `<Space>jP` and `<Space>jx` work in his session). Stepping and continuing have no keys on purpose: use the typed commands in [section 7](#7-debugging).
+
+| Key | Same as | What it does | Mode |
+| --- | --- | --- | --- |
+| `<Space>jp` | `:DapToggleBreakpoint` | Breakpoint on or off on the cursor line (`B` sign). which-key text: `Java debug: toggle breakpoint` | n |
+| `<Space>jP` | `:DapClearBreakpoints` | Remove ALL breakpoints in ALL files at once; no undo (set them again with `<Space>jp`). Capital P on purpose: the mirror of `<Space>jp` (one breakpoint), kept apart because it is destructive. Key tested headless in a scratch copy (3 breakpoints in 3 files, the list was empty afterwards) and confirmed by the owner, as was the command `:DapClearBreakpoints`. which-key text: `Java debug: clear all breakpoints` | n |
+| `<Space>jh` | `:lua require("dap.ui.widgets").hover()` | While the debugger is paused: show the value of the variable under the cursor in a float. which-key text: `Java debug: show value under cursor (paused)` | n |
+| `<Space>jx` | `:DapTerminate` | End the debug session: the program is stopped. The breakpoints stay where they are (assumption, not tested here: that is how nvim-dap works). which-key text: `Java debug: terminate session` | n |
+
+Note: a Neovim that was already running when these keys were added (`<Space>jP` included) does not have them, because mappings are read at startup. Restart it with `<Space>sv` (writes all buffers and runs `:restart`; terminal buffers such as the Claude panel are not relaunched, see the `<Space>sv` entry in [section 40](../10-various.md#40-configuration-management)).
 
 ### Settings and debugger setup
 
@@ -278,6 +291,10 @@ Applies to `<Space>rn` and, in the same way, to other project-wide jdtls actions
 6. `<Space>jbc`  Fix that worked in the scratch copy ([Clean workspace](#clean-workspace-spacejbc)): choose `1. Yes` with `<Enter>`. jdtls restarts and rebuilds the workspace (progress in the lower right; wait about 1 minute; the `.index` files reappear). Then the same rename returned edits for 4 files. It is a cache clean: save unsaved work first, and the first start afterwards is slower. It is NOT guaranteed to fix every failed rename; if the log shows a different error, that error is the lead.
 7. After a successful rename the open buffer has changed and the other files are changed in memory only (hidden buffers, `:ls` shows `+`): save them all with `:wa`.
 
+### Rename: `:grep` + `:cfdo` instead of `<Space>rn`?
+
+Not a drop-in replacement. It takes about a second but is plain text: it also changes comments, strings and unrelated same-named methods (tested: `Calc.add` and `List.add`). Use it only for a unique name and only after reviewing the matches with `:copen`; for common names (`add`, `get`, `size`) stay with `<Space>rn`. Details, table and tested examples: [LSP rename versus `:grep` + `:cfdo`](../05-search-and-files.md#lsp-rename-versus-grep--cfdo-can-the-fast-text-rename-replace-a-slow-spacern).
+
 ### Add a missing import (auto-import)
 
 Example: a file contains `List<String> names = new ArrayList<>();` and no imports. Tested.
@@ -344,9 +361,9 @@ class CalcTest {
 }
 ```
 
-1. `<Space>jtc` anywhere in the class runs both tests; with the cursor inside one method, `<Space>jtm` runs only that one.
-2. A terminal window named `[dap-terminal] Launch All Java Tests` opens at the bottom (the tab line also shows it). Tested content: only the start lines (`Picked up JAVA_TOOL_OPTIONS...`) and `[Process exited 0]`. The terminal does NOT print pass or fail text.
-3. The results are in the report: `<Space>jtr` opens a floating window with a tree. Tested, all passing:
+1. `<Space>jtc` anywhere in the class runs both tests; with the cursor inside one method, `<Space>jtm` runs only that one. Tested (tmux, real nvim): `<Space>jtm` with the cursor on the assert line of the second method, then `<Space>jtr`, listed only that method (`multiplyWorks`), not `addWorks`; the whole-class run `<Space>jtc` lists all test methods. The cursor must be inside a method that has a test annotation, see [`cursor is not on a test method`](#cursor-is-not-on-a-test-method).
+2. A terminal window named `[dap-terminal] Launch All Java Tests` opens at the bottom (the tab line also shows it). Tested content: only the start lines (`Picked up JAVA_TOOL_OPTIONS...`) and `[Process exited 0]`. The terminal does NOT print pass or fail text. User-confirmed for `<Space>jtm` as well: the terminal shows only the `Picked up JAVA_TOOL_OPTIONS: -javaagent:.../lombok.jar` line and `[Process exited 0]`.
+3. The results are in the report: to see it press `<Space>jtr`; it opens a floating window with a tree. (In a tmux test of ours, after `<Space>jtc` only the terminal was visible and no report popup appeared by itself. The user saw the report with a check mark after a `<Space>jtc` class run.) Tested, all passing:
 
 ```
  demo.CalcTest
@@ -365,6 +382,40 @@ Each line has a status icon in front (a different icon for pass and fail). Teste
 
 4. Close the report with `<Esc>` or `q` (both tested). `<Space>jtr` again after a new run shows the new result. The exit code in the terminal is 0 even when tests fail; trust the report.
 
+To debug a test (stop at a breakpoint instead of just running it) see [section 7](#7-debugging), "Learning exercise: debug a test".
+
+### `cursor is not on a test method`
+
+`<Space>jtm` can warn `cursor is not on a test method`. The message comes from nvim-java (`java-test/api.lua`): `execute_current_test_method` warns when no test method is found at the cursor; the methods come from jdtls/java-test for the current file. Causes, most likely first:
+
+1. **User-confirmed:** the method has no `@Test` above it (the neighbouring method had one). Add `@Test` (or `@ParameterizedTest` etc.) above the method; after that `<Space>jtm` ran it.
+2. From the source code (not tested separately): the cursor is outside a method, for example on the class line or between methods. Put the cursor on a line inside the method.
+3. Assumption, not tested: jdtls has not re-read the file after your edit. Wait a few seconds and press `<Space>jtm` again.
+4. Assumption, not tested: a syntax error in the file (an extra or missing `}`, for example after typing a block by hand), so the method is not recognized. Fix the braces.
+
+### The test terminal window does not come back after you close it
+
+Tested (scratch copy, tmux, real nvim, 2026-10-05): the first `<Space>jtm` or `<Space>jtc` opens the window `[dap-terminal] Launch All Java Tests` at the bottom; for a tiny test the line `[Process exited 0]` appeared within about 2 seconds. After you close that window (`:q`, `<Space>q`, or any accidental unsplit), further runs do NOT open a new window. Only the notice `INFO::"run current test method"` (or the class variant) appears. `:ls` then still lists the buffer `[dap-terminal] Launch All Java Tests` with the flags `hF` (`h` = hidden). The notice only means the run was STARTED, not that it finished.
+
+Why (read from the source code on 2026-10-05, not tested separately): nvim-java does not create the test terminal. Its runner (`lua/java-dap/runner.lua`, `Runner:run_by_config`) only calls `require('dap').run(config, ...)`, and nvim-dap (`lua/dap/session.lua`, `terminals.acquire`) creates the terminal. nvim-dap first reuses a terminal buffer from a pool of buffers of finished sessions (filled by `terminals.release`) and in that case opens NO window. Only when the pool is empty does it create a new buffer AND a window, with the command from its setting `terminal_win_cmd` (default `belowright new`). So the first run opens the window, later runs write into the same buffer, and nothing reopens the window you closed. This is the default behaviour of nvim-dap, not a choice of this config (the config sets neither `terminal_win_cmd` nor `dap.defaults`). On 2026-10-05 there was no difference between the installed nvim-java and a local clone of the latest nvim-java `main` (the `lua/` folders were identical).
+
+User's observation (tested by the user): the program runner window (`<Space>jrr`) DOES come back after `:q` the next time it runs, while the test terminal does not. Read from the source (the window-opening detail itself was not tested by us beyond that observation): nvim-java's own runner (`lua/java-runner/run.lua`) creates a NEW terminal buffer for every run (`nvim_create_buf` plus `nvim_open_term`) and shows it with its own window logic (`runner.lua`, `set_buffer` / `create`), so a window is opened each run. It does not use nvim-dap's terminal pool.
+
+Assumption, not tested: the nvim-dap setting `dap.defaults.fallback.terminal_win_cmd` (a command string such as `belowright new`, or a function returning a buffer and a window) only applies when a NEW terminal buffer is created. Changing it would therefore not make a closed window come back for a reused buffer. Not recommended or configured here; the way to work with it is the steps below.
+
+To see the test terminal again:
+
+1. `:ls`  Look for the line `[dap-terminal] Launch All Java Tests`; `h` means hidden.
+2. `:sbuffer dap-terminal`  Shows it in a new horizontal split below. Or `:vert sbuffer dap-terminal` for side by side. Tested: the buffer is listed and shows `[Process exited 0]`. Not tellable by us: whether the content shown came from the LATEST run or from an earlier one. Details of `:sbuffer`: [Put two chosen buffers side by side or one above the other](../06-windows-terminal-sessions.md#put-two-chosen-buffers-side-by-side-or-one-above-the-other).
+3. `<Ctrl-w>k` / `<Ctrl-w>j`  Back to the code window. You can keep the terminal in a split permanently to watch the exit line of every run.
+
+Reliable signals that a test run has finished:
+
+- The exit line (`[Process exited 0]`) in the terminal buffer.
+- `<Space>jtr` (report). Tested: it shows the LAST finished run only (after `<Space>jtm` on one method it listed only that method, after `<Space>jtc` all methods). Assumption, not tested: a report opened too early may still show the previous run, so wait for the exit line first.
+
+The debug runs `<Space>jtC` and `<Space>jtM` also go through `dap.run` (read from the source: `run_by_config` in `api.lua` is used for both; the debug configuration differs only in `debug = true`), so the same terminal reuse is expected. Assumption, not tested.
+
 ### Needs
 
 - A JUnit dependency in `pom.xml` (the test project: `junit-jupiter` 5.10.2 and `maven-surefire-plugin` 3.2.5, release 21).
@@ -375,28 +426,95 @@ Each line has a status icon in front (a different icon for pass and fail). Teste
 
 ### Why and how
 
-nvim-dap is the debugger client; java-debug is the adapter that talks to the JVM; nvim-java registers the Java configurations for you. This config has NO dap keymaps and NO dap-ui panel (no variables or stack window). You work with `:Dap*` commands, the sign column and small floating windows. Tested end to end:
+nvim-dap is the debugger client; java-debug is the adapter that talks to the JVM; nvim-java registers the Java configurations for you. This config has four debug keys (`<Space>jp` breakpoint, `<Space>jP` clear all breakpoints, `<Space>jh` value under the cursor, `<Space>jx` stop; see section 4) and NO dap-ui panel (no variables or stack window). Everything else is a typed `:Dap*` command: stepping and continuing deliberately have no keys (`:DapContinue`, `:DapStepOver`, `:DapStepInto`, `:DapStepOut`). You work with the sign column and small floating windows. The commands were tested end to end; the four keys were tested in a scratch copy of the config and confirmed by the owner:
 
 | Step | How | Tested result |
 | --- | --- | --- |
-| Breakpoint on / off | `:DapToggleBreakpoint` on the line (put it on a line with code, e.g. the `assertEquals` line, not on the `void addWorks() {` line) | A `B` sign in the sign column |
-| Debug a test class | `:DapToggleBreakpoint`, then `<Space>jtC` | After a few seconds the window shows a `→` sign on the breakpoint line; the program is paused |
-| Debug one test method | `<Space>jtM` with the cursor in the method | same, only that method |
-| Debug the program (`main`) | `:DapToggleBreakpoint` in `Main.java`, then `:DapContinue` | A picker "Configuration" opens (tested: 5 identical entries `nvim-java-test -> demo.Main`); press `<Enter>` on the first: the program stops at the breakpoint with `→` |
-| Step over | `:DapStepOver` | `→` moves to the next line |
-| Step into | `:DapStepInto` | On a call to your own method it opens that file (tested: `calc.add(2, 3)` opens `Calc.java` at `int sum = a + b;`). On a line without a call, or into library code, it opens an empty `unknown` buffer and a DAP warning "Adapter reported frame ... Invalid cursor line" |
-| Step out | `:DapStepOut` | Back to the caller |
-| Look at a value | put the cursor on the variable, `:lua require("dap.ui.widgets").hover()` | A small float with the value (tested: `sum` shows `5`). `<Esc>` closes it |
-| Continue | `:DapContinue` while paused | Runs to the next breakpoint or to the end (tested: the test terminal shows `[Process exited 0]`) |
+| Breakpoint on / off | `<Space>jp` (same as `:DapToggleBreakpoint`) on the line (put it on a line with code, e.g. the `assertEquals` line, not on the `void addWorks() {` line) | A `B` sign in the sign column |
+| Debug a test class | `<Space>jp`, then `<Space>jtC` | No picker. A notice `debug current test class` appears; after about 15 seconds the window shows a `→` sign on the breakpoint line; the program is paused (tested in a scratch copy; confirmed by the owner, 2026-10-05) |
+| Debug one test method | `<Space>jtM` with the cursor in the method | same, only that method (same start as `<Space>jtC`; confirmed by the owner, 2026-10-05, together with the class key) |
+| Debug the program (`main`) | `<Space>jp` in `Main.java`, then `:DapContinue` | A picker "Configuration" opens (tested: 5 identical entries `nvim-java-test -> demo.Main`; why there are several: see [The Configuration picker](#the-configuration-picker)); press `<Enter>` on the first: the program stops at the breakpoint with `→` |
+| Step over | `:DapStepOver` | `→` moves to the next line; the line you were on has run (confirmed by the owner, 2026-10-05) |
+| Step into | `:DapStepInto` | On a call to your own method it opens that file (tested: `calc.add(2, 3)` opens `Calc.java` at `int sum = a + b;`; confirmed by the owner, 2026-10-05: the file of your own method opens at its first line inside). On a line without a call, or into library code, it opens an empty `unknown` buffer and a DAP warning "Adapter reported frame ... Invalid cursor line" |
+| Step out | `:DapStepOut` | Back to the caller file (confirmed by the owner, 2026-10-05) |
+| Look at a value | put the cursor on the variable, `<Space>jh` (same as `:lua require("dap.ui.widgets").hover()`); only while paused | A small float with the value (tested: `sum` shows `5` with the command; the key tested in a scratch copy: a variable showed `13`; `<Space>jh` on a variable after the breakpoint line showed its value, confirmed by the owner, 2026-10-05). `<Esc>` closes it |
+| Continue | `:DapContinue` while paused | Runs to the next breakpoint or to the end (tested: the test terminal shows `[Process exited 0]`; confirmed by the owner, 2026-10-05: for the program, the terminal shows the rest of the output and `[Process exited 0]`) |
 | Debug console | `:DapToggleRepl` | A `[dap-repl-N]` window; run again to hide |
-| Stop | `:DapTerminate` | The session ends (tested: no session afterwards) |
+| Stop | `<Space>jx` (same as `:DapTerminate`) | The session ends (tested: no session afterwards; confirmed by the owner, 2026-10-05: a new session starts cleanly after it) |
+
+### Debug workflow
+
+1. `<Space>jp` on a line with code (not a comment and not the method signature line).
+2. `:DapContinue`, then in the picker choose an entry that ends with your main class (for example `... -> tutorial.Main`). For tests `<Space>jtC` / `<Space>jtM` start directly, with no picker.
+3. While paused (the `→` sign): `:DapStepOver`, `:DapStepInto` or `:DapStepOut` to move; `<Space>jh` with the cursor on a variable shows its value.
+4. `:DapContinue` to run on, to the end or to the next breakpoint.
+5. `<Space>jx` to stop the session.
+6. Optional: `<Space>jP` removes all breakpoints in all files when you are done.
+
+What the stepping commands do (for beginners; the owner confirmed the behaviour on 2026-10-05):
+
+| Command | Meaning |
+| --- | --- |
+| `:DapStepOver` | Run THIS line and stop on the next one. Method calls on the line run completely; you do not go inside them. |
+| `:DapStepInto` | Go INSIDE the method that is called on this line. Works for your own code that has source; into library code you get an empty `unknown` buffer and a DAP warning (see the step table). |
+| `:DapStepOut` | Run the rest of the current method and stop back in the caller. |
+| `:DapContinue` | Run until the next breakpoint, or to the end of the program. |
+
+Program output appears only when its line has run: the `→` line has NOT run yet, so a `System.out.println(...)` on it prints nothing until you step over it (confirmed by the owner).
+
+### Learning exercise (try it)
+
+Confirmed by the owner (2026-10-05): every step matched. Use a small `main` method that calls `compute(a, b)` on line A, followed by a few lines that print and use the result.
+
+1. `<Space>jp` on line A, then `:DapContinue` and choose the first entry in the picker: the program stops with `→` on line A.
+2. `:DapStepOver`: `→` moves to the next line; line A has run, but a print on the next line has not printed yet.
+3. `:DapStepOver` again: the output of the print line appears in the debug terminal (only now, when its line has run) and `→` moves on. Put the cursor on a variable assigned earlier and press `<Space>jh`: a float shows its value; `<Esc>` closes it.
+4. `:DapContinue`: the program runs to the end; the terminal shows the rest of the output and `[Process exited 0]`.
+5. Start again (`<Space>jx` first if a session is still open, then `<Space>jp` on line A and `:DapContinue` plus picker). On line A, `:DapStepInto` opens the file of `compute` at its first line inside; `:DapStepOver` once there; `:DapStepOut` goes back to the caller file.
+
+### Learning exercise: debug a test
+
+Confirmed by the owner (2026-10-05): the steps below worked in his own session ("yes it worked"; he did not report exact screen details). Tested by us in a scratch copy (tmux, real nvim, jdtls attached). Use the test class from section 6: a test `multiplyWorks` whose line is `assertEquals(6, new Calc().multiply(2, 3));`.
+
+1. `<Space>jp` on the `assertEquals(...)` line of `multiplyWorks`: a `B` sign appears.
+2. `<Space>jtC` (debug the whole test class; `<Space>jtM` with the cursor in the method debugs only that method): there is NO picker. A notice `debug current test class` appears.
+3. Wait about 15 seconds (tested): `→` is on the breakpoint line. The debug terminal shows only the `Picked up JAVA_TOOL_OPTIONS` line until the run ends.
+4. `:DapStepOver`: the assert line runs and `→` moves on.
+5. `:DapContinue`: the tests run to the end; the terminal shows `[Process exited 0]`.
+6. `<Space>jtr`: the report shows a check mark per test (confirmed by the owner). Assumption, not tested: if it shows an old result, the run has not finished yet; wait for the exit line and open it again.
+
+Without a breakpoint `<Space>jtC` just runs the tests to the end.
+
+Difference to debugging a program:
+
+| | `:DapContinue` | `<Space>jtC` / `<Space>jtM` |
+| --- | --- | --- |
+| For | a class with a `main` method | JUnit tests (whole class / the method under the cursor) |
+| Picker | yes, the `Configuration` picker; choose the entry that ends with your main class | no, it starts directly |
+| Start from | any file | the test file |
+
+Stopping inside the code that the test calls (experiment, reported working by the owner, "yes it worked", no details; our own automated attempt could not verify it):
+
+1. Open the file of the called method (for example `Calc.java`) and put the breakpoint inside it with `<Space>jp`.
+2. Go back to the test file and press `<Space>jtC`.
+3. The debugger pauses inside the called method when the test reaches it. `<Space>jh` on a parameter shows its value (the exact value shown was not reported).
+
+Practical rule: to stop inside the code that the test calls, set the breakpoint in that file, then start the test debug from the test file.
+
+### The Configuration picker
+
+`:DapContinue` without a running session opens a picker titled `Configuration`. It lists `<project name> -> <main class>` for every class with a `main` method (for example one line for `Main` and one for `Snippets`). The number at the start is only the position in the list. Any entry with the main class you want is identical to the others: pick the first. Many identical entries are normal (tested: 5 identical entries in one session; 40 entries in a long session, 4 in a fresh one).
+
+Why the list grows (read from the nvim-java source, `lua/java-dap/init.lua`: `vim.list_extend(nvim_dap.configurations.java, dap_config)`): every time the debug configuration is set up, nvim-java APPENDS the detected main classes and never clears the old ones. A set-up happens each time jdtls attaches and on `<Space>jd` / `:JavaDapConfig`, so the list grows during a long session. The 40 entries were 20 pairs; what caused each of the 20 set-ups was not verified. A restart of Neovim resets the list. Assumption, not tested: `:lua require("dap").configurations.java = {}` followed by `<Space>jd` empties and refills it without a restart.
 
 Notes:
 
 - Without a breakpoint, `<Space>jtC` simply runs the tests to the end.
 - The debugged program's output goes to the `[dap-terminal]` window.
-- `<Space>jrr` runs without a debugger; to debug `main` use `:DapContinue` as above.
-- If a debug window stays open after `:DapTerminate`, close it with `<Space>q` in that window.
+- Breakpoints only work when the program is started through the debugger. `<Space>jrr` runs without a debugger: it starts a plain `java` process (read from the nvim-java source, `lua/java-runner/run.lua`: the command is started with `jobstart`, no dap involved), so breakpoints are IGNORED and the whole program runs and prints all its output (the owner saw the complete output after setting a breakpoint and pressing `<Space>jrr`). The `B` sign stays on the line either way. To stop at breakpoints start with `:DapContinue` (and the picker) as above, or `<Space>jtC` / `<Space>jtM` for tests.
+- More than one breakpoint (tested in a scratch copy, tmux, real nvim, 2026-10-05, breakpoints set with `<Space>jp` on two lines of a small `main` method): `:DapContinue` plus the picker stops at the FIRST breakpoint the program reaches (`→` on that line; the terminal shows only the `Picked up JAVA_TOOL_OPTIONS` line). `:DapContinue` while paused runs on and stops at the SECOND one (the terminal now also shows the output printed in between). A third `:DapContinue`, with nothing left to stop at, runs to the end: the terminal shows the rest of the output and `[Process exited 0]`. The order of stops follows the order in which the program reaches the lines, not the order in which you set the breakpoints. `<Space>jx` stops early at any point.
+- Remove breakpoints: `<Space>jp` (or `:DapToggleBreakpoint`) on the line that has the `B` removes it. It TOGGLES: with the cursor on a different line it ADDS a breakpoint there (read from nvim-dap `toggle_breakpoint`; removal not separately confirmed by the owner). "I have tons of breakpoints, how do I remove them all?": `<Space>jP` (same as `:DapClearBreakpoints`) clears the breakpoints of all files at once, `<Space>jp` on the line removes only that one. The command and the key `<Space>jP` were both confirmed by the owner in his session; the key was also tested headless in a scratch copy (3 breakpoints in 3 files, none afterwards). The command was also tested headless (2026-10-05, scratch copy: 7 breakpoints in 3 files went to 0 breakpoints in 0 files); there is no undo, set them again with `<Space>jp`. Not tested: the visual `B` signs in a UI, and running it while a debug session is paused. Assumption, not tested: removing a breakpoint while paused does not resume the program.
+- If a debug window stays open after `<Space>jx` / `:DapTerminate`, close it with `<Space>q` in that window.
 - See [section 36](../07-code.md#36-debugging) and [section 56](../07-code.md#56-debugging-in-depth) for the general DAP notes.
 
 ## 8. Refactoring (extract)
@@ -1143,12 +1261,13 @@ See [section 7](../06-windows-terminal-sessions.md#7-windows-splits-and-buffers)
 | `<Space>jrr` prints nothing | jdtls not finished importing, or the file is not under `src/main/java`, or no `main` method | Wait for the first import, `<Space>jbb`, then `<Space>jrr` again; a project that is its own git root and one nested in a bigger git repo both work |
 | Old errors or deleted classes still shown | Stale jdtls workspace | `<Space>jbc` then Yes (jdtls restarts); if it stays wrong: `rm -r ~/.cache/nvim/jdtls/workspace` |
 | A different, empty workspace appears after starting from another folder | The workspace folder name is a hash of the START folder of Neovim | Always start nvim in the same project folder |
-| Test terminal shows no pass/fail | By design: results are in the report | `<Space>jtr` |
+| Test terminal shows no pass/fail | By design: results are in the report (user-confirmed for `<Space>jtm`: only the `Picked up JAVA_TOOL_OPTIONS` line and `[Process exited 0]`) `<Space>jtr`; no terminal window appears at all after you closed it once: see [The test terminal window does not come back after you close it](#the-test-terminal-window-does-not-come-back-after-you-close-it) |
+| `<Space>jtm` warns `cursor is not on a test method` | User-confirmed cause: no `@Test` above the method. Other causes (cursor outside a method: from the source code; jdtls not yet updated, syntax error: assumptions) | Add `@Test`, cursor inside the method; see [`cursor is not on a test method`](#cursor-is-not-on-a-test-method) |
 | First test run fails with a download error | Maven offline: JUnit jars not in `~/.m2`. Tested in a shell with an empty repo: `mvn -o test` stops with `Cannot access central (https://repo.maven.apache.org/maven2) in offline mode and the artifact org.apache.maven.plugins:maven-resources-plugin:jar:3.3.1 has not been downloaded from it before` | Connect once, run `<Space>jtc` again (or `mvn test` in a shell) |
 | `Java version mismatch: JDTLS ... requires Java ...` | The JDK on PATH is too old or too new for jdtls 1.54.0 | Use the devShell JDK (25) |
 | "release version N not supported" when compiling | `maven.compiler.release` in `pom.xml` is higher than the JDK | Lower it (the test project uses 21 on JDK 25) |
 | `.java` file in a scratch folder: no Java features | No project root (no `pom.xml`, `.git`) | Create `pom.xml` or `git init` |
-| Debugger does not stop | No breakpoint, or the breakpoint is on a line without code | `:DapToggleBreakpoint` on a code line, then `<Space>jtC` |
+| Debugger does not stop | No breakpoint, or the breakpoint is on a line without code | `<Space>jp` on a code line, then `<Space>jtC` |
 | `:DapStepInto` opens an empty `unknown` buffer | The step went into library code without source | `:DapStepOut`; step into your own methods only |
 | `<Space>rn` or `<Space>ca` warn "no attached language server supports it" | Only typos_lsp attached, jdtls missing | Same as "jdtls never attaches" |
 | `<Space>rn` (or another project-wide action such as references) does nothing after `<Enter>`, no message | Most likely (not guaranteed): the jdtls search index files of the workspace are missing or stale and the server fails silently; other causes exist. Slow answers (10 to 17 s or more) are normal | Wait, check `:LspAttached`, read the jdtls log, then `<Space>jbc` + Yes if it shows index errors; steps in [When a rename does nothing](#when-a-rename-does-nothing) |
