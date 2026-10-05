@@ -1,91 +1,59 @@
-snippet homepackages "home packages" b
+snippet homepackages "home-manager package list (home.packages; pkgs must be in scope)" b
 home.packages = with pkgs; [
 	$0
 ];
 endsnippet
 
 
-snippet systempackages "system packages" b
+snippet systempackages "NixOS system package list (environment.systemPackages; pkgs must be in scope)" b
 environment.systemPackages = with pkgs; [
 	$0
 ];
 endsnippet
 
 
-snippet excludepackages "exclude packages" b
-environment.${1:systemPackages}.excludePackages = with pkgs; [
+snippet excludepackages "Exclude default desktop packages on NixOS (desktop: gnome|plasma6|cosmic|cinnamon|budgie|enlightenment|lxqt|mate|pantheon|xfce)" b
+environment.${1:desktop}.excludePackages = with pkgs; [
 	$0
 ];
 endsnippet
 
 
-snippet delibheaderhome "delib header for home-manager" b
+snippet delibmodule "delib module with an enable switch (target: nixos|darwin|home|myconfig; mode: ifEnabled|ifDisabled)" b
 { delib
 , ...
 }:
 delib.module {
-	name = "${1:module_name}";
-	options = with delib; moduleOptions {
-		enable = boolOption ${2:false};
-	};
+	name = "${1:module_path}";
+	options = delib.singleEnableOption ${2:default_enabled};
 
-	home.ifEnabled =
+	${3:target}.${4:mode} =
 		{ cfg
 		, myconfig
 		, ...
 		}:
-		$0
+		{
+			$0
+		};
+}
 endsnippet
 
 
-snippet delibheadersystem "delib header for nixos system" b
+snippet delibalways "delib module applied unconditionally, no enable switch (target: nixos|darwin|home|myconfig)" b
 { delib
 , ...
 }:
 delib.module {
-	name = "${1:module_name}";
-	options = with delib; moduleOptions {
-		enable = boolOption ${2:false};
-	};
+	name = "${1:module_path}";
 
-	nixos.ifEnabled =
-		{ cfg
-		, myconfig
+	${2:target}.always =
+		{ myconfig
 		, ...
 		}:
-		$0
-endsnippet
-
-
-snippet delibheaderhomealways "delib header for home-manager (always)" b
-{ delib
-, ...
-}:
-delib.module {
-	name = "${1:module_name}";
-
-	home.always =
-		{ cfg
-		, myconfig
-		, ...
-		}:
-		$0
-endsnippet
-
-
-snippet delibheadersystemalways "delib header for nixos system (always)" b
-{ delib
-, ...
-}:
-delib.module {
-	name = "${1:module_name}";
-
-	nixos.always =
-		{ cfg
-		, myconfig
-		, ...
-		}:
-		$0
+		{
+			$0
+		};
+}
 endsnippet
 
 
@@ -97,9 +65,9 @@ in
 endsnippet
 
 
-snippet mkshell "mkShell development environment" b
+snippet mkshell "mkShell development environment (packages = tools, shellHook = commands run on entry)" b
 pkgs.mkShell {
-	buildInputs = with pkgs; [
+	packages = with pkgs; [
 		$1
 	];
 
@@ -110,35 +78,41 @@ pkgs.mkShell {
 endsnippet
 
 
-snippet mkderiv "stdenv.mkDerivation" b
+snippet mkderiv "stdenv.mkDerivation (buildInputs = libraries, nativeBuildInputs = build tools)" b
 pkgs.stdenv.mkDerivation {
 	pname = "${1:name}";
-	version = "${2:0.1.0}";
+	version = "${2:version}";
 
-	src = ${3:./.};
+	src = ${3:source};
 
 	buildInputs = with pkgs; [
 		$4
 	];
 
+	nativeBuildInputs = with pkgs; [
+		$5
+	];
+
 	installPhase = ''
+		runHook preInstall
 		$0
+		runHook postInstall
 	'';
 }
 endsnippet
 
 
-snippet flake "Basic flake.nix boilerplate" b
+snippet flake "Basic flake.nix boilerplate (system: x86_64-linux|aarch64-linux|x86_64-darwin|aarch64-darwin)" b
 {
-	description = "${1:A very basic flake}";
+	description = "${1:description}";
 
 	inputs = {
-		nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+		nixpkgs.url = "github:nixos/nixpkgs?ref=${2:channel}";
 	};
 
 	outputs = { self, nixpkgs, ... }@inputs:
 	let
-		system = "${2:x86_64-linux}";
+		system = "${3:system}";
 		pkgs = nixpkgs.legacyPackages.\${system};
 	in
 	{
@@ -148,8 +122,8 @@ snippet flake "Basic flake.nix boilerplate" b
 endsnippet
 
 
-snippet homefile "home.file for generating text files" b
-home.file."${1:.config/myapp/config.conf}" = {
+snippet homefile "home.file that generates a text file, path relative to $HOME (a literal ${ inside '' '' must be written ''${)" b
+home.file."${1:file_path}" = {
 	text = ''
 		$0
 	'';
@@ -157,27 +131,27 @@ home.file."${1:.config/myapp/config.conf}" = {
 endsnippet
 
 
-snippet fetchgit "fetchFromGitHub boilerplate" b
+snippet fetchgithub "fetchFromGitHub boilerplate (hash: use pkgs.lib.fakeHash first, then paste the hash from the error)" b
 src = pkgs.fetchFromGitHub {
 	owner = "${1:owner}";
 	repo = "${2:repo}";
 	rev = "${3:commit_or_tag}";
-	hash = "${4:lib.fakeHash}";
+	hash = ${4:pkgs.lib.fakeHash};
 };
 $0
 endsnippet
 
 
-snippet systemd "systemd service boilerplate" b
-systemd.services.${1:my-service} = {
-	description = "${2:My custom service}";
+snippet systemd "NixOS systemd service (restart_policy: no|on-success|on-failure|on-abnormal|on-watchdog|on-abort|always)" b
+systemd.services.${1:service_name} = {
+	description = "${2:description}";
 	wantedBy = [ "multi-user.target" ];
 	after = [ "network.target" ];
 
 	serviceConfig = {
-		ExecStart = "${3:${pkgs.hello}/bin/hello}";
-		Restart = "${4:always}";
-		User = "${5:root}";
+		ExecStart = "${3:command}";
+		Restart = "${4:restart_policy}";
+		User = "${5:user}";
 	};
 };
 $0

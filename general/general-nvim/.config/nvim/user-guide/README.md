@@ -19,7 +19,7 @@ A hands-on manual for one specific Neovim setup (Catppuccin Mocha theme, plugins
 | Git | 20, 48 |
 | Claude Code, Markdown, LaTeX/Typst, spelling, URLs | 9, 27, 28, 31, 38, 49 |
 | Everything else: custom commands, configuration, automatic behaviors, shell commands, Neovide, other plugins | 34, 39 to 42, 66, 77 |
-| Languages: Java, Python, LaTeX, Markdown, Typst, C++, Vim | 78 to 82, 84, 85 |
+| Languages: Java, Python, LaTeX, Markdown, Typst, C++, Vim, Nix | 78 to 82, 84 to 86 |
 | Catalog of every plugin, each linked to its section | 83 |
 
 **How it is organized.** Every topic is a numbered section, and the text "see section N" always means that number. Section 2 is a one-page cheat sheet of the daily keys, with pointers to the full sections. Sections with "in depth" in the title go further than the short section on the same topic. Start with section 1, then section 2; use the table of contents (or the plugin catalog, section 83) to find the rest.
@@ -663,6 +663,14 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [What you get](languages/vim.md#what-you-get)
         - [Snippets](languages/vim.md#snippets)
         - [Related sections](languages/vim.md#related-sections)
+
+20. **[Nix](languages/nix.md)**
+    - [86. Nix (snippets and delib modules)](languages/nix.md#86-nix-snippets-and-delib-modules)
+        - [What you get](languages/nix.md#what-you-get)
+        - [The Nix devShell](languages/nix.md#the-nix-devshell)
+        - [What delib is](languages/nix.md#what-delib-is)
+        - [Snippets](languages/nix.md#snippets)
+        - [Related sections](languages/nix.md#related-sections)
 
 <!-- toc:end -->
 
