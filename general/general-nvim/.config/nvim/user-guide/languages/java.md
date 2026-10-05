@@ -382,6 +382,8 @@ Each line has a status icon in front (a different icon for pass and fail). Teste
 
 4. Close the report with `<Esc>` or `q` (both tested). `<Space>jtr` again after a new run shows the new result. The exit code in the terminal is 0 even when tests fail; trust the report.
 
+To debug a test (stop at a breakpoint instead of just running it) see [section 7](#7-debugging), "Learning exercise: debug a test".
+
 ### `cursor is not on a test method`
 
 `<Space>jtm` can warn `cursor is not on a test method`. The message comes from nvim-java (`java-test/api.lua`): `execute_current_test_method` warns when no test method is found at the cursor; the methods come from jdtls/java-test for the current file. Causes, most likely first:
@@ -429,8 +431,8 @@ nvim-dap is the debugger client; java-debug is the adapter that talks to the JVM
 | Step | How | Tested result |
 | --- | --- | --- |
 | Breakpoint on / off | `<Space>jp` (same as `:DapToggleBreakpoint`) on the line (put it on a line with code, e.g. the `assertEquals` line, not on the `void addWorks() {` line) | A `B` sign in the sign column |
-| Debug a test class | `<Space>jp`, then `<Space>jtC` | After a few seconds the window shows a `→` sign on the breakpoint line; the program is paused |
-| Debug one test method | `<Space>jtM` with the cursor in the method | same, only that method |
+| Debug a test class | `<Space>jp`, then `<Space>jtC` | No picker. A notice `debug current test class` appears; after about 15 seconds the window shows a `→` sign on the breakpoint line; the program is paused (tested in a scratch copy; confirmed by the owner, 2026-10-05) |
+| Debug one test method | `<Space>jtM` with the cursor in the method | same, only that method (same start as `<Space>jtC`; confirmed by the owner, 2026-10-05, together with the class key) |
 | Debug the program (`main`) | `<Space>jp` in `Main.java`, then `:DapContinue` | A picker "Configuration" opens (tested: 5 identical entries `nvim-java-test -> demo.Main`; why there are several: see [The Configuration picker](#the-configuration-picker)); press `<Enter>` on the first: the program stops at the breakpoint with `→` |
 | Step over | `:DapStepOver` | `→` moves to the next line; the line you were on has run (confirmed by the owner, 2026-10-05) |
 | Step into | `:DapStepInto` | On a call to your own method it opens that file (tested: `calc.add(2, 3)` opens `Calc.java` at `int sum = a + b;`; confirmed by the owner, 2026-10-05: the file of your own method opens at its first line inside). On a line without a call, or into library code, it opens an empty `unknown` buffer and a DAP warning "Adapter reported frame ... Invalid cursor line" |
@@ -469,6 +471,35 @@ Confirmed by the owner (2026-10-05): every step matched. Use a small `main` meth
 3. `:DapStepOver` again: the output of the print line appears in the debug terminal (only now, when its line has run) and `→` moves on. Put the cursor on a variable assigned earlier and press `<Space>jh`: a float shows its value; `<Esc>` closes it.
 4. `:DapContinue`: the program runs to the end; the terminal shows the rest of the output and `[Process exited 0]`.
 5. Start again (`<Space>jx` first if a session is still open, then `<Space>jp` on line A and `:DapContinue` plus picker). On line A, `:DapStepInto` opens the file of `compute` at its first line inside; `:DapStepOver` once there; `:DapStepOut` goes back to the caller file.
+
+### Learning exercise: debug a test
+
+Confirmed by the owner (2026-10-05): the steps below worked in his own session ("yes it worked"; he did not report exact screen details). Tested by us in a scratch copy (tmux, real nvim, jdtls attached). Use the test class from section 6: a test `multiplyWorks` whose line is `assertEquals(6, new Calc().multiply(2, 3));`.
+
+1. `<Space>jp` on the `assertEquals(...)` line of `multiplyWorks`: a `B` sign appears.
+2. `<Space>jtC` (debug the whole test class; `<Space>jtM` with the cursor in the method debugs only that method): there is NO picker. A notice `debug current test class` appears.
+3. Wait about 15 seconds (tested): `→` is on the breakpoint line. The debug terminal shows only the `Picked up JAVA_TOOL_OPTIONS` line until the run ends.
+4. `:DapStepOver`: the assert line runs and `→` moves on.
+5. `:DapContinue`: the tests run to the end; the terminal shows `[Process exited 0]`.
+6. `<Space>jtr`: the report shows a check mark per test (confirmed by the owner). Assumption, not tested: if it shows an old result, the run has not finished yet; wait for the exit line and open it again.
+
+Without a breakpoint `<Space>jtC` just runs the tests to the end.
+
+Difference to debugging a program:
+
+| | `:DapContinue` | `<Space>jtC` / `<Space>jtM` |
+| --- | --- | --- |
+| For | a class with a `main` method | JUnit tests (whole class / the method under the cursor) |
+| Picker | yes, the `Configuration` picker; choose the entry that ends with your main class | no, it starts directly |
+| Start from | any file | the test file |
+
+Stopping inside the code that the test calls (experiment, reported working by the owner, "yes it worked", no details; our own automated attempt could not verify it):
+
+1. Open the file of the called method (for example `Calc.java`) and put the breakpoint inside it with `<Space>jp`.
+2. Go back to the test file and press `<Space>jtC`.
+3. The debugger pauses inside the called method when the test reaches it. `<Space>jh` on a parameter shows its value (the exact value shown was not reported).
+
+Practical rule: to stop inside the code that the test calls, set the breakpoint in that file, then start the test debug from the test file.
 
 ### The Configuration picker
 

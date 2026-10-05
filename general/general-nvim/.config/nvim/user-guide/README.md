@@ -576,6 +576,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
             - [Why and how](languages/java.md#why-and-how-1)
             - [Debug workflow](languages/java.md#debug-workflow)
             - [Learning exercise (try it)](languages/java.md#learning-exercise-try-it)
+            - [Learning exercise: debug a test](languages/java.md#learning-exercise-debug-a-test)
             - [The Configuration picker](languages/java.md#the-configuration-picker)
         - [8. Refactoring (extract)](languages/java.md#8-refactoring-extract)
         - [9. Snippets](languages/java.md#9-snippets)
