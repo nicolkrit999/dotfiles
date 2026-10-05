@@ -3,7 +3,7 @@
 
 # 14. Autocompletion (`nvim-cmp`)
 
-Plugin: nvim-cmp. Sources: LSP, UltiSnips snippets, file paths, buffer words; in LaTeX files also omni (BibTeX/citations); in the `/` search line buffer words, in the `:` command line paths and command names. Each source is its own small plugin, listed in section 45 ("Completion Sources and Helpers").
+Plugin: nvim-cmp. Sources: LSP, UltiSnips snippets, file paths, buffer words; in LaTeX files also omni (BibTeX/citations); in the `/` search line buffer words, in the `:` command line paths and command names. Each source is its own small plugin, listed in section 45 ("Completion sources and helpers").
 
 | Keymap | Description |
 | --- | --- |
@@ -33,7 +33,17 @@ Plugin: UltiSnips + vim-snippets. Custom snippets in `my_snippets/` directory.
 
 Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `snippets`, `tex`, `vim`
 
-### Java Snippets
+Example (tested in a Java buffer): type `jfor`, press `<Ctrl-j>`: it expands to a loop with the first placeholder (`int`) selected:
+
+```
+for (int i = 0; i < length; i++) {
+    // code here
+}
+```
+
+Type `long` (it replaces `int`), then `<Ctrl-j>` moves to the next placeholder (`i`), the next `<Ctrl-j>` to `0`, and so on. The full walk-through is in section 52 (How to use snippets).
+
+### Java snippets
 
 | Trigger | Expansion |
 | --- | --- |
@@ -47,7 +57,7 @@ Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `sni
 | `jtrycatch` / `jtryfinally` | Try-catch / try-catch-finally |
 | `jwhilescannerbreak` | While loop with Scanner and break condition |
 
-### Other Snippets
+### Other snippets
 
 | File | Triggers |
 | --- | --- |
@@ -60,11 +70,22 @@ Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `sni
 | tex | `use` (`\usepackage{}`), `eqa` (equation environment) |
 | vim | `fun` (function), `aug` (augroup) |
 
+Two examples (tested): in any file `arw` + `<Ctrl-j>` gives `--> ` with the cursor after the arrow. In a Python file `main` + `<Ctrl-j>` (at the start of a line) gives this block, with the cursor on the empty indented line inside `def main():`:
+
+```
+def main():
+    (cursor here)
+
+
+if __name__ == "__main__":
+    main()
+```
+
 ---
 
-# 45. Autocompletion In Depth
+# 45. Autocompletion in depth (`nvim-cmp`)
 
-## How It Works
+## How it works
 
 When you type in insert mode, **nvim-cmp** queries multiple sources and shows a popup menu with suggestions:
 
@@ -75,14 +96,14 @@ When you type in insert mode, **nvim-cmp** queries multiple sources and shows a 
 
 For LaTeX files the sources are **omni** (BibTeX/citations), the texlab LSP (only when `texlab` is on PATH, LaTeX devShell), UltiSnips, buffer and path.
 
-## The Smart Tab Behavior
+## The smart tab behavior
 
 `<Tab>` has two behaviors depending on context:
 
 1. **Completion menu is visible**: Selects the next item in the menu
 2. **Otherwise**: Inserts a normal tab character
 
-## Completion Keymaps
+## Completion keymaps
 
 | Keymap | In completion menu | Outside menu |
 | --- | --- | --- |
@@ -93,13 +114,28 @@ For LaTeX files the sources are **omni** (BibTeX/citations), the texlab LSP (onl
 | `<Ctrl-d>` | Scroll docs up | Delete the character right of the cursor |
 | `<Ctrl-f>` | Scroll docs down | (nothing) |
 
-## Visual Indicators
+Example (tested in a Python buffer with the pyright language server): line 1 is `pri_value = 1`, and on line 2 you type `prin`. The menu opens by itself, with the language server entries first and the snippets after them:
+
+```
+prin|
++---------------------------------------+
+| print             Function            |    <- from the language server
+| print~            Snippet             |    <- from UltiSnips
+| ProfileFunction   Variable            |
++---------------------------------------+
+```
+
+1. `<Tab>` selects the first entry: the line now reads `print`.
+2. `<CR>` confirms it, and no newline is inserted.
+3. If you do NOT pick an entry (no `<Tab>`) and press `<CR>`, you get a normal newline and the menu closes (it may open again on the new line when something matches there), so `<CR>` never inserts a completion you did not choose (tested: `prin` then `<CR>` left `prin` and started line 3).
+
+## Visual indicators
 
 - Each completion item shows an icon indicating its kind (function, variable, method, keyword, etc.) via mini.icons
 - Deprecated items appear with strikethrough
 - The completion menu is semi-transparent (5% blend)
 
-## Completion Sources and Helpers
+## Completion sources and helpers
 
 nvim-cmp itself only draws the menu. What it offers comes from small "source" plugins, each used under the `name` it has in `lua/config/nvim-cmp.lua`:
 
@@ -123,17 +159,17 @@ Libraries and dependencies of these plugins (for example `mini.icons`, which dra
 
 ---
 
-# 52. Snippets for Developers
+# 52. Snippets for developers (`UltiSnips`)
 
-## What Snippets Are
+## What snippets are
 
 Plugin: **UltiSnips** + **vim-snippets**. Snippets are templates that expand into boilerplate code when you type a trigger word.
 
-## Ready-Made Snippets (`vim-snippets`)
+## Ready-made snippets (`vim-snippets`)
 
-Besides the personal files in `my_snippets/`, UltiSnips also loads the `vim-snippets` collection: a library of common snippets for many languages that ships its own `UltiSnips/` folder. The plugin is installed as a dependency of UltiSnips and has no setup, keys or commands of its own, and the config lists the snippet folders it searches as `UltiSnips` and `my_snippets`. Its entries appear in the completion menu next to the personal ones (through the `ultisnips` source in section 45, "Completion Sources and Helpers"). To see what a language offers, open a file of that type, type the first letters of a common word such as `def` or `class` and look at the menu. The exact trigger list of the collection is not reproduced in this guide.
+Besides the personal files in `my_snippets/`, UltiSnips also loads the `vim-snippets` collection: a library of common snippets for many languages that ships its own `UltiSnips/` folder. The plugin is installed as a dependency of UltiSnips and has no setup, keys or commands of its own, and the config lists the snippet folders it searches as `UltiSnips` and `my_snippets`. Its entries appear in the completion menu next to the personal ones (through the `ultisnips` source in section 45, "Completion sources and helpers"). To see what a language offers, open a file of that type, type the first letters of a common word such as `def` or `class` and look at the menu. The exact trigger list of the collection is not reproduced in this guide.
 
-## How to Use Snippets
+## How to use snippets
 
 1. In insert mode, type a trigger word (e.g., `jfor` in a Java file)
 2. The trigger appears in the completion menu as a snippet
@@ -143,7 +179,19 @@ Besides the personal files in `my_snippets/`, UltiSnips also loads the `vim-snip
 6. Press `<Ctrl-k>` to jump to the previous placeholder
 7. Fill in each placeholder, and you're done
 
-## Custom Snippets
+Example with `jfor` in a Java buffer (tested):
+
+```
+jfor            <- you type the trigger
+(Ctrl-j)        -> for (int i = 0; i < length; i++) {
+                       // code here
+                   }                          the first placeholder, int, is selected
+long            -> for (long i = 0; ...       typing replaces the selected placeholder
+(Ctrl-j)        -> the next placeholder, i, is selected; (Ctrl-j) again: 0, then length, then the body
+(Ctrl-k)        -> back to the previous placeholder
+```
+
+## Custom snippets
 
 Custom snippets live in the `my_snippets/` directory. Each file targets a specific language:
 
@@ -159,7 +207,7 @@ Custom snippets live in the `my_snippets/` directory. Each file targets a specif
 | `vim.snippets` | Vimscript | Vim plugin development |
 | `snippets.snippets` | Snippet files | `snip`: template for a new snippet definition |
 
-## Creating Your Own Snippets
+## Creating your own snippets
 
 Edit the appropriate file in `my_snippets/` (e.g., `my_snippets/python.snippets`):
 
@@ -173,5 +221,14 @@ endsnippet
 - `trigger` is what you type
 - `b` means it only triggers at the beginning of a line
 - `${1}`, `${2}`, `${3}` are tab-stop placeholders (jump between them with `<Ctrl-j>`)
+
+Result (tested with exactly this definition in a Python file): typing `trigger` at the start of a line and pressing `<Ctrl-j>` gives
+
+```
+def function_name(args):
+    pass
+```
+
+with the cursor on the first placeholder, `function_name`: type the real name, `<Ctrl-j>` jumps to `args`, then to `pass` (tested: `load` typed, `<Ctrl-j>`, `path` typed, `<Ctrl-j>`, `return 1` gives `def load(path):` / `    return 1`).
 
 ---

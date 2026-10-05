@@ -39,7 +39,7 @@ FILES = [
     "languages/java.md", "languages/python.md", "languages/latex.md",
     "languages/markdown.md", "languages/typst.md",
 ]
-CHEAT_SHEET_TITLE = "Day-to-Day Cheat Sheet"
+CHEAT_SHEET_TITLE = "Day-to-day cheat sheet"
 TOC_DEPTH = 3  # headings # ## ### are listed in the README table of contents
 
 
@@ -88,7 +88,7 @@ def build_toc():
     for i, rel in enumerate(FILES, 1):
         hs = headings(rel)
         if rel == "README.md":
-            hs = [h for h in hs if h[1] != "Neovim User Guide" and h[1] != "Contents"]
+            hs = [h for h in hs if h[1] != "Neovim user guide" and h[1] != "Contents"]
         else:
             lines.append("")
         lines.append(f"{i}. **[{chapter_title(rel)}]({rel})**" if rel != "README.md"
@@ -167,7 +167,7 @@ def combined_markdown():
     parts = []
     for i, rel in enumerate(FILES, 1):
         fid = file_id(rel)
-        title = "Day-to-Day Cheat Sheet (section 2)" if rel == "README.md" else chapter_title(rel)
+        title = "Day-to-day cheat sheet (section 2)" if rel == "README.md" else chapter_title(rel)
         parts.append(f"# Chapter {i}: {title} {{#{fid}}}\n")
         fence, seen = False, {}
         body = readme_with_toc() if rel == "README.md" else read(rel)
@@ -219,6 +219,46 @@ def tool(name, env_hint):
     return path
 
 
+def section_numbers():
+    return {int(m.group(1)) for rel in FILES for lvl, t, _ in headings(rel) if lvl == 1
+            for m in [re.match(r"(\d+)\. ", t)] if m}
+
+
+def check_cover():
+    """Every section number must appear exactly once in the cover's "What it covers" table."""
+    src = read("README.md")
+    if "**What it covers.**" not in src:
+        return []
+    table = src.split("**What it covers.**", 1)[1].split("\n\n**", 1)[0]
+    seen = []
+    for row in table.splitlines():
+        cells = row.split("|")
+        if len(cells) < 4 or not re.search(r"\d", cells[2]):
+            continue
+        for part in cells[2].split(","):
+            m = re.fullmatch(r"\s*(\d+)(?: to (\d+))?\s*", part)
+            if m:
+                seen += range(int(m.group(1)), int(m.group(2) or m.group(1)) + 1)
+    want = section_numbers()
+    problems = [f"README.md cover table \"What it covers\": section {n} is missing" for n in sorted(want - set(seen))]
+    problems += [f"README.md cover table \"What it covers\": section {n} listed {seen.count(n)} times"
+                 for n in sorted(set(seen)) if seen.count(n) > 1 or n not in want]
+    return problems
+
+
+def cover_markdown():
+    """The cover page text: the README top part (between the title lines and "## Contents"), so the
+    README and the PDF cover share one source, plus one line of facts computed from the real files."""
+    src = read("README.md")
+    head = src.split("\n## Contents", 1)[0]
+    head = re.sub(r"\A# .*?\n+Leader key:[^\n]*\n+", "", head, flags=re.S)  # title/subtitle come from metadata
+    sections = section_numbers()
+    plugins = COUNT.search(read(CATALOG))
+    facts = (f"This edition: {len(sections)} numbered sections in {len(FILES)} chapters"
+             + (f", {plugins.group(1)} plugins in the catalog" if plugins else "") + ".")
+    return f"{head.strip()} {facts}\n"
+
+
 def build_pdf():
     if not (shutil.which("pandoc") and shutil.which("typst")):
         nix = shutil.which("nix")
@@ -233,14 +273,29 @@ def build_pdf():
         md, typ = os.path.join(tmp, "guide.md"), os.path.join(tmp, "guide.typ")
         with open(md, "w", encoding="utf-8") as f:
             f.write(combined_markdown())
+        cover_md, cover_typ = os.path.join(tmp, "cover.md"), os.path.join(tmp, "cover.typ")
+        with open(cover_md, "w", encoding="utf-8") as f:
+            f.write(cover_markdown())
+        subprocess.check_call([pandoc, "-f", "gfm", "-t", "typst", cover_md, "-o", cover_typ])
+        body = open(cover_typ, encoding="utf-8").read()
+        with open(cover_typ, "w", encoding="utf-8") as f:
+            # 11pt text; tables a little smaller with tight padding and sized columns, so the whole cover
+            # stays on page 1 (the contents must start on page 2: open_guide uses page 2)
+            body = body.replace("columns: 2,", "columns: (13fr, 7fr),", 1).replace("columns: 2,", "columns: (auto, 1fr),", 1)
+            f.write("#v(-2.5em)\n#[\n#set text(size: 11pt)\n#set par(justify: false, leading: 0.45em, spacing: 0.6em)\n"
+                    "#set table(inset: (x: 4pt, y: 2pt))\n#show figure: set block(breakable: true)\n#show table: set text(size: 8pt)\n"
+                    + body + "\n]\n")
+        with open(cover_typ, "a", encoding="utf-8") as f:
+            f.write("\n#pagebreak()\n")  # keeps the table of contents on page 2 (open_guide uses page 2)
         subprocess.check_call([
             pandoc, "-f", "gfm+attributes+gfm_auto_identifiers-hard_line_breaks", "-t", "typst",
             "--standalone", "--toc", "--toc-depth=4", "--highlight-style=tango",
             "-V", "papersize=a4", "-V", "fontsize=10pt", "-V", "margin.x=1.8cm", "-V", "margin.y=2cm",
             "-V", "mainfont=DejaVu Sans", 
-            "--metadata", "title=Neovim User Guide",
+            "--metadata", "title=Neovim user guide",
             "--metadata", "subtitle=Leader key: Space. Keys, commands and workflows of this config.",
             "--include-in-header", os.path.join(HERE, "pdf-header.typ"),
+            "--include-before-body", cover_typ,
             md, "-o", typ])
         cmd = [typst, "compile"]
         for p in font_paths():
@@ -398,6 +453,7 @@ def check():
         problems.append("README.md table of contents is out of date (run ./build-pdf.py)")
     problems += check_links()
     problems += check_plugins()
+    problems += check_cover()
     if not os.path.exists(PDF) or not os.path.exists(STAMP):
         problems.append("neovim-user-guide.pdf is missing (run ./build-pdf.py)")
     else:
@@ -407,8 +463,8 @@ def check():
         if pdftotext:
             text = norm(subprocess.run([pdftotext, PDF, "-"], capture_output=True, text=True).stdout)
             missing = [f"{rel}: {t}" for rel in FILES for lvl, t, _ in headings(rel)
-                       if not (rel == "README.md" and lvl == 1 and t == "Neovim User Guide")
-                       and not (rel == "README.md" and t in ("Contents", "2. Day-to-Day Cheat Sheet"))
+                       if not (rel == "README.md" and lvl == 1 and t == "Neovim user guide")
+                       and not (rel == "README.md" and t in ("Contents", "2. Day-to-day cheat sheet"))
                        and norm(t) not in text]
             problems += [f"heading missing from the PDF text: {m}" for m in missing]
             first = subprocess.run([pdftotext, "-f", "2", "-l", "2", PDF, "-"], capture_output=True, text=True).stdout

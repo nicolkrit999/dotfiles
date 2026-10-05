@@ -52,7 +52,7 @@ which typst tinymist typstyle zathura
 
 1. In a terminal, enter the project folder (the devShell loads through direnv).
 2. Open a file: `nvim main.typ`.
-3. Wait a few seconds until the statusline on the right shows `tinymist` (it is the main server; `(+2)` means two more servers: `ltex_plus` and `typos_lsp`).
+3. Wait a few seconds until the statusline on the right shows `tinymist` (it is the main server; `(+2)` means two more servers: `ltex_plus` and `typos_lsp`). `ltex_plus` attaches last: in a test it was still missing after 14 seconds and present within 40.
 4. Press `<Space>tw`. The command line shows `Starting: typst watch  --diagnostic-format short 'main.typ' --open zathura` and the PDF opens in zathura.
 5. Edit the text and save with `:w` (Typst files are never saved automatically, see "Auto-save" below). The PDF is rebuilt and zathura reloads it.
 6. If the document has an error, a quickfix window opens at the bottom with the message. Fix it and save again: the window closes by itself.
@@ -138,12 +138,67 @@ else
 end
 ```
 
-The plugin settings (`lua/plugin_specs.lua`):
+The real typst.vim spec (`lua/plugin_specs.lua`, verbatim):
 
 ```lua
-vim.g.typst_auto_open_quickfix = 1
-vim.g.typst_pdf_viewer = vim.env.TYPST_PDF_VIEWER or (utils.executable("zathura") and "zathura") or ""
+-- Typst syntax highlighting, :TypstWatch, and :make support.
+-- Requires the `typst` CLI on PATH (add pkgs.typst to your nix env).
+{
+  "kaarmu/typst.vim",
+  enabled = function()
+    return utils.executable("typst")
+  end,
+  ft = { "typst" },
+  init = function()
+    -- Conceal features are off by default; enable per-user if desired.
+    vim.g.typst_conceal       = 0
+    vim.g.typst_conceal_math  = 0
+    vim.g.typst_conceal_emoji = 0
+    -- Folding is off; enable by setting typst_folding = 1 locally.
+    vim.g.typst_folding       = 0
+    -- Auto-open quickfix window on compile errors.
+    vim.g.typst_auto_open_quickfix = 1
+    -- Use zathura for auto-reloading PDF preview; fall back to env var or system default.
+    vim.g.typst_pdf_viewer = vim.env.TYPST_PDF_VIEWER or (utils.executable("zathura") and "zathura") or ""
+  end,
+},
 ```
+
+In plain words:
+
+- `enabled`: typst.vim only loads when `typst` is on PATH (inside the Typst devShell). Without it there is no `:TypstWatch`, `:Toc` or `:make` support.
+- `ft = { "typst" }`: lazy-loaded when a Typst file is opened.
+- `typst_conceal`, `typst_conceal_math`, `typst_conceal_emoji` = 0: no concealing; you see the raw source. Set one to 1 locally to hide markup / render math symbols / emoji names.
+- `typst_folding = 0`: the plugin's folding is off. Set `vim.g.typst_folding = 1` to get folds by headings.
+- `typst_auto_open_quickfix = 1`: a compile error opens the quickfix window by itself.
+- `typst_pdf_viewer`: `$TYPST_PDF_VIEWER` if set, else `zathura` if installed, else an empty string (typst's `--open` then uses the system default PDF program).
+- Not set: `typst_output_to_tmp` (so the PDF stays next to the source).
+
+The Typst-side filetype file is `after/ftplugin/typst.lua` (verbatim, whole file); it sets the two prose options and the `<Space>tw` key:
+
+```lua
+-- Typst filetype settings and keymaps.
+-- Loaded automatically for *.typ buffers by Neovim's after/ftplugin mechanism.
+
+-- Reasonable defaults for prose-heavy markup files.
+vim.opt_local.textwidth = 100
+vim.opt_local.wrap      = true
+
+-- <leader>tw  - launch typst watch (recompile + open PDF) in background.
+-- TypstWatch is provided by kaarmu/typst.vim, which is only enabled when `typst` is on PATH
+-- (e.g. inside the typst devShell): same check here. Without typst the key shows ONE warning
+-- (an unmapped key would fall through to <Space>t (aerial) + w).
+if vim.fn.executable("typst") == 1 then
+  vim.keymap.set("n", "<leader>tw", "<cmd>TypstWatch<cr>",
+    { buffer = true, desc = "Typst: watch & recompile" })
+else
+  vim.keymap.set("n", "<leader>tw", function()
+    vim.notify("Typst: typst not found on PATH (open nvim inside the typst devShell)", vim.log.levels.WARN)
+  end, { buffer = true, desc = "Typst: watch & recompile (needs typst)" })
+end
+```
+
+The `<Space>tw` part of this file is the block above ("Watch, compile and the PDF"); the two `vim.opt_local` lines are the `textwidth` and `wrap` rows in "Filetype settings".
 
 | Question | Answer |
 | --- | --- |

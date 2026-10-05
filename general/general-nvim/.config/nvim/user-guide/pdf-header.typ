@@ -1,4 +1,4 @@
-#set page(numbering: "1", footer: context align(center, text(size: 8pt, fill: gray)[Neovim User Guide · page #counter(page).display()]))
+#set page(numbering: "1", footer: context align(center, text(size: 8pt, fill: gray)[Neovim user guide · page #counter(page).display()]))
 #show link: set text(fill: rgb("#1e66f5"))
 #show raw: set text(font: "DejaVu Sans Mono", size: 0.9em)
 #show raw.where(block: true): it => block(fill: rgb("#f3f4f8"), inset: 8pt, radius: 3pt, width: 100%, it)

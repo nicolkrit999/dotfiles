@@ -1,11 +1,11 @@
 <!-- chapter: Navigation -->
 [Back to the guide index](README.md)
 
-# 3. Core Navigation (Moving Without the Mouse)
+# 3. Core navigation (moving without the mouse)
 
 All navigation happens in **Normal mode**. Press `<Esc>` first if you are in Insert mode.
 
-## Basic Cursor Movement
+## Basic cursor movement
 
 | Keymap | Description |
 | --- | --- |
@@ -22,7 +22,7 @@ All navigation happens in **Normal mode**. Press `<Esc>` first if you are in Ins
 - It works the same in Visual mode (`v3l` extends the selection by 3 characters, `V3j` selects the current line plus 3 below) and after an operator (`d3l` deletes 3 characters, `d3j` deletes the current line and the 3 below).
 - With relative line numbers on, the number shown next to a line is exactly the `N` to use with `Nj` / `Nk` to reach it.
 
-## Moving Within a Line
+## Moving within a line
 
 | Keymap | Description |
 | --- | --- |
@@ -33,7 +33,18 @@ All navigation happens in **Normal mode**. Press `<Esc>` first if you are in Ins
 | `$` | Jump to the **end of the line** |
 | `g_` | Jump to the last non-blank character of the line |
 
-## Moving by Word
+Where the cursor lands, on the line `    return foo(bar);  ` (4 leading spaces, 2 trailing spaces, cursor on `foo`; tested):
+
+| Keys | Cursor lands on |
+| --- | --- |
+| `H` (or `^`) | the `r` of `return` (first non-blank) |
+| `L` (or `g_`) | the `;` (last non-blank, NOT the trailing spaces) |
+| `$` | the last trailing space |
+| `0` | column 1 (a leading space) |
+
+With an operator, `dg_` on `foo` deletes up to and including the `;` and leaves `    return   ` (tested).
+
+## Moving by word
 
 | Keymap | Description |
 | --- | --- |
@@ -47,7 +58,17 @@ All navigation happens in **Normal mode**. Press `<Esc>` first if you are in Ins
 
 **word vs WORD**: A "word" stops at punctuation (e.g., `foo.bar` is 3 words: `foo`, `.`, `bar`). A "WORD" only stops at whitespace (e.g., `foo.bar` is 1 WORD).
 
-## Moving by Line/Screen
+Example on `foo.bar baz` with the cursor on the first `f` (tested):
+
+| Keys | Cursor lands on |
+| --- | --- |
+| `w` | the `.` (the next word is the punctuation) |
+| `ww` | the `b` of `bar` |
+| `W` | the `b` of `baz` (the whole `foo.bar` is one WORD) |
+| `e` | the second `o` of `foo` (end of the word) |
+| `E` | the `r` of `bar` (end of the WORD `foo.bar`) |
+
+## Moving by line/screen
 
 | Keymap | Description |
 | --- | --- |
@@ -68,7 +89,25 @@ All navigation happens in **Normal mode**. Press `<Esc>` first if you are in Ins
 | `(` | Jump to the beginning of the previous sentence |
 | `)` | Jump to the beginning of the next sentence |
 
-## Jumping to Matching Brackets/Parentheses
+Where the cursor line ends up on the screen (a window 21 lines high; `scrolloff` is 5 here, so `zt` and `zb` leave 5 lines of context instead of putting the line on the very edge; tested):
+
+```
+      zt                 zz                 zb
++--------------+   +--------------+   +--------------+
+| 5 lines of   |   |              |   |              |
+|  context     |   |              |   |              |
+| > cursor <   |   |              |   |              |
+|              |   |              |   |              |
+|              |   | > cursor <   |   |              |
+|              |   |              |   |              |
+|              |   |              |   | > cursor <   |
+|              |   |              |   |  5 lines of  |
+|              |   |              |   |   context    |
++--------------+   +--------------+   +--------------+
+ row 6 of 21        row 11 of 21       row 16 of 21
+```
+
+## Jumping to matching brackets/parentheses
 
 | Keymap | Description |
 | --- | --- |
@@ -76,7 +115,9 @@ All navigation happens in **Normal mode**. Press `<Esc>` first if you are in Ins
 
 The `matchpairs` option also includes: `<>`, and several CJK bracket pairs.
 
-## Jumping to Specific Characters
+Examples (tested): on `if (a && (b || c)) {` with the cursor on the first `(`, `%` jumps to the last `)` of the outer pair (the one before ` {`). With an operator, `d%` on `x(a, b)y` with the cursor on the `(` gives `xy`.
+
+## Jumping to specific characters
 
 **Note**: The built-in `f` motion has been replaced by the hop.nvim plugin (see Jump Navigation section). The following built-in motions still work:
 
@@ -87,13 +128,23 @@ The `matchpairs` option also includes: `<>`, and several CJK bracket pairs.
 
 `;` is the command key in this config, so it does **not** repeat `t`/`T`. `,` still repeats the last `t`/`T` in the opposite direction.
 
-## Jump Navigation with hop.nvim (Plugin)
+## Jump navigation with hop.nvim (plugin)
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
 | `f` | n, x, o | Press `f`, then type 2 characters. All matches on screen get labeled. Press the label letter to jump there instantly. Case insensitive. Press `<Esc>` to cancel. |
 
-## Jump History
+Example (tested in a real terminal): the visible text is `the first foo and the second foo end` and the cursor is on the `t` of `the`.
+
+```
+visible text:         the first foo and the second foo end
+press f, type fo ->   the first aoo and the second soo end     (a label replaces the first letter of each match)
+press s          ->   the cursor jumps to the second foo
+```
+
+The label letters depend on the screen (here `a` and `s`), so read them from the screen. After an operator the jump is the range: `d` + `f` + `fo` + `s` on the same text deletes everything from the cursor up to and including the `f` of the second `foo` and leaves `oo end`; the range is not limited to the line (see the note on `f` after an operator in the editing chapter).
+
+## Jump history
 
 | Keymap | Description |
 | --- | --- |
@@ -102,7 +153,9 @@ The `matchpairs` option also includes: `<>`, and several CJK bracket pairs.
 
 Every time you use a jump command (like `gg`, `G`, `/search`, `gd`, etc.), your position is saved. You can then go back and forth through your history with these keys.
 
-## Word References (vim-illuminate)
+Example (tested): on line 10 of a 12-line file, press `gg` (line 1), then `G` (last line), then `<Ctrl-o>`: you are back on line 1. `<Ctrl-o>` again: back on line 10, where you started. `<Ctrl-i>`: line 1 again.
+
+## Word references (vim-illuminate)
 
 Other uses of the word under the cursor are highlighted when there are at least 2 (from the LSP server, else from Treesitter). It only runs in these file types: bash, c, cpp, go, java, javascript, json, lua, markdown, nix, python, rust, sh, tex (also plain TeX), toml, typescript, typst, yaml (and the React variants of javascript and typescript). In `.nix` files only the identical word is highlighted (text matching): the nix language server would mark every package of a `with pkgs; [...]` list.
 
@@ -112,11 +165,13 @@ Other uses of the word under the cursor are highlighted when there are at least 
 | `<Alt-p>` | n | Jump to the previous reference |
 | `<Alt-i>` | x, o | Text object: the reference under the cursor (e.g. `d<Alt-i>`) |
 
+Example (`<Alt-n>` tested in a Lua file): with `local Config = {}` on line 6 and `function Config.get(key)` on line 8, put the cursor on `Config` in line 8 and press `<Alt-n>`: the cursor jumps to the `Config` on line 6. Pressed again it goes back to line 8 (it wraps around at the end). Both `Config` words carry the plugin's highlight (read from its extmarks: `IlluminatedWordWrite` on the line 6 one, `IlluminatedWordRead` on the line 8 one, tested).
+
 These three keys are plugin defaults of vim-illuminate: the plugin sets them only when nothing else uses the key, and the config does not define them itself.
 
 Commands: `:IlluminateToggle`, `:IlluminatePause`, `:IlluminateResume`.
 
-## Marks (Bookmarks)
+## Marks (bookmarks)
 
 | Keymap | Description |
 | --- | --- |
@@ -129,9 +184,11 @@ Commands: `:IlluminateToggle`, `:IlluminatePause`, `:IlluminateResume`.
 
 Marks `a-z` are local to the file. Marks `A-Z` are global (across files).
 
+Example (tested): the file has the lines `a`, `  b c d`, `c`, `d`, `e` and the cursor is on the `c` of line 2 (column 5). Press `ma`, then `5G` (last line). `` `a `` returns to line 2, column 5 (the exact spot); `'a` returns to line 2 but on the first non-blank, the `b` (column 3). Marks also work with an operator: on the lines `a`, `b`, `c` with the cursor on `a`, `ma`, `jj`, then ``d`a`` deletes from the mark to the cursor and leaves `c`.
+
 ---
 
-# 22. Jump Navigation (`hop.nvim`)
+# 22. Jump navigation (`hop.nvim`)
 
 | Keymap | Mode | Description |
 | --- | --- | --- |
@@ -141,7 +198,7 @@ Marks `a-z` are local to the file. Marks `A-Z` are global (across files).
 
 ---
 
-# 23. Search Lens (`nvim-hlslens`)
+# 23. Search lens (`nvim-hlslens`)
 
 | Keymap | Description |
 | --- | --- |
@@ -150,9 +207,17 @@ Marks `a-z` are local to the file. Marks `A-Z` are global (across files).
 | `*` | Search the word under the cursor forward as a whole word (the cursor stays on the word; with a count, e.g. `3*`, it jumps 3 matches forward from the cursor, like `3n`) |
 | `#` | Same, backward |
 
+Example (tested in a real terminal): after `/count<Enter>` and `n` in a file where `count` appears 4 times, the line with the second match ends with a small virtual text:
+
+```
+local count = 0
+count = count + 1  [2/4]        <- the match you are on is the 2nd of 4
+return count
+```
+
 ---
 
-# 37. Symbol Outline (`aerial.nvim`)
+# 37. Symbol outline (`aerial.nvim`)
 
 The outline comes from Treesitter or the LSP server (no ctags needed).
 
@@ -163,13 +228,26 @@ The outline comes from Treesitter or the LSP server (no ctags needed).
 
 Commands: `:AerialToggle`, `:AerialOpen`, `:AerialNavToggle`.
 
+What it looks like (tested in a real terminal, on a Lua file; the sidebar opens on the right and each symbol has a small icon in front of it that depends on the font):
+
+```
+ code window                              Outline sidebar
+ local M = {}                           |  (icon) M.load
+ function M.load(path)                  |  (icon) Config.get
+   return path
+ end
+ local Config = {}
+ function Config.get(key)
+   ...
+```
+
 ---
 
-# 50. Code Navigation Strategies
+# 50. Code navigation strategies
 
 This section covers how developers typically navigate code in this setup.
 
-## Finding Files
+## Finding files
 
 | Method | Keymap | Best for |
 | --- | --- | --- |
@@ -180,7 +258,7 @@ This section covers how developers typically navigate code in this setup.
 | Buffer pick | `<Space>bp` | Quick switch when you can see the buffer tab |
 | Buffer cycle | `gb` / `gB` | Cycling through open files linearly (`{N}gb` = buffer number N) |
 
-## Finding Code
+## Finding code
 
 | Method | Keymap | Best for |
 | --- | --- | --- |
@@ -192,7 +270,7 @@ This section covers how developers typically navigate code in this setup.
 | Buffer tags | `<Space>ft` | Jumping to a function/class in the current file (uses ctags) |
 | Symbol outline | `<Space>t` | Sidebar (aerial) with all symbols in the file; focus stays in the code |
 
-## Understanding Code
+## Understanding code
 
 | Method | Keymap | What you learn |
 | --- | --- | --- |
@@ -203,7 +281,7 @@ This section covers how developers typically navigate code in this setup.
 | Code outline | `<Space>t` | The structure of the file (classes, functions, methods) |
 | Breadcrumb bar | (automatic) | Current location in the code shown at the top (dropbar) |
 
-## Refactoring Code
+## Refactoring code
 
 | Method | Keymap | What it does |
 | --- | --- | --- |

@@ -137,6 +137,18 @@ at_stop
 - Tools outside the devShell must be absent inside nvim (`executable == 0`) and produce no popups/errors: check both inside and outside.
 - Clean up: `at_stop` removes `$AT/s-<name>`; also delete any compiled artifacts created in project dirs.
 
+### 6.1 Fake repo in /tmp + `nix develop` (no direnv needed): the preferred way to finish a toolchain test
+When a check needs a language toolchain, git history or a real project, do NOT leave it unverified or hand it to the user at once. Build a fake project under `/tmp` (a copy of this repo, or a small well-known open-source project in that language; local remotes only, see standing rules 1.7) and run nvim headless from inside the matching flake:
+```
+cd /tmp/x && nix develop ~/nix/templates/krit/dev-environments/language-specific/<lang> -c nvim --headless <file> -c 'lua ...' -c qa
+```
+(`<lang>` = python, rust, go, latex, typst, nix, jupyter, ...; if the flake dir is not writable copy it to `/tmp` first. No `direnv allow` is needed for this route; `direnv exec` above stays for the owner's real project dirs.) Rules:
+- Test tool availability INSIDE nvim (`vim.fn.exepath("tool")`), never with `which` in the shell. Global tools on nvim's own PATH via `~/nix/users/krit/common/programs/cli-programs/neovim.nix` extraPackages: prettier, pyright, stylua, lua-language-server, nixd, typos-lsp, ltex-ls-plus, marksman, bash/yaml LSPs. DevShell-only (absent outside their shell by design): black, ruff, rust-analyzer, gopls, tinymist/typst, texlab/latex (xelatex), java. Absent outside a devShell is NOT a missing package: never ask for a nix change before re-testing inside the right devShell.
+- Never write inside `~/dotfiles` or `~/nix` for a test; the fake repo and all artifacts live in `/tmp`; clean up your own files.
+- Make several real attempts (different approach each: feedkeys, `:normal`, private tmux, temp repo, real files instead of scratch buffers) before giving up.
+- Leave UNVERIFIED only what truly cannot be verified after those attempts: UI-only effects, visual look only a human can judge, inconsistent results, network or credentials. Never invent a result: write a plain description and list the item.
+- Record every leftover for the owner's future audit in the project memory file `~/.claude/projects/-home-krit-dotfiles/memory/neovim-guide-unverified-items.md` (one entry: where, what the guide says, what was tried in 2-3 attempts, why it failed, what a human should check). That file lives in memory, never inside `user-guide/`.
+
 ## 7. Testing text objects and operators properly
 - Text objects only exist in operator-pending and visual modes. `ia`/`aa`/`i(`... pressed in normal mode are NOT commands; test them as `dia`, `cia`, `yia`, `vi(`, `via`, and `.`-repeat. Assert the buffer text afterwards (`tn_lua 'table.concat(vim.api.nvim_buf_get_lines(0,0,-1,false),"|")'`) rather than eyeballing.
 - Test each operator x object x position (cursor inside, on the delimiter, at the start/end, on an empty line), count prefixes (`d2ia`), and visual mode (`v` + object, `x` mode maps).

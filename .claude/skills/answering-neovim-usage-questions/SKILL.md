@@ -59,6 +59,7 @@ Never trust the guide alone, and never answer from generic Vim knowledge alone. 
 - Is the plugin enabled, or commented out in `plugin_specs.lua`?
 - Options that change behaviour (`nowrap`, `ignorecase smartcase`, `relativenumber`): check `lua/options.lua`.
 - A quick sandbox test is allowed (scratch copy under `/tmp` or the scratchpad, `isolated-nvim.sh`, private `tmux -L`; never push, never credentials; see the auditing skill's verification doc, section 1 rule 4).
+- **Toolchain tests (devShells).** If a check needs a language toolchain, git history or a real project, build a fake repo under `/tmp` (copy of this repo or a small well-known project in that language) and run `nix develop ~/nix/templates/krit/dev-environments/language-specific/<lang>` there, then `nvim --headless` from inside it (no `direnv allow` needed). Test tool availability with `vim.fn.exepath` inside nvim, not `which` (global on nvim's PATH: prettier, pyright, stylua, lua-language-server, nixd, typos-lsp, ltex-ls-plus, marksman; devShell-only: black, ruff, rust-analyzer, gopls, tinymist/typst, texlab/latex). Never write inside `~/dotfiles` for tests. Leave UNVERIFIED only what still fails after several attempts (UI-only, visual look, inconsistent results) and record it in `~/.claude/projects/-home-krit-dotfiles/memory/neovim-guide-unverified-items.md`. Full rule: `skills/auditing-neovim-config/verification-gates-and-isolated-harness.md` section 6.1.
 
 If a check is not possible, say which part could not be verified.
 

@@ -27,12 +27,26 @@ In a `.tex` buffer the config also sets `textwidth = 120`, `wrap` on and a colum
 
 vimtex is **enabled only when `latex` is on PATH**:
 
+The real spec head (`lua/plugin_specs.lua`; the `init` function is shown in pieces under "How vimtex is set up" below):
+
 ```lua
--- lua/plugin_specs.lua
-"lervag/vimtex",
-enabled = function() return utils.executable("latex") end,
-ft = { "tex" },
+-- LaTeX support: loaded on every platform whenever `latex` is on PATH (on Linux via the LaTeX devShell)
+{
+  "lervag/vimtex",
+  enabled = function()
+    return utils.executable("latex")
+  end,
+  -- not lazy on purpose: the PDF viewer's Ctrl+click starts a separate headless nvim (no tex file) that
+  -- needs the :VimtexInverseSearch command, which only exists once vimtex is loaded
+  lazy = false,
+  init = function()
 ```
+
+In plain words:
+
+- `enabled`: the plugin only exists when `latex` is on PATH, as described above.
+- `lazy = false`: vimtex is **not** lazy-loaded on `ft = "tex"`. The PDF viewer's Ctrl+click starts a separate headless Neovim with no `tex` file, and that Neovim needs the `:VimtexInverseSearch` command, which only exists once vimtex is loaded (see "The viewer").
+- `init` runs before the plugin loads and sets its options (the next section).
 
 Outside a LaTeX environment the plugin does not load: no `<Space>rf`, no `<F9>`, no `\ll`, no `:Vimtex*` commands. The environment comes from the flake `~/nix/templates/krit/dev-environments/language-specific/latex/flake.nix`. Its packages: `texlive.combined.scheme-full` (gives `latex`, `latexmk`, all packages), `texlab`, `zathura`, `pandoc`, `tectonic`, `latex2html`, `latex2mathml`.
 
@@ -46,6 +60,113 @@ Check inside the folder: `which latex latexmk texlab zathura` must print four pa
 **Start Neovim from inside the devShell.** The tools are looked up when Neovim starts; entering the shell afterwards does not enable vimtex in the already running Neovim.
 
 Outside the devShell a `.tex` file still gets syntax colours, `ltex_plus`, `typos_lsp`, snippets and buffer/path completion. It gets no vimtex, no texlab, no PDF.
+
+## How vimtex is set up (the real code)
+
+All of it is the `init` function of the vimtex spec in `lua/plugin_specs.lua`, quoted verbatim in four pieces plus a short closing block (the spec head is shown in "What it needs"). Each piece is dedented to its own left margin (the original is indented 10 spaces inside `vim.cmd`); only the indentation differs from the file. The VimL part sits inside `vim.cmd([[ ... ]])` and only runs when `latex` is on PATH.
+
+**1. Viewer choice and inverse-search helper**
+
+```lua
+vim.g.vimtex_view_method = (utils.executable("zathura") and "zathura") or "general"
+vim.cmd([[
+  if executable('latex')
+    " Hacks for inverse search to work semi-automatically,
+    function! s:write_server_name() abort
+      let nvim_server_file = (has('win32') ? $TEMP : '/tmp') . '/vimtexserver.txt'
+      call writefile([v:servername], nvim_server_file)
+    endfunction
+
+    augroup vimtex_common
+      autocmd!
+      autocmd FileType tex call s:write_server_name()
+      " buffer-local like the old nmap, via Lua so the map can carry a desc
+      autocmd FileType tex lua for _, lhs in ipairs({ "<F9>", "<leader>rf" }) do vim.keymap.set("n", lhs, "<Plug>(vimtex-compile)", { buffer = true, remap = true, desc = "LaTeX: start/stop compiling (vimtex)" }) end
+    augroup END
+```
+
+In plain words:
+
+- `vimtex_view_method` is `zathura` when zathura is installed, otherwise `general` (the system default PDF program).
+- `s:write_server_name` writes Neovim's address (`v:servername`) into `/tmp/vimtexserver.txt` (`%TEMP%` on Windows) every time a `tex` file is opened. The viewer's inverse search (Ctrl+click) uses it to find the right Neovim; see "The viewer".
+- The autocommand sets the compile key twice, buffer-local, for `tex` files only: `<F9>` and `<leader>rf` both map to `<Plug>(vimtex-compile)`. `remap = true` is required because the target is a `<Plug>` mapping; it is set from Lua so the key can carry a `desc`.
+
+**2. latexmk build directory and the table of contents**
+
+```lua
+let g:vimtex_compiler_latexmk = {
+      \ 'build_dir' : 'build',
+      \ }
+
+" TOC settings
+let g:vimtex_toc_config = {
+      \ 'name' : 'TOC',
+      \ 'layers' : ['content', 'todo', 'include'],
+      \ 'resize' : 1,
+      \ 'split_width' : 30,
+      \ 'todo_sorted' : 0,
+      \ 'show_help' : 1,
+      \ 'show_numbers' : 1,
+      \ 'mode' : 2,
+      \ }
+```
+
+In plain words:
+
+- `build_dir = 'build'` is in the config but has no effect: see "Where the output goes" under "Compiling". vimtex's current option is called `out_dir`.
+- `g:vimtex_toc_config` configures the `\lt` / `\lT` table of contents (section "Table of contents"): `layers` = what is listed (document content, todo comments, included files); `split_width = 30` = a 30-column window; `resize = 1` = Vim is resized automatically when that vertical window opens (vimtex default 0); `mode = 2` = separate window **and** a location list (1 = window only, 3/4 = location list only); `show_numbers = 1` = section numbers; `show_help = 1` = the key hint lines at the top; `todo_sorted = 0` = todo entries stay in file order. Meanings checked against vimtex's `:help vimtex-toc` upstream text.
+
+**3. Viewers on Windows and macOS**
+
+```lua
+" Viewer settings for different platforms
+if g:is_win
+  let g:vimtex_view_general_viewer = 'SumatraPDF'
+  let g:vimtex_view_general_options = '-reuse-instance -forward-search @tex @line @pdf'
+endif
+
+if g:is_mac
+  " let g:vimtex_view_method = "skim"
+  let g:vimtex_view_general_viewer = '/Applications/Skim.app/Contents/SharedSupport/displayline'
+  let g:vimtex_view_general_options = '-r @line @pdf @tex'
+
+  augroup vimtex_mac
+    autocmd!
+    autocmd User VimtexEventCompileSuccess call UpdateSkim()
+  augroup END
+
+  " The following code is adapted from https://gist.github.com/skulumani/7ea00478c63193a832a6d3f2e661a536.
+  function! UpdateSkim() abort
+    let l:out = b:vimtex.out()
+    let l:src_file_path = expand('%:p')
+    let l:cmd = [g:vimtex_view_general_viewer, '-r']
+
+    if !empty(system('pgrep Skim'))
+      call extend(l:cmd, ['-g'])
+    endif
+
+    call jobstart(l:cmd + [line('.'), l:out, l:src_file_path])
+  endfunction
+endif
+```
+
+In plain words:
+
+- Windows (`g:is_win`): SumatraPDF with `-reuse-instance -forward-search @tex @line @pdf` (one window, jumps to the cursor line).
+- macOS (`g:is_mac`): Skim through its `displayline` helper (`-r @line @pdf @tex`). `UpdateSkim()` runs after every successful compile (`VimtexEventCompileSuccess`) and re-opens or refreshes Skim at the cursor line; `-g` keeps Skim in the background when it is already running. The function is adapted from the public gist named in the comment. The commented `vimtex_view_method = "skim"` line is a leftover.
+- On Linux none of this runs; zathura from piece 1 is used.
+- The last four lines (shown below) close the `if executable('latex')`, the `vim.cmd`, the `init` function and the spec.
+
+Closing lines of the spec:
+
+```lua
+      endif
+    ]])
+  end,
+},
+```
+
+One more cross-plugin setting belongs to vimtex: `vim.g.matchup_override_vimtex = 1` in the `vim-matchup` spec (same file). It lets vim-matchup take over `%` matching in `tex` files instead of vimtex's own implementation.
 
 ## Quick start
 
@@ -217,16 +338,27 @@ texlab attaches to `tex` files when `texlab` is on PATH. It reads the whole proj
 - **Diagnostics** (including errors from the build log), hover (`K`), symbols, rename, code actions (`<Space>ca`): the global LSP keys, see the LSP section.
 - `:LspTexlabBuild`: one build (tested).
 
+The server entry (`lua/config/lsp.lua`):
+
+```lua
+-- LaTeX (texlab comes from the LaTeX devShell; enabled only when executable)
+texlab = { cmd = { "texlab" } },
+```
+
+Only the command is given. The server is enabled only when `texlab` is on PATH (the generic rule for all servers), so outside the devShell nothing starts and nothing warns.
+
 Sources for `tex` files (`lua/config/nvim-cmp.lua`):
 
 ```lua
-cmp.setup.filetype("tex", { sources = {
-  { name = "omni" },        -- vimtex
-  { name = "nvim_lsp" },    -- texlab
-  { name = "ultisnips" },
-  { name = "buffer", keyword_length = 2 },
-  { name = "path" },
-}})
+cmp.setup.filetype("tex", {
+  sources = {
+    { name = "omni" },
+    { name = "nvim_lsp" }, -- texlab (LaTeX devShell); no-op when no LSP is attached
+    { name = "ultisnips" },
+    { name = "buffer",   keyword_length = 2 },
+    { name = "path" },
+  },
+})
 ```
 
 **Duplicates are normal**: typing `\sec` and `<Ctrl-n>` shows entries from vimtex (omni) and texlab (nvim_lsp), 26 entries with several "section" (tested). Either inserts the same text.
@@ -254,9 +386,28 @@ Typing `\cite{kn` and `<Ctrl-n>` shows `knuth [book] Knuth (1968), "TAOCP"` in t
 LanguageTool as a language server. Config (`after/lsp/ltex_plus.lua`):
 
 ```lua
-filetypes = { "markdown", "tex", "plaintex", "typst", "gitcommit", "text" },
-settings = { ltex = { language = "en-US", ... } },
+-- LanguageTool grammar/spell checking via ltex-ls-plus (installed globally by nix).
+---@type vim.lsp.Config
+return {
+  filetypes = { "markdown", "tex", "plaintex", "typst", "gitcommit", "text" },
+  ---@type lspconfig.settings.ltex
+  settings = {
+    ltex = {
+      -- user's spelllang is en,it,de,fr; LanguageTool checks ONE language per document.
+      -- Alternative: language = "auto" (LanguageTool detects the language per document;
+      -- less reliable on short texts such as commit messages).
+      language = "en-US",
+      -- language ids (after get_language_id): this list REPLACES lspconfig's default list
+      enabled = { "markdown", "latex", "tex", "plaintex", "typst", "gitcommit", "git-commit", "plaintext", "text" },
+      -- setting ltex.ltex-ls.logLevel: the default ("fine") writes whole documents to stderr,
+      -- i.e. into lsp.log, on every check
+      ["ltex-ls"] = { logLevel = "warning" },
+    },
+  },
+}
 ```
+
+The file is quoted in full (`after/lsp/ltex_plus.lua`). `enabled` lists language ids and **replaces** the plugin default list; `logLevel = "warning"` stops the server from logging whole documents on every check.
 
 - **One language per document: `en-US`**, although `spelllang` is `en,it,de,fr`. LaTeX commands are skipped; only the prose is checked.
 - Problems are diagnostics. In my test a misspelled word got **two** underlines, one from `typos` and one from `LTeX`; this is normal.
