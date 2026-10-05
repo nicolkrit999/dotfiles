@@ -30,6 +30,8 @@ Plugin: UltiSnips + vim-snippets. Custom snippets in `my_snippets/` directory.
 | --- | --- |
 | `<Ctrl-j>` | Expand snippet / jump to next placeholder |
 | `<Ctrl-k>` | Jump to previous placeholder |
+| `<Space>fs` | Open the snippet gallery: fuzzy-search only your own snippets and insert one (normal mode); see section 52 |
+| `<Alt-s>` | Same gallery from insert mode; inserts at the cursor (see section 52) |
 
 Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `snippets`, `tex`, `vim`
 
@@ -330,6 +332,23 @@ index           -> for (int index = start; ... typing replaces the selected plac
 (Ctrl-j)        -> the next placeholder, start, is selected; (Ctrl-j) again: end, then the body
 (Ctrl-k)        -> back to the previous placeholder
 ```
+
+## The snippet gallery
+
+The completion menu also lists the hundreds of built-in `vim-snippets` entries. The **snippet gallery** shows only your own snippets (the files in `my_snippets/`) for the filetype of the current buffer, plus the ones from `all.snippets`, without typing a trigger.
+
+1. Press `<Space>fs` in normal mode, or `<Alt-s>` in insert mode
+2. A floating fzf-lua picker opens: each line is `trigger  description  [file]`, sorted by trigger; the snippet text is shown in the preview on the right
+3. Type to filter, move with `<Ctrl-n>` / `<Ctrl-p>` (see section 12, "Moving Inside Any Picker")
+4. Press `<Enter>` to insert the snippet: from insert mode it lands exactly at the cursor, from normal mode right after the character under the cursor (like `a`); the usual placeholders work, jump with `<Ctrl-j>` / `<Ctrl-k>`
+5. Press `<Esc>` to cancel: nothing is inserted (from insert mode you return to insert mode)
+
+Notes:
+
+- Snippets with a regular-expression trigger, such as `ltx` (the trigger is `(?<!\w)ltx`), are listed and inserted like the others
+- A few snippets cannot be inserted from the gallery because they need what only typing the trigger provides (a captured part of the trigger, or helper code of the file, for example the markdown headings `h1` ... `h6`). Their line ends with `(type trigger)`; choosing one shows a warning and inserts nothing, so type the trigger instead
+- If nothing is available for the filetype, a message says so
+- `<Alt-s>` needs a terminal that sends Alt-s to Neovim (most do). If it does nothing, use `<Space>fs`. `<Ctrl-s>` is not used for the gallery: in insert mode it stays the LSP signature help
 
 ## Custom snippets
 

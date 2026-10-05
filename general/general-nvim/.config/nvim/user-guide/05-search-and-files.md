@@ -507,6 +507,7 @@ The same `<Ctrl-n>` / `<Ctrl-p>` also move through the completion menu (section 
 | `<Space>ft` | Search tags (functions, classes) in the current buffer (needs `ctags`; the Nix nvim wrapper provides universal-ctags) |
 | `<Space>fb` | Search currently open buffers |
 | `<Space>fr` | Search recently opened files |
+| `<Space>fs` | Search only your own snippets (`my_snippets/`) and insert one; also `<Alt-s>` in insert mode (section 52, The snippet gallery) |
 | `<Space>gbl` | Fuzzy-search git branches (`<Enter>` checks the branch out) |
 | `<Space>gB` | Branch menu (the same menu as clicking the branch name in the statusline): choose a branch and Neovim switches to it. Move with `<Ctrl-n>` / `<Ctrl-p>`, see "Moving Inside Any Picker" |
 

@@ -8,7 +8,7 @@
 --
 -- Usage (keys are defined at the bottom of this file; loaded from lua/config/fzf-lua.lua):
 --   normal mode  <leader>fs  open the gallery; the snippet is inserted AFTER the cursor (like `a`)
---   insert mode  <C-s>       open the gallery; the snippet is inserted AT the cursor
+--   insert mode  <M-s>       open the gallery; the snippet is inserted AT the cursor
 --
 -- Notes / limits:
 --   * Needs fzf-lua and UltiSnips (loaded at VeryLazy); nothing is done at require time.
@@ -17,8 +17,9 @@
 --   * Anon has no access to the file's `global !p` helpers, to `post_jump` actions or to the
 --     regex `match` of a trigger. Snippets that need them are marked "(type trigger)" in the list
 --     and are not inserted from the gallery (a warning explains it); type their trigger instead.
---   * The hand-off from insert mode needs a real terminal that delivers <C-s> to Neovim
---     (many terminals use <C-s> as XOFF/flow control). If it does nothing, use <leader>fs.
+--   * The hand-off from insert mode needs a terminal that delivers <M-s> (Alt-s) to Neovim.
+--     If it does nothing, use <leader>fs. (<C-s> is NOT used: it is the built-in insert-mode
+--     LSP signature help.)
 local M = {}
 
 local SNIPPET_DIR = "my_snippets"
@@ -270,12 +271,27 @@ function M.open()
     lines[#lines + 1] = it.line
   end
 
+  local picked = false
   fzf.fzf_exec(lines, {
     prompt = "Snippets> ",
     previewer = make_previewer(by_line),
-    winopts = { title = " My snippets (" .. vim.bo[origin.buf].filetype .. ") " },
+    winopts = {
+      title = " My snippets (" .. vim.bo[origin.buf].filetype .. ") ",
+      -- picker cancelled (<Esc>/<C-c>): go back to insert mode if the gallery was opened from it
+      on_close = function()
+        vim.schedule(function()
+          if picked or origin.mode ~= "i" then return end
+          if not vim.api.nvim_win_is_valid(origin.win) then return end
+          vim.api.nvim_set_current_win(origin.win)
+          local line = vim.api.nvim_get_current_line()
+          pcall(vim.api.nvim_win_set_cursor, origin.win, { origin.pos[1], math.min(origin.pos[2], #line) })
+          vim.cmd(origin.pos[2] >= #line and "startinsert!" or "startinsert")
+        end)
+      end,
+    },
     actions = {
       ["default"] = function(selected)
+        picked = true
         local item = selected and by_line[selected[1]]
         if not item then return end
         local snip = read_snippet(item.file, item.lnum)
@@ -298,8 +314,7 @@ end
 
 -- Keymaps (style as in lua/config/fzf-lua.lua)
 vim.keymap.set("n", "<leader>fs", M.open, { desc = "Fuzzy search my custom snippets" })
--- UNVERIFIED in a real terminal: <C-s> may be swallowed as XOFF (flow control) before it
--- reaches Neovim; `stty -ixon` in the shell rc frees it. <leader>fs always works.
-vim.keymap.set("i", "<C-s>", M.open, { desc = "Fuzzy search my custom snippets" })
+-- UNVERIFIED in a real terminal: Alt-s must reach Neovim as <M-s>. <leader>fs always works.
+vim.keymap.set("i", "<M-s>", M.open, { desc = "Fuzzy search my custom snippets" })
 
 return M

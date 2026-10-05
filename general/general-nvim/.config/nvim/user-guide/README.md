@@ -261,6 +261,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [What snippets are](04-completion-snippets.md#what-snippets-are)
         - [Ready-made snippets (vim-snippets)](04-completion-snippets.md#ready-made-snippets-vim-snippets)
         - [How to use snippets](04-completion-snippets.md#how-to-use-snippets)
+        - [The snippet gallery](04-completion-snippets.md#the-snippet-gallery)
         - [Custom snippets](04-completion-snippets.md#custom-snippets)
         - [Creating your own snippets](04-completion-snippets.md#creating-your-own-snippets)
 
@@ -1078,6 +1079,7 @@ More: sections 66, 68 and 71.
 | `<Space>?` | Open the user guide PDF |
 | `<Space>ff` / `<Space>fg` | Find a file / search text in the project |
 | `<Space>fb` / `<Space>fr` / `<Space>fh` | Open buffers / recent files / help tags |
+| `<Space>fs` (`<Alt-s>` in insert mode) | Fuzzy-search your own snippets and insert one (section 52) |
 
 More: sections 9 and 12.
 
