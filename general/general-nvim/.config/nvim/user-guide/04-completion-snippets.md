@@ -30,6 +30,8 @@ Plugin: UltiSnips + vim-snippets. Custom snippets in `my_snippets/` directory.
 | --- | --- |
 | `<Ctrl-j>` | Expand snippet / jump to next placeholder |
 | `<Ctrl-k>` | Jump to previous placeholder |
+| `<Space>fs` | Open the snippet gallery: fuzzy-search only your own snippets and insert one (normal mode); see section 52 |
+| `<Alt-s>` | Same gallery from insert mode; inserts at the cursor (see section 52) |
 
 Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `snippets`, `tex`, `vim`
 
@@ -172,7 +174,7 @@ Conventions (the same in every Java snippet):
 
 ### Other snippets
 
-Every row gives the trigger and its description as the completion menu shows it. Explanations, expansions and placeholders are in the chapters named in the last column. The nix snippets are not described in this guide.
+Every row gives the trigger and its description as the completion menu shows it. Explanations, expansions and placeholders are in the chapters named in the last column.
 
 | File | Trigger | Description | Chapter |
 | --- | --- | --- | --- |
@@ -196,6 +198,11 @@ Every row gives the trigger and its description as the completion menu shows it.
 | tex | `eqa` | Numbered equation environment with a label, referenced with \ref{label} (start of line) | `languages/latex.md` |
 | vim | `fun` | Vimscript function declared with abort (args are comma separated) | `languages/vim.md` |
 | vim | `aug` | Autocommand group that clears itself first (EVENT: BufWritePost, FileType, ...; PATTERN: *.vim, ...; start of line) | `languages/vim.md` |
+| nix | `homepackages` `systempackages` | home-manager package list (home.packages; pkgs must be in scope); NixOS system package list (environment.systemPackages; pkgs must be in scope) | `languages/nix.md` |
+| nix | `excludepackages` | Exclude default desktop packages on NixOS (desktop: gnome, plasma6, cosmic, cinnamon, budgie, enlightenment, lxqt, mate, pantheon, xfce) | `languages/nix.md` |
+| nix | `delibmodule` `delibalways` | delib module with an enable switch (target: nixos, darwin, home, myconfig; mode: ifEnabled, ifDisabled); delib module applied unconditionally, no enable switch (target: nixos, darwin, home, myconfig) | `languages/nix.md` |
+| nix | `let` `mkshell` `mkderiv` | let ... in block; mkShell development environment (packages = tools, shellHook = commands run on entry); stdenv.mkDerivation (buildInputs = libraries, nativeBuildInputs = build tools) | `languages/nix.md` |
+| nix | `flake` `homefile` `fetchgithub` `systemd` | Basic flake.nix boilerplate; home.file that generates a text file, path relative to $HOME; fetchFromGitHub boilerplate (hash: use pkgs.lib.fakeHash first, then paste the hash from the error); NixOS systemd service | `languages/nix.md` |
 | markdown | `k1` / `kbd`, `k2`, `k3` | HTML <kbd> tag for one key (type k1 or kbd); two keys / three keys joined by + as <kbd> tags | `languages/markdown.md` |
 | markdown | `h1` ... `h6` | Heading of level 1 to 6: type h1 ... h6 at the start of a line | `languages/markdown.md` |
 | markdown | `meta`, `more`, `td` | YAML front matter with title, current date and time, tags and categories (start of line); Blog read-more marker; tl;dr line (start of line) | `languages/markdown.md` |
@@ -326,6 +333,23 @@ index           -> for (int index = start; ... typing replaces the selected plac
 (Ctrl-k)        -> back to the previous placeholder
 ```
 
+## The snippet gallery
+
+The completion menu also lists the hundreds of built-in `vim-snippets` entries. The **snippet gallery** shows only your own snippets (the files in `my_snippets/`) for the filetype of the current buffer, plus the ones from `all.snippets`, without typing a trigger.
+
+1. Press `<Space>fs` in normal mode, or `<Alt-s>` in insert mode
+2. A floating fzf-lua picker opens: each line is `trigger  description  [file]`, sorted by trigger; the snippet text is shown in the preview on the right
+3. Type to filter, move with `<Ctrl-n>` / `<Ctrl-p>` (see section 12, "Moving Inside Any Picker")
+4. Press `<Enter>` to insert the snippet: from insert mode it lands exactly at the cursor, from normal mode right after the character under the cursor (like `a`); the usual placeholders work, jump with `<Ctrl-j>` / `<Ctrl-k>`
+5. Press `<Esc>` to cancel: nothing is inserted (from insert mode you return to insert mode)
+
+Notes:
+
+- Snippets with a regular-expression trigger, such as `ltx` (the trigger is `(?<!\w)ltx`), are listed and inserted like the others
+- A few snippets cannot be inserted from the gallery because they need what only typing the trigger provides (a captured part of the trigger, or helper code of the file, for example the markdown headings `h1` ... `h6`). Their line ends with `(type trigger)`; choosing one shows a warning and inserts nothing, so type the trigger instead
+- If nothing is available for the filetype, a message says so
+- `<Alt-s>` needs a terminal that sends Alt-s to Neovim (most do). If it does nothing, use `<Space>fs`. `<Ctrl-s>` is not used for the gallery: in insert mode it stays the LSP signature help
+
 ## Custom snippets
 
 Custom snippets live in the `my_snippets/` directory. Each file targets a specific language:
@@ -336,7 +360,7 @@ Custom snippets live in the `my_snippets/` directory. Each file targets a specif
 | `java.snippets` | Java | 71 snippets: input, arrays and collections, control flow, methods, classes, exceptions, file I/O, JavaFX (full list in section 15, Java snippets) |
 | `python.snippets` | Python | `print` (f-string), `impa`, `main`, `sol` (chapter `languages/python.md`, Snippets) |
 | `cpp.snippets` | C++ | `bare` program, includes, container declarations, print helpers, `random`, control flow (chapter `languages/cpp.md`, section 84) |
-| `nix.snippets` | Nix | Nix language patterns |
+| `nix.snippets` | Nix | 12 snippets: package lists, `delibmodule` / `delibalways`, `mkshell`, `mkderiv`, `flake`, `fetchgithub`, `systemd` (chapter `languages/nix.md`, section 86) |
 | `tex.snippets` | LaTeX | `use` (`\usepackage`), `eqa` (equation with label) (chapter `languages/latex.md`, Snippets) |
 | `markdown.snippets` | Markdown | 17 snippets: keys, headings, links, images, front matter, message boxes (chapter `languages/markdown.md`, Snippets) |
 | `vim.snippets` | Vimscript | `fun` (function), `aug` (augroup) (chapter `languages/vim.md`, section 85) |

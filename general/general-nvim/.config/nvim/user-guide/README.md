@@ -19,7 +19,7 @@ A hands-on manual for one specific Neovim setup (Catppuccin Mocha theme, plugins
 | Git | 20, 48 |
 | Claude Code, Markdown, LaTeX/Typst, spelling, URLs | 9, 27, 28, 31, 38, 49 |
 | Everything else: custom commands, configuration, automatic behaviors, shell commands, Neovide, other plugins | 34, 39 to 42, 66, 77 |
-| Languages: Java, Python, LaTeX, Markdown, Typst, C++, Vim | 78 to 82, 84, 85 |
+| Languages: Java, Python, LaTeX, Markdown, Typst, C++, Vim, Nix | 78 to 82, 84 to 86 |
 | Catalog of every plugin, each linked to its section | 83 |
 
 **How it is organized.** Every topic is a numbered section, and the text "see section N" always means that number. Section 2 is a one-page cheat sheet of the daily keys, with pointers to the full sections. Sections with "in depth" in the title go further than the short section on the same topic. Start with section 1, then section 2; use the table of contents (or the plugin catalog, section 83) to find the rest.
@@ -60,6 +60,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
     - [Save and quit](README.md#save-and-quit)
     - [Sessions, dashboard and zoxide](README.md#sessions-dashboard-and-zoxide)
     - [Code intelligence (LSP)](README.md#code-intelligence-lsp)
+    - [Completion and snippets](README.md#completion-and-snippets)
     - [Git day to day](README.md#git-day-to-day)
     - [Mouse](README.md#mouse)
     - [Language guides (tools that exist only for one language)](README.md#language-guides-tools-that-exist-only-for-one-language)
@@ -261,6 +262,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [What snippets are](04-completion-snippets.md#what-snippets-are)
         - [Ready-made snippets (vim-snippets)](04-completion-snippets.md#ready-made-snippets-vim-snippets)
         - [How to use snippets](04-completion-snippets.md#how-to-use-snippets)
+        - [The snippet gallery](04-completion-snippets.md#the-snippet-gallery)
         - [Custom snippets](04-completion-snippets.md#custom-snippets)
         - [Creating your own snippets](04-completion-snippets.md#creating-your-own-snippets)
 
@@ -664,6 +666,14 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Snippets](languages/vim.md#snippets)
         - [Related sections](languages/vim.md#related-sections)
 
+20. **[Nix](languages/nix.md)**
+    - [86. Nix (snippets and delib modules)](languages/nix.md#86-nix-snippets-and-delib-modules)
+        - [What you get](languages/nix.md#what-you-get)
+        - [The Nix devShell](languages/nix.md#the-nix-devshell)
+        - [What delib is](languages/nix.md#what-delib-is)
+        - [Snippets](languages/nix.md#snippets)
+        - [Related sections](languages/nix.md#related-sections)
+
 <!-- toc:end -->
 
 The cheat sheet below is section 2: the keys and commands you use every day, with pointers to the full sections.
@@ -908,6 +918,24 @@ More: sections 30 and 58.
 
 More: sections 13 and 44.
 
+### Completion and snippets
+
+The completion menu opens by itself while you type in Insert mode (from 1 character; buffer words from 2).
+
+| Keys | What it does |
+| --- | --- |
+| `<Tab>` | Menu open: select the next item. Menu closed: insert a normal tab |
+| `<CR>` | Confirm the item you picked with `<Tab>`; with nothing picked it is a plain newline |
+| `<Ctrl-e>` / `<Esc>` | Close the menu (without it: end of line / leave Insert mode) |
+| `<Ctrl-d>` / `<Ctrl-f>` | Scroll the documentation window up / down (menu open) |
+| `<Ctrl-j>` / `<Ctrl-k>` | Expand a snippet or jump to the next placeholder / jump back |
+| `<Space>fs` | Gallery: fuzzy-search only your own snippets (`my_snippets/`) for this filetype and insert one |
+| `<Alt-s>` (Insert mode) | Same gallery, inserting at the cursor |
+
+Menu order: language server, then snippets, then paths, then buffer words (LaTeX files start with vimtex). In the `/` search line the menu offers buffer words; in `:` it offers paths and commands.
+
+More: sections 14, 15, 45 and 52 (the gallery is in section 52, "The snippet gallery").
+
 ### Git day to day
 
 | Keys | What it does |
@@ -1070,6 +1098,7 @@ More: sections 66, 68 and 71.
 | `<Space>?` | Open the user guide PDF |
 | `<Space>ff` / `<Space>fg` | Find a file / search text in the project |
 | `<Space>fb` / `<Space>fr` / `<Space>fh` | Open buffers / recent files / help tags |
+| `<Space>fs` (`<Alt-s>` in insert mode) | Fuzzy-search your own snippets and insert one (section 52) |
 
 More: sections 9 and 12.
 

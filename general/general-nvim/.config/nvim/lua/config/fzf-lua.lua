@@ -26,3 +26,6 @@ vim.keymap.set("n", "<leader>ft", "<cmd>FzfLua btags<cr>", { desc = "Fuzzy searc
 vim.keymap.set("n", "<leader>fb", "<cmd>FzfLua buffers<cr>", { desc = "Fuzzy search opened buffers" })
 vim.keymap.set("n", "<leader>fr", "<cmd>FzfLua oldfiles<cr>", { desc = "Fuzzy search opened files history" })
 vim.keymap.set("n", "<leader>gbl", "<cmd>FzfLua git_branches<cr>", { desc = "Fuzzy search git branches" })
+
+-- Custom snippet gallery: <leader>fs (normal) and <M-s> (insert); see lua/config/snippet-gallery.lua
+require("config.snippet-gallery")
