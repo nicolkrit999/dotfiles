@@ -63,6 +63,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
     - [Git day to day](README.md#git-day-to-day)
     - [Mouse](README.md#mouse)
     - [Language guides (tools that exist only for one language)](README.md#language-guides-tools-that-exist-only-for-one-language)
+    - [Language devShells (:DevEnv)](README.md#language-devshells-devenv)
     - [Neovide (Neovim in its own window)](README.md#neovide-neovim-in-its-own-window)
     - [Lists with a search bar (pickers)](README.md#lists-with-a-search-bar-pickers)
     - [Quickfix list (search results, errors)](README.md#quickfix-list-search-results-errors)
@@ -412,6 +413,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Debug adapter protocol (DAP, nvim-dap)](07-code.md#debug-adapter-protocol-dap-nvim-dap)
         - [GDB integration (nvim-gdb)](07-code.md#gdb-integration-nvim-gdb)
     - [43. How the development toolchain fits together](07-code.md#43-how-the-development-toolchain-fits-together)
+        - [Enter a language devShell from a running Neovim (:DevEnv)](07-code.md#enter-a-language-devshell-from-a-running-neovim-devenv)
     - [53. Documentation lookup](07-code.md#53-documentation-lookup)
         - [nvim-devdocs (plugin)](07-code.md#nvim-devdocs-plugin)
         - [Hover documentation (LSP)](07-code.md#hover-documentation-lsp)
@@ -933,6 +935,14 @@ More: sections 7 and 32.
 | LaTeX | vimtex, texlab, ltex, compiling, the PDF viewer | 80 |
 | Markdown | marksman, rendering, preview, footnotes, `:ToPDF` | 81 |
 | Typst | tinymist, `<Space>tw` watch, the PDF viewer | 82 |
+
+### Language devShells (`:DevEnv`)
+
+| Command | What it does |
+| --- | --- |
+| `:DevEnv <lang>` | Enter a language devShell (`java`, `latex`, `typst`, `python`, ...) from the running Neovim, without restarting: adds its programs to `PATH`, enables the language servers and plugins that were waiting. `<Tab>` lists the names. First call about 10 s, then cached. Example: `:DevEnv java` |
+
+Full list of devShells and details: [section 43](07-code.md#43-how-the-development-toolchain-fits-together).
 
 ### Neovide (Neovim in its own window)
 

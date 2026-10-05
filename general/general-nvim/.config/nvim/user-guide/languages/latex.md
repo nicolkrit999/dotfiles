@@ -57,7 +57,9 @@ Outside a LaTeX environment the plugin does not load: no `<Space>rf`, no `<F9>`,
 
 Check inside the folder: `which latex latexmk texlab zathura` must print four paths.
 
-**Start Neovim from inside the devShell.** The tools are looked up when Neovim starts; entering the shell afterwards does not enable vimtex in the already running Neovim.
+**Option 1: `:DevEnv latex` in the running Neovim.** Type `:DevEnv latex` then `<CR>`. It evaluates the LaTeX flake in the background (about 10 seconds the first time, then cached), adds its programs to `PATH` for this session, enables texlab, loads vimtex and replays the file type for open `.tex` buffers. A notification `DevEnv: latex ready: ...` lists what started. Opening a `.tex` file without `latex` shows a one-time hint, `latex not found on PATH: run :DevEnv latex to enter its devShell`. Details and the list of all devShells: section 43. It affects this session only.
+
+**Option 2: start Neovim from inside the devShell.** The tools are looked up when Neovim starts; entering the shell with direnv or `nix develop` afterwards does not enable vimtex in an already running Neovim (use Option 1 for that).
 
 Outside the devShell a `.tex` file still gets syntax colours, `ltex_plus`, `typos_lsp`, snippets and buffer/path completion. It gets no vimtex, no texlab, no PDF.
 
@@ -437,7 +439,7 @@ UltiSnips, file `my_snippets/tex.snippets`. Both are start-of-line snippets (`b`
 
 | Problem | Cause and fix |
 | --- | --- |
-| `<Space>rf`, `<F9>` and `\ll` do nothing, `:VimtexCompile` unknown | vimtex not loaded: `latex` not on PATH. Start Neovim inside the devShell (`which latex`, `direnv allow`). Check `:set ft?` is `tex` |
+| `<Space>rf`, `<F9>` and `\ll` do nothing, `:VimtexCompile` unknown | vimtex not loaded: `latex` not on PATH. Run `:DevEnv latex`, or start Neovim inside the devShell (`which latex`, `direnv allow`). Check `:set ft?` is `tex` |
 | Compile fails, quickfix opened | Read the first entry (`\le`), fix that line, `:w`; the compiler retries. Raw output: `\lo` |
 | No PDF | Look next to `main.tex` (not in `build/`), see "Where the output goes". A fatal error stops the PDF |
 | Viewer did not open | `zathura` not on PATH, or the compile failed, or `g:vimtex_view_automatic` is 0. Try `\lv` |

@@ -33,29 +33,142 @@ Plugin: UltiSnips + vim-snippets. Custom snippets in `my_snippets/` directory.
 
 Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `snippets`, `tex`, `vim`
 
-Example (tested in a Java buffer): type `jfor`, press `<Ctrl-j>`: it expands to a loop with the first placeholder (`int`) selected:
+Example: in a Java buffer type `jfor`, press `<Ctrl-j>`: it expands to a loop with the first placeholder (`i`) selected:
 
 ```
-for (int i = 0; i < length; i++) {
-    // code here
+for (int i = start; i < end; i++) {
+    // code
 }
 ```
 
-Type `long` (it replaces `int`), then `<Ctrl-j>` moves to the next placeholder (`i`), the next `<Ctrl-j>` to `0`, and so on. The full walk-through is in section 52 (How to use snippets).
+Type `index` (it replaces `i` everywhere it appears), then `<Ctrl-j>` moves to the next placeholder (`start`), the next `<Ctrl-j>` to `end`, then to `// code`. The full walk-through is in section 52 (How to use snippets).
 
 ### Java snippets
 
-| Trigger | Expansion |
+Source: `my_snippets/java.snippets` (71 snippets). Each section below follows the same grouping as the snippet file.
+
+The tables below are the quick reference. For each snippet's expanded code, the meaning of the placeholders and examples, see section 78 (Java chapter, `languages/java.md`, section 9).
+
+Conventions (the same in every Java snippet):
+
+- Triggers are camelCase and case-sensitive (`jPromptRead`, not `jpromptread`): pick them from the completion menu instead of typing them whole. Type `j` and read the list.
+- Placeholders are generic English words naming the kind of thing to fill in (`type`, `name`, `condition`, `ExceptionType`), never hardcoded values.
+- The Scanner variable is always named `input`. `fdijscanner` creates it; the other input snippets use an existing `input`.
+- The one-line description is shown by nvim-cmp above the snippet body in the completion menu (scroll it with `<Ctrl-d>` / `<Ctrl-f>`); expand with `<Ctrl-j>`, jump between placeholders with `<Ctrl-j>` / `<Ctrl-k>`.
+- `fdijscanner` uses the file name as the class name by default.
+- When a snippet needs an import, its description names the exact import(s). The snippets do not add imports themselves, so check that the import line exists at the top of the file.
+- Counterpart snippets name each other in their description (`jInterface` / `jImplements`, `jEquals` / `jHashCode`, `jComparable` / `jComparator`, `jtwrScanner` / `jtwrPrintWriter`, `jtwrObjectOut` / `jtwrObjectIn`, `jMinArray` / `jMaxArray`).
+
+**Program skeleton and input**
+
+| Trigger | Expands to / use it when |
 | --- | --- |
-| `fdijscanner` | Java Scanner input template |
-| `jarr` / `jarrlit` | Array / array with literal values |
-| `jdict` / `jdictfull` | HashMap / HashMap with import |
-| `jfor` / `jforeach` | For loop / enhanced for loop |
-| `jwhile` / `jdowhile` | While / do-while loop |
-| `jif` / `jifelse` / `jifelif` | If / if-else / if-else if-else |
-| `jswitchtraditional` / `jswitchmulti` / `jswitcharrow` / `jswitcharrowmulti` / `jswitchyield` / `jswitchyieldblock` | Switch variants |
-| `jtrycatch` / `jtryfinally` | Try-catch / try-catch-finally |
-| `jwhilescannerbreak` | While loop with Scanner and break condition |
+| `fdijscanner` | Program skeleton with a Scanner named input (course package) |
+| `jPromptRead` | Print a prompt and read a value (Type: Int, Double, Boolean, Line; import java.util.Scanner) |
+| `jReadValidated` | Ask again until the input has the right type (Type: Int, Double, Boolean; import java.util.Scanner) |
+| `jReadNumberThenLine` | Read a number and then a line, consuming the leftover newline (import java.util.Scanner) |
+| `jReadUntilInt` | Loop reading numbers from input until a sentinel value (uses an existing Scanner named input; import java.util.Scanner) |
+| `jReadUntilString` | Loop reading Strings from input until a sentinel text (uses an existing Scanner named input; import java.util.Scanner) |
+| `jRandomInt` | Random int between a minimum and minimum + range - 1 |
+
+**Arrays, matrices and collections**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jArrayNew` | Array created with a given size |
+| `jArrayLiteral` | Array created from literal values |
+| `jMinArray` | Find the minimum of an array (jMaxArray for the maximum) |
+| `jMaxArray` | Find the maximum of an array (jMinArray for the minimum) |
+| `jforMatrix` | Nested indexed for loops over a matrix |
+| `jforeachMatrix` | Nested foreach loops over a matrix |
+| `jArrayAdd` | Add an element to a fixed array with a counter (returns false when null or full) |
+| `jArrayRemove` | Remove an element from a fixed array with a counter (object arrays; returns false when not found) |
+| `jHashMap` | HashMap declaration (import java.util.HashMap) |
+| `jTreeMap` | TreeMap (sorted by key) declaration (import java.util.TreeMap) |
+| `jArrayList` | ArrayList declaration (import java.util.List, java.util.ArrayList) |
+| `jHashSet` | HashSet declaration (import java.util.Set, java.util.HashSet) |
+| `jforMapEntry` | Iterate over the entries of a map (import java.util.Map) |
+
+**Control flow**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jfor` | Indexed for loop |
+| `jforeach` | Enhanced for loop |
+| `jwhile` | While loop |
+| `jdowhile` | Do-while loop |
+| `jif` | If statement |
+| `jifelse` | If-else statement |
+| `jifelif` | If-else if-else statement |
+| `jtern` | Ternary conditional assigned to a variable |
+| `jswitchtraditional` | Traditional switch statement with break |
+| `jswitchmulti` | Traditional switch with two labels per case |
+| `jswitcharrow` | Switch statement with arrow syntax |
+| `jswitcharrowmulti` | Switch with arrow syntax and two labels per case |
+| `jswitchyield` | Switch expression assigned to a variable |
+| `jswitchyieldblock` | Switch expression with a block and yield |
+
+**Methods**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jStaticMethod` | Private static method |
+| `jRecursive` | Recursive method with a base case |
+
+**Classes**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jClass` | Package-private class with 3 fields and a constructor (delete the extra fields) |
+| `jPublicClass` | Public class with 3 private final fields and a constructor (delete the extra fields) |
+| `jSubclass` | Subclass with a constructor calling super |
+| `jAbstractClass` | Abstract class with one abstract method |
+| `jInterface` | Interface with one method |
+| `jImplements` | Class implementing an interface (the counterpart of jInterface) |
+| `jToString` | toString with two fields |
+| `jToStringSuper` | toString extending the superclass toString (for subclasses) |
+| `jEquals` | equals using getClass (override hashCode too: jHashCode) |
+| `jHashCode` | hashCode with Objects.hash (pair of jEquals; import java.util.Objects) |
+| `jDefaultIfBlank` | Constructor field: use a default when a String is null or blank |
+| `jDefaultIfBelowMin` | Constructor field: use a default when a number is below a minimum |
+| `jRecord` | Record with two components |
+| `jRecordCompact` | Record with a compact constructor for validation |
+| `jEnum` | Plain enum with three constants |
+| `jEnumFields` | Enum whose constants carry a value |
+| `jInstanceOf` | Type test with a binding variable (pattern matching) |
+| `jComparable` | compareTo method for natural ordering (add implements Comparable by hand) |
+| `jComparator` | Separate Comparator class (the counterpart of jComparable; import java.util.Comparator) |
+
+**Exceptions**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jException` | Custom checked exception with a fixed message |
+| `jExceptionData` | Custom checked exception carrying a value |
+| `jThrowIf` | Guard that throws (ExceptionType: IllegalArgumentException, NullPointerException, ...) |
+| `jtrycatch` | Try-catch block |
+| `jtryfinally` | Try-catch-finally block |
+| `jtrywith` | Generic try-with-resources block |
+
+**File I/O and serialization**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jtwrScanner` | Read a text file line by line with a Scanner (import java.util.Scanner, java.io.File, java.io.FileNotFoundException) |
+| `jtwrPrintWriter` | Write to a text file with a PrintWriter (the counterpart of jtwrScanner; import java.io.PrintWriter, java.io.FileOutputStream, java.io.FileNotFoundException) |
+| `jtwrBufferedReader` | Read a file with BufferedReader and readLine in a loop (import java.io.BufferedReader, java.io.FileReader, java.io.IOException) |
+| `jtwrObjectOut` | Serialize an object to a file (import java.io.ObjectOutputStream, java.io.FileOutputStream, java.io.IOException) |
+| `jtwrObjectIn` | Read a serialized object from a file (the counterpart of jtwrObjectOut; import java.io.ObjectInputStream, java.io.FileInputStream, java.io.IOException) |
+| `jSerialUID` | serialVersionUID field for a Serializable class (class must implement java.io.Serializable) |
+
+**JavaFX**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jfxApp` | JavaFX application skeleton (import javafx.application.Application, javafx.stage.Stage, javafx.scene.Scene, javafx.scene.layout.BorderPane) |
+| `jfxProperty` | Model field with the JavaFX property trio (create the property in the constructor; import javafx.beans.property.StringProperty (or the property type used)) |
+| `jfxAlert` | JavaFX alert dialog (AlertType: INFORMATION, WARNING, ERROR, CONFIRMATION; import javafx.scene.control.Alert, javafx.scene.control.Alert.AlertType) |
+| `jfxOnAction` | JavaFX button event handler |
 
 ### Other snippets
 
@@ -179,15 +292,15 @@ Besides the personal files in `my_snippets/`, UltiSnips also loads the `vim-snip
 6. Press `<Ctrl-k>` to jump to the previous placeholder
 7. Fill in each placeholder, and you're done
 
-Example with `jfor` in a Java buffer (tested):
+Example with `jfor` in a Java buffer:
 
 ```
 jfor            <- you type the trigger
-(Ctrl-j)        -> for (int i = 0; i < length; i++) {
-                       // code here
-                   }                          the first placeholder, int, is selected
-long            -> for (long i = 0; ...       typing replaces the selected placeholder
-(Ctrl-j)        -> the next placeholder, i, is selected; (Ctrl-j) again: 0, then length, then the body
+(Ctrl-j)        -> for (int i = start; i < end; i++) {
+                       // code
+                   }                          the first placeholder, i, is selected
+index           -> for (int index = start; ... typing replaces the selected placeholder everywhere it is used
+(Ctrl-j)        -> the next placeholder, start, is selected; (Ctrl-j) again: end, then the body
 (Ctrl-k)        -> back to the previous placeholder
 ```
 
@@ -198,7 +311,7 @@ Custom snippets live in the `my_snippets/` directory. Each file targets a specif
 | File | Language | Notable snippets |
 | --- | --- | --- |
 | `all.snippets` | All filetypes | General-purpose snippets |
-| `java.snippets` | Java | Scanner, arrays, loops, conditionals, switch, try-catch (see full list in Snippets section) |
+| `java.snippets` | Java | 71 snippets: input, arrays and collections, control flow, methods, classes, exceptions, file I/O, JavaFX (full list in section 15, Java snippets) |
 | `python.snippets` | Python | Python-specific patterns |
 | `cpp.snippets` | C++ | C++ templates |
 | `nix.snippets` | Nix | Nix language patterns |

@@ -10,6 +10,8 @@ require("custom-autocmd")
 require("mappings")
 -- :z / :Z zoxide jump
 require("zoxide")
+-- :DevEnv <lang> enters a language devShell from the running session
+require("devenv")
 -- all the plugins installed and their configurations
 require("plugin_specs")
 

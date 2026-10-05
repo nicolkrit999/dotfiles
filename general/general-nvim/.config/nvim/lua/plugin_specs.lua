@@ -69,31 +69,9 @@ local plugin_specs = {
       "mfussenegger/nvim-dap",
     },
     config = function()
-      local is_nix_managed = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
-      -- java (JDK) only exists inside the Java devShell: outside it, stay silent
-      -- (no spring-boot LS spawn, no jdtls start -> no ENOENT 'java' warnings on .java files)
-      local has_java = vim.fn.executable("java") == 1
-
-      require("java").setup({
-        -- nix: never download a JDK (no nix-ld); the devShell provides JAVA_HOME (jdk25) and java on PATH
-        jdk = { auto_install = not is_nix_managed },
-        java_test = { enable = true },
-        java_debug_adapter = { enable = true },
-        spring_boot_tools = { enable = has_java },
-        -- jdtls.path intentionally unset: nvim-java uses its own jdtls 1.54.0 from
-        -- ~/.local/share/nvim/nvim-java/packages (the devShell's `jdtls` is a bin/ wrapper, not a jdtls root)
-      })
-
-      -- jdtls settings go through vim.lsp.config (NOT java.setup{jdtls.settings}).
-      -- Only scalar/dict values here: lists would REPLACE nvim-java's values (e.g. init_options.bundles).
-      vim.lsp.config("jdtls", {
-        settings = {
-          java = { home = vim.env.JAVA_HOME },
-        },
-      })
-      if has_java then
-        vim.lsp.enable("jdtls")
-      end
+      -- body lives in lua/config/nvim-java.lua so :DevEnv java can run it again after the devShell
+      -- environment arrives (a java-less first run leaves jdtls and spring-boot-tools off)
+      require("config.nvim-java").setup()
     end,
   },
 
@@ -675,12 +653,11 @@ local plugin_specs = {
   -- LaTeX support: loaded on every platform whenever `latex` is on PATH (on Linux via the LaTeX devShell)
   {
     "lervag/vimtex",
-    enabled = function()
-      return utils.executable("latex")
-    end,
-    -- not lazy on purpose: the PDF viewer's Ctrl+click starts a separate headless nvim (no tex file) that
-    -- needs the :VimtexInverseSearch command, which only exists once vimtex is loaded
-    lazy = false,
+    -- Not lazy on purpose when latex exists: the PDF viewer's Ctrl+click starts a separate headless nvim
+    -- (no tex file) that needs the :VimtexInverseSearch command, which only exists once vimtex is loaded.
+    -- Without latex it is lazy with no trigger (stays installed, never loads) until :DevEnv latex loads it
+    -- (lua/devenv.lua). Not `enabled`/`cond`: lazy.nvim drops such plugins from the loadable list.
+    lazy = not utils.executable("latex"),
     init = function()
       vim.g.vimtex_view_method = (utils.executable("zathura") and "zathura") or "general"
       vim.cmd([[
@@ -752,10 +729,10 @@ local plugin_specs = {
   -- Requires the `typst` CLI on PATH (add pkgs.typst to your nix env).
   {
     "kaarmu/typst.vim",
-    enabled = function()
-      return utils.executable("typst")
-    end,
-    ft = { "typst" },
+    -- no typst at startup: lazy with no trigger (stays installed) until :DevEnv typst loads it
+    -- (lua/devenv.lua); not `enabled`/`cond`, which lazy.nvim drops from the loadable list
+    lazy = true,
+    ft = utils.executable("typst") and { "typst" } or nil,
     init = function()
       -- Conceal features are off by default; enable per-user if desired.
       vim.g.typst_conceal       = 0

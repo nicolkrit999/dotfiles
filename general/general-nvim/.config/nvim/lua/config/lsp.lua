@@ -490,3 +490,47 @@ vim.api.nvim_create_user_command("LspAttached", function()
   }
   require("lsp_utils").show_lsp_menu(size, position)
 end, { desc = "Show LSP attached to current buffer" })
+
+-- Late enable for :DevEnv (lua/devenv.lua): after a devShell's environment was applied to vim.env,
+-- enable the servers whose binaries are on PATH now (the startup loop above skipped them) and start
+-- them on the matching open buffers. Returns the names it newly enabled.
+local M = {}
+
+---@return string[]
+function M.enable_available()
+  local newly = {}
+  for name in pairs(servers) do
+    if not deferred[name] and not vim.lsp.is_enabled(name) and not missing_binary(name) then
+      vim.lsp.enable(name)
+      table.insert(newly, name)
+    end
+  end
+  table.sort(newly)
+  -- vim.lsp.enable only hooks FileType events that come later: replay it once for open buffers
+  -- that one of the new servers handles (Nvim's own enable logic, no duplicate clients)
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    local ft = vim.bo[buf].filetype
+    if vim.api.nvim_buf_is_loaded(buf) and ft ~= "" then
+      local wanted = vim.iter(newly):any(function(name)
+        local fts = vim.lsp.config[name].filetypes
+        return fts == nil or vim.list_contains(fts, ft)
+      end)
+      if wanted then
+        vim.api.nvim_exec_autocmds("FileType", { group = "nvim.lsp.enable", buffer = buf })
+      end
+    end
+  end
+  -- R: the one-time probe may have said "no" because R was missing; ask again
+  if r_probe == "no" and utils.executable("R") then
+    r_probe = nil
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(buf) and vim.list_contains({ "r", "rmd", "quarto" }, vim.bo[buf].filetype) then
+        probe_r_language_server()
+        break
+      end
+    end
+  end
+  return newly
+end
+
+return M
