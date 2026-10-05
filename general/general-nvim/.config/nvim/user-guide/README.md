@@ -4,32 +4,32 @@ Leader key: `<Space>`
 
 A hands-on manual for one specific Neovim setup (Catppuccin Mocha theme, plugins managed by lazy.nvim). It explains how to work in this editor without touching the mouse: what to press, what happens, and why.
 
-**Who it is for.** People new to Neovim or to this config, and the author when a key has been forgotten. No Vim knowledge is assumed: modes and the verb + noun idea are explained first (section 1). Every key listed here is taken from the real config, so it works as written.
+**Who it is for.** People new to Neovim or to this config, and the author when a key has been forgotten. No Vim knowledge is assumed: modes and the verb + noun idea are explained first (section [1](01-basics.md#1-understanding-modes)). Every key listed here is taken from the real config, so it works as written.
 
 **What it covers.**
 
 | Area | Sections |
 | --- | --- |
-| Basics: modes, cheat sheet, saving, recovering, getting help | 1, 2, 69 to 70, 72 to 74 |
-| Moving around | 3, 22, 23, 37, 50 |
-| Editing: selection, text objects, registers, macros, the dot command | 4 to 6, 16, 17, 24, 25, 29, 60 to 62, 64, 65, 68, 71, 76 |
-| Search, replace, fuzzy finding, file tree, quickfix, files | 10 to 12, 26, 30, 51, 57, 63, 67 |
-| Windows, buffers, terminal, sessions, statusline and UI | 7, 8, 32, 33, 58 |
-| Code: LSP, completion, snippets, folding, treesitter, running, debugging, docs, workflows | 13 to 15, 18, 19, 21, 35, 36, 43 to 47, 52 to 56, 59, 75 |
-| Git | 20, 48 |
-| Claude Code, Markdown, LaTeX/Typst, spelling, URLs | 9, 27, 28, 31, 38, 49 |
-| Everything else: custom commands, configuration, automatic behaviors, shell commands, Neovide, other plugins | 34, 39 to 42, 66, 77 |
-| Languages: Java, Python, LaTeX, Markdown, Typst, C++, Vim, Nix | 78 to 82, 84 to 86 |
-| Catalog of every plugin, each linked to its section | 83 |
+| Basics: modes, cheat sheet, saving, recovering, getting help | [1](01-basics.md#1-understanding-modes), [2](#2-day-to-day-cheat-sheet), [69](01-basics.md#69-tips-for-vim-beginners) to [70](01-basics.md#70-the-verb--noun-system-how-vim-commands-work), [72](01-basics.md#72-saving-quitting-and-file-state) to [74](01-basics.md#74-discovering-keymaps-and-getting-help) |
+| Moving around | [3](02-navigation.md#3-core-navigation-moving-without-the-mouse), [22](02-navigation.md#22-jump-navigation-hopnvim), [23](02-navigation.md#23-search-lens-nvim-hlslens), [37](02-navigation.md#37-symbol-outline-aerialnvim), [50](02-navigation.md#50-code-navigation-strategies) |
+| Editing: selection, text objects, registers, macros, the dot command | [4](03-editing.md#4-editing) to [6](03-editing.md#6-working-with-parentheses-quotes-and-brackets), [16](03-editing.md#16-code-commenting), [17](03-editing.md#17-surrounding-pairs-vim-sandwich--nvim-autopairs), [24](03-editing.md#24-yank-history-yankynvim), [25](03-editing.md#25-undo-history), [29](03-editing.md#29-registers--macros), [60](03-editing.md#60-macros-in-depth) to [62](03-editing.md#62-visual-block-editing-multi-cursor-like), [64](03-editing.md#64-everyday-editing-scenarios), [65](03-editing.md#65-swapping-function-arguments-vim-swap), [68](03-editing.md#68-useful-vim-tricks), [71](03-editing.md#71-the-global-command-g), [76](03-editing.md#76-common-editing-power-combos) |
+| Search, replace, fuzzy finding, file tree, quickfix, files | [10](05-search-and-files.md#10-searching-replacing-and-refactoring-text) to [12](05-search-and-files.md#12-fuzzy-finding--project-wide-search-fzf-lua), [26](05-search-and-files.md#26-quickfix--location-list), [30](05-search-and-files.md#30-working-with-directories), [51](05-search-and-files.md#51-quickfix-workflows-for-developers), [57](05-search-and-files.md#57-file-management-for-developers), [63](05-search-and-files.md#63-working-with-multiple-files), [67](05-search-and-files.md#67-multi-file-search-and-replace-complete-guide) |
+| Windows, buffers, terminal, sessions, statusline and UI | [7](06-windows-terminal-sessions.md#7-windows-splits-and-buffers), [8](06-windows-terminal-sessions.md#8-terminal-integration), [32](06-windows-terminal-sessions.md#32-statusline-lualinenvim), [33](06-windows-terminal-sessions.md#33-ui-features), [58](06-windows-terminal-sessions.md#58-session-and-productivity) |
+| Code: LSP, completion, snippets, folding, treesitter, running, debugging, docs, workflows | [13](07-code.md#13-lsp-language-server-protocol) to [15](04-completion-snippets.md#15-snippets-ultisnips), [18](07-code.md#18-code-folding-nvim-ufo), [19](07-code.md#19-code-running), [21](07-code.md#21-treesitter--text-objects), [35](07-code.md#35-java-development-nvim-java), [36](07-code.md#36-debugging), [43](07-code.md#43-how-the-development-toolchain-fits-together) to [47](07-code.md#47-code-folding-in-depth-nvim-ufo), [52](04-completion-snippets.md#52-snippets-for-developers-ultisnips) to [56](07-code.md#56-debugging-in-depth), [59](07-code.md#59-useful-developer-commands), [75](07-code.md#75-real-world-developer-workflows) |
+| Git | [20](08-git.md#20-git-integration), [48](08-git.md#48-git-workflow-in-depth) |
+| Claude Code, Markdown, LaTeX/Typst, spelling, URLs | [9](09-ai-and-writing.md#9-ai-assistant-window-claude-code-claude-codenvim), [27](09-ai-and-writing.md#27-markdown-support), [28](09-ai-and-writing.md#28-latex-and-typst-support), [31](09-ai-and-writing.md#31-spell-checking), [38](09-ai-and-writing.md#38-url--unicode-gxnvim-vim-highlighturl-unicodevim), [49](09-ai-and-writing.md#49-ai-assisted-development-in-depth) |
+| Everything else: custom commands, configuration, automatic behaviors, shell commands, Neovide, other plugins | [34](10-various.md#34-custom-commands), [39](10-various.md#39-other-plugins) to [42](10-various.md#42-automatic-behaviors), [66](10-various.md#66-shell-commands-from-inside-neovim), [77](10-various.md#77-neovide-graphical-neovim) |
+| Languages: Java, Python, LaTeX, Markdown, Typst, C++, Vim, Nix | [78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging) to [82](languages/typst.md#82-typst-typstvim-tinymist-watch-and-preview), [84](languages/cpp.md#84-c-snippets-compile-and-run) to [86](languages/nix.md#86-nix-snippets-and-delib-modules) |
+| Catalog of every plugin, each linked to its section | [83](11-plugins.md#83-plugin-catalog) |
 
-**How it is organized.** Every topic is a numbered section, and the text "see section N" always means that number. Section 2 is a one-page cheat sheet of the daily keys, with pointers to the full sections. Sections with "in depth" in the title go further than the short section on the same topic. Start with section 1, then section 2; use the table of contents (or the plugin catalog, section 83) to find the rest.
+**How it is organized.** Every topic is a numbered section, and the text "see section N" always means that number. [Section 2](#2-day-to-day-cheat-sheet) is a one-page cheat sheet of the daily keys, with pointers to the full sections. Sections with "in depth" in the title go further than the short section on the same topic. Start with [section 1](01-basics.md#1-understanding-modes), then [section 2](#2-day-to-day-cheat-sheet); use the table of contents (or the plugin catalog, [section 83](11-plugins.md#83-plugin-catalog)) to find the rest.
 
 **Conventions.**
 
 | Notation | Meaning |
 | --- | --- |
 | `<Space>ff` | Press the leader key (Space), then `f`, then `f` |
-| `<Ctrl-o>`, `<Alt-j>`, `<Esc>`, `<CR>`, `<BS>` | A key with a modifier, or a named key (`<CR>` is Enter, `<BS>` is Backspace); all key names: section 2, "Key names" |
+| `<Ctrl-o>`, `<Alt-j>`, `<Esc>`, `<CR>`, `<BS>` | A key with a modifier, or a named key (`<CR>` is Enter, `<BS>` is Backspace); all key names: section [2](#2-day-to-day-cheat-sheet), "[Key names](#key-names-how-keys-are-written)" |
 | `:Z word` | A command: type it after `:` in Normal mode and press Enter |
 | `n`, `x`, `o`, `i`, `s`, `t`, `cmd` in a Mode column | Normal, Visual (also `v`), Operator-pending, Insert, Select, Terminal, Command-line; several letters (e.g. `n, x`) mean the key works in each of those modes |
 | N/A in a table cell | Not applicable: nothing is produced or to enter (cells are never left empty) |
@@ -701,7 +701,7 @@ The things you do all day, in one place. Details are in the sections named at th
 | `<leader>`, `<Leader>` | The leader key, which is `<Space>` here | `<leader>rf` is the same as `<Space>rf` |
 | `<Up>`, `<Down>`, `<Left>`, `<Right>` | The arrow keys | |
 | `<Home>`, `<End>` | The Home and End keys | |
-| `<PageUp>`, `<PageDown>`, `<Insert>`, `<F1>` to `<F12>` | Page, Insert and function keys | The guide avoids needing them (see "Keyboards without function keys, Insert or Page keys") |
+| `<PageUp>`, `<PageDown>`, `<Insert>`, `<F1>` to `<F12>` | Page, Insert and function keys | The guide avoids needing them (see "[Keyboards without function keys, Insert or Page keys](#keyboards-without-function-keys-insert-or-page-keys)") |
 | `gg`, `dd`, `<Space>ff` | Press the keys one after another, quickly | After `<Space>` a popup (which-key) lists what can follow |
 | `;` | Same as `:` in Normal and Visual mode | `;w<Enter>` saves, `;qa!<Enter>` quits everything without asking |
 | `<file>`, `<name>`, `<path>`, `<word>`, `<char>`, `<url>` | Not a key: replace it with your own value | Any word in `<...>` that is not a key name is a placeholder |
@@ -742,7 +742,7 @@ The things you do all day, in one place. Details are in the sections named at th
 | `<Space>t` | Symbol outline of the file |
 | `:Z <word>` | Change the working folder with zoxide |
 
-More: sections 3, 7, 11, 12, 22.
+More: sections [3](02-navigation.md#3-core-navigation-moving-without-the-mouse), [7](06-windows-terminal-sessions.md#7-windows-splits-and-buffers), [11](05-search-and-files.md#11-file-explorer-nvim-tree), [12](05-search-and-files.md#12-fuzzy-finding--project-wide-search-fzf-lua), [22](02-navigation.md#22-jump-navigation-hopnvim).
 
 ### Copy, delete and move
 
@@ -760,7 +760,7 @@ More: sections 3, 7, 11, 12, 22.
 | `:Rename <name>` / `:Move <path>` / `:Duplicate <name>` / `:Delete` | Rename, move, copy or delete the current FILE |
 | tree: `a` `d` `r` `c` `x` `p` | Create, delete, rename, copy, cut, paste files in the file tree |
 
-More: sections 4, 11, 24, 57.
+More: sections [4](03-editing.md#4-editing), [11](05-search-and-files.md#11-file-explorer-nvim-tree), [24](03-editing.md#24-yank-history-yankynvim), [57](05-search-and-files.md#57-file-management-for-developers).
 
 ### Indented blocks
 
@@ -770,7 +770,7 @@ More: sections 4, 11, 24, 57.
 | `dai` / `yai` / `cai` / `vai` | Same, including the lines that open and close the block |
 | `[i` / `]i` | Jump to the top / bottom of the block |
 
-More: section 5 ("ii / ai").
+More: section [5](03-editing.md#5-selection-visual-mode) ("ii / ai").
 
 ### Text objects (what to delete, change or copy)
 
@@ -783,7 +783,7 @@ More: section 5 ("ii / ai").
 | `diS(` / `daS(` | Sandwich: empty the surrounding `(` `)` / remove them with their content |
 | `ii` / `ai` | The indented block (see above) |
 
-The same objects work after `c`, `y` and `v`. More: sections 5, 6, 17 and 70.
+The same objects work after `c`, `y` and `v`. More: sections [5](03-editing.md#5-selection-visual-mode), [6](03-editing.md#6-working-with-parentheses-quotes-and-brackets), [17](03-editing.md#17-surrounding-pairs-vim-sandwich--nvim-autopairs) and [70](01-basics.md#70-the-verb--noun-system-how-vim-commands-work).
 
 ### Macros
 
@@ -794,7 +794,7 @@ The same objects work after `c`, `y` and `v`. More: sections 5, 6, 17 and 70.
 | `@a` / `5@a` / `@@` | Play it once / 5 times / repeat the last one (in Markdown buffers `@@` returns from a footnote instead: use `@a` again) |
 | `:%normal @a` | Play it on every line of the file |
 
-More: sections 29 and 60.
+More: sections [29](03-editing.md#29-registers--macros) and [60](03-editing.md#60-macros-in-depth).
 
 ### Bulk rename and replace
 
@@ -805,9 +805,9 @@ More: sections 29 and 60.
 | Replace text in every file of the project | `:grep "old"` then `:cfdo %s/old/new/g \| update` |
 | Replace one by one, deciding each time | `*`, `ciw` + new word + `<Esc>`, then `n` to skip or `.` to replace |
 | Rename or move one file | `:Rename <name>` / `:Move <path>`, or `r` in the file tree |
-| Undo a multi-file replace | See section 67 |
+| Undo a multi-file replace | See section [67](05-search-and-files.md#67-multi-file-search-and-replace-complete-guide) |
 
-Files are renamed one at a time with the commands above. More: sections 10 and 67.
+Files are renamed one at a time with the commands above. More: sections [10](05-search-and-files.md#10-searching-replacing-and-refactoring-text) and [67](05-search-and-files.md#67-multi-file-search-and-replace-complete-guide).
 
 ### Undo, redo and repeat
 
@@ -818,7 +818,7 @@ Files are renamed one at a time with the commands above. More: sections 10 and 6
 | `.` | Repeat the last change (e.g. `ciw` + word, then `n` and `.` on the next match) |
 | `[y` / `]y` | After a paste, replace the pasted text with an earlier / later yank (yank two lines, `p`, then `[y`) |
 
-More: sections 24, 25, 61.
+More: sections [24](03-editing.md#24-yank-history-yankynvim), [25](03-editing.md#25-undo-history), [61](03-editing.md#61-the-dot-command-----repeating-actions).
 
 ### Visual block (many lines at once)
 
@@ -831,7 +831,7 @@ More: sections 24, 25, 61.
 | `g<Ctrl-a>` | Count up 1, 2, 3 ... down the selected numbers |
 | `<Alt-j>` / `<Alt-k>` | Move the selected lines down / up |
 
-More: section 62.
+More: section [62](03-editing.md#62-visual-block-editing-multi-cursor-like).
 
 ### Comments and surrounding pairs (vim-commentary, vim-sandwich)
 
@@ -846,7 +846,7 @@ More: section 62.
 | `sd"` | Delete the surrounding `"` |
 | `sr"'` | Change the surrounding `"` into `'` |
 
-More: sections 16 and 17.
+More: sections [16](03-editing.md#16-code-commenting) and [17](03-editing.md#17-surrounding-pairs-vim-sandwich--nvim-autopairs).
 
 ### Search in a file
 
@@ -857,7 +857,7 @@ More: sections 16 and 17.
 | `;noh<Enter>` | Clear the search highlight |
 | `:%s/old/new/gc` | Replace with a question for each match |
 
-More: sections 10 and 23.
+More: sections [10](05-search-and-files.md#10-searching-replacing-and-refactoring-text) and [23](02-navigation.md#23-search-lens-nvim-hlslens).
 
 ### Buffers, splits, tabs
 
@@ -873,11 +873,11 @@ More: sections 10 and 23.
 | From the Claude panel | `<Ctrl-h>` goes back to the code on the left (`<Esc>` is sent to Claude); `<Ctrl-w>l` or `<Right>` from the code goes back in |
 | `<Ctrl-w>=` / `<Ctrl-w>o` | Make windows equal / keep only this window |
 | `<Ctrl-w>x` / `<Ctrl-w>r` | Swap this window with the next one (the file on the right goes to the left) / rotate all windows of the row |
-| `:BufferLineMovePrev` / `:BufferLineMoveNext` | Move the current tab one place left / right in the top bar (no key for it: type the command; section 7) |
+| `:BufferLineMovePrev` / `:BufferLineMoveNext` | Move the current tab one place left / right in the top bar (no key for it: type the command; section [7](06-windows-terminal-sessions.md#7-windows-splits-and-buffers)) |
 | `gt` / `gT`, `\t` / `\T` | Next / previous tab, close this tab / the other tabs |
 | `:sp <file>` / `:vs <file>` | Open a file in a new horizontal / vertical split (`;` works like `:`, so `;vs <file>` too) |
 
-More: section 7.
+More: section [7](06-windows-terminal-sessions.md#7-windows-splits-and-buffers).
 
 ### Save and quit
 
@@ -889,7 +889,7 @@ More: section 7.
 | `:wa` / `:q!` | Save all buffers / close this window and discard changes |
 | (automatic) | Auto-save: a changed file saves itself when you switch buffer or leave the nvim window; a message "AutoSave: saved at ..." appears (not for unnamed or read-only buffers, terminals, LaTeX and Typst files) |
 
-More: section 72.
+More: section [72](01-basics.md#72-saving-quitting-and-file-state).
 
 ### Sessions, dashboard and zoxide
 
@@ -903,7 +903,7 @@ More: section 72.
 | `:Obsession`, `nvim -S Session.vim` | Keep a `Session.vim` up to date, restore it later |
 | `<Space>sv` | Restart nvim (writes all files first) |
 
-More: sections 30 and 58.
+More: sections [30](05-search-and-files.md#30-working-with-directories) and [58](06-windows-terminal-sessions.md#58-session-and-productivity).
 
 ### Code intelligence (LSP)
 
@@ -916,7 +916,7 @@ More: sections 30 and 58.
 | `]d` / `[d` | Next / previous diagnostic |
 | `<Space>dd` | Show the diagnostic under the cursor |
 
-More: sections 13 and 44.
+More: sections [13](07-code.md#13-lsp-language-server-protocol) and [44](07-code.md#44-language-server-protocol-lsp-in-depth).
 
 ### Completion and snippets
 
@@ -934,7 +934,7 @@ The completion menu opens by itself while you type in Insert mode (from 1 charac
 
 Menu order: language server, then snippets, then paths, then buffer words (LaTeX files start with vimtex). In the `/` search line the menu offers buffer words; in `:` it offers paths and commands.
 
-More: sections 14, 15, 45 and 52 (the gallery is in section 52, "The snippet gallery").
+More: sections [14](04-completion-snippets.md#14-autocompletion-nvim-cmp), [15](04-completion-snippets.md#15-snippets-ultisnips), [45](04-completion-snippets.md#45-autocompletion-in-depth-nvim-cmp) and [52](04-completion-snippets.md#52-snippets-for-developers-ultisnips) (the gallery is in section [52](04-completion-snippets.md#52-snippets-for-developers-ultisnips), "[The snippet gallery](04-completion-snippets.md#the-snippet-gallery)").
 
 ### Git day to day
 
@@ -953,7 +953,7 @@ More: sections 14, 15, 45 and 52 (the gallery is in section 52, "The snippet gal
 | `<Space>gl` | Copy a permalink for the line |
 | `:Neogit` / `:NeogitLogCurrent` | Open the Neogit status window / the log of the current file (`q` closes) |
 
-More: sections 20 and 48.
+More: sections [20](08-git.md#20-git-integration) and [48](08-git.md#48-git-workflow-in-depth).
 
 ### Mouse
 
@@ -965,17 +965,17 @@ More: sections 20 and 48.
 | Click the language-server name in the statusline | Popup with the attached language servers (also `:LspAttached`) |
 | Right-click in the text | Neovim's menu: `Paste` pastes the clipboard, `Select All` selects the whole file, `Inspect` shows which highlight and syntax group is under the click, `How-to disable mouse` opens the help for it |
 
-More: sections 7 and 32.
+More: sections [7](06-windows-terminal-sessions.md#7-windows-splits-and-buffers) and [32](06-windows-terminal-sessions.md#32-statusline-lualinenvim).
 
 ### Language guides (tools that exist only for one language)
 
 | Language | What the guide covers | Section |
 | --- | --- | --- |
-| Java | nvim-java, jdtls, running, JUnit tests, debugging, refactoring, profiles | 78 |
-| Python | pyright, ruff, black, uv, `<Space>rf` / `<F9>` and `<Space>rr`, pdb debugging | 79 |
-| LaTeX | vimtex, texlab, ltex, compiling, the PDF viewer | 80 |
-| Markdown | marksman, rendering, preview, footnotes, `:ToPDF` | 81 |
-| Typst | tinymist, `<Space>tw` watch, the PDF viewer | 82 |
+| Java | nvim-java, jdtls, running, JUnit tests, debugging, refactoring, profiles | [78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging) |
+| Python | pyright, ruff, black, uv, `<Space>rf` / `<F9>` and `<Space>rr`, pdb debugging | [79](languages/python.md#79-python-pyright-ruff-black-uv-running-and-debugging) |
+| LaTeX | vimtex, texlab, ltex, compiling, the PDF viewer | [80](languages/latex.md#80-latex-vimtex-texlab-ltex-pdf-viewer) |
+| Markdown | marksman, rendering, preview, footnotes, `:ToPDF` | [81](languages/markdown.md#81-markdown-writing-preview-footnotes-pdf) |
+| Typst | tinymist, `<Space>tw` watch, the PDF viewer | [82](languages/typst.md#82-typst-typstvim-tinymist-watch-and-preview) |
 
 ### Language devShells (`:DevEnv`)
 
@@ -1002,7 +1002,7 @@ Full explanation: [section 77](10-various.md#77-neovide-graphical-neovim).
 | `<Tab>` | Move down (marks the item too in fzf-lua and Telescope) |
 | `<Enter>` / `<Esc>` | Choose / close (in snacks and Telescope the first `<Esc>` only leaves the search bar) |
 
-`j` and `k` type letters into the search bar. More: section 12.
+`j` and `k` type letters into the search bar. More: section [12](05-search-and-files.md#12-fuzzy-finding--project-wide-search-fzf-lua).
 
 ### Quickfix list (search results, errors)
 
@@ -1016,7 +1016,7 @@ Full explanation: [section 77](10-various.md#77-neovide-graphical-neovim).
 | `<Ctrl-x>` / `<Ctrl-v>` in the list | Open the item in a horizontal / vertical split |
 | `:cfdo %s/old/new/g \| update` | Replace in every file of the list |
 
-More: sections 26 and 51.
+More: sections [26](05-search-and-files.md#26-quickfix--location-list) and [51](05-search-and-files.md#51-quickfix-workflows-for-developers).
 
 ### Spell checking
 
@@ -1029,7 +1029,7 @@ More: sections 26 and 51.
 | `zug` | Undo the last `zg` |
 | `:e ~/.config/nvim/spell/en.utf-8.add` | Open the list of allowed English words (one per line: delete a line to forbid the word again) |
 
-`:set nospell` only turns off the built-in checker. Typo underlines that come from the language servers (`typos_lsp` in code, `ltex_plus` in prose) stay; they are diagnostics. More: section 31.
+`:set nospell` only turns off the built-in checker. Typo underlines that come from the language servers (`typos_lsp` in code, `ltex_plus` in prose) stay; they are diagnostics. More: section [31](09-ai-and-writing.md#31-spell-checking).
 
 ### Run code and terminal
 
@@ -1038,9 +1038,9 @@ More: sections 26 and 51.
 | `<Space>rr` | Run the current file in a terminal on the left |
 | `<Space>rf` / `<F9>` | Run or compile the file the editor's own way (Lua, Vim script, Python, C++, LaTeX; one warning in other file types) |
 | `:term` | Open a terminal in this window |
-| `<Esc>` / `i` | Leave terminal mode / go back into it (`<Esc>` works differently in the Claude panel, see sections 8 and 9) |
+| `<Esc>` / `i` | Leave terminal mode / go back into it (`<Esc>` works differently in the Claude panel, see sections [8](06-windows-terminal-sessions.md#8-terminal-integration) and [9](09-ai-and-writing.md#9-ai-assistant-window-claude-code-claude-codenvim)) |
 
-More: sections 8 and 19. `<Space>rf` in any other file type shows one warning (`no editor-run for this file type (use <Space>rr for a terminal run)`).
+More: sections [8](06-windows-terminal-sessions.md#8-terminal-integration) and [19](07-code.md#19-code-running). `<Space>rf` in any other file type shows one warning (`no editor-run for this file type (use <Space>rr for a terminal run)`).
 
 ### Python debugger keys (pdb through nvim-gdb)
 
@@ -1058,11 +1058,11 @@ Start with `<Space>dp` in a Python buffer (pdb through nvim-gdb); the keys work 
 | `<Space>dv` | Evaluate the word under the cursor (Visual: the selection) |
 | `:GdbDebugStop` | Quit the debugger |
 
-More: section 79.
+More: section [79](languages/python.md#79-python-pyright-ruff-black-uv-running-and-debugging).
 
 ### Keyboards without function keys, Insert or Page keys
 
-Nearly every key in this guide has a version without function keys. `<F9>` is `<Space>rf` (run the file the editor's own way); the Python debugger has the `<Space>d` keys above. `<S-Insert>` (paste in the GUI, ginit.vim) is replaced by `<Ctrl-r>` then `+` in Insert mode or on the command line (built-in Vim, works everywhere); `<Ctrl-d>` / `<Ctrl-u>` scroll instead of the Page keys. Unicode `<F4>` is replaced by `<Ctrl-k>` + two letters (section 38). The only keys left are three vimtex defaults in section 80 (`<F6>`, `<F7>`, `<F8>`).
+Nearly every key in this guide has a version without function keys. `<F9>` is `<Space>rf` (run the file the editor's own way); the Python debugger has the `<Space>d` keys above. `<S-Insert>` (paste in the GUI, ginit.vim) is replaced by `<Ctrl-r>` then `+` in Insert mode or on the command line (built-in Vim, works everywhere); `<Ctrl-d>` / `<Ctrl-u>` scroll instead of the Page keys. Unicode `<F4>` is replaced by `<Ctrl-k>` + two letters (section [38](09-ai-and-writing.md#38-url--unicode-gxnvim-vim-highlighturl-unicodevim)). The only keys left are three vimtex defaults in section [80](languages/latex.md#80-latex-vimtex-texlab-ltex-pdf-viewer) (`<F6>`, `<F7>`, `<F8>`).
 
 ### Folding (nvim-ufo)
 
@@ -1073,7 +1073,7 @@ Nearly every key in this guide has a version without function keys. `<F9>` is `<
 | `zr` / `zm` | Open / close one more fold level |
 | `<Space>K` | Preview the folded lines |
 
-More: section 18.
+More: section [18](07-code.md#18-code-folding-nvim-ufo).
 
 ### Text tricks
 
@@ -1087,7 +1087,7 @@ More: section 18.
 | `:g/pattern/normal @a` | Run macro `a` on every matching line |
 | `:!cmd` / `:read !cmd` | Run a shell command / insert its output |
 
-More: sections 66, 68 and 71.
+More: sections [66](10-various.md#66-shell-commands-from-inside-neovim), [68](03-editing.md#68-useful-vim-tricks) and [71](03-editing.md#71-the-global-command-g).
 
 ### Claude and fuzzy finders
 
@@ -1098,9 +1098,9 @@ More: sections 66, 68 and 71.
 | `<Space>?` | Open the user guide PDF |
 | `<Space>ff` / `<Space>fg` | Find a file / search text in the project |
 | `<Space>fb` / `<Space>fr` / `<Space>fh` | Open buffers / recent files / help tags |
-| `<Space>fs` (`<Alt-s>` in insert mode) | Fuzzy-search your own snippets and insert one (section 52) |
+| `<Space>fs` (`<Alt-s>` in insert mode) | Fuzzy-search your own snippets and insert one (section [52](04-completion-snippets.md#52-snippets-for-developers-ultisnips)) |
 
-More: sections 9 and 12.
+More: sections [9](09-ai-and-writing.md#9-ai-assistant-window-claude-code-claude-codenvim) and [12](05-search-and-files.md#12-fuzzy-finding--project-wide-search-fzf-lua).
 
 ### Other most-used keys (from the former quick reference)
 

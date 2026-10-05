@@ -3,7 +3,7 @@
 
 # 78. Java (nvim-java, jdtls, tests, debugging)
 
-This section is one complete walk through everything that is specific to Java in this config: the tools, why each one is there, how it works, how to use it, and what to do when it does not work. It covers only Java-only things (nvim-java and its parts, the language servers, the test runner, the debugger, the Java keys, commands and snippets). Global tools with global keys (`gd`, `K`, `<Space>rn`, git, fzf, ...) get only a pointer to their own section. Sections 35 and 54 hold the short key lists and section 56 the debugging basics; this section puts everything in one order.
+This section is one complete walk through everything that is specific to Java in this config: the tools, why each one is there, how it works, how to use it, and what to do when it does not work. It covers only Java-only things (nvim-java and its parts, the language servers, the test runner, the debugger, the Java keys, commands and snippets). Global tools with global keys (`gd`, `K`, `<Space>rn`, git, fzf, ...) get only a pointer to their own section. Sections [35](../07-code.md#35-java-development-nvim-java) and [54](../07-code.md#54-java-development-in-depth) hold the short key lists and section [56](../07-code.md#56-debugging-in-depth) the debugging basics; this section puts everything in one order.
 
 Everything marked "tested" below was tried with real keys in a Maven test project (JDK 25 devShell, `Main`, `Calc`, `CalcTest`).
 
@@ -19,7 +19,7 @@ Everything marked "tested" below was tried with real keys in a Maven test projec
 | **nvim-dap** | The general debugger client (breakpoints, stepping) | `:Dap*` commands | plugin `mfussenegger/nvim-dap`, a dependency of nvim-java |
 | **Lombok** | Many Java projects use it; jdtls must load it as an agent | Annotations like `@Getter` compile | `lombok` package of nvim-java, and `JAVA_TOOL_OPTIONS` of the devShell |
 | **typos_lsp** | Spell checker for code (global tool, not Java-only) | Underlines misspelled words in identifiers and comments, also in Java | `typos-lsp` from the Nix system |
-| **Snippets** | Typing the same loops and switches over and over | See part 9 below | `my_snippets/java.snippets` |
+| **Snippets** | Typing the same loops and switches over and over | See [part 9](#9-snippets) below | `my_snippets/java.snippets` |
 
 Tools you get only through the devShell: the JDK (25), `mvn`, `gradle`, `lombok`, `jdtls` wrapper, and the two VS Code extensions. The Neovim config itself never installs them.
 
@@ -64,8 +64,8 @@ Plugin: **spring-boot.nvim**. It has no spec of its own in the plugin file: nvim
 | What it starts | A second language server (the Spring Boot tools of VS Code, installed by nvim-java as its `spring-boot-tools` package, default version 1.55.1) that attaches next to jdtls. nvim-java passes the server path to the plugin's setup and registers the client commands the server needs |
 | When it starts | Only when `java` is on PATH: the config sets `spring_boot_tools = { enable = has_java }`, so in practice only inside the Java devShell |
 | What it offers | Per the plugin's README (not tried here): finding Spring beans and web endpoints through workspace symbols, completion and navigation in `application.properties` and `application.yml`, snippet completion and code actions |
-| Where you see it | The statusline shows `jdtls (+2)` and the attached clients are `jdtls,spring-boot,typos_lsp` (see "2. Quick Start") |
-| Caveat | It attaches in every Java buffer, even in a project without Spring; that is harmless (see section 5) |
+| Where you see it | The statusline shows `jdtls (+2)` and the attached clients are `jdtls,spring-boot,typos_lsp` (see "[2. Quick Start](#2-quick-start)") |
+| Caveat | It attaches in every Java buffer, even in a project without Spring; that is harmless (see [section 5](#5-language-server-features-in-a-java-buffer)) |
 
 ### The Java devShell (`use_dev_env java`)
 
@@ -90,13 +90,13 @@ direnv loads the devShell when you `cd` into the folder. The devShell (template 
 1. `:DevEnv java`  then `<CR>`. The first call takes about 10 seconds and shows `DevEnv: evaluating the java devShell (about 10 s) ...`; later calls are instant (cached per flake).
 2. A notification `DevEnv: java ready: ...` lists what started (`java`, `nvim-java (jdtls, spring-boot-tools)`, language servers). jdtls attaches to the `.java` buffers that are already open.
 
-It applies only `PATH`, `JAVA_HOME`, `CLASSPATH`, `JAVA_TOOL_OPTIONS` (Lombok) and a few other allowlisted variables, then starts nvim-java. The devShell's shell hook does not run, so the extension links above are not created: jdtls works anyway (nvim-java uses its own copies), but you get a warning when the java-debug or java-test extension is missing from `~/.local/share/nvim/nvim-java/packages`; debugging and tests may then be unavailable until nvim-java installs them or direnv enters the devShell once. Opening a `.java` file without `java` also shows a one-time hint, `java not found on PATH: run :DevEnv java to enter its devShell`. All devShell names and the full description: section 43.
+It applies only `PATH`, `JAVA_HOME`, `CLASSPATH`, `JAVA_TOOL_OPTIONS` (Lombok) and a few other allowlisted variables, then starts nvim-java. The devShell's shell hook does not run, so the extension links above are not created: jdtls works anyway (nvim-java uses its own copies), but you get a warning when the java-debug or java-test extension is missing from `~/.local/share/nvim/nvim-java/packages`; debugging and tests may then be unavailable until nvim-java installs them or direnv enters the devShell once. Opening a `.java` file without `java` also shows a one-time hint, `java not found on PATH: run :DevEnv java to enter its devShell`. All devShell names and the full description: [section 43](../07-code.md#43-how-the-development-toolchain-fits-together).
 
 The other option is unchanged: quit, `cd` into the project and start `nvim` from there with direnv.
 
 ### Outside the devShell
 
-`java` is not on PATH, so jdtls and spring-boot do not start. `.java` files still open with syntax highlighting, snippets and typos_lsp, but without Java language features. Every `<Space>j...` key shows ONE warning, `Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)`. These global keys are fallbacks: without them `<Space>jrr` would fall through to plain Vim keys (`<Space>`, `j`, `rr`). The universal run key `<Space>rr` (section 19) then runs plain `java <file>` if `java` exists, otherwise gives one warning.
+`java` is not on PATH, so jdtls and spring-boot do not start. `.java` files still open with syntax highlighting, snippets and typos_lsp, but without Java language features. Every `<Space>j...` key shows ONE warning, `Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)`. These global keys are fallbacks: without them `<Space>jrr` would fall through to plain Vim keys (`<Space>`, `j`, `rr`). The universal run key `<Space>rr` ([section 19](../07-code.md#19-code-running)) then runs plain `java <file>` if `java` exists, otherwise gives one warning.
 
 ## 2. Quick start
 
@@ -232,14 +232,14 @@ Tested: in the test project it only shows a notification: `No configured runtime
 
 ## 5. Language server features in a Java buffer
 
-All need jdtls attached. The general keys are described elsewhere (section 13 for LSP); here is what they do in Java.
+All need jdtls attached. The general keys are described elsewhere ([section 13](../07-code.md#13-lsp-language-server-protocol) for LSP); here is what they do in Java.
 
 | Key / command | What it does in Java |
 | --- | --- |
 | `gd` | Go to definition; several results open the location list |
 | `K` | Hover: type and Javadoc. Tested: a hover float shows a "java" progress bar while loading |
 | `<Space>rn` | Rename a class, method or variable in all files |
-| `<Space>ca` | Code actions: quick fix, organize imports, generate getters, constructors, `toString`; also the way to extract with a selection (see Refactoring) |
+| `<Space>ca` | Code actions: quick fix, organize imports, generate getters, constructors, `toString`; also the way to extract with a selection (see [Refactoring](#8-refactoring-extract)) |
 | `<Space>fm` | Format the file with the jdtls formatter (Eclipse style). Tested: `calc.add(2,3)*4` became `calc.add(2, 3) * 4`. Formatting is never automatic |
 | `:LspInlayHints enable` / `disable` | Inlay hints (parameter names, types); off by default (tested: enable turns hints on) |
 | `<Space>t` | Symbol outline (aerial); tested in Java: shows `Main` and `main` |
@@ -249,7 +249,7 @@ Other notes:
 
 - **illuminate**: other uses of the word under the cursor are highlighted (Java is in its filetype list).
 - **typos_lsp**: attaches to Java buffers too (root markers include `.gitignore`), also outside the devShell. If `<Space>rn` or `<Space>ca` only warn "no attached language server supports it", only typos_lsp is attached and jdtls is missing.
-- **Completion** and **snippets** work as in other languages (sections 14 and 15).
+- **Completion** and **snippets** work as in other languages (sections [14](../04-completion-snippets.md#14-autocompletion-nvim-cmp) and [15](../04-completion-snippets.md#15-snippets-ultisnips)).
 - The coloured line marker (`colorcolumn`) is at 100 for Java.
 - spring-boot attaches next to jdtls in every Java buffer, even in a project without Spring; it is harmless.
 
@@ -301,7 +301,7 @@ Each line has a status icon in front (a different icon for pass and fail). Teste
 ### Needs
 
 - A JUnit dependency in `pom.xml` (the test project: `junit-jupiter` 5.10.2 and `maven-surefire-plugin` 3.2.5, release 21).
-- jdtls attached and the `java-test` extension linked by the devShell (see section 1).
+- jdtls attached and the `java-test` extension linked by the devShell (see [section 1](#1-what-you-get-and-why)).
 - Network the first time Maven has to download the JUnit jars into `~/.m2`.
 
 ## 7. Debugging
@@ -330,7 +330,7 @@ Notes:
 - The debugged program's output goes to the `[dap-terminal]` window.
 - `<Space>jrr` runs without a debugger; to debug `main` use `:DapContinue` as above.
 - If a debug window stays open after `:DapTerminate`, close it with `<Space>q` in that window.
-- See section 36 and section 56 for the general DAP notes.
+- See [section 36](../07-code.md#36-debugging) and [section 56](../07-code.md#56-debugging-in-depth) for the general DAP notes.
 
 ## 8. Refactoring (extract)
 
@@ -382,7 +382,7 @@ Pressing `<Space>jem` while the selection is still active does NOT work (visual 
 
 ## 9. Snippets
 
-Source: `my_snippets/java.snippets` (71 snippets, grouped below as in the file). Type the trigger in insert mode in a Java buffer and expand it with `<Ctrl-j>` (section 15); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. A compact trigger + description table of all of them is in `04-completion-snippets.md` ("Java snippets"); this section explains each snippet and shows what it expands to.
+Source: `my_snippets/java.snippets` (71 snippets, grouped below as in the file). Type the trigger in insert mode in a Java buffer and expand it with `<Ctrl-j>` ([section 15](../04-completion-snippets.md#15-snippets-ultisnips)); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. A compact trigger + description table of all of them is in [`04-completion-snippets.md`](../04-completion-snippets.md) ("[Java snippets](../04-completion-snippets.md#java-snippets)"); this section explains each snippet and shows what it expands to.
 
 Conventions (the same in every snippet):
 
@@ -1048,9 +1048,9 @@ button.setOnAction((event) -> {
 | `<Esc>` first | In a terminal window press `<Esc>` to get to normal mode, then use a window key. `i` types in the terminal again |
 | `<Space>q` | Save if modified and close the current window (use it in a runner, test or debug terminal) |
 | `<Ctrl-w>o` | Keep only the current window |
-| `<Esc>` in a float | Closes the report float, the Profiles window, `New Name` box and hover floats (section 7 lists `<Esc>` closing floats) |
+| `<Esc>` in a float | Closes the report float, the Profiles window, `New Name` box and hover floats ([section 7](../06-windows-terminal-sessions.md#7-windows-splits-and-buffers) lists `<Esc>` closing floats) |
 
-See section 7 (windows) and the cheat sheet in section 2 for the same rows.
+See [section 7](../06-windows-terminal-sessions.md#7-windows-splits-and-buffers) (windows) and the cheat sheet in [section 2](../README.md#2-day-to-day-cheat-sheet) for the same rows.
 
 ## 11. Troubleshooting
 
@@ -1078,7 +1078,7 @@ See section 7 (windows) and the cheat sheet in section 2 for the same rows.
 
 ## Related sections
 
-Section 35 (Java keys), 54 (Java in depth), 36 and 56 (debugging), 19 and 55 (running code, `<Space>rr`), 13 (LSP), 14 (completion), 15 (snippets), 7 (windows), 8 (terminal), 20 (git; the git root decides the jdtls root), 2 (quick reference and cheat sheet).
+Section [35](../07-code.md#35-java-development-nvim-java) (Java keys), [54](../07-code.md#54-java-development-in-depth) (Java in depth), [36](../07-code.md#36-debugging) and [56](../07-code.md#56-debugging-in-depth) (debugging), [19](../07-code.md#19-code-running) and [55](../07-code.md#55-code-running-in-depth) (running code, `<Space>rr`), [13](../07-code.md#13-lsp-language-server-protocol) (LSP), [14](../04-completion-snippets.md#14-autocompletion-nvim-cmp) (completion), [15](../04-completion-snippets.md#15-snippets-ultisnips) (snippets), [7](../06-windows-terminal-sessions.md#7-windows-splits-and-buffers) (windows), [8](../06-windows-terminal-sessions.md#8-terminal-integration) (terminal), [20](../08-git.md#20-git-integration) (git; the git root decides the jdtls root), [2](../README.md#2-day-to-day-cheat-sheet) (quick reference and cheat sheet).
 
 
 ---

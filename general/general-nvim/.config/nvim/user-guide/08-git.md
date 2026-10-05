@@ -5,7 +5,7 @@
 
 ## vim-fugitive (plugin)
 
-The fugitive keys (and the gitlinker keys below) exist only inside a git repository: nvim started in one, or a file of one opened. Outside a repository these keys are not mapped: `<Space>` just moves the cursor one column right and the next keys run as their normal Vim/plugin meaning (`<Space>gs` becomes `l` plus vim-swap's `gs`). `<Space>gbl` works everywhere (fzf-lua).
+The fugitive keys (and the [gitlinker keys](#gitlinkernvim-plugin) below) exist only inside a git repository: nvim started in one, or a file of one opened. Outside a repository these keys are not mapped: `<Space>` just moves the cursor one column right and the next keys run as their normal Vim/plugin meaning (`<Space>gs` becomes `l` plus vim-swap's `gs`). `<Space>gbl` works everywhere (fzf-lua).
 
 `<Space>gn` (Neogit) and `<Space>gD` (Diffview) belong to the same group: both are defined in `lua/config/fugitive.lua`, which loads together with fugitive when git is detected, so they exist only in a git repository too (once defined they stay for the rest of the session, even after `:cd` out of the repository). The plugins behind them are not repo-limited: `:Neogit` and `:DiffviewOpen` load on demand from any directory (Neogit itself still needs a repository to show anything).
 
@@ -48,7 +48,7 @@ M lua/mappings.lua
 
 Close the window again with `gq`. `<Space>gw` in the `mappings.lua` buffer moves it from "Unstaged" to "Staged" (the header becomes `Staged (1)`), `<Space>gu` moves it back.
 
-`<Space>gd`, `<Space>gr` and `<Space>gi` are not git keys: they are Glance (peek at definitions, references, implementations, see "Peeking Without Jumping (Glance)" in the code chapter). For a git diff use `<Space>gv`, for restoring use `<Space>gx`.
+`<Space>gd`, `<Space>gr` and `<Space>gi` are not git keys: they are Glance (peek at definitions, references, implementations, see "[Peeking Without Jumping (Glance)](07-code.md#peeking-without-jumping-glancenvim)" in the code chapter). For a git diff use `<Space>gv`, for restoring use `<Space>gx`.
 
 Clicking the branch name in the statusline also opens a branch picker (`git checkout` of the chosen local or remote branch).
 
@@ -106,7 +106,7 @@ Neogit is a full-screen git interface in the style of Emacs Magit: one status bu
 
 | Key / command | Effect |
 | --- | --- |
-| `<Space>gn` | Open Neogit (`:Neogit`); the key exists only in a git repository, see the note at the top of section 20 |
+| `<Space>gn` | Open Neogit (`:Neogit`); the key exists only in a git repository, see the note at the top of [section 20](#20-git-integration) |
 | `:Neogit` | Open the status buffer (a new tab) from any directory inside a repository |
 | `:NeogitCommit [<sha>]` | Open the commit view of a commit (`HEAD` when no argument) |
 | `:NeogitLogCurrent [<file>]` | Log of a file (the current file when no argument; with a visual range, the history of those lines) |
@@ -221,7 +221,7 @@ This config includes several git-related plugins that each handle a different as
 | **diffs.nvim** | Syntax highlighting inside the diffs of fugitive, neogit and gitsigns; conflict markers. `:Diff` shows the file against the index. | Automatic, `:Diff`. |
 | **codediff.nvim** | VSCode-style side-by-side diff. | `:CodeDiff`. |
 
-Merge conflicts: `:DiffviewOpen` is the merge tool (keys in section 20, "Resolving Merge Conflicts").
+Merge conflicts: `:DiffviewOpen` is the merge tool (keys in [section 20](#20-git-integration), "[Resolving Merge Conflicts](#resolving-merge-conflicts-diffviewnvim)").
 
 ## Daily Git workflow
 

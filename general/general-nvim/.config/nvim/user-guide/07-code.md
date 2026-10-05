@@ -123,7 +123,7 @@ Nerd Font signs in the gutter: 󰅚 (error), 󰀪 (warning), 󰋽 (info), 󰌶 (
 | Keymap | Description |
 | --- | --- |
 | `<Space>db` | Telescope picker with the diagnostics of the current file |
-| `<Space>dw` | Toggle the Trouble diagnostics list (the diagnostics of every buffer Neovim has loaded, grouped by file; see "Diagnostics in depth") |
+| `<Space>dw` | Toggle the Trouble diagnostics list (the diagnostics of every buffer Neovim has loaded, grouped by file; see "[Diagnostics in depth](#diagnostics-in-depth)") |
 | `<Space>de` | Jump to next error |
 | `<Space>dE` | Jump to previous error |
 | `<Space>dd` | Show diagnostic detail in floating window |
@@ -174,7 +174,7 @@ Each server is configured in `lua/config/lsp.lua` (plus `after/lsp/<name>.lua`) 
 | **yamlls** | YAML | Schema validation and formatting for YAML files. |
 | **marksman** | Markdown | Link validation, heading completion. Formatting is done by `<Space>fm` with Prettier (not by marksman). |
 | **nixd** | Nix | Nix language analysis. Formatter: nixpkgs-fmt. |
-| **jdtls** | Java | Full Java IDE features via nvim-java (see Java section). Auto-configured. |
+| **jdtls** | Java | Full Java IDE features via nvim-java (see [Java section](#54-java-development-in-depth)). Auto-configured. |
 | **clangd** | C/C++ | Compilation, diagnostics, code completion for C/C++. |
 | **ltex_plus** | Prose (markdown, tex, typst, gitcommit, text) | Grammar and spell checking with LanguageTool; problems are diagnostics. |
 | **typos_lsp** | Every real file | Finds typos in identifiers and comments; offers fixes as code actions. |
@@ -188,11 +188,11 @@ Each server is configured in `lua/config/lsp.lua` (plus `after/lsp/<name>.lua`) 
 | **phpactor** | PHP | PHP analysis and refactoring. |
 | **r_language_server** | R | R analysis, after a one-time check that the R package `languageserver` is installed. |
 
-Each server starts only when its program is installed (see the table in section 13); `:LspAttached` (or a click on the LSP name in the statusline) shows what is attached.
+Each server starts only when its program is installed (see the table in [section 13](#13-lsp-language-server-protocol)); `:LspAttached` (or a click on the LSP name in the statusline) shows what is attached.
 
 ## How language servers are registered (lua/config/lsp.lua)
 
-One file registers every server, so there is no separate chapter for languages such as Rust, Go, TypeScript, Haskell, Swift, PHP, R or Nix: their whole setup is the entry quoted below. There is no Mason in this config: no tool installer manages servers. The programs come from the Nix system or from a devShell (see section 43), and a server is started only if its program is found on PATH.
+One file registers every server, so there is no separate chapter for languages such as Rust, Go, TypeScript, Haskell, Swift, PHP, R or Nix: their whole setup is the entry quoted below. There is no Mason in this config: no tool installer manages servers. The programs come from the Nix system or from a devShell (see [section 43](#43-how-the-development-toolchain-fits-together)), and a server is started only if its program is found on PATH.
 
 ### Shared capabilities
 
@@ -209,7 +209,7 @@ vim.lsp.config("*", {
 
 ### The server table
 
-Abridged: the Python, Lua, Nix, LaTeX, Rust, Go, Haskell, Swift, TypeScript and PHP, R entries are quoted verbatim; the entries for bashls, clangd, yamlls, marksman, ltex_plus, typos_lsp and tinymist are left out (tinymist is quoted in the Typst chapter). Lines starting with `-- ...` mark the cuts.
+Abridged: the Python, Lua, Nix, LaTeX, Rust, Go, Haskell, Swift, TypeScript and PHP, R entries are quoted verbatim; the entries for bashls, clangd, yamlls, marksman, ltex_plus, typos_lsp and tinymist are left out (tinymist is quoted in the [Typst chapter](languages/typst.md#82-typst-typstvim-tinymist-watch-and-preview)). Lines starting with `-- ...` mark the cuts.
 
 ```lua
 -- Servers: configured here (plus after/lsp/<name>.lua), enabled only when the binary exists
@@ -297,7 +297,7 @@ local servers = {
 In plain words:
 
 - Each entry is `name = { cmd = {...}, ... }`. Only what differs from nvim-lspconfig's default definition is written; anything left out (filetypes, root markers) is the default. More settings of a server live in `after/lsp/<name>.lua`.
-- **Python:** `pyright` and `ruff`, see the Python chapter.
+- **Python:** `pyright` and `ruff`, see the [Python chapter](languages/python.md#79-python-pyright-ruff-black-uv-running-and-debugging).
 - **Nix (`nixd`):** `--log=error` because the default level writes every request into the LSP log file; the formatter is `nixpkgs-fmt`.
 - **LaTeX (`texlab`):** only the command; texlab comes from the LaTeX devShell.
 - **Rust (`rust_analyzer`) and Go (`gopls`):** the comment says which devShell supplies them. `gopls` trims nvim-lspconfig's filetype list to `go`, `gomod`, `gowork` (the default also lists `gotmpl`, which no filetype detection sets, and `:checkhealth vim.lsp` would warn about it).
@@ -306,7 +306,7 @@ In plain words:
 - **TypeScript / JavaScript (`ts_ls`):** the entry is empty (`{}`) on purpose. nvim-lspconfig's `cmd` is a function that prefers the project's `node_modules/.bin` copy of the server; setting `cmd` here would replace it. The binary check for it is in `needs` (next section).
 - **PHP (`phpactor`):** only the command is pinned; the default filetypes and root markers are kept.
 - **R (`r_language_server`):** starts R and runs the `languageserver` package. It is never enabled by the plain loop, only by the probe described below.
-- **Lua (`lua_ls`):** see "Lua: lua_ls and stylua" below.
+- **Lua (`lua_ls`):** see "[Lua: lua_ls and stylua](#lua-lua_ls-and-stylua)" below.
 
 ### When is a server enabled
 
@@ -427,7 +427,7 @@ In plain words:
 
 - `<F9>` and `<Space>rf` run the file with `:luafile %`.
 - `<Space>f` and `<Space>fm` both run `stylua_format`. In Lua buffers `<Space>fm` is stylua, not the LSP formatter, because lua_ls formatting is off.
-- `stylua_format` formats the buffer (not the file on disk) through stdin: `stylua --search-parent-directories --stdin-filepath <name> -` (so a project `stylua.toml` is honoured), compares old and new text, and applies only the changed hunks, bottom-up, in one undo step. Every window showing the buffer keeps its cursor and view. A missing stylua or a stylua error (for example a syntax error) gives ONE warning and leaves the buffer untouched. The Markdown prettier key uses the same idea (see the Markdown chapter).
+- `stylua_format` formats the buffer (not the file on disk) through stdin: `stylua --search-parent-directories --stdin-filepath <name> -` (so a project `stylua.toml` is honoured), compares old and new text, and applies only the changed hunks, bottom-up, in one undo step. Every window showing the buffer keeps its cursor and view. A missing stylua or a stylua error (for example a syntax error) gives ONE warning and leaves the buffer untouched. The Markdown prettier key uses the same idea (see the [Markdown chapter](languages/markdown.md#81-markdown-writing-preview-footnotes-pdf)).
 
 ## typos_lsp: where it attaches
 
@@ -474,7 +474,7 @@ These keys work per buffer according to what the attached servers support: `K` a
 | `<Space>ca` | **Code action**. Shows a menu of available fixes and refactorings. | When the lightbulb icon appears, or when you want to auto-import, extract a variable, fix a lint warning, etc. |
 | `<Space>fm` | **Format file**. Runs the LSP formatter asynchronously (ruff, nixd, ...); in Markdown buffers Prettier, in Lua buffers stylua. | Before committing, or whenever you want clean formatting. |
 
-A worked example of `gd`, `K` and `<Space>rn` on a small Python file is in section 13 ("LSP keymaps").
+A worked example of `gd`, `K` and `<Space>rn` on a small Python file is in [section 13](#13-lsp-language-server-protocol) ("[LSP keymaps](#lsp-keymaps)").
 
 ## Peeking without jumping (glance.nvim)
 
@@ -486,7 +486,7 @@ Plugin: **glance.nvim**. Instead of jumping away to a definition (which changes 
 | `<Space>gr` | Peek at all references. See every place in the project that uses this symbol. |
 | `<Space>gi` | Peek at implementations. See how interfaces/abstract methods are implemented. |
 
-Neovim's builtin `grn`, `gra`, `grr`, `gri`, `grt` and `gO` also work (see section 13).
+Neovim's builtin `grn`, `gra`, `grr`, `gri`, `grt` and `gO` also work (see [section 13](#13-lsp-language-server-protocol)).
 
 **When to use Glance vs `gd`**: Use Glance when you want to quickly check something and come back. Use `gd` when you want to actually navigate to the definition and work there.
 
@@ -534,10 +534,10 @@ Plugin: **lazydev.nvim**. When you edit a Lua file (for example this config), th
 | Loads | Only in Lua files (lazy `ft = "lua"`); no cost elsewhere |
 | Extra libraries (`lua/plugin_specs.lua`) | The luv types when the file mentions `vim.uv`; the nvim-lspconfig types when it mentions `lspconfig` (type help for `after/lsp/*.lua` files) |
 | Keys | None |
-| Needs | `lua_ls` attached to the buffer (see the server table above) |
+| Needs | `lua_ls` attached to the buffer (see the [server table](#the-server-table) above) |
 | Not set up | lazydev's optional nvim-cmp source for `require("...")` module names is not configured here, so module-name completion inside `require(...)` only lists modules that are already loaded in the workspace |
 
-How the results reach the menu: the names come from `lua_ls` through the normal LSP source (see section 45, "Completion sources and helpers"); it was not verified here that every lazydev-provided name shows up in the menu.
+How the results reach the menu: the names come from `lua_ls` through the normal LSP source (see [section 45](04-completion-snippets.md#45-autocompletion-in-depth-nvim-cmp), "[Completion sources and helpers](04-completion-snippets.md#completion-sources-and-helpers)"); it was not verified here that every lazydev-provided name shows up in the menu.
 
 ---
 
@@ -604,7 +604,7 @@ Folded lines show a preview: the first line of the fold + a count like `󰁂 42`
 | `<Space>K` | Preview folded lines in popup | See what's inside without unfolding |
 | `zi` | Toggle folding on/off globally | Temporarily disable all folding |
 
-See "Code folding" (section 18) for a before/after picture.
+See "[Code folding](#18-code-folding-nvim-ufo)" ([section 18](#18-code-folding-nvim-ufo)) for a before/after picture.
 
 **Workflow tip**: Press `zM` to close all folds when you open a large file. This gives you an outline view. Then use `za` to open only the sections you care about. Use `<Space>K` to peek inside folds without opening them.
 
@@ -779,7 +779,7 @@ Some filetypes have an additional `<Space>rf` runner (also `<F9>`):
 | Plugin | Keymap / Command | Description |
 | --- | --- | --- |
 | nvim-dap | (lazy-loaded) | Debug Adapter Protocol client. Java debugging auto-configured via nvim-java. |
-| nvim-gdb | `<Space>dp` | Python buffers only: start pdb on the current file (Linux/Windows only; elsewhere one warning); during the session `<Space>dc` `dn` `ds` `df` `dB` `du` `dv` step and inspect (table in section 2). `:GdbStart` (gdb) works inside the c-cpp / rust devShells |
+| nvim-gdb | `<Space>dp` | Python buffers only: start pdb on the current file (Linux/Windows only; elsewhere one warning); during the session `<Space>dc` `dn` `ds` `df` `dB` `du` `dv` step and inspect (table in [section 2](README.md#2-day-to-day-cheat-sheet)). `:GdbStart` (gdb) works inside the c-cpp / rust devShells |
 
 ---
 
@@ -791,7 +791,7 @@ Plugin: **nvim-dap**. DAP is a standardized protocol (created by Microsoft) for 
 
 **Java**: Debugging is auto-configured via nvim-java (only inside the Java devShell, where `java` is on PATH). Open a Java file, set breakpoints, and use `<Space>jtC` (debug the current test class) or `<Space>jtM` (debug the current test method).
 
-**Python**: In Python buffers `<Space>dp` starts `python -m pdb` on the current file through nvim-gdb. Only available on Linux/Windows. During the session use `<Space>dc` (continue), `dn` (next), `ds` (step), `df` (finish), `dB` (breakpoint), `du` (until) and `dv` (evaluate); the full table is in section 2 ("Python debugger keys").
+**Python**: In Python buffers `<Space>dp` starts `python -m pdb` on the current file through nvim-gdb. Only available on Linux/Windows. During the session use `<Space>dc` (continue), `dn` (next), `ds` (step), `df` (finish), `dB` (breakpoint), `du` (until) and `dv` (evaluate); the full table is in [section 2](README.md#2-day-to-day-cheat-sheet) ("[Python debugger keys](README.md#python-debugger-keys-pdb-through-nvim-gdb)").
 
 ## GDB integration (nvim-gdb)
 
@@ -828,7 +828,7 @@ The plugin's own start keys (`<Space>dd`, `dl`, `dp`, `db`, `dr`) are switched o
 | `<Ctrl-p>` / `<Ctrl-n>` | `:GdbFrameUp` / `:GdbFrameDown` | Move one stack frame up / down (plugin default) |
 | `<Space>dv` | (evaluate) | Evaluate the word under the cursor (Normal) or the selection (Visual); moved here from the plugin's `<F9>` |
 
-Two commands without a key: `:GdbCreateWatch <command>` (for example `info locals` in GDB) opens a watch window that re-runs the command at every step, and `:GdbLopenBacktrace` / `:GdbLopenBreakpoints` put the backtrace / breakpoints into the location list. The Python-only Space keys for the same actions (`<Space>dc`, `dn`, `ds`, `df`, `dB`, `du`) are in the Python guide ("Debugging with pdb"). The F-keys, `<Ctrl-p>` / `<Ctrl-n>` and the commands are the plugin's defaults from its README and help (`:help nvimgdb`). They are untested here beyond what the Python guide documents for pdb.
+Two commands without a key: `:GdbCreateWatch <command>` (for example `info locals` in GDB) opens a watch window that re-runs the command at every step, and `:GdbLopenBacktrace` / `:GdbLopenBreakpoints` put the backtrace / breakpoints into the location list. The Python-only Space keys for the same actions (`<Space>dc`, `dn`, `ds`, `df`, `dB`, `du`) are in the [Python guide ("Debugging with pdb")](languages/python.md#debugging-with-pdb-nvim-gdb). The F-keys, `<Ctrl-p>` / `<Ctrl-n>` and the commands are the plugin's defaults from its README and help (`:help nvimgdb`). They are untested here beyond what the Python guide documents for pdb.
 
 ---
 
@@ -862,7 +862,7 @@ You don't need to start any of this manually. It all happens on file open.
 
 ## Enter a language devShell from a running Neovim (`:DevEnv`)
 
-Language servers and tools come from per-language Nix devShells (see "Configured servers and what they provide" in section 44). Normally direnv loads the devShell when you `cd` into a project and you start `nvim` there. If Neovim is already running without the devShell (for example a `.java` file opened from outside its project, so `java` is not on PATH), you do not have to quit:
+Language servers and tools come from per-language Nix devShells (see "[Configured servers and what they provide](#configured-servers-and-what-they-provide)" in [section 44](#44-language-server-protocol-lsp-in-depth)). Normally direnv loads the devShell when you `cd` into a project and you start `nvim` there. If Neovim is already running without the devShell (for example a `.java` file opened from outside its project, so `java` is not on PATH), you do not have to quit:
 
 1. `:DevEnv <lang>`  Type the command and a devShell name, for example `:DevEnv java`, then `<CR>`. Press `<Tab>` after `:DevEnv ` to list the available names.
 2. Wait. The first call for a flake takes about 10 seconds and shows a progress notification (`DevEnv: evaluating the java devShell (about 10 s) ...`). Neovim stays usable meanwhile.
@@ -872,7 +872,7 @@ What it does, in order:
 
 - Runs `nix print-dev-env --json` on the flake folder, asynchronously.
 - Takes only an allowlist of variables from the result: `PATH` (prepended to the current one), `JAVA_HOME`, `CLASSPATH`, `NODE_PATH`, `XDG_DATA_DIRS`, `NIX_CFLAGS_COMPILE`, `NIX_LDFLAGS` and `JAVA_TOOL_OPTIONS` (the Lombok agent). Nothing else (not `HOME`, `SHELL`, ...) is changed.
-- Enables every language server whose programs are now on PATH (section 44) and replays the file type for open buffers, so a server attaches to the file you already have open.
+- Enables every language server whose programs are now on PATH ([section 44](#44-language-server-protocol-lsp-in-depth)) and replays the file type for open buffers, so a server attaches to the file you already have open.
 - Starts the language-specific parts: nvim-java, jdtls and spring-boot for `java`; vimtex for `latex`; typst.vim for `typst`.
 - Caches the result per flake (keyed on `flake.lock` and `flake.nix`), so the next call is instant. A cache whose Nix store paths were garbage-collected is ignored and evaluated again.
 
@@ -880,7 +880,7 @@ Things to know:
 
 - It is a command only: there is no keybinding.
 - It needs `nix` with the `nix-command` and `flakes` features on the machine.
-- The flake's shell hook does not run, so the extension links the Java devShell makes (java-debug, java-test) are not created; see section 78 for what that means.
+- The flake's shell hook does not run, so the extension links the Java devShell makes (java-debug, java-test) are not created; see [section 78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging) for what that means.
 - The environment applies to this Neovim session only. Quit and restart, and you have to run it again (or start Neovim from the devShell).
 - Opening a `.java` or `.tex` file without its tool shows a one-time hint: `java not found on PATH: run :DevEnv java to enter its devShell` (same for `latex`).
 - The folder holding the flakes is the default below. Change it with `vim.g.devenv_base` (Lua) or the `$NVIM_DEVENV_BASE` environment variable. Only sub-folders that contain a `flake.nix` are listed as devShells.
@@ -892,7 +892,7 @@ Every devShell it supports (path: `~/nix/templates/krit/dev-environments/languag
 | `c-cpp` | `~/nix/templates/krit/dev-environments/language-specific/c-cpp` | clang-tools (clangd), cmake, conan, cppcheck, doxygen, gtest, lcov, vcpkg, codespell, CLion |
 | `go` | `~/nix/templates/krit/dev-environments/language-specific/go` | go, gopls, gotools, golangci-lint |
 | `haskell` | `~/nix/templates/krit/dev-environments/language-specific/haskell` | ghc, cabal-install, haskell-language-server, ormolu |
-| `java` | `~/nix/templates/krit/dev-environments/language-specific/java` | JDK (`JAVA_HOME`), Maven, Gradle, Lombok agent, jdtls wrapper, java-debug and java-test extensions (see section 78) |
+| `java` | `~/nix/templates/krit/dev-environments/language-specific/java` | JDK (`JAVA_HOME`), Maven, Gradle, Lombok agent, jdtls wrapper, java-debug and java-test extensions (see [section 78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging)) |
 | `jupyter` | `~/nix/templates/krit/dev-environments/language-specific/jupyter` | python313, poetry, ruff, ipykernel, pip and a `.venv` virtual-environment hook |
 | `latex` | `~/nix/templates/krit/dev-environments/language-specific/latex` | texlive (scheme-full: `latex`, `latexmk`), texlab, tectonic, pandoc, zathura, latex2html, latex2mathml |
 | `nix` | `~/nix/templates/krit/dev-environments/language-specific/nix` | nixd, nixfmt, statix, nh, niv, cachix, lorri, vulnix, dhall-nix |
@@ -905,7 +905,7 @@ Every devShell it supports (path: `~/nix/templates/krit/dev-environments/languag
 | `swift` | `~/nix/templates/krit/dev-environments/language-specific/swift` | swift, sourcekit-lsp |
 | `typst` | `~/nix/templates/krit/dev-environments/language-specific/typst` | typst, tinymist, typstyle, prettypst, typstwriter, utpm, zathura |
 
-Language chapters: Java section 78, LaTeX section 80, Typst section 82.
+Language chapters: Java [section 78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging), LaTeX [section 80](languages/latex.md#80-latex-vimtex-texlab-ltex-pdf-viewer), Typst [section 82](languages/typst.md#82-typst-typstvim-tinymist-watch-and-preview).
 
 ---
 
@@ -1092,7 +1092,7 @@ Result of step 2 (tested): the one-line file `{"a":1,"b":[2,3]}` becomes seven l
 
 # 35. Java development (`nvim-java`)
 
-The Java keys work only in a Java buffer with the Java language server (jdtls) attached: open nvim inside the Java devShell (`java` on PATH) or run `:DevEnv java` (section 43). Everywhere else the same keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)". which-key groups: `<Space>j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
+The Java keys work only in a Java buffer with the Java language server (jdtls) attached: open nvim inside the Java devShell (`java` on PATH) or run `:DevEnv java` ([section 43](#43-how-the-development-toolchain-fits-together)). Everywhere else the same keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)". which-key groups: `<Space>j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
 
 ### Build & run
 
@@ -1127,7 +1127,7 @@ The Java keys work only in a Java buffer with the Java language server (jdtls) a
 | `<Space>jj` | Change JDK runtime |
 | `<Space>jd` | Configure debugger (DAP) |
 
-Worked examples of these keys are in section 78 (`languages/java.md`).
+Worked examples of these keys are in [section 78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging) ([`languages/java.md`](languages/java.md#78-java-nvim-java-jdtls-tests-debugging)).
 
 ---
 
@@ -1192,6 +1192,6 @@ DAP is configured automatically when jdtls starts. Debugging uses the nvim-dap c
 
 Only the `:JavaBuild*` and `:JavaRefactor*` commands exist after jdtls has attached; the other `:Java*` commands exist as soon as nvim-java is loaded but do nothing useful without jdtls.
 
-Worked examples of these keys are in section 78 (`languages/java.md`).
+Worked examples of these keys are in [section 78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging) ([`languages/java.md`](languages/java.md#78-java-nvim-java-jdtls-tests-debugging)).
 
 ---

@@ -3,7 +3,7 @@
 
 # 14. Autocompletion (`nvim-cmp`)
 
-Plugin: nvim-cmp. Sources: LSP, UltiSnips snippets, file paths, buffer words; in LaTeX files also omni (BibTeX/citations); in the `/` search line buffer words, in the `:` command line paths and command names. Each source is its own small plugin, listed in section 45 ("Completion sources and helpers").
+Plugin: nvim-cmp. Sources: LSP, UltiSnips snippets, file paths, buffer words; in LaTeX files also omni (BibTeX/citations); in the `/` search line buffer words, in the `:` command line paths and command names. Each source is its own small plugin, listed in [section 45 ("Completion sources and helpers")](#completion-sources-and-helpers).
 
 | Keymap | Description |
 | --- | --- |
@@ -30,8 +30,8 @@ Plugin: UltiSnips + vim-snippets. Custom snippets in `my_snippets/` directory.
 | --- | --- |
 | `<Ctrl-j>` | Expand snippet / jump to next placeholder |
 | `<Ctrl-k>` | Jump to previous placeholder |
-| `<Space>fs` | Open the snippet gallery: fuzzy-search only your own snippets and insert one (normal mode); see section 52 |
-| `<Alt-s>` | Same gallery from insert mode; inserts at the cursor (see section 52) |
+| `<Space>fs` | Open the snippet gallery: fuzzy-search only your own snippets and insert one (normal mode); see [section 52](#52-snippets-for-developers-ultisnips) |
+| `<Alt-s>` | Same gallery from insert mode; inserts at the cursor (see [section 52](#52-snippets-for-developers-ultisnips)) |
 
 Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `snippets`, `tex`, `vim`
 
@@ -43,13 +43,13 @@ for (int i = start; i < end; i++) {
 }
 ```
 
-Type `index` (it replaces `i` everywhere it appears), then `<Ctrl-j>` moves to the next placeholder (`start`), the next `<Ctrl-j>` to `end`, then to `// code`. The full walk-through is in section 52 (How to use snippets).
+Type `index` (it replaces `i` everywhere it appears), then `<Ctrl-j>` moves to the next placeholder (`start`), the next `<Ctrl-j>` to `end`, then to `// code`. The full walk-through is in [section 52 (How to use snippets)](#how-to-use-snippets).
 
 ### Java snippets
 
 Source: `my_snippets/java.snippets` (71 snippets). Each section below follows the same grouping as the snippet file.
 
-The tables below are the quick reference. For each snippet's expanded code, the meaning of the placeholders and examples, see section 78 (Java chapter, `languages/java.md`, section 9).
+The tables below are the quick reference. For each snippet's expanded code, the meaning of the placeholders and examples, see [section 78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging) (Java chapter, [`languages/java.md`](languages/java.md#78-java-nvim-java-jdtls-tests-debugging), [section 9](languages/java.md#9-snippets)).
 
 Conventions (the same in every Java snippet):
 
@@ -181,34 +181,34 @@ Every row gives the trigger and its description as the completion menu shows it.
 | all | `ltx` (regular expression `(?<!\w)ltx`) | Type ltx (not right after a word character) to insert the word LaTeX; works in every filetype | this section |
 | all | `arw` | ASCII right arrow (-->) followed by text | this section |
 | snippets | `snip` | Template for a new snippet definition (copied from vim-snippets; start of line) | this section |
-| cpp | `bare` | Barebone C++ program: common includes, using std:: declarations and main | `languages/cpp.md` |
-| cpp | `icd` | #include directive (start of line) | `languages/cpp.md` |
-| cpp | `incset` `incmap` `incqueue` `incstr` `incvec` `incstack` | Include the header and add the using line, for example "Include <set> and add using std::set (start of line)" | `languages/cpp.md` |
-| cpp | `vec` `map` `umap` `set` `uset` `queue` `stack` | std container declaration, for example "std::vector declaration (needs using std::vector: bare or incvec)"; `map` also "overrides the vim-snippets map" | `languages/cpp.md` |
-| cpp | `plist` | print a container as [a, b, c] (needs <iostream>, <string>, <iterator>) | `languages/cpp.md` |
-| cpp | `pmat` | print a vector of vectors, one [a, b, c] row per line (needs <iostream>, <vector>, <string>, <iterator>) | `languages/cpp.md` |
-| cpp | `pqueue` | print a priority_queue or stack by popping a copy (uses top(); std::queue has front() instead) | `languages/cpp.md` |
-| cpp | `cout` | Print a labelled variable with std::cout (needs #include <iostream>) | `languages/cpp.md` |
-| cpp | `random` | Function returning a vector of random ints in [low, high] (needs #include <random> and <vector>) | `languages/cpp.md` |
-| cpp | `sol` | LeetCode style: create a Solution object (needs a class Solution) | `languages/cpp.md` |
-| cpp | `for` `if` `ifelse` | for loop with init, condition and step (overrides the vim-snippets for); if statement; if-else statement | `languages/cpp.md` |
-| python | `print` | Print a text with the value of a variable (f-string: the variable name goes inside the braces) | `languages/python.md` |
-| python | `impa` `main` `sol` | Import a module under an alias (start of line); Main function plus the if __name__ == "__main__" guard (start of line); LeetCode style: create a Solution object (needs a class Solution; start of line) | `languages/python.md` |
-| tex | `use` | \usepackage line: type the package name (start of line) | `languages/latex.md` |
-| tex | `eqa` | Numbered equation environment with a label, referenced with \ref{label} (start of line) | `languages/latex.md` |
-| vim | `fun` | Vimscript function declared with abort (args are comma separated) | `languages/vim.md` |
-| vim | `aug` | Autocommand group that clears itself first (EVENT: BufWritePost, FileType, ...; PATTERN: *.vim, ...; start of line) | `languages/vim.md` |
-| nix | `homepackages` `systempackages` | home-manager package list (home.packages; pkgs must be in scope); NixOS system package list (environment.systemPackages; pkgs must be in scope) | `languages/nix.md` |
-| nix | `excludepackages` | Exclude default desktop packages on NixOS (desktop: gnome, plasma6, cosmic, cinnamon, budgie, enlightenment, lxqt, mate, pantheon, xfce) | `languages/nix.md` |
-| nix | `delibmodule` `delibalways` | delib module with an enable switch (target: nixos, darwin, home, myconfig; mode: ifEnabled, ifDisabled); delib module applied unconditionally, no enable switch (target: nixos, darwin, home, myconfig) | `languages/nix.md` |
-| nix | `let` `mkshell` `mkderiv` | let ... in block; mkShell development environment (packages = tools, shellHook = commands run on entry); stdenv.mkDerivation (buildInputs = libraries, nativeBuildInputs = build tools) | `languages/nix.md` |
-| nix | `flake` `homefile` `fetchgithub` `systemd` | Basic flake.nix boilerplate; home.file that generates a text file, path relative to $HOME; fetchFromGitHub boilerplate (hash: use pkgs.lib.fakeHash first, then paste the hash from the error); NixOS systemd service | `languages/nix.md` |
-| markdown | `k1` / `kbd`, `k2`, `k3` | HTML <kbd> tag for one key (type k1 or kbd); two keys / three keys joined by + as <kbd> tags | `languages/markdown.md` |
-| markdown | `h1` ... `h6` | Heading of level 1 to 6: type h1 ... h6 at the start of a line | `languages/markdown.md` |
-| markdown | `meta`, `more`, `td` | YAML front matter with title, current date and time, tags and categories (start of line); Blog read-more marker; tl;dr line (start of line) | `languages/markdown.md` |
-| markdown | `img`, `link`, `detail` | Centered image / Markdown link / Collapsible details block; each overrides the vim-snippets entry of the same trigger | `languages/markdown.md` |
-| markdown | `rlink`, `font`, `yh` | Markdown reference link [text][label]; HTML font tag with a color (obsolete in HTML5); Corner brackets for quoting (CJK style) | `languages/markdown.md` |
-| markdown | `info` `warn` `error` `success` | Message box (embeds its own style block; needs network for the Font Awesome 4.2.0 icons from a remote CDN) | `languages/markdown.md` |
+| cpp | `bare` | Barebone C++ program: common includes, using std:: declarations and main | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| cpp | `icd` | #include directive (start of line) | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| cpp | `incset` `incmap` `incqueue` `incstr` `incvec` `incstack` | Include the header and add the using line, for example "Include <set> and add using std::set (start of line)" | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| cpp | `vec` `map` `umap` `set` `uset` `queue` `stack` | std container declaration, for example "std::vector declaration (needs using std::vector: bare or incvec)"; `map` also "overrides the vim-snippets map" | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| cpp | `plist` | print a container as [a, b, c] (needs <iostream>, <string>, <iterator>) | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| cpp | `pmat` | print a vector of vectors, one [a, b, c] row per line (needs <iostream>, <vector>, <string>, <iterator>) | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| cpp | `pqueue` | print a priority_queue or stack by popping a copy (uses top(); std::queue has front() instead) | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| cpp | `cout` | Print a labelled variable with std::cout (needs #include <iostream>) | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| cpp | `random` | Function returning a vector of random ints in [low, high] (needs #include <random> and <vector>) | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| cpp | `sol` | LeetCode style: create a Solution object (needs a class Solution) | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| cpp | `for` `if` `ifelse` | for loop with init, condition and step (overrides the vim-snippets for); if statement; if-else statement | [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run) |
+| python | `print` | Print a text with the value of a variable (f-string: the variable name goes inside the braces) | [`languages/python.md`](languages/python.md#snippets) |
+| python | `impa` `main` `sol` | Import a module under an alias (start of line); Main function plus the if __name__ == "__main__" guard (start of line); LeetCode style: create a Solution object (needs a class Solution; start of line) | [`languages/python.md`](languages/python.md#snippets) |
+| tex | `use` | \usepackage line: type the package name (start of line) | [`languages/latex.md`](languages/latex.md#snippets) |
+| tex | `eqa` | Numbered equation environment with a label, referenced with \ref{label} (start of line) | [`languages/latex.md`](languages/latex.md#snippets) |
+| vim | `fun` | Vimscript function declared with abort (args are comma separated) | [`languages/vim.md`](languages/vim.md#85-vimscript-snippets-source-and-settings) |
+| vim | `aug` | Autocommand group that clears itself first (EVENT: BufWritePost, FileType, ...; PATTERN: *.vim, ...; start of line) | [`languages/vim.md`](languages/vim.md#85-vimscript-snippets-source-and-settings) |
+| nix | `homepackages` `systempackages` | home-manager package list (home.packages; pkgs must be in scope); NixOS system package list (environment.systemPackages; pkgs must be in scope) | [`languages/nix.md`](languages/nix.md#86-nix-snippets-and-delib-modules) |
+| nix | `excludepackages` | Exclude default desktop packages on NixOS (desktop: gnome, plasma6, cosmic, cinnamon, budgie, enlightenment, lxqt, mate, pantheon, xfce) | [`languages/nix.md`](languages/nix.md#86-nix-snippets-and-delib-modules) |
+| nix | `delibmodule` `delibalways` | delib module with an enable switch (target: nixos, darwin, home, myconfig; mode: ifEnabled, ifDisabled); delib module applied unconditionally, no enable switch (target: nixos, darwin, home, myconfig) | [`languages/nix.md`](languages/nix.md#86-nix-snippets-and-delib-modules) |
+| nix | `let` `mkshell` `mkderiv` | let ... in block; mkShell development environment (packages = tools, shellHook = commands run on entry); stdenv.mkDerivation (buildInputs = libraries, nativeBuildInputs = build tools) | [`languages/nix.md`](languages/nix.md#86-nix-snippets-and-delib-modules) |
+| nix | `flake` `homefile` `fetchgithub` `systemd` | Basic flake.nix boilerplate; home.file that generates a text file, path relative to $HOME; fetchFromGitHub boilerplate (hash: use pkgs.lib.fakeHash first, then paste the hash from the error); NixOS systemd service | [`languages/nix.md`](languages/nix.md#86-nix-snippets-and-delib-modules) |
+| markdown | `k1` / `kbd`, `k2`, `k3` | HTML <kbd> tag for one key (type k1 or kbd); two keys / three keys joined by + as <kbd> tags | [`languages/markdown.md`](languages/markdown.md#snippets) |
+| markdown | `h1` ... `h6` | Heading of level 1 to 6: type h1 ... h6 at the start of a line | [`languages/markdown.md`](languages/markdown.md#snippets) |
+| markdown | `meta`, `more`, `td` | YAML front matter with title, current date and time, tags and categories (start of line); Blog read-more marker; tl;dr line (start of line) | [`languages/markdown.md`](languages/markdown.md#snippets) |
+| markdown | `img`, `link`, `detail` | Centered image / Markdown link / Collapsible details block; each overrides the vim-snippets entry of the same trigger | [`languages/markdown.md`](languages/markdown.md#snippets) |
+| markdown | `rlink`, `font`, `yh` | Markdown reference link [text][label]; HTML font tag with a color (obsolete in HTML5); Corner brackets for quoting (CJK style) | [`languages/markdown.md`](languages/markdown.md#snippets) |
+| markdown | `info` `warn` `error` `success` | Message box (embeds its own style block; needs network for the Font Awesome 4.2.0 icons from a remote CDN) | [`languages/markdown.md`](languages/markdown.md#snippets) |
 
 **`ltx`** replaces the typed `ltx` with the word `LaTeX`. It does not fire when `ltx` follows a word character, so words that merely contain these letters are left alone. **`arw`** inserts `--> ` (two hyphens and a greater-than sign, plain ASCII, not a Unicode arrow) and selects the placeholder `text`, so you can type the text right after it. **`snip`** (start of line) writes a template for a new snippet definition in a `.snippets` file: the keyword `snippet`, then the placeholders `Tab_trigger`, `Description` and the options `b`, then a body line and `endsnippet`.
 
@@ -284,18 +284,18 @@ nvim-cmp itself only draws the menu. What it offers comes from small "source" pl
 | Plugin | Source name | What it offers | Where it is active |
 | --- | --- | --- | --- |
 | `cmp-nvim-lsp` | `nvim_lsp` | Names from the language server (functions, variables, types) | Normal Insert-mode completion; first in the list (in buffers without an attached server it offers nothing) |
-| `cmp-nvim-ultisnips` | `ultisnips` | Snippet triggers from UltiSnips (see "Snippets for Developers" below) | Insert-mode completion, second in the list |
+| `cmp-nvim-ultisnips` | `ultisnips` | Snippet triggers from UltiSnips (see "[Snippets for Developers](#52-snippets-for-developers-ultisnips)" below) | Insert-mode completion, second in the list |
 | `cmp-path` | `path` | File and folder paths | Insert-mode completion; also first in the `:` command line |
 | `cmp-buffer` | `buffer` | Words already in the current buffer, from 2 typed characters | Insert-mode completion (last in the list); the only source in the `/` search line |
 | `cmp-omni` | `omni` | Whatever the filetype's omni-completion function offers; in LaTeX files that is vimtex (commands, labels, citations) | Only in `tex` files, where it is listed first |
 | `cmp-cmdline` | `cmdline` | Ex command names and their arguments | Only in the `:` command line |
 
-How the command line behaves: in `/` the menu offers buffer words. In `:` the `path` source is asked first and the `cmdline` source is used when it has nothing (nvim-cmp's group rule), so a path-like word completes as a path and an ordinary word as a command or argument. `<Tab>` / `<S-Tab>` open and move through the menu there (see the table in section 14).
+How the command line behaves: in `/` the menu offers buffer words. In `:` the `path` source is asked first and the `cmdline` source is used when it has nothing (nvim-cmp's group rule), so a path-like word completes as a path and an ordinary word as a command or argument. `<Tab>` / `<S-Tab>` open and move through the menu there (see the table in [section 14](#14-autocompletion-nvim-cmp)).
 
 Two helpers are not sources:
 
 - `colorful-menu.nvim` colours each completion label the way code is coloured (name, argument list, type) using the language server's own label; the extra text (arguments, types) is drawn in the comment colour (settings in `lua/config/colorful_menu.lua`), and labels longer than 60 columns are cut. It works automatically, no keys.
-- `vim-snippets` is a ready-made snippet collection loaded by UltiSnips next to the personal `my_snippets/` files (see "Ready-Made Snippets" in the snippets section below).
+- `vim-snippets` is a ready-made snippet collection loaded by UltiSnips next to the personal `my_snippets/` files (see "[Ready-Made Snippets](#ready-made-snippets-vim-snippets)" in the snippets section below).
 
 Libraries and dependencies of these plugins (for example `mini.icons`, which draws the kind icons) have no keys of their own.
 
@@ -309,7 +309,7 @@ Plugin: **UltiSnips** + **vim-snippets**. Snippets are templates that expand int
 
 ## Ready-made snippets (`vim-snippets`)
 
-Besides the personal files in `my_snippets/`, UltiSnips also loads the `vim-snippets` collection: a library of common snippets for many languages that ships its own `UltiSnips/` folder. The plugin is installed as a dependency of UltiSnips and has no setup, keys or commands of its own, and the config lists the snippet folders it searches as `UltiSnips` and `my_snippets`. Its entries appear in the completion menu next to the personal ones (through the `ultisnips` source in section 45, "Completion sources and helpers"). To see what a language offers, open a file of that type, type the first letters of a common word such as `def` or `class` and look at the menu. The exact trigger list of the collection is not reproduced in this guide.
+Besides the personal files in `my_snippets/`, UltiSnips also loads the `vim-snippets` collection: a library of common snippets for many languages that ships its own `UltiSnips/` folder. The plugin is installed as a dependency of UltiSnips and has no setup, keys or commands of its own, and the config lists the snippet folders it searches as `UltiSnips` and `my_snippets`. Its entries appear in the completion menu next to the personal ones (through the `ultisnips` source in [section 45, "Completion sources and helpers"](#completion-sources-and-helpers)). To see what a language offers, open a file of that type, type the first letters of a common word such as `def` or `class` and look at the menu. The exact trigger list of the collection is not reproduced in this guide.
 
 ## How to use snippets
 
@@ -339,7 +339,7 @@ The completion menu also lists the hundreds of built-in `vim-snippets` entries. 
 
 1. Press `<Space>fs` in normal mode, or `<Alt-s>` in insert mode
 2. A floating fzf-lua picker opens: each line is `trigger  description  [file]`, sorted by trigger; the snippet text is shown in the preview on the right
-3. Type to filter, move with `<Ctrl-n>` / `<Ctrl-p>` (see section 12, "Moving Inside Any Picker")
+3. Type to filter, move with `<Ctrl-n>` / `<Ctrl-p>` (see [section 12](05-search-and-files.md#12-fuzzy-finding--project-wide-search-fzf-lua), "[Moving Inside Any Picker](05-search-and-files.md#moving-inside-any-picker-lists-with-a-search-bar)")
 4. Press `<Enter>` to insert the snippet: from insert mode it lands exactly at the cursor, from normal mode right after the character under the cursor (like `a`); the usual placeholders work, jump with `<Ctrl-j>` / `<Ctrl-k>`
 5. Press `<Esc>` to cancel: nothing is inserted (from insert mode you return to insert mode)
 
@@ -356,14 +356,14 @@ Custom snippets live in the `my_snippets/` directory. Each file targets a specif
 
 | File | Language | Notable snippets |
 | --- | --- | --- |
-| `all.snippets` | All filetypes | `ltx` (the word LaTeX), `arw` (ASCII `-->` then text); see section 15, Other snippets |
-| `java.snippets` | Java | 71 snippets: input, arrays and collections, control flow, methods, classes, exceptions, file I/O, JavaFX (full list in section 15, Java snippets) |
-| `python.snippets` | Python | `print` (f-string), `impa`, `main`, `sol` (chapter `languages/python.md`, Snippets) |
-| `cpp.snippets` | C++ | `bare` program, includes, container declarations, print helpers, `random`, control flow (chapter `languages/cpp.md`, section 84) |
-| `nix.snippets` | Nix | 12 snippets: package lists, `delibmodule` / `delibalways`, `mkshell`, `mkderiv`, `flake`, `fetchgithub`, `systemd` (chapter `languages/nix.md`, section 86) |
-| `tex.snippets` | LaTeX | `use` (`\usepackage`), `eqa` (equation with label) (chapter `languages/latex.md`, Snippets) |
-| `markdown.snippets` | Markdown | 17 snippets: keys, headings, links, images, front matter, message boxes (chapter `languages/markdown.md`, Snippets) |
-| `vim.snippets` | Vimscript | `fun` (function), `aug` (augroup) (chapter `languages/vim.md`, section 85) |
+| `all.snippets` | All filetypes | `ltx` (the word LaTeX), `arw` (ASCII `-->` then text); see [section 15, Other snippets](#other-snippets) |
+| `java.snippets` | Java | 71 snippets: input, arrays and collections, control flow, methods, classes, exceptions, file I/O, JavaFX (full list in [section 15, Java snippets](#java-snippets)) |
+| `python.snippets` | Python | `print` (f-string), `impa`, `main`, `sol` (chapter [`languages/python.md`](languages/python.md#snippets), Snippets) |
+| `cpp.snippets` | C++ | `bare` program, includes, container declarations, print helpers, `random`, control flow (chapter [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run), [section 84](languages/cpp.md#84-c-snippets-compile-and-run)) |
+| `nix.snippets` | Nix | 12 snippets: package lists, `delibmodule` / `delibalways`, `mkshell`, `mkderiv`, `flake`, `fetchgithub`, `systemd` (chapter [`languages/nix.md`](languages/nix.md#86-nix-snippets-and-delib-modules), [section 86](languages/nix.md#86-nix-snippets-and-delib-modules)) |
+| `tex.snippets` | LaTeX | `use` (`\usepackage`), `eqa` (equation with label) (chapter [`languages/latex.md`](languages/latex.md#snippets), Snippets) |
+| `markdown.snippets` | Markdown | 17 snippets: keys, headings, links, images, front matter, message boxes (chapter [`languages/markdown.md`](languages/markdown.md#snippets), Snippets) |
+| `vim.snippets` | Vimscript | `fun` (function), `aug` (augroup) (chapter [`languages/vim.md`](languages/vim.md#85-vimscript-snippets-source-and-settings), [section 85](languages/vim.md#85-vimscript-snippets-source-and-settings)) |
 | `snippets.snippets` | Snippet files | `snip`: template for a new snippet definition |
 
 ## Creating your own snippets

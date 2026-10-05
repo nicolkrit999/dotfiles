@@ -108,7 +108,7 @@ start                 <Ctrl-w>L on A          <Ctrl-w>J on A          <Ctrl-w>x 
 
 ## Buffer tabs (the top line, bufferline.nvim)
 
-The top line shows one tab per open buffer (bufferline). Click a tab to switch to it. The `x` at the right of a tab closes it; while that buffer has unsaved changes the `x` is replaced by a `●`, and clicking the `●` closes it too. For a changed file Vim then asks `Save changes to "name"? [Y]es, (N)o, (C)ancel`: Yes saves and closes, No discards and closes, Cancel keeps the buffer and shows the warning "unsaved changes, buffer kept". A terminal whose program is still running is kept ("running terminal, buffer kept"). A right-click opens Neovim's own menu (see the Mouse table in the cheat sheet).
+The top line shows one tab per open buffer (bufferline). Click a tab to switch to it. The `x` at the right of a tab closes it; while that buffer has unsaved changes the `x` is replaced by a `●`, and clicking the `●` closes it too. For a changed file Vim then asks `Save changes to "name"? [Y]es, (N)o, (C)ancel`: Yes saves and closes, No discards and closes, Cancel keeps the buffer and shows the warning "unsaved changes, buffer kept". A terminal whose program is still running is kept ("running terminal, buffer kept"). A right-click opens Neovim's own menu (see the [Mouse table](README.md#mouse) in the cheat sheet).
 
 | Key | Effect |
 | --- | --- |
@@ -134,7 +134,7 @@ The tabs are sorted by buffer number, which is the order in which the files were
 
 Example (tested): you opened `hello.java` and then `calculator.java`, so the tabs read `hello.java | calculator.java` and `calculator.java` is the current buffer. `:BufferLineMovePrev` makes them `calculator.java | hello.java`; `:BufferLineMoveNext` puts them back. The new order stays while you switch between the buffers (tested within one Neovim session).
 
-This only changes the order of the tabs. If the two files are shown side by side in two split windows and you want to swap which one is on the left, that is a window operation: `<Ctrl-w>x` (see "Moving windows around" above); tested: with `hello.java` on the left and `calculator.java` on the right, `<Ctrl-w>x` gives `calculator.java | hello.java`.
+This only changes the order of the tabs. If the two files are shown side by side in two split windows and you want to swap which one is on the left, that is a window operation: `<Ctrl-w>x` (see "[Moving windows around](#moving-windows-around)" above); tested: with `hello.java` on the left and `calculator.java` on the right, `<Ctrl-w>x` gives `calculator.java | hello.java`.
 
 ## Closing windows
 
@@ -156,7 +156,7 @@ This only changes the order of the tabs. If the two files are shown side by side
 | `<Space>bp` | **Pick** a buffer: each open buffer shows a letter, press it to switch |
 | `\d` | Close/delete the current buffer (window stays open, shows previous buffer). On the last buffer an empty buffer is left. A named file with changes is saved first by auto-save (BufLeave); a buffer auto-save does not save (unnamed, read-only, Typst/LaTeX) is not deleted: you land in the previous buffer and the unsaved one stays loaded. On the only, unnamed buffer with typed text, Vim's confirm dialog "Save changes?" appears (the unsaved buffer is shown for a moment while it asks); your answer decides whether it is closed (tested in a real terminal). |
 | `\D` | Close all other buffers, but **keep** buffers with unsaved changes and terminals that are still running (one message "kept N buffer(s) (unsaved or running terminal)") |
-| `<Ctrl-^>` | Switch to the **alternate buffer**: the buffer you were in before this one. Press it again to come back, so you can flip between two files. It is the same as `:b#` or `:e #`. On a US keyboard `^` is Shift-6, so the keys are Ctrl-Shift-6; many terminals cannot send that, which is why Neovide gets the plain `<Ctrl-6>` as well (see section 77) |
+| `<Ctrl-^>` | Switch to the **alternate buffer**: the buffer you were in before this one. Press it again to come back, so you can flip between two files. It is the same as `:b#` or `:e #`. On a US keyboard `^` is Shift-6, so the keys are Ctrl-Shift-6; many terminals cannot send that, which is why Neovide gets the plain `<Ctrl-6>` as well (see [section 77](10-various.md#77-neovide-graphical-neovim)) |
 | `:ls` or `:buffers` | List all open buffers |
 | `:b <name>` | Switch to a buffer by (partial) name |
 | `:b 3` | Switch to buffer number 3 |
@@ -201,7 +201,7 @@ The terminal automatically starts in insert mode (you can type immediately) and 
 
 | Keymap | Context | Description |
 | --- | --- | --- |
-| `<Esc>` | In terminal | **Exit terminal mode** and enter Normal mode. Now you can navigate away from the terminal window using `<Ctrl-w>h/j/k/l` or arrow keys. Exception: in the Claude Code panel `<Esc>` goes to Claude; use `<Ctrl-\><Ctrl-n>` there (see section 9). |
+| `<Esc>` | In terminal | **Exit terminal mode** and enter Normal mode. Now you can navigate away from the terminal window using `<Ctrl-w>h/j/k/l` or arrow keys. Exception: in the Claude Code panel `<Esc>` goes to Claude; use `<Ctrl-\><Ctrl-n>` there (see [section 9](09-ai-and-writing.md#9-ai-assistant-window-claude-code-claude-codenvim)). |
 | `i` or `a` | In terminal (Normal mode) | Re-enter terminal mode (start typing commands again) |
 | `<Ctrl-w>h/j/k/l` | In terminal (Normal mode) | Move to another window |
 | `<Left>/<Right>/<Up>/<Down>` | In terminal (Normal mode) | Move to another window (arrow key shortcuts) |
@@ -278,9 +278,9 @@ Example (tested in a git repo, the cursor in the first line of a Lua file with o
 | Feature | Description |
 | --- | --- |
 | **which-key.nvim** | Press `<Space>` and wait: a popup shows all available leader keybindings |
-| **Dashboard** | Start screen for a bare `nvim` (no file, directory or stdin); menu and keys in "Dashboard (Start Screen)" below |
+| **Dashboard** | Start screen for a bare `nvim` (no file, directory or stdin); menu and keys in "[Dashboard (Start Screen)](#dashboard-start-screen-dashboard-nvim)" below |
 | **nvim-notify** | Animated notification popups (fade + slide, 1500ms) |
-| **Colorschemes** | On Nix systems the base16 theme named by `NVIM_BASE16_THEME` (fallback Catppuccin Mocha); on other systems one of 19 themes chosen at random at each start. UI colours (yank flash, hop keys, notifications, float borders) follow the active theme. Details: "Colorschemes" below |
+| **Colorschemes** | On Nix systems the base16 theme named by `NVIM_BASE16_THEME` (fallback Catppuccin Mocha); on other systems one of 19 themes chosen at random at each start. UI colours (yank flash, hop keys, notifications, float borders) follow the active theme. Details: "[Colorschemes](#colorschemes)" below |
 | **dropbar.nvim** | Breadcrumb bar at top showing file > class > function |
 | **nvim-colorizer** | Color codes (hex, rgb) are highlighted with their actual color; plain color words such as `red` are not |
 | **mini.indentscope** | Visual `▏` guide for current indent scope (loads right after the first screen; `ii`/`ai` exist from then on) |
@@ -299,7 +299,7 @@ Plugin: **dropbar.nvim**. A line at the top of a window shows the path to the co
 | Click a part of the bar with the mouse | Opens a menu of the entries at that level (for example the other functions of the class); `<CR>` or a click on an entry jumps there (plugin default) |
 | In that menu: `q` or `<Esc>` | Close the menu (plugin default) |
 
-For a keyboard-driven view of the same information use the symbol outline (`<Space>t`, "Symbol Outline" in the navigation chapter).
+For a keyboard-driven view of the same information use the symbol outline (`<Space>t`, "[Symbol Outline](02-navigation.md#37-symbol-outline-aerialnvim)" in the navigation chapter).
 
 ## LSP progress messages (fidget.nvim)
 
@@ -360,7 +360,7 @@ The UI colours of this config (yank flash, cursor and float borders, hop hint ke
 
 The "other names" are the colorscheme files found in the installed plugin folders, so they depend on the plugin version.
 
-Not in the random list: catppuccin (`catppuccin`, `catppuccin-mocha`, `-macchiato`, `-frappe`, `-latte`) and nvim-base16 (many `base16-<name>` themes; the one used on Nix). lush.nvim is only a library that arctic needs; it provides no colorscheme (see "Libraries and dependencies" in "39. Other plugins" in `10-various.md`).
+Not in the random list: catppuccin (`catppuccin`, `catppuccin-mocha`, `-macchiato`, `-frappe`, `-latte`) and nvim-base16 (many `base16-<name>` themes; the one used on Nix). lush.nvim is only a library that arctic needs; it provides no colorscheme (see "[Libraries and dependencies](10-various.md#libraries-and-dependencies)" in "[39. Other plugins](10-various.md#39-other-plugins)" in `10-various.md`).
 
 ## Line number column (`statuscol.nvim`)
 
@@ -369,7 +369,7 @@ The column at the left of every window is drawn by statuscol.nvim as one column 
 | Part | What it shows |
 | --- | --- |
 | Signs | The sign column is one cell wide (`signcolumn=yes:1`). The config defines signs for git changes (gitsigns) and for diagnostics (error, warning, info, hint glyphs) |
-| Number | The line number; `number` and `relativenumber` are both on (see "Automatic behaviors" for which window gets relative numbers). `relculright` is off, so the number of the cursor line is not right-aligned |
+| Number | The line number; `number` and `relativenumber` are both on (see "[Automatic behaviors](10-various.md#42-automatic-behaviors)" for which window gets relative numbers). `relculright` is off, so the number of the cursor line is not right-aligned |
 | Folds | The fold markers; fold levels deeper than 3 show a blank instead |
 
 Example (tested in a git repository, the cursor in line 1 of a file with no diagnostics; compared with the last commit, line 3 was changed, one line below it was deleted and two lines were added at the end; the cursor line shows its absolute number, the other lines their distance from the cursor):
@@ -388,7 +388,7 @@ Example (tested in a git repository, the cursor in line 1 of a file with no diag
 
 The sign column is one cell wide: when a line also has a diagnostic (for example a lua_ls hint such as "unused local"), the diagnostic sign is drawn instead of the git sign.
 
-The fold keys are in "Code folding (`nvim-ufo`)".
+The fold keys are in "[Code folding (`nvim-ufo`)](07-code.md#18-code-folding-nvim-ufo)".
 
 ## Icons and UI libraries
 
@@ -408,12 +408,12 @@ Plugin: **snacks.nvim**. Loaded at startup; three of its parts are enabled, with
 | Part | What it does here |
 | --- | --- |
 | input | Replaces `vim.ui.input`: questions that ask for text appear as a small popup at the cursor with a darkened backdrop |
-| picker | Replaces `vim.ui.select` (the snacks picker option `ui_select` is on by default and the config does not turn it off), so selection lists such as the branch menu or code actions are filterable pickers. The keys inside them are in "Moving Inside Any Picker" (`05-search-and-files.md`) |
+| picker | Replaces `vim.ui.select` (the snacks picker option `ui_select` is on by default and the config does not turn it off), so selection lists such as the branch menu or code actions are filterable pickers. The keys inside them are in "[Moving Inside Any Picker](05-search-and-files.md#moving-inside-any-picker-lists-with-a-search-bar)" (`05-search-and-files.md`) |
 | bigfile | A file over 1.5 MB, or one whose lines average more than 5000 characters, gets the filetype `bigfile`: no Treesitter and no filetype keys. The language server of the real filetype starts a little later, without semantic tokens or completion. `:lsp stop` drops it; `:set ft=<language>` (for example `:set ft=json`) returns to full mode |
 
 ## Dashboard (start screen, dashboard-nvim)
 
-The dashboard opens for a bare `nvim` (no file, no directory, no stdin) or with `:Dashboard`. `<Enter>` runs the item under the cursor. These single-letter keys work only inside the dashboard (the items that show `[<Leader> ...]` on the right are the global keys, they work everywhere, see "Help keys" below):
+The dashboard opens for a bare `nvim` (no file, no directory, no stdin) or with `:Dashboard`. `<Enter>` runs the item under the cursor. These single-letter keys work only inside the dashboard (the items that show `[<Leader> ...]` on the right are the global keys, they work everywhere, see "[Help keys](#help-keys-the-user-guide-and-claude-any-buffer-and-the-dashboard)" below):
 
 | Key | Item |
 | --- | --- |

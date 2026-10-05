@@ -3,19 +3,19 @@
 
 # 86. Nix (snippets and delib modules)
 
-This chapter covers the custom Nix snippets (file `my_snippets/nix.snippets`, 12 snippets) and the few things the config does for `.nix` files. Only what is stated in "What you get" has been checked in the config. The delib explanation below comes from the session that wrote the snippets, which checked it against the denix source (`lib/configurations/module.nix`) and the NixOS and home-manager option search; it is not re-checked here.
+This chapter covers the custom Nix snippets (file `my_snippets/nix.snippets`, 12 snippets) and the few things the config does for `.nix` files. Only what is stated in "[What you get](#what-you-get)" has been checked in the config. The delib explanation below comes from the session that wrote the snippets, which checked it against the denix source (`lib/configurations/module.nix`) and the NixOS and home-manager option search; it is not re-checked here.
 
 ## What you get
 
 | Feature | What it does | Needs |
 | --- | --- | --- |
-| **nixd** (language server) | The main language server of `nix` buffers: diagnostics, completion, hover, go to definition (section 44). Started with `--log=error` | `nixd` on PATH (section 44; the nix devShell, section 43, has it) |
+| **nixd** (language server) | The main language server of `nix` buffers: diagnostics, completion, hover, go to definition ([section 44](../07-code.md#44-language-server-protocol-lsp-in-depth)). Started with `--log=error` | `nixd` on PATH ([section 44](../07-code.md#44-language-server-protocol-lsp-in-depth); the nix devShell, [section 43](../07-code.md#43-how-the-development-toolchain-fits-together), has it) |
 | **Format file** (`<Space>fm`) | Runs the LSP formatter asynchronously (`vim.lsp.buf.format`). The formatter command set for nixd is `nixpkgs-fmt` | `nixd` attached and `nixpkgs-fmt` on PATH |
-| **Word highlight** | In `.nix` files only the identical word is highlighted (text matching or Tree-sitter), because nixd would mark every package of a `with pkgs; [ ... ]` list (section 3, "Word references") | Nothing |
+| **Word highlight** | In `.nix` files only the identical word is highlighted (text matching or Tree-sitter), because nixd would mark every package of a `with pkgs; [ ... ]` list ([section 3](../02-navigation.md#3-core-navigation-moving-without-the-mouse), "[Word references](../02-navigation.md#word-references-vim-illuminate)") | Nothing |
 | **Comments** | The smart comment plugin knows Nix: `#` line comments, `/* */` blocks and `'' ''` strings | Nothing |
-| **Line-length marker** | The coloured column marker sits at column 100 for Nix (section 41) | Nothing |
-| **Tree-sitter** | Grammars on Nix systems come from the nix store (section 21, section 46) | Nothing extra |
-| **Snippets** | See Snippets below | Nothing |
+| **Line-length marker** | The coloured column marker sits at column 100 for Nix ([section 41](../10-various.md#41-filetype-specific-settings)) | Nothing |
+| **Tree-sitter** | Grammars on Nix systems come from the nix store ([section 21](../07-code.md#21-treesitter--text-objects), [section 46](../07-code.md#46-treesitter-in-depth-nvim-treesitter)) | Nothing extra |
+| **Snippets** | See [Snippets](#snippets) below | Nothing |
 
 Not stated here because the config does not show it: a Nix filetype plugin under `after/ftplugin` (there is none), any Nix-specific key, and any use of `nixfmt` or `statix` by the config (a search of `lua/`, `after/` and `plugin/` finds neither; `nixfmt` appears only in a comment about the column marker). The formatter setting for nixd names `nixpkgs-fmt`, not `nixfmt`.
 
@@ -31,11 +31,11 @@ packages = with pkgs; [
 ];
 ```
 
-The last entry is the `nix-tests` flake package (`github:danielefongo/nix-tests`). The guide names the tools and does not describe what each one does, except `nixd` (the language server, see above); section 43 lists the same packages in its devShell table.
+The last entry is the `nix-tests` flake package (`github:danielefongo/nix-tests`). The guide names the tools and does not describe what each one does, except `nixd` (the language server, see above); [section 43](../07-code.md#43-how-the-development-toolchain-fits-together) lists the same packages in its devShell table.
 
 Which of these the config uses: only `nixd` (`lua/config/lsp.lua`: `cmd = { "nixd", "--log=error" }`, formatter `nixpkgs-fmt`). The config does not call `nixfmt`, `statix` or the others.
 
-How to enter it, as for the other languages (section 43):
+How to enter it, as for the other languages ([section 43](../07-code.md#43-how-the-development-toolchain-fits-together)):
 
 - **In a running Neovim:** `:DevEnv nix` then `<CR>`. `:DevEnv` lists every sub-folder of its base folder (default `~/nix/templates/krit/dev-environments/language-specific`, changeable with `vim.g.devenv_base` or `$NVIM_DEVENV_BASE`) that holds a `flake.nix`, so `nix` is offered automatically (press `<Tab>` after `:DevEnv `). It adds the programs to `PATH` for this session only.
 - **With direnv in a project:** the other chapters use one line in the project's `.envrc`, `use_dev_env <name>`; for this devShell that would be `use_dev_env nix` (same mechanism, `direnv allow` once, start Neovim from that shell).
@@ -89,7 +89,7 @@ delib.module {
 
 ## Snippets
 
-Source: `my_snippets/nix.snippets` (12 snippets). Type the trigger in insert mode in a Nix buffer and expand it with `<Ctrl-j>` (section 15); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. The text in quotes after each trigger below is its description exactly as the completion menu shows it. Every snippet is a "start of line" snippet (UltiSnips option `b`): it expands only at the beginning of a line. Placeholders are shown in tab-stop order; after the last one the cursor leaves the block (`$0`, or the end of the text). A compact trigger list is in `04-completion-snippets.md` ("Other snippets").
+Source: `my_snippets/nix.snippets` (12 snippets). Type the trigger in insert mode in a Nix buffer and expand it with `<Ctrl-j>` ([section 15](../04-completion-snippets.md#15-snippets-ultisnips)); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. The text in quotes after each trigger below is its description exactly as the completion menu shows it. Every snippet is a "start of line" snippet (UltiSnips option `b`): it expands only at the beginning of a line. Placeholders are shown in tab-stop order; after the last one the cursor leaves the block (`$0`, or the end of the text). A compact trigger list is in [`04-completion-snippets.md` ("Other snippets")](../04-completion-snippets.md#other-snippets).
 
 Two things apply to all of them:
 
@@ -128,7 +128,7 @@ Example: `desktop` = `gnome` gives `environment.gnome.excludePackages = with pkg
 
 **Group: delib modules**
 
-Read "What delib is" above first. Both snippets produce a complete module and leave a valid file (the closing `};` and `}` are included). The first line `{ delib, ... }:` is the argument set of the file.
+Read "[What delib is](#what-delib-is)" above first. Both snippets produce a complete module and leave a valid file (the closing `};` and `}` are included). The first line `{ delib, ... }:` is the argument set of the file.
 
 **`delibmodule`**: "delib module with an enable switch (target: nixos|darwin|home|myconfig; mode: ifEnabled|ifDisabled)". A module that has an `enable` option, so an `ifEnabled` block works. Placeholders: `module_path` (the dotted `name`, for example `programs.bat`), `default_enabled` (`true` or `false`), `target` (`nixos`, `darwin`, `home` or `myconfig`), `mode` (`ifEnabled` or `ifDisabled`), then the body.
 
@@ -308,4 +308,4 @@ systemd.user.services.name = {
 
 ## Related sections
 
-Section 15 and 52 (snippets), 3 (word references, in the navigation chapter), 41 (filetype settings), 43 (toolchain and devShells), 44 (language server in depth), 78 (Java chapter, section 9 has the same snippet layout).
+Section [15](../04-completion-snippets.md#15-snippets-ultisnips) and [52](../04-completion-snippets.md#52-snippets-for-developers-ultisnips) (snippets), [3](../02-navigation.md#3-core-navigation-moving-without-the-mouse) (word references, in the navigation chapter), [41](../10-various.md#41-filetype-specific-settings) (filetype settings), [43](../07-code.md#43-how-the-development-toolchain-fits-together) (toolchain and devShells), [44](../07-code.md#44-language-server-protocol-lsp-in-depth) (language server in depth), [78](java.md#78-java-nvim-java-jdtls-tests-debugging) (Java chapter, [section 9](java.md#9-snippets) has the same snippet layout).

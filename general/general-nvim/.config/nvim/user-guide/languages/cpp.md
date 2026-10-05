@@ -3,23 +3,23 @@
 
 # 84. C++ (snippets, compile and run)
 
-This chapter covers the custom C++ snippets (file `my_snippets/cpp.snippets`) and the few things the config does for C++ files. Only what is stated here has been checked in the config; the language server and the toolchain are explained in their own sections, named in "Related sections".
+This chapter covers the custom C++ snippets (file `my_snippets/cpp.snippets`) and the few things the config does for C++ files. Only what is stated here has been checked in the config; the language server and the toolchain are explained in their own sections, named in "[Related sections](#related-sections)".
 
 ## What you get
 
 | Feature | What it does | Needs |
 | --- | --- | --- |
-| **clangd** (language server) | Diagnostics, completion, hover and go to definition for `c` and `cpp` buffers (section 44) | `clangd` on PATH (c-cpp devShell, section 43) |
+| **clangd** (language server) | Diagnostics, completion, hover and go to definition for `c` and `cpp` buffers ([section 44](../07-code.md#44-language-server-protocol-lsp-in-depth)) | `clangd` on PATH (c-cpp devShell, [section 43](../07-code.md#43-how-the-development-toolchain-fits-together)) |
 | **Compile and run** (`<Space>rf` or `<F9>`) | Compiles the file with `clang++` (else `g++`), `-Wall -Wextra -std=c++20 -O2`, and runs the binary in a split below. Only mapped when a compiler is on PATH | `clang++` or `g++` (c-cpp devShell) |
-| **Run in a terminal** (`<Space>rr`) | Compiles with `g++ -Wall -Wextra -std=c++20` and runs the binary that is written next to the source (section 19) | `g++` (c-cpp devShell) |
-| **Tree-sitter** | The `cpp` parser gives syntax highlighting (section 44 and the tree-sitter section of `07-code.md`) | Parser (from the nix store on Nix systems) |
+| **Run in a terminal** (`<Space>rr`) | Compiles with `g++ -Wall -Wextra -std=c++20` and runs the binary that is written next to the source ([section 19](../07-code.md#19-code-running)) | `g++` (c-cpp devShell) |
+| **Tree-sitter** | The `cpp` parser gives syntax highlighting ([section 44](../07-code.md#44-language-server-protocol-lsp-in-depth) and the [tree-sitter section](../07-code.md#46-treesitter-in-depth-nvim-treesitter) of [`07-code.md`](../07-code.md)) | Parser (from the nix store on Nix systems) |
 | **Comment leader** | Pressing `o`, `O` or `<Enter>` after a comment line does not continue the comment (`formatoptions` without `o` and `r`) | Nothing |
-| **Line-length marker** | The coloured column marker sits at column 80 for C++ (section 41) | Nothing |
-| **Snippets** | See Snippets below | Nothing |
+| **Line-length marker** | The coloured column marker sits at column 80 for C++ ([section 41](../10-various.md#41-filetype-specific-settings)) | Nothing |
+| **Snippets** | See [Snippets](#snippets) below | Nothing |
 
 ## Snippets
 
-Source: `my_snippets/cpp.snippets`. Type the trigger in insert mode in a C++ buffer and expand it with `<Ctrl-j>` (section 15); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. The one-line description is shown by nvim-cmp in the completion menu. A compact trigger list is in `04-completion-snippets.md` ("Other snippets").
+Source: `my_snippets/cpp.snippets`. Type the trigger in insert mode in a C++ buffer and expand it with `<Ctrl-j>` ([section 15](../04-completion-snippets.md#15-snippets-ultisnips)); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. The one-line description is shown by nvim-cmp in the completion menu. A compact trigger list is in [`04-completion-snippets.md` ("Other snippets")](../04-completion-snippets.md#other-snippets).
 
 Conventions:
 
@@ -204,4 +204,4 @@ std::vector<int> genRandom(int low, int high, int len){
 
 ## Related sections
 
-Section 15 and 52 (snippets), 19 (code running), 41 (filetype settings), 43 (toolchain and devShells), 44 (language server in depth), 78 (Java chapter, section 9 has the same snippet layout).
+Section [15](../04-completion-snippets.md#15-snippets-ultisnips) and [52](../04-completion-snippets.md#52-snippets-for-developers-ultisnips) (snippets), [19](../07-code.md#19-code-running) (code running), [41](../10-various.md#41-filetype-specific-settings) (filetype settings), [43](../07-code.md#43-how-the-development-toolchain-fits-together) (toolchain and devShells), [44](../07-code.md#44-language-server-protocol-lsp-in-depth) (language server in depth), [78](java.md#78-java-nvim-java-jdtls-tests-debugging) (Java chapter, [section 9](java.md#9-snippets) has the same snippet layout).

@@ -8,7 +8,7 @@
 | Keymap | Mode | Description |
 | --- | --- | --- |
 | `<Space>cc` | n | **Toggle** Claude Code terminal (opens/closes it) |
-| `<Space>a` | n | Fresh Claude session for a quick "how do I do X in Neovim" question: vertical split on the right, started in the nvim config folder with the `answering-neovim-usage-questions` skill loaded, always on the Sonnet model (`--model sonnet`) and permissions bypassed (no prompts); `/exit` closes it (on the dashboard it opens in its own tab). See section 33 "Help keys" |
+| `<Space>a` | n | Fresh Claude session for a quick "how do I do X in Neovim" question: vertical split on the right, started in the nvim config folder with the `answering-neovim-usage-questions` skill loaded, always on the Sonnet model (`--model sonnet`) and permissions bypassed (no prompts); `/exit` closes it (on the dashboard it opens in its own tab). See [section 33](06-windows-terminal-sessions.md#33-ui-features) "[Help keys](06-windows-terminal-sessions.md#help-keys-the-user-guide-and-claude-any-buffer-and-the-dashboard)" |
 | `<Space>cR` | n | Resume/continue the last Claude conversation (`claude --continue`) |
 | `<Space>cV` | n | Start Claude in verbose mode |
 | `:ClaudeCodeResume` | cmd | Start `claude --resume` (pick an older conversation; command only, no key) |

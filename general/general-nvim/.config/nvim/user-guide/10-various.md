@@ -13,7 +13,7 @@
 | `:Edit <pattern>...` | Open every file matching the glob patterns (`:Edit src/*.lua`); `:edit` typed as the first word expands to `:Edit` |
 | `:Datetime [format]` | Show date and time (optional format argument) |
 | `:ToPDF` | Convert markdown to PDF (requires pandoc) |
-| `:Z {keywords}` | zoxide jump (see Working with directories) |
+| `:Z {keywords}` | zoxide jump (see [Working with directories](05-search-and-files.md#30-working-with-directories)) |
 | `:TermHL` | Show the current buffer (e.g. a log with ANSI colour codes) rendered with its colours in a read-only terminal buffer |
 | `:LogAutocmds` | Toggle logging of all autocommand events to `~/.local/state/nvim/log-autocmds.log` (the file is emptied each time logging starts) |
 | `:StripTrailingWhitespace` | Remove trailing whitespace (same as `<Space><Space>`) |
@@ -56,11 +56,11 @@ Type these in command mode, then press space (or Enter) to expand:
 | `vim-obsession` | `:Obsession` | Session save/restore |
 | `instant.nvim` | `:InstantStartServer`, `:InstantStartSession {host} {port}`, `:InstantJoinSession {host} {port}` | Collaborative editing (loads on its first `:Instant...` command) |
 | `firenvim` | Browser | Neovim in browser text areas |
-| `aerial.nvim` | `<Space>t` | Symbol outline (section 37) |
+| `aerial.nvim` | `<Space>t` | Symbol outline ([section 37](02-navigation.md#37-symbol-outline-aerialnvim)) |
 | `treesj` | `gS` | Split / join code blocks |
 | `vim-illuminate` | `<Alt-n>`, `<Alt-p>`, `<Alt-i>` | Word references: `<Alt-n>` / `<Alt-p>` jump to the next / previous one, `<Alt-i>` selects the reference (Visual and operator-pending mode) |
 | `vimade` | Automatic | Dims inactive windows |
-| `persistence.nvim` | Dashboard `r` / `L` | Saves a session per folder when you quit (see Session Management) |
+| `persistence.nvim` | Dashboard `r` / `L` | Saves a session per folder when you quit (see [Session Management](06-windows-terminal-sessions.md#session-management-persistencenvim-vim-obsession)) |
 | `snacks.nvim` | Automatic | Nicer input / select popups; light mode for big files |
 | `colorful-menu.nvim` | Automatic | Completion labels coloured like code |
 | `live-command.nvim` | `:norm` | Live preview of `:norm` while you type |
@@ -71,7 +71,7 @@ Type these in command mode, then press space (or Enter) to expand:
 
 ## telescope.nvim (second picker)
 
-Plugins: **telescope.nvim** and **telescope-symbols.nvim**. Telescope is a second popup picker next to fzf-lua (the file, grep and buffer pickers are fzf-lua, see `05-search-and-files.md`). It is lazy: it loads only on its first `:Telescope` command, so nothing starts at launch. nvim-devdocs lists it as a dependency too.
+Plugins: **telescope.nvim** and **telescope-symbols.nvim**. Telescope is a second popup picker next to fzf-lua (the file, grep and buffer pickers are fzf-lua, see [`05-search-and-files.md`](05-search-and-files.md#12-fuzzy-finding--project-wide-search-fzf-lua)). It is lazy: it loads only on its first `:Telescope` command, so nothing starts at launch. nvim-devdocs lists it as a dependency too.
 
 | Command / key | Effect |
 | --- | --- |
@@ -79,7 +79,7 @@ Plugins: **telescope.nvim** and **telescope-symbols.nvim**. Telescope is a secon
 | `:Telescope keymaps` | Searchable list of all keymaps |
 | `:Telescope symbols` | Pick a symbol from a list and insert it at the cursor (emoji, kaomoji, gitmoji, math, latex, julia, nerd font glyphs) |
 
-telescope-symbols.nvim has no command, key or setup of its own; it only ships the symbol lists (JSON files) that the built-in `:Telescope symbols` picker reads from the runtime path. Lazy.nvim loads it together with Telescope. The keys inside the picker (and the ways Telescope differs from fzf-lua) are in "Moving Inside Any Picker" in `05-search-and-files.md`. `:Telescope symbols` was read from the plugin code, not tried.
+telescope-symbols.nvim has no command, key or setup of its own; it only ships the symbol lists (JSON files) that the built-in `:Telescope symbols` picker reads from the runtime path. Lazy.nvim loads it together with Telescope. The keys inside the picker (and the ways Telescope differs from fzf-lua) are in "[Moving Inside Any Picker](05-search-and-files.md#moving-inside-any-picker-lists-with-a-search-bar)" in `05-search-and-files.md`. `:Telescope symbols` was read from the plugin code, not tried.
 
 ## Copying over SSH (vim-oscyank)
 
@@ -145,9 +145,9 @@ These plugins have no commands or keys. Other plugins need them, and lazy.nvim l
 | --- | --- | --- |
 | plenary.nvim | Lua helper library (async, paths, jobs) | claude-code.nvim, neogit, nvim-devdocs and Telescope |
 | promise-async | Promise and async library | nvim-ufo (code folding) |
-| lush.nvim | Library for writing colour themes in Lua | the arctic colorscheme (see "Colorschemes" in `06-windows-terminal-sessions.md`) |
-| nui.nvim | Popup, menu and layout building blocks | nvim-java, nvim-dbee, ascii.nvim (see "Icons and UI libraries" in `06-windows-terminal-sessions.md`) |
-| nvim-web-devicons, mini.icons | File and kind icons | see "Icons and UI libraries" in `06-windows-terminal-sessions.md` |
+| lush.nvim | Library for writing colour themes in Lua | the arctic colorscheme (see "[Colorschemes](06-windows-terminal-sessions.md#colorschemes)" in `06-windows-terminal-sessions.md`) |
+| nui.nvim | Popup, menu and layout building blocks | nvim-java, nvim-dbee, ascii.nvim (see "[Icons and UI libraries](06-windows-terminal-sessions.md#icons-and-ui-libraries)" in `06-windows-terminal-sessions.md`) |
+| nvim-web-devicons, mini.icons | File and kind icons | see "[Icons and UI libraries](06-windows-terminal-sessions.md#icons-and-ui-libraries)" in `06-windows-terminal-sessions.md` |
 
 ## SQL databases (nvim-dbee, vim-dadbod-ui)
 

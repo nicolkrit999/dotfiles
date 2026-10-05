@@ -3,7 +3,7 @@
 
 # 79. Python (pyright, ruff, black, uv, running and debugging)
 
-This section is one walk-through for everything Python in your config: what starts by itself, how to run, format and debug a file, how virtual environments are detected, and what to check when something does not work. Deeper background on the shared parts lives in the sections named in "Related sections" at the end.
+This section is one walk-through for everything Python in your config: what starts by itself, how to run, format and debug a file, how virtual environments are detected, and what to check when something does not work. Deeper background on the shared parts lives in the sections named in "[Related sections](#related-sections)" at the end.
 
 ## What you get
 
@@ -11,10 +11,10 @@ This section is one walk-through for everything Python in your config: what star
 | --- | --- | --- |
 | **pyright** (language server) | Type checking, import resolution, hover (`K`), go to definition (`gd`), rename (`<Space>rn`), references. Mode is `standard`, whole workspace is checked. Its own import sorting is turned off (ruff does that) | `pyright-langserver` on PATH (installed globally by `neovim.nix`, also in the python devShell) |
 | **ruff** (language server, `ruff server`) | Fast linting (diagnostics), quick fixes and "organise imports" through `<Space>ca`. It is the server that offers formatting for `<Space>fm` | `ruff` on PATH (python and jupyter devShells; NOT global) |
-| **black** (formatter) | `<Space>f` formats the file; after every save a background check warns when the file is not formatted | `black` on PATH (python devShell), or a uv project that has black (see Running) |
+| **black** (formatter) | `<Space>f` formats the file; after every save a background check warns when the file is not formatted | `black` on PATH (python devShell), or a uv project that has black (see [Running](#running-code)) |
 | **typos_lsp** | Spell checker for identifiers and comments, attaches to every file type (also Python) | `typos-lsp` on PATH (installed globally by `neovim.nix`) |
 | **tree-sitter** | Syntax highlighting (the `python` parser) | Nothing on Nix systems (parsers come from the nix store) |
-| **Snippets** | `print` (f-string), `impa`, `main`, `sol` (see Snippets below) | Nothing |
+| **Snippets** | `print` (f-string), `impa`, `main`, `sol` (see [Snippets](#snippets) below) | Nothing |
 | **uv awareness** | In a project with `uv.lock` and no active virtual environment, `<Space>rf` / `<F9>` and `<Space>f` go through `uv run` | `uv` on PATH (it is: `/run/current-system/sw/bin/uv`, tested) |
 | **Statusline label** | Shows the active environment as `name (venv)` or `name (conda)` in Python buffers | An activated environment |
 | **Format check** | After saving, `black --check` runs in the background and warns `<file>: file is not formatted (black)` | `black` on PATH, otherwise silent |
@@ -26,7 +26,7 @@ This section is one walk-through for everything Python in your config: what star
 
 ## Quick start
 
-1. Start nvim **inside the Python devShell** (a project folder with `.envrc` containing `use_dev_env python`, see "Devshell and tools"). Outside it, only pyright and typos_lsp exist.
+1. Start nvim **inside the Python devShell** (a project folder with `.envrc` containing `use_dev_env python`, see "[Devshell and tools](#devshell-and-tools)"). Outside it, only pyright and typos_lsp exist.
 2. Open a file: `nvim hello.py`. Wait a second or two. `:LspAttached` lists the running servers; tested in the python devShell: `pyright`, `ruff`, `typos_lsp`. The statusline shows `pyright (+2)` (the first server and two more).
 3. Type a small program, save with `:w`, then run it with `<Space>rf` (or `<F9>`). A 6-line quickfix window opens at the bottom and shows the output.
 4. Run it again as a full terminal with `<Space>rr`. A terminal split opens on the LEFT of the code.
@@ -46,7 +46,7 @@ This section is one walk-through for everything Python in your config: what star
 | nvim-gdb | Step through a script with pdb (Python's built-in debugger) with the current line marked in your code | Starts `python -m pdb file.py` in a terminal pane and talks to it |
 | AsyncRun | Run a script without leaving the editor and read the output in the quickfix window | `<Space>rf` / `<F9>` runs a shell command as a background job and streams its output into quickfix |
 | typos_lsp | Catches misspelt words inside names and comments | A language server for every file type |
-| tree-sitter, aerial, illuminate, treesj, ufo | General tools that also work for Python (highlighting, outline, word highlight, split/join, folding) | See the sections in "Related sections" |
+| tree-sitter, aerial, illuminate, treesj, ufo | General tools that also work for Python (highlighting, outline, word highlight, split/join, folding) | See the sections in "[Related sections](#related-sections)" |
 
 Python-specific configuration lives in only a few places:
 
@@ -108,7 +108,7 @@ Python has no plugin spec of its own. It is a few small files, quoted here verba
 
 ### The server entries (lua/config/lsp.lua)
 
-Abridged (the other servers of the table are left out, see "How language servers are registered" in the LSP chapter):
+Abridged (the other servers of the table are left out, see "[How language servers are registered](../07-code.md#how-language-servers-are-registered-luaconfiglsplua)" in the LSP chapter):
 
 ```lua
 -- Servers: configured here (plus after/lsp/<name>.lua), enabled only when the binary exists
@@ -195,11 +195,11 @@ return {
 }
 ```
 
-In plain words: `organizeImports = true` makes ruff offer the "Organize imports" code action (see "Code actions from ruff"). Everything else comes from the project's `pyproject.toml` / `ruff.toml`.
+In plain words: `organizeImports = true` makes ruff offer the "Organize imports" code action (see "[Code actions from ruff](#code-actions-from-ruff)"). Everything else comes from the project's `pyproject.toml` / `ruff.toml`.
 
 ### Which environment: get_py_env (lua/utils.lua)
 
-Verbatim, the decision logic behind the table in "When `<Space>rf` / `<F9>` uses uv":
+Verbatim, the decision logic behind the table in "[When `<Space>rf` / `<F9>` uses uv](#when-spacerf--f9-uses-uv)":
 
 ```lua
 --- Get the current virtual env name ("" if none) and its kind
@@ -284,7 +284,7 @@ In plain words:
 - `py_env` is computed once, when the Python file is opened. That is why activating a venv or creating `uv.lock` afterwards needs `:e!`.
 - The run keys exist only when the `:AsyncRun` command exists (the plugin is lazy and registers the command at startup). The `%%` in the format string becomes a literal `%`, which AsyncRun expands to the current file, in double quotes.
 - `<Space>f` is a buffer-local map that overrides the global `<Space>f`. It runs black on the file on disk (`!black %`, so save first), through `uv run` in a uv project. If black (or uv) is missing, the key shows ONE warning instead of falling through to `<Space>` + `f`.
-- `vim.g.ruff_makeprg_params = ""` is what lets `:compiler ruff` + `:make` work without `--preview` (see "Linting from the command line").
+- `vim.g.ruff_makeprg_params = ""` is what lets `:compiler ruff` + `:make` work without `--preview` (see "[Linting from the command line](#linting-from-the-command-line-compiler-ruff)").
 
 ### AsyncRun (lua/plugin_specs.lua)
 
@@ -308,7 +308,7 @@ In plain words:
 In plain words:
 
 - `cmd = { "AsyncRun" }`: the plugin loads the first time `:AsyncRun` is used, that is, on the first `<F9>` / `<Space>rf`.
-- `asyncrun_open = 6` is the "quickfix window 6 lines tall" of the table in "Running code".
+- `asyncrun_open = 6` is the "quickfix window 6 lines tall" of the table in "[Running code](#running-code)".
 - The `gbk` branch matters only on Windows (output encoding of the console); on Linux and macOS nothing is set.
 
 ### pdb through nvim-gdb (plugin spec and ftplugin)
@@ -379,7 +379,7 @@ In plain words:
 - `enabled` limits nvim-gdb to Windows and Linux. On macOS the `:GdbStartPDB` command does not exist, so `<Space>dp` shows one warning instead.
 - `cmd = { ... }`: the plugin loads on the first `:GdbStart*` command. `build = { "bash install.sh" }` compiles its helper when it is installed.
 - Three overrides protect your own keys: `nvimgdb_disable_start_keymaps` stops nvim-gdb from creating its global `<Space>dd/dl/dp/db/dr` (they would replace your `<Space>dd` and `<Space>db`); `key_eval = "<space>dv"` moves its evaluate key off `<F9>` (it used to remove your run key at the end of a session); the `config` function deletes the global command-line `<C-e>` map nvim-gdb adds, so the builtin `<C-e>` keeps working.
-- `<Space>dp` runs `:GdbStartPDB python -m pdb %` (plain python, never `uv run`). The `<Space>dc/dn/ds/df/dB/du` keys are thin wrappers: they run the matching `:Gdb...` command and turn the error you would get outside a debug session into one warning. The full key table is in "Debugging with pdb (nvim-gdb)" below.
+- `<Space>dp` runs `:GdbStartPDB python -m pdb %` (plain python, never `uv run`). The `<Space>dc/dn/ds/df/dB/du` keys are thin wrappers: they run the matching `:Gdb...` command and turn the error you would get outside a debug session into one warning. The full key table is in "[Debugging with pdb (nvim-gdb)](#debugging-with-pdb-nvim-gdb)" below.
 - There is no debugpy and no nvim-dap setup for Python; nvim-dap is installed only as a dependency of nvim-java.
 
 ## Running code
@@ -420,7 +420,7 @@ TypeError: unsupported operand type(s) for +: 'int' and 'str'
 
 ### When `<Space>rf` / `<F9>` uses uv
 
-The choice is made when the Python file is opened (`after/ftplugin/python.lua`), from the project root (nearest `.git` or `pyproject.toml`). Abridged here (`...` stands for the options); the full code is in "How Python is set up (the real code)" above:
+The choice is made when the Python file is opened (`after/ftplugin/python.lua`), from the project root (nearest `.git` or `pyproject.toml`). Abridged here (`...` stands for the options); the full code is in "[How Python is set up (the real code)](#how-python-is-set-up-the-real-code)" above:
 
 ```lua
 local py_env = utils.get_py_env()
@@ -456,7 +456,7 @@ nvim hello.py
 | `<Space>rf` / `<F9>` | `:AsyncStop` (tested with a 60-second `time.sleep`: `ps` showed `python -u slow.py` before and nothing after; stronger kill: `:AsyncStop!`) |
 | `<Space>rr` | In the terminal press `<Ctrl-c>`, or delete the terminal buffer with `:bd!` (tested: `ps` showed `python3 slow.py` before `:bd!` and nothing after) |
 
-Warning, tested earlier: `<Space>q` on a terminal window only **closes the window**; the running program keeps running hidden. Stop it first. See section 55 and section 8 for terminal navigation.
+Warning, tested earlier: `<Space>q` on a terminal window only **closes the window**; the running program keeps running hidden. Stop it first. See section [55](../07-code.md#55-code-running-in-depth) and section [8](../06-windows-terminal-sessions.md#8-terminal-integration) for terminal navigation.
 
 ## Formatting and linting
 
@@ -487,7 +487,7 @@ def f(a, b):
 print(f(1, 2))
 ```
 
-Save again: no warning. (`os` and `sys` stay; ruff still shows `E401` and `F401` hints. See "Code actions from ruff".)
+Save again: no warning. (`os` and `sys` stay; ruff still shows `E401` and `F401` hints. See "[Code actions from ruff](#code-actions-from-ruff)".)
 
 Key points:
 
@@ -524,7 +524,7 @@ The ftplugin sets `vim.g.ruff_makeprg_params = ""` so that Neovim's built-in ruf
 :make %
 ```
 
-runs `ruff check --output-format=concise nav.py` and puts every finding in the quickfix list (then `:copen`, `]q`, `[q`; see section 26). Needs `ruff` on PATH (devShell).
+runs `ruff check --output-format=concise nav.py` and puts every finding in the quickfix list (then `:copen`, `]q`, `[q`; see [section 26](../05-search-and-files.md#26-quickfix--location-list)). Needs `ruff` on PATH (devShell).
 
 ## LSP keys
 
@@ -568,7 +568,7 @@ Who does what:
 
 Tested: after `:LspInlayHints enable` no inline hints appeared in a small Python file (pyright sends none for this code), so expect little or nothing in Python.
 
-Ruff reads its rules from `pyproject.toml` / `ruff.toml` in the project. Pyright reads `pyrightconfig.json` or `[tool.pyright]` in `pyproject.toml`. See section 13 and section 44 for the LSP basics.
+Ruff reads its rules from `pyproject.toml` / `ruff.toml` in the project. Pyright reads `pyrightconfig.json` or `[tool.pyright]` in `pyproject.toml`. See section [13](../07-code.md#13-lsp-language-server-protocol) and section [44](../07-code.md#44-language-server-protocol-lsp-in-depth) for the LSP basics.
 
 ## Debugging with pdb (nvim-gdb)
 
@@ -626,11 +626,11 @@ Notes:
 - nvim-gdb's own evaluate key was `<F9>`; it is moved to `<Space>dv` (only while a debug session is active), and `<F9>` is no longer the eval key. `<F4>` `<F5>` `<F8>` `<F10>` `<F11>` `<F12>` still work.
 - nvim-gdb loads the first time you use a `:GdbStart*` command. Its default start keys `<Space>dd/dl/dp/db/dr` are turned off (`vim.g.nvimgdb_disable_start_keymaps = true`) so they do not replace your own `<Space>dd` and `<Space>db`; `<Space>dp` is yours, set in the ftplugin.
 - A quick alternative without any plugin: add `breakpoint()` in the code and run it with `<Space>rr`; the terminal stops there with a `(Pdb)` prompt.
-- Section 56 has the wider debugging picture.
+- Section [56](../07-code.md#56-debugging-in-depth) has the wider debugging picture.
 
 ## Virtual environments
 
-**Statusline label.** In Python buffers only, the statusline shows the environment (section B of the lualine bar, section 32):
+**Statusline label.** In Python buffers only, the statusline shows the environment (section B of the lualine bar, section [32](../06-windows-terminal-sessions.md#32-statusline-lualinenvim)):
 
 | Environment variable set | Label |
 | --- | --- |
@@ -661,7 +661,7 @@ There is **no test runner support** for Python in this config: no neotest, no vi
 | Run all tests | In the terminal split: `:terminal pytest`, or run `pytest` in a shell next to nvim (pytest comes from the project environment; it is not in the python devShell list) |
 | Run a test file | `<Space>rf` (or `<F9>`) or `<Space>rr` on a file that ends with `unittest.main()`, or `:!pytest %` |
 | Debug a failing test | Put `breakpoint()` in the test and run `<Space>rr`, or `pytest --pdb` in a terminal |
-| See failures in quickfix | `:AsyncRun pytest -q` (output opens in the 6-line quickfix window, section 26) |
+| See failures in quickfix | `:AsyncRun pytest -q` (output opens in the 6-line quickfix window, section [26](../05-search-and-files.md#26-quickfix--location-list)) |
 
 The only plugin that knows about tests is nvim-java (Java only, `<Space>jt...`).
 
@@ -683,7 +683,7 @@ All keys below exist in the keymap dump for Python buffers (or globally).
 | `gd` then `<Ctrl-o>` | n | Jump to a definition and back |
 | `<Space>gr` | n | References in a Glance popup |
 
-Operators combine with the motions: `d]]` deletes up to the next top-level definition, `v]m` selects up to the next method. `ii` depends on indentation, so it works well in Python. Section 21, 37, 47 and 50 have more.
+Operators combine with the motions: `d]]` deletes up to the next top-level definition, `v]m` selects up to the next method. `ii` depends on indentation, so it works well in Python. Section [21](../07-code.md#21-treesitter--text-objects), [37](../02-navigation.md#37-symbol-outline-aerialnvim), [47](../07-code.md#47-code-folding-in-depth-nvim-ufo) and [50](../02-navigation.md#50-code-navigation-strategies) have more.
 
 ## Snippets
 
@@ -729,7 +729,7 @@ if __name__ == "__main__":
 solution = Solution()
 ```
 
-The snippet menu may also offer vim-snippets entries (`def`, `class`, `ifmain`, ...). Section 15 and section 52 explain the engine.
+The snippet menu may also offer vim-snippets entries (`def`, `class`, `ifmain`, ...). Section [15](../04-completion-snippets.md#15-snippets-ultisnips) and section [52](../04-completion-snippets.md#52-snippets-for-developers-ultisnips) explain the engine.
 
 ## Troubleshooting
 
@@ -753,7 +753,7 @@ The snippet menu may also offer vim-snippets entries (`def`, `class`, `ifmain`, 
 
 ## Related sections
 
-Section 8 (terminal integration), section 13 (LSP), section 15 (snippets), section 18 (folding), section 19 (code running), section 21 (text objects), section 26 (quickfix), section 32 (statusline), section 36 (debugging), section 37 (aerial), section 41 (filetype settings), section 42 (automatic behaviours), section 43 (toolchain), section 44 (LSP in depth), section 52 (snippets for developers), section 55 (running in depth), section 56 (debugging in depth).
+Section [8](../06-windows-terminal-sessions.md#8-terminal-integration) (terminal integration), section [13](../07-code.md#13-lsp-language-server-protocol) (LSP), section [15](../04-completion-snippets.md#15-snippets-ultisnips) (snippets), section [18](../07-code.md#18-code-folding-nvim-ufo) (folding), section [19](../07-code.md#19-code-running) (code running), section [21](../07-code.md#21-treesitter--text-objects) (text objects), section [26](../05-search-and-files.md#26-quickfix--location-list) (quickfix), section [32](../06-windows-terminal-sessions.md#32-statusline-lualinenvim) (statusline), section [36](../07-code.md#36-debugging) (debugging), section [37](../02-navigation.md#37-symbol-outline-aerialnvim) (aerial), section [41](../10-various.md#41-filetype-specific-settings) (filetype settings), section [42](../10-various.md#42-automatic-behaviors) (automatic behaviours), section [43](../07-code.md#43-how-the-development-toolchain-fits-together) (toolchain), section [44](../07-code.md#44-language-server-protocol-lsp-in-depth) (LSP in depth), section [52](../04-completion-snippets.md#52-snippets-for-developers-ultisnips) (snippets for developers), section [55](../07-code.md#55-code-running-in-depth) (running in depth), section [56](../07-code.md#56-debugging-in-depth) (debugging in depth).
 
 
 ---
