@@ -57,7 +57,9 @@ Outside a LaTeX environment the plugin does not load: no `<Space>rf`, no `<F9>`,
 
 Check inside the folder: `which latex latexmk texlab zathura` must print four paths.
 
-**Start Neovim from inside the devShell.** The tools are looked up when Neovim starts; entering the shell afterwards does not enable vimtex in the already running Neovim.
+**Option 1: `:DevEnv latex` in the running Neovim.** Type `:DevEnv latex` then `<CR>`. It evaluates the LaTeX flake in the background (about 10 seconds the first time, then cached), adds its programs to `PATH` for this session, enables texlab, loads vimtex and replays the file type for open `.tex` buffers. A notification `DevEnv: latex ready: ...` lists what started. Opening a `.tex` file without `latex` shows a one-time hint, `latex not found on PATH: run :DevEnv latex to enter its devShell`. Details and the list of all devShells: section 43. It affects this session only.
+
+**Option 2: start Neovim from inside the devShell.** The tools are looked up when Neovim starts; entering the shell with direnv or `nix develop` afterwards does not enable vimtex in an already running Neovim (use Option 1 for that).
 
 Outside the devShell a `.tex` file still gets syntax colours, `ltex_plus`, `typos_lsp`, snippets and buffer/path completion. It gets no vimtex, no texlab, no PDF.
 
@@ -426,18 +428,36 @@ The file is quoted in full (`after/lsp/ltex_plus.lua`). `enabled` lists language
 
 ## Snippets
 
-UltiSnips, file `my_snippets/tex.snippets`. Both are start-of-line snippets (`b`): type the trigger at the beginning of a line, `<Ctrl-j>` expands and jumps forward, `<Ctrl-k>` jumps back. They also appear in the completion menu (tested: `use` + `<Ctrl-j>` gave `\usepackage{}` with the cursor inside; `eqa` + `<Ctrl-j>` gave the equation environment with the cursor in `\label{}`).
+UltiSnips, file `my_snippets/tex.snippets`. Both are start-of-line snippets (`b`): type the trigger at the beginning of a line, `<Ctrl-j>` expands and jumps forward, `<Ctrl-k>` jumps back. They also appear in the completion menu, which shows the description in quotes below.
 
-| Trigger | Result |
+| Trigger | Description |
 | --- | --- |
-| `use` | `\usepackage{package}`, name selected |
-| `eqa` | `\begin{equation}\label{}` / body / `\end{equation}`; first stop in the label, second in the body |
+| `use` | \usepackage line: type the package name (start of line) |
+| `eqa` | Numbered equation environment with a label, referenced with \ref{label} (start of line) |
+
+**`use`**: the cursor starts on the `package` placeholder inside the braces.
+
+```latex
+\usepackage{package}
+```
+
+Example: `package` = `amsmath` gives `\usepackage{amsmath}`.
+
+**`eqa`**: an equation environment with a label. The first placeholder is `label` (inside `\label{}`), the second is `content` (the formula on its own indented line). Refer to the equation elsewhere with `\ref{label}` using the same label text.
+
+```latex
+\begin{equation}\label{label}
+	content
+\end{equation}
+```
+
+Example: `label` = `eq:energy`, `content` = `E = mc^2`; later `\ref{eq:energy}` prints the equation number.
 
 ## Troubleshooting
 
 | Problem | Cause and fix |
 | --- | --- |
-| `<Space>rf`, `<F9>` and `\ll` do nothing, `:VimtexCompile` unknown | vimtex not loaded: `latex` not on PATH. Start Neovim inside the devShell (`which latex`, `direnv allow`). Check `:set ft?` is `tex` |
+| `<Space>rf`, `<F9>` and `\ll` do nothing, `:VimtexCompile` unknown | vimtex not loaded: `latex` not on PATH. Run `:DevEnv latex`, or start Neovim inside the devShell (`which latex`, `direnv allow`). Check `:set ft?` is `tex` |
 | Compile fails, quickfix opened | Read the first entry (`\le`), fix that line, `:w`; the compiler retries. Raw output: `\lo` |
 | No PDF | Look next to `main.tex` (not in `build/`), see "Where the output goes". A fatal error stops the PDF |
 | Viewer did not open | `zathura` not on PATH, or the compile failed, or `g:vimtex_view_automatic` is 0. Try `\lv` |

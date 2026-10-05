@@ -14,7 +14,7 @@ This section is one walk-through for everything Python in your config: what star
 | **black** (formatter) | `<Space>f` formats the file; after every save a background check warns when the file is not formatted | `black` on PATH (python devShell), or a uv project that has black (see Running) |
 | **typos_lsp** | Spell checker for identifiers and comments, attaches to every file type (also Python) | `typos-lsp` on PATH (installed globally by `neovim.nix`) |
 | **tree-sitter** | Syntax highlighting (the `python` parser) | Nothing on Nix systems (parsers come from the nix store) |
-| **Snippets** | `print`, `impa`, `main`, `sol` (see Snippets below) | Nothing |
+| **Snippets** | `print` (f-string), `impa`, `main`, `sol` (see Snippets below) | Nothing |
 | **uv awareness** | In a project with `uv.lock` and no active virtual environment, `<Space>rf` / `<F9>` and `<Space>f` go through `uv run` | `uv` on PATH (it is: `/run/current-system/sw/bin/uv`, tested) |
 | **Statusline label** | Shows the active environment as `name (venv)` or `name (conda)` in Python buffers | An activated environment |
 | **Format check** | After saving, `black --check` runs in the background and warns `<file>: file is not formatted (black)` | `black` on PATH, otherwise silent |
@@ -687,17 +687,49 @@ Operators combine with the motions: `d]]` deletes up to the next top-level defin
 
 ## Snippets
 
-Snippets come from `my_snippets/python.snippets` (UltiSnips) and the shared vim-snippets collection. Type the trigger and press `<Ctrl-j>` to expand; `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder.
+Source: `my_snippets/python.snippets` (UltiSnips, 4 snippets) and the shared vim-snippets collection. Type the trigger in insert mode and press `<Ctrl-j>` to expand; `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. The text in quotes after each trigger is its description as the completion menu shows it. "Start of line" snippets expand only at the beginning of a line. Placeholders are shown in tab-stop order.
 
-| Trigger | Expands to | Only at line start |
+| Trigger | Description | Start of line only |
 | --- | --- | --- |
-| `print` | `print("$1".format($2))` | no |
-| `impa` | `import FOO as BAR` (two placeholders) | yes |
-| `main` | `def main():` with an empty body and `if __name__ == "__main__": main()` | yes |
-| `sol` | `solution = Solution()` (coding-challenge helper) | yes |
+| `print` | Print a text with the value of a variable (f-string: the variable name goes inside the braces) | no |
+| `impa` | Import a module under an alias (import FOO as BAR, start of line) | yes |
+| `main` | Main function plus the if __name__ == "__main__" guard (start of line) | yes |
+| `sol` | LeetCode style: create a Solution object (needs a class Solution; start of line) | yes |
+
+**`print`**: an f-string print. Type the text, jump, type the name of the variable; it is written inside the braces, so its value appears in the output.
+
+```python
+print(f"text {variable}")
+```
+
+Example: `text` = `total:`, `variable` = `count` gives `print(f"total: {count}")`, which prints `total: 3` when `count` is 3.
+
+**`impa`**: import under an alias. Both placeholders are upper case words to overwrite.
+
+```python
+import FOO as BAR
+```
+
+Example: `FOO` = `numpy`, `BAR` = `np`.
+
+**`main`**: the usual entry point. The cursor starts on the `# code` placeholder inside `main`.
+
+```python
+def main():
+	# code
+
+
+if __name__ == "__main__":
+	main()
+```
+
+**`sol`**: the object that coding-challenge sites expect; it needs a `class Solution` in the file.
+
+```python
+solution = Solution()
+```
 
 The snippet menu may also offer vim-snippets entries (`def`, `class`, `ifmain`, ...). Section 15 and section 52 explain the engine.
-
 
 ## Troubleshooting
 

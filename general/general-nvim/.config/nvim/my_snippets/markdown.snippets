@@ -11,71 +11,71 @@ def gen_header(snip):
 	snip.expand_anon(line_content)
 endglobal
 
-snippet "(k1|kbd)" "HTML kbd tag" rw
+snippet "(k1|kbd)" "HTML <kbd> tag for one key (type k1 or kbd)" rw
 <kbd>${1:KEY}</kbd>$0
 endsnippet
 
-snippet k2 "Two key strokes shortcut"
+snippet k2 "Two keys joined by + as <kbd> tags"
 <kbd>${1:KEY}</kbd> + <kbd>${2:KEY}</kbd>
 endsnippet
 
-snippet k3 "Three key strokes shortcut"
+snippet k3 "Three keys joined by + as <kbd> tags"
 <kbd>${1:KEY}</kbd> + <kbd>${2:KEY}</kbd> + <kbd>${3:KEY}</kbd>
 endsnippet
 
-snippet meta "Markdown front matter (YAML format)" b
+snippet meta "YAML front matter with title, current date and time, tags and categories (start of line)" b
 ---
-title: "$1"
+title: "${1:title}"
 date: `!p from datetime import datetime
 if not snip.c:
 	snip.rv=datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S%z")`
-tags: [$2]
-categories: [$3]
+tags: [${2:tag1, tag2}]
+categories: [${3:category}]
 ---
 $0
 endsnippet
 
-snippet more "HTML more tag"
+snippet more "Blog read-more marker <!--more-->"
 <!--more-->
 endsnippet
 
-snippet img "Aligned image using HTML tag"
+snippet img "Centered image with a width in pixels, written as HTML (overrides the vim-snippets img)"
 <p align="center">
 <img src="${1:URL}" width="${2:800}">
 </p>
 $0
 endsnippet
 
-snippet font "HTML font tag"
+snippet font "HTML font tag with a color (obsolete in HTML5)"
 <font color="${1:blue}">${2:TEXT}</font>
 endsnippet
 
-snippet link "Markdown links"
-[$1]($2)$0
+snippet link "Markdown link [text](url) (overrides the vim-snippets link)"
+[${1:text}](${2:url})$0
 endsnippet
 
-snippet rlink "Markdown ref link"
+snippet rlink "Markdown reference link [text][label]"
 [${1:link_text}][${2:label}]
 endsnippet
 
 post_jump "gen_header(snip)"
-snippet "h([1-6])" "Markdown header" br
+snippet "h([1-6])" "Heading of level 1 to 6: type h1 ... h6 at the start of a line" br
 `!p snip.rv = match.group(1)`
 endsnippet
 
-snippet detail "Clickable details" b
+snippet detail "Collapsible details block with a clickable summary (start of line; overrides the vim-snippets detail)" b
 <details>
 <summary><font size="2" color="red">${1:Click to show the code.}</font></summary>
 
-$2
+${2:content}
 </details>
 endsnippet
 
-snippet yh "直角引号" w
+snippet yh "Corner brackets for quoting (CJK style)" w
 「$1」
 endsnippet
 
-snippet info "info box"
+snippet info "Info message box (embeds its own style block; needs network for the Font Awesome 4.2.0 icons from a remote CDN)"
 <style type="text/css">
 @import url('//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css');
 
@@ -92,13 +92,13 @@ snippet info "info box"
 </style>
 
 <div class="info-msg">
-	<i class="fa fa-info-circle"> Info</i></br>
+	<i class="fa fa-info-circle"> Info</i><br>
 	${1:info text}
 </div>
 $0
 endsnippet
 
-snippet warn "warning box"
+snippet warn "Warning message box (embeds its own style block; needs network for the Font Awesome 4.2.0 icons from a remote CDN)"
 <style type="text/css">
 @import url('//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css');
 
@@ -115,13 +115,13 @@ snippet warn "warning box"
 </style>
 
 <div class="warning-msg">
-	<i class="fa fa-warning"> Warning</i></br>
+	<i class="fa fa-warning"> Warning</i><br>
 	${1:warning text}
 </div>
 $0
 endsnippet
 
-snippet error "error box"
+snippet error "Error message box (embeds its own style block; needs network for the Font Awesome 4.2.0 icons from a remote CDN)"
 <style type="text/css">
 @import url('//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css');
 
@@ -138,13 +138,13 @@ snippet error "error box"
 </style>
 
 <div class="error-msg">
-	<i class="fa fa-times-circle"> Error</i></br>
+	<i class="fa fa-times-circle"> Error</i><br>
 	${1:error text}
 </div>
 $0
 endsnippet
 
-snippet success "success box"
+snippet success "Success message box (embeds its own style block; needs network for the Font Awesome 4.2.0 icons from a remote CDN)"
 <style type="text/css">
 @import url('//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css');
 
@@ -161,12 +161,12 @@ snippet success "success box"
 </style>
 
 <div class="success-msg">
-	<i class="fa fa-check"></i>
+	<i class="fa fa-check"> Success</i><br>
 	${1:success text}
 </div>
 $0
 endsnippet
 
-snippet td "too long do not read" bw
-tl;dr: $1
+snippet td "tl;dr line (start of line)" bw
+tl;dr: ${1:summary}
 endsnippet

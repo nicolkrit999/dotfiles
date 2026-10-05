@@ -1,14 +1,14 @@
-snippet fun "vim function"
-function! ${1:MyFunc}(${2}) abort
-	$3
+snippet fun "Vimscript function declared with abort (args are comma separated)"
+function! ${1:MyFunc}(${2:args}) abort
+	${3:body}
 endfunction
 $0
 endsnippet
 
-snippet aug "vim augroup" b
+snippet aug "Autocommand group that clears itself first (EVENT: BufWritePost, FileType, ...; PATTERN: *.vim, ...; start of line)" b
 augroup ${1:GROUP_NAME}
 	autocmd!
-	autocmd ${2:EVENT} ${3:PATTERN} $4
+	autocmd ${2:EVENT} ${3:PATTERN} ${4:command}
 augroup END
 $0
 endsnippet

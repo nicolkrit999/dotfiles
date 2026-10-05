@@ -33,7 +33,7 @@ A project enters it through direnv. The `.envrc` of a Typst project contains one
 use_dev_env typst
 ```
 
-Then `cd` into the project (run `direnv allow` once per project). Start Neovim from that shell, so it sees the programs. Check:
+Then `cd` into the project (run `direnv allow` once per project). Start Neovim from that shell, so it sees the programs. Or, in an already running Neovim, run `:DevEnv typst` (then `<CR>`): it adds the programs to `PATH` for this session, loads typst.vim and enables tinymist (section 43). Check:
 
 ```bash
 which typst tinymist typstyle zathura

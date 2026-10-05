@@ -85,9 +85,18 @@ direnv loads the devShell when you `cd` into the folder. The devShell (template 
 
 `.direnv/` is ignored by git, so nothing shows up in `git status`. First time in a new folder: `direnv allow`.
 
+**Entering the devShell from a running Neovim (`:DevEnv java`).** If Neovim is already open without the devShell (for example a `.java` file opened from outside the project), run `:DevEnv java` instead of quitting:
+
+1. `:DevEnv java`  then `<CR>`. The first call takes about 10 seconds and shows `DevEnv: evaluating the java devShell (about 10 s) ...`; later calls are instant (cached per flake).
+2. A notification `DevEnv: java ready: ...` lists what started (`java`, `nvim-java (jdtls, spring-boot-tools)`, language servers). jdtls attaches to the `.java` buffers that are already open.
+
+It applies only `PATH`, `JAVA_HOME`, `CLASSPATH`, `JAVA_TOOL_OPTIONS` (Lombok) and a few other allowlisted variables, then starts nvim-java. The devShell's shell hook does not run, so the extension links above are not created: jdtls works anyway (nvim-java uses its own copies), but you get a warning when the java-debug or java-test extension is missing from `~/.local/share/nvim/nvim-java/packages`; debugging and tests may then be unavailable until nvim-java installs them or direnv enters the devShell once. Opening a `.java` file without `java` also shows a one-time hint, `java not found on PATH: run :DevEnv java to enter its devShell`. All devShell names and the full description: section 43.
+
+The other option is unchanged: quit, `cd` into the project and start `nvim` from there with direnv.
+
 ### Outside the devShell
 
-`java` is not on PATH, so jdtls and spring-boot do not start. `.java` files still open with syntax highlighting, snippets and typos_lsp, but without Java language features. Every `<Space>j...` key shows ONE warning, `Java: jdtls not attached (open nvim inside the Java devShell)`. These global keys are fallbacks: without them `<Space>jrr` would fall through to plain Vim keys (`<Space>`, `j`, `rr`). The universal run key `<Space>rr` (section 19) then runs plain `java <file>` if `java` exists, otherwise gives one warning.
+`java` is not on PATH, so jdtls and spring-boot do not start. `.java` files still open with syntax highlighting, snippets and typos_lsp, but without Java language features. Every `<Space>j...` key shows ONE warning, `Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)`. These global keys are fallbacks: without them `<Space>jrr` would fall through to plain Vim keys (`<Space>`, `j`, `rr`). The universal run key `<Space>rr` (section 19) then runs plain `java <file>` if `java` exists, otherwise gives one warning.
 
 ## 2. Quick start
 
@@ -191,6 +200,8 @@ Process finished with exit code::0
 ```
 
 (The `Picked up JAVA_TOOL_OPTIONS` line comes from the devShell's Lombok setting; it is harmless.) `<Space>jrl` hides and shows this window again. To go back to the code: `<Esc>`, then `<Ctrl-w>k` or `<Up>`.
+
+Known quirk (an nvim-java bug): once the program has finished, typing a key in this terminal buffer gives `E900: Invalid channel id`. Press `<Esc>` (or `<Ctrl-\><Ctrl-n>`) first to leave terminal mode, then close the window with `:q` or `<Ctrl-w>c`.
 
 ### Profiles window (`<Space>jrp`)
 
@@ -371,31 +382,662 @@ Pressing `<Space>jem` while the selection is still active does NOT work (visual 
 
 ## 9. Snippets
 
-Source: `my_snippets/java.snippets`. Type the trigger in insert mode in a Java buffer and expand it with `<Ctrl-j>` (section 15); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder.
+Source: `my_snippets/java.snippets` (71 snippets, grouped below as in the file). Type the trigger in insert mode in a Java buffer and expand it with `<Ctrl-j>` (section 15); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. A compact trigger + description table of all of them is in `04-completion-snippets.md` ("Java snippets"); this section explains each snippet and shows what it expands to.
 
-| Trigger | Result |
-| --- | --- |
-| `fdijscanner` | `package fondamentidiinformatica.X;`, the Scanner import and a class with `main` reading one line from `System.in` |
-| `jarr` | `int[] arrayName = new int[size];` |
-| `jarrlit` | `int[] arrayName = {value1, value2, value3};` |
-| `jdict` | `HashMap<String, Integer> mapName = new HashMap<>();` |
-| `jdictfull` | The same with `import java.util.HashMap;` and a `put(key, value)` line |
-| `jfor` | `for (int i = 0; i < length; i++) { }` |
-| `jforeach` | `for (String item : collection) { }` |
-| `jwhile` | `while (condition) { }` |
-| `jdowhile` | `do { } while (condition);` |
-| `jif` | `if (condition) { }` |
-| `jifelse` | `if ... else ...` |
-| `jifelif` | `if ... else if ... else ...` |
-| `jswitchtraditional` | Classic `switch` with `case`, `break`, `default` |
-| `jswitchmulti` | Classic `switch`, several `case` labels per result (months to seasons) |
-| `jswitcharrow` | `switch` with `case x -> result;` |
-| `jswitcharrowmulti` | Arrow `switch`, several values per case |
-| `jswitchyield` | Switch expression assigned to a variable |
-| `jswitchyieldblock` | Switch expression with a `default -> { ...; yield ...; }` block |
-| `jtrycatch` | `try { } catch (Exception e) { }` |
-| `jtryfinally` | `try / catch / finally` |
-| `jwhilescannerbreak` | `Scanner` loop that reads values until a stop value, then closes the scanner |
+Conventions (the same in every snippet):
+
+- Triggers are camelCase and case-sensitive (`jPromptRead`, not `jpromptread`): pick them from the completion menu instead of typing them whole. Type `j` and read the list.
+- Placeholders are generic English words naming the kind of thing to fill in (`type`, `name`, `condition`, `ExceptionType`), never hardcoded values.
+- The Scanner variable is always named `input`. `fdijscanner` creates it; the other input snippets use an existing `input`.
+- The one-line description is shown by nvim-cmp above the snippet body in the completion menu (scroll it with `<Ctrl-d>` / `<Ctrl-f>`).
+- `fdijscanner` uses the file name as the class name by default.
+- When a snippet needs an import, its description names the exact import(s). The snippets do not add imports themselves, so check that the import line exists at the top of the file.
+- Counterpart snippets name each other in their description (`jInterface` / `jImplements`, `jEquals` / `jHashCode`, `jComparable` / `jComparator`, `jtwrScanner` / `jtwrPrintWriter`, `jtwrObjectOut` / `jtwrObjectIn`, `jMinArray` / `jMaxArray`).
+
+How to read the code blocks below: they show the expansion with the placeholder names, in tab-stop order. When a name appears several times in the real expansion (for example the loop variable `i`), you type it once and every copy follows. Delete the placeholder text you do not need, or overwrite it.
+
+**Group: Program skeleton and input**
+
+**The Scanner `Type` placeholder.** The input snippets end in `input.next` plus a placeholder `Type`. Type the name of what you want to read, with a capital first letter, and it becomes the method:
+
+| You type for `Type` | Method | Reads | Variable type |
+| --- | --- | --- | --- |
+| `Int` | `nextInt()` | an integer | `int` |
+| `Double` | `nextDouble()` | a decimal number | `double` |
+| `Boolean` | `nextBoolean()` | `true` / `false` | `boolean` |
+| `Line` | `nextLine()` | a whole line, spaces included | `String` |
+| (none, just `next`) | `next()` | one word | `String` |
+
+`Int` and `Double` match the Java type name (`int`, `double`). Strings are the odd one out: you do not write `String`, you write `Line` (a whole line) or use `next()` (one word, which you must type by hand because `Type` is part of the placeholder). Other types follow the same idea (`nextLong()`, `hasNextBigInteger()`).
+
+**`fdijscanner`**: whole program skeleton for the course (package `fondamentidiinformatica.<subpackage>`), with a Scanner named `input`, one prompt and one read. The class name defaults to the file name.
+
+```java
+package fondamentidiinformatica.subpackage;
+
+import java.util.Scanner;
+
+public class FileName {
+    public static void main(String[] args) {
+        Scanner input = new Scanner(System.in);
+
+        System.out.print("prompt: ");
+        type name = input.nextType();
+
+        // code
+
+        input.close();
+    }
+}
+```
+
+Example: prompt `Enter your age`, type `int`, name `age`, `Type` = `Int` gives `int age = input.nextInt();`.
+
+**`jPromptRead`**: prints a prompt and reads one value into a new variable. Needs `import java.util.Scanner;` and an existing `input`.
+
+```java
+System.out.print("prompt: ");
+type name = input.nextType();
+```
+
+Example: `double`, `price`, `Double` gives `double price = input.nextDouble();`. For a text line: `String`, `city`, `Line` gives `String city = input.nextLine();`.
+
+**`jReadValidated`**: asks again until the user types the right kind of value. The `Type` placeholder is used twice, in `hasNext<Type>()` (is the next token of that type?) and in `next<Type>()` (read it), so you type it once.
+
+```java
+while (!input.hasNextType()) {
+    System.out.print("error message: ");
+    input.nextLine();
+}
+type name = input.nextType();
+```
+
+Examples: `Type` = `Int` gives `hasNextInt` / `nextInt`; `Type` = `Double` gives `hasNextDouble` / `nextDouble`. The same pattern works for other types, for instance `hasNextBigInteger`. The type name matches Java (`Int`/`int`, `Double`/`double`), except that a String uses `Line` (`hasNextLine` / `nextLine`), which reads a whole line, while `next` reads one word. The `input.nextLine()` inside the loop throws away the wrong input before asking again.
+
+**`jReadNumberThenLine`**: reads a number and then a line of text. After `nextInt()` the Enter key is still waiting in the input, so a plain `nextLine()` would return an empty string. The extra `input.nextLine()` consumes that leftover newline. Use it whenever a number read is followed by a line read.
+
+```java
+type name = input.nextType();
+input.nextLine(); // consume the leftover newline
+String text = input.nextLine();
+```
+
+Example: `int`, `age`, `Int`, then `text` renamed to `fullName`. `Type` is a number type here (`Int`, `Double`), not `Line`.
+
+**`jReadUntilInt`**: keeps reading numbers until the user types a stop value (the sentinel), then leaves the loop with `break`. The comparison uses `==`, so it fits numbers and chars, not Strings (use `jReadUntilString`).
+
+```java
+while (true) {
+    System.out.print("prompt: ");
+    type name = input.nextType();
+
+    if (name == sentinel) {
+        break;
+    }
+
+    // code
+}
+```
+
+Example: `int`, `n`, `Int`, sentinel `0` gives `int n = input.nextInt();` and `if (n == 0)`. For a double you would write `double`, `Double`, and a sentinel such as `-1`.
+
+**`jReadUntilString`**: the same loop for text lines. It compares with `.equals(...)`, never with `==`, because Strings are objects.
+
+```java
+while (true) {
+    System.out.print("prompt: ");
+    String name = input.nextLine();
+
+    if (name.equals("sentinel")) {
+        break;
+    }
+
+    // code
+}
+```
+
+Example: sentinel `stop` ends the loop when the user types `stop`.
+
+**`jRandomInt`**: a random integer from `min` to `min + range - 1`. Example: range `6`, min `1` gives a die roll from 1 to 6.
+
+```java
+int name = (int) (Math.random() * range) + min;
+```
+
+**Group: Arrays, matrices and collections**
+
+**Arrays.** `jArrayNew` makes an empty array of a given size (all zeros, `false` or `null`); `jArrayLiteral` makes one from known values. Delete or add values in the braces as needed.
+
+```java
+type[] name = new type[size];
+type[] name = {value1, value2, value3};
+```
+
+Example: `int`, `scores`, `5` gives `int[] scores = new int[5];`.
+
+**`jMinArray` / `jMaxArray`**: find the smallest / largest element. The result starts as the first element and the loop compares from index 1. The two snippets are identical except for `<` and `>`.
+
+```java
+type min = array[0];
+for (int i = 1; i < array.length; i++) {
+    if (array[i] < min) {
+        min = array[i];
+    }
+}
+```
+
+`jMaxArray` has the variable named `max` and `>` in the comparison. Example: `type` = `int`, `array` = `scores`.
+
+**`jforMatrix` / `jforeachMatrix`**: walk every cell of a two-dimensional array. The indexed version gives you the row and column numbers `i` and `j` and a spot after each row (for example to print a newline); the foreach version gives the values directly but no indexes.
+
+```java
+for (int i = 0; i < matrix.length; i++) {
+    for (int j = 0; j < matrix[i].length; j++) {
+        // code
+    }
+    // end of row
+}
+
+for (type[] row : matrix) {
+    for (type value : row) {
+        // code
+    }
+}
+```
+
+Note the tab-stop order of `jforMatrix`: the matrix name comes first, then `i`, `j`, the inner code and the end-of-row spot.
+
+**`jArrayAdd` / `jArrayRemove`**: methods for a fixed-size array plus a counter. The array never grows: `count` says how many slots are really used, and the free slots are at the end. Put them inside your class, where `array` and `count` are fields. Add stores at position `count` and increments it (it returns `false` if the element is `null` or the array is full). Remove finds the element with `equals`, shifts the following ones left, clears the last used slot and decrements `count` (it returns `false` if not found). Remove works on object arrays (`String`, your own classes), not on `int[]`.
+
+```java
+boolean methodName(Type element) {
+    if (element == null || count >= array.length) {
+        return false;
+    }
+    array[count++] = element;
+    return true;
+}
+
+boolean methodName(Type element) {
+    for (int i = 0; i < count; i++) {
+        if (array[i].equals(element)) {
+            for (int j = i; j < count - 1; j++) {
+                array[j] = array[j + 1];
+            }
+            array[--count] = null;
+            return true;
+        }
+    }
+    return false;
+}
+```
+
+Example: `methodName` = `addStudent`, `Type` = `Student`, `element` = `student`, `count` = `numStudents`, `array` = `students`. In `jArrayRemove` the order is `methodName`, `Type`, `element`, `i`, `count`, `array`, `j`.
+
+**Collections.** Four declarations. The type names go inside `<>` and must be object types: `Integer` instead of `int`, `Double` instead of `double`, `String`.
+
+| Trigger | Expansion | Imports |
+| --- | --- | --- |
+| `jHashMap` | `HashMap<KeyType, ValueType> name = new HashMap<>();` | `java.util.HashMap` |
+| `jTreeMap` | `TreeMap<KeyType, ValueType> name = new TreeMap<>();` (keys kept sorted) | `java.util.TreeMap` |
+| `jArrayList` | `List<Type> name = new ArrayList<>();` | `java.util.List`, `java.util.ArrayList` |
+| `jHashSet` | `Set<Type> name = new HashSet<>();` (no duplicates) | `java.util.Set`, `java.util.HashSet` |
+
+Examples: `HashMap<String, Integer> ages`, `List<String> names`, `Set<Integer> seen`.
+
+**`jforMapEntry`**: loops over a map one entry (key and value) at a time. Needs `import java.util.Map;`. Inside the loop call `entry.getKey()` and `entry.getValue()`.
+
+```java
+for (Map.Entry<KeyType, ValueType> entry : map.entrySet()) {
+    // entry.getKey(), entry.getValue()
+}
+```
+
+Example: `String`, `Integer`, `entry`, `ages` gives `for (Map.Entry<String, Integer> entry : ages.entrySet())`.
+
+**Group: Control flow**
+
+Plain loops and conditions. Tab stops go top to bottom (loop header, then body; for `jifelif` each condition and body in turn).
+
+```java
+for (int i = start; i < end; i++) { /* code */ }        // jfor
+for (Type item : collection) { /* code */ }              // jforeach
+while (condition) { /* code */ }                         // jwhile
+do { /* code */ } while (condition);                     // jdowhile
+if (condition) { /* code */ }                            // jif
+if (condition) { /* code */ } else { /* code */ }        // jifelse
+if (c1) { /* code */ } else if (c2) { /* code */ } else { /* code */ }  // jifelif
+```
+
+(The real expansions are multi-line with one statement per line; they are compressed here.) `jfor` loops from `start` up to but not including `end`; use `jforeach` when you do not need the index. `jdowhile` runs the body at least once.
+
+**`jtern`**: ternary conditional assigned to a variable.
+
+```java
+type name = condition ? valueIfTrue : valueIfFalse;
+```
+
+Example: `String`, `label`, `age >= 18`, `"adult"`, `"minor"`.
+
+**Switch.** Six forms of the same idea; choose by style. `variable` is what you test; the case values are constants (numbers, chars, Strings, enum constants).
+
+| Trigger | Style | Use it when |
+| --- | --- | --- |
+| `jswitchtraditional` | `case v:` with `break;` | the classic form; forgetting `break` makes execution fall through to the next case |
+| `jswitchmulti` | `case a: case b:` | two values share one body |
+| `jswitcharrow` | `case v -> statement;` | no `break` needed, no fall-through |
+| `jswitcharrowmulti` | `case a, b -> statement;` | arrow form with two values per case |
+| `jswitchyield` | `Type result = switch (...) {...};` | the switch produces a value you assign |
+| `jswitchyieldblock` | same, with a `{ ... yield ...; }` block | one case needs several statements before giving its value |
+
+```java
+switch (variable) {                       // jswitchtraditional
+    case value1:
+        // code
+        break;
+    case value2:
+        // code
+        break;
+    default:
+        // code
+        break;
+}
+
+switch (variable) {                       // jswitcharrow
+    case value1 -> statement;
+    case value2 -> statement;
+    default -> statement;
+}
+
+Type result = switch (variable) {         // jswitchyield
+    case value1 -> "result1";
+    case value2 -> "result2";
+    default -> "defaultResult";
+};
+
+Type result = switch (variable) {         // jswitchyieldblock
+    case value1, value2 -> "result1";
+    case value3, value4 -> {
+        // statements
+        yield "result2";
+    }
+    default -> "defaultResult";
+};
+```
+
+`jswitchmulti` and `jswitcharrowmulti` are the same as the two first forms with `value1`..`value4` (two labels in each case). The switch-expression forms need `Type` to match what the cases return (`String` for the quoted texts; change the quotes if you return numbers) and a `default` case. Arrow switches need Java 14 or later.
+
+**Group: Methods**
+
+Both are `private static`, the form used in `main` programs where methods sit next to `main` in one class.
+
+```java
+private static returnType name(type param) {      // jStaticMethod
+    // code
+}
+
+private static returnType name(type param) {      // jRecursive
+    if (baseCondition) {
+        return baseValue;
+    }
+    return recursiveCase;
+}
+```
+
+`jRecursive` is a method that calls itself: the base case stops the recursion and the last line is the recursive call. Example for a factorial: `int`, `factorial`, `int n`, base `n <= 1`, value `1`, recursive case `n * factorial(n - 1)`. Delete or add parameters as needed.
+
+**Group: Classes**
+
+**`jClass` / `jPublicClass`**: a class with three fields and a constructor that assigns them. `jClass` is package-private with plain fields; `jPublicClass` is `public`, with `private final` fields (cannot change after construction) and a `public` constructor. Delete the field lines and constructor parts you do not need; the field names repeat in the constructor, so rename them in one place.
+
+```java
+public class ClassName {
+    private final type field1;
+    private final type field2;
+    private final type field3;
+
+    public ClassName(type field1, type field2, type field3) {
+        this.field1 = field1;
+        this.field2 = field2;
+        this.field3 = field3;
+    }
+}
+```
+
+Example: `Student`, `String name`, `int age`.  `jClass` is the same without `public` and `private final`.
+
+**`jSubclass`**: a class that extends another and calls its constructor with `super(...)`. Example: `Student`, `Person`, parameters `String name`, arguments `name`.
+
+```java
+public class SubClass extends SuperClass {
+    public SubClass(type param) {
+        super(arguments);
+    }
+}
+```
+
+**`jAbstractClass`** / **`jInterface`** / **`jImplements`**: an abstract class cannot be instantiated and has methods without a body that subclasses must write; an interface lists methods only; `jImplements` is the class that fulfils an interface (it already includes `@Override`). Use `jInterface` first, then `jImplements` in another file with the same interface and method names.
+
+```java
+public abstract class ClassName {
+    // fields and constructor
+
+    public abstract returnType method(type param);
+}
+
+public interface InterfaceName {
+    returnType method(type param);
+}
+
+public class ClassName implements InterfaceName {
+    @Override
+    public returnType method(type param) {
+        // code
+    }
+}
+```
+
+Example: interface `Shape` with `double area()`, class `Circle implements Shape`.
+
+**`jToString` / `jToStringSuper`**: `toString()` is what `System.out.println(object)` prints. `jToString` writes the class name and two fields (delete or copy the `+ ", field=" + this.field` part for other counts); `jToStringSuper` is for a subclass and appends one extra field to the text of the superclass.
+
+```java
+@Override
+public String toString() {
+    return "ClassName[field1=" + this.field1 + ", field2=" + this.field2 + "]";
+}
+
+@Override
+public String toString() {
+    return super.toString() + ", label: " + this.field;
+}
+```
+
+**`jEquals` / `jHashCode`**: they go together. `equals` says when two objects count as equal (same field values rather than same memory address); `hashCode` must give the same number for equal objects, and hash collections (`HashMap`, `HashSet`) rely on that. If you override one, override the other with the same fields. `jHashCode` needs `import java.util.Objects;`.
+
+```java
+@Override
+public boolean equals(Object obj) {
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+        return false;
+    }
+    ClassName other = (ClassName) obj;
+    return comparison;
+}
+
+@Override
+public int hashCode() {
+    return Objects.hash(field1, field2);
+}
+```
+
+Example for `comparison`: `name.equals(other.name) && age == other.age` (use `.equals` for objects, `==` for primitives). Then `hashCode` takes `name, age`.
+
+**`jDefaultIfBlank` / `jDefaultIfBelowMin`**: one-line field assignments for a constructor that validates its arguments instead of throwing. The first replaces a `null` or blank String with a default; the second replaces a number below a minimum. They use the constructor parameter named like the field.
+
+```java
+this.field = field == null || field.isBlank() ? defaultValue : field;   // jDefaultIfBlank
+this.field = field < minimum ? defaultValue : field;                    // jDefaultIfBelowMin
+```
+
+Examples: `this.name = name == null || name.isBlank() ? "unknown" : name;` and `this.age = age < 0 ? 0 : age;`. To reject bad values with an exception instead, use `jThrowIf`.
+
+**`jRecord` / `jRecordCompact`**: a record is a short class for plain data; the compiler writes the constructor, getters (`point.x()`), `equals`, `hashCode` and `toString`. The compact form adds validation code that runs in the constructor (throw an exception there, or normalise a value).
+
+```java
+public record RecordName(type component1, type component2) {}
+
+public record RecordName(type component) {
+    public RecordName {
+        // validation
+    }
+}
+```
+
+Example: `public record Point(int x, int y) {}`; compact validation: `if (x < 0) throw new IllegalArgumentException("negative");`.
+
+**`jEnum` / `jEnumFields`**: a fixed set of named values. `jEnumFields` lets each constant carry a value, with a private constructor and a getter.
+
+```java
+public enum EnumName { CONSTANT1, CONSTANT2, CONSTANT3 }
+
+public enum EnumName {
+    CONSTANT1(value1), CONSTANT2(value2);
+
+    private final type field;
+
+    private EnumName(type field) {
+        this.field = field;
+    }
+
+    public type getField() {
+        return field;
+    }
+}
+```
+
+Example: `public enum Size { SMALL(1), LARGE(3); ... private final int weight; ... getWeight() }`.
+
+**`jInstanceOf`**: tests the type of an object and gives you a variable of that type in the same step (no cast). Example: `object` = `shape`, `Type` = `Circle`, variable `circle`.
+
+```java
+if (object instanceof Type variable) {
+    // code
+}
+```
+
+**`jComparable` / `jComparator`**: both define an order for sorting. `jComparable` is the natural order, written inside the class itself, so the class must also say `implements Comparable<ClassName>` (add it by hand; the snippet does not). `jComparator` is a separate class for an alternative order, used as `Collections.sort(list, new ByAge())` or `list.sort(new ByAge())`. Both return a negative number, zero or a positive number. `jComparator` needs `import java.util.Comparator;`.
+
+```java
+@Override
+public int compareTo(ClassName other) {
+    return comparison;
+}
+
+public class ComparatorName implements Comparator<Type> {
+    @Override
+    public int compare(Type first, Type second) {
+        return comparison;
+    }
+}
+```
+
+Example for `comparison`: `Integer.compare(age, other.age)` in `compareTo`, and `first.getName().compareTo(second.getName())` in `compare`.
+
+**Group: Exceptions**
+
+**`jException` / `jExceptionData`**: your own checked exception (a method that throws it must declare `throws` or catch it). Type the name once without the word `Exception`: the snippet adds it. The first has a fixed message; the second keeps a value and builds the message from it.
+
+```java
+public class NameException extends Exception {
+    public NameException() {
+        super("message");
+    }
+}
+
+public class NameException extends Exception {
+    private final type field;
+
+    public NameException(final type field) {
+        super(messageExpression);
+        this.field = field;
+    }
+
+    public type getField() {
+        return field;
+    }
+}
+```
+
+Example: `Name` = `InvalidAge`, message `"Age is not valid"` gives `InvalidAgeException`. For the data version: `int`, `age`, message expression `"Invalid age: " + age`, getter `Age`.
+
+**`jThrowIf`**: guard at the start of a method that throws when the condition holds. Common `ExceptionType` values: `IllegalArgumentException` (bad argument), `NullPointerException` (unexpected null); or one of your own exceptions.
+
+```java
+if (condition) {
+    throw new ExceptionType("message");
+}
+```
+
+Example: `age < 0`, `IllegalArgumentException`, `"age must not be negative"`.
+
+**`jtrycatch` / `jtryfinally` / `jtrywith`**: `try` runs the code, `catch` handles the named exception, `finally` always runs afterwards (cleanup). `jtrywith` is try-with-resources: the resource declared in the parentheses is closed automatically at the end, with or without an error. Common `ExceptionType` choices: `InputMismatchException`, `NumberFormatException`, `FileNotFoundException`, `IOException`, or just `Exception`.
+
+```java
+try {
+    // code
+} catch (ExceptionType e) {
+    // handle exception
+}
+
+try {
+    // code
+} catch (ExceptionType e) {
+    // handle exception
+} finally {
+    // cleanup code
+}
+
+try (ResourceType resource = initializer) {
+    // code
+} catch (ExceptionType e) {
+    // handle exception
+}
+```
+
+Example for `jtrywith`: `Scanner`, `fileScanner`, `new Scanner(new File("data.txt"))`, `FileNotFoundException`. The ready-made file versions are in the next group.
+
+**Group: File I/O and serialization**
+
+The `jtwr*` snippets are try-with-resources: the reader or writer is closed automatically at the end of the block, so you never call `close()`. Replace `path` with the file name, relative to where the program runs (for example `data.txt`). Each has a catch clause with the exception the file operation can throw.
+
+**`jtwrScanner` / `jtwrPrintWriter`**: read a text file line by line with a Scanner; write to a text file with a PrintWriter. Imports: for reading `java.util.Scanner`, `java.io.File`, `java.io.FileNotFoundException`; for writing `java.io.PrintWriter`, `java.io.FileOutputStream`, `java.io.FileNotFoundException`. The `true` in the writer turns on automatic flushing. `FileOutputStream` overwrites an existing file.
+
+```java
+try (Scanner fileScanner = new Scanner(new File("path"))) {
+    while (fileScanner.hasNextLine()) {
+        String line = fileScanner.nextLine();
+        // code
+    }
+} catch (FileNotFoundException e) {
+    // handle exception
+}
+
+try (PrintWriter writer = new PrintWriter(new FileOutputStream("path"), true)) {
+    writer.println(content);
+} catch (FileNotFoundException e) {
+    // handle exception
+}
+```
+
+Example: path `data.txt`; content `name + " " + age`. Use `writer.println` in a loop for several lines (put the snippet's `println` line inside your own `for`).
+
+**`jtwrBufferedReader`**: reads a file line by line with `BufferedReader.readLine()`, which returns `null` at the end of the file. Imports: `java.io.BufferedReader`, `java.io.FileReader`, `java.io.IOException`. Same job as `jtwrScanner` with a different class and exception (`IOException`).
+
+```java
+try (BufferedReader reader = new BufferedReader(new FileReader("path"))) {
+    String line;
+    while ((line = reader.readLine()) != null) {
+        // code
+    }
+} catch (IOException e) {
+    // handle exception
+}
+```
+
+**`jtwrObjectOut` / `jtwrObjectIn` / `jSerialUID`**: serialization saves a whole object to a binary file and reads it back. The class of the object must say `implements Serializable` (`import java.io.Serializable;`), and so must the classes of its fields. `jSerialUID` adds the version field inside that class; give it any number, change it when the class changes shape. Imports for writing: `java.io.ObjectOutputStream`, `java.io.FileOutputStream`, `java.io.IOException`; for reading: `java.io.ObjectInputStream`, `java.io.FileInputStream`, `java.io.IOException`. Reading needs a cast to the real type and also catches `ClassNotFoundException`.
+
+```java
+try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("path"))) {
+    out.writeObject(object);
+} catch (IOException e) {
+    // handle exception
+}
+
+try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("path"))) {
+    Type name = (Type) in.readObject();
+} catch (IOException | ClassNotFoundException e) {
+    // handle exception
+}
+
+private static final long serialVersionUID = 1L;
+```
+
+Example: write `student` to `student.dat`, then read with `Type` = `Student`, `name` = `loaded`.
+
+**Group: JavaFX**
+
+JavaFX is the graphical interface library of the course.
+
+**`jfxApp`**: skeleton of a JavaFX program: a class extending `Application`, a `start` method that builds the window, and `main` that calls `launch`. Imports: `javafx.application.Application`, `javafx.stage.Stage`, `javafx.scene.Scene`, `javafx.scene.layout.BorderPane`. The `BorderPane` placeholder is the root layout (change it, for example to `VBox`, and add the matching import); width and height are in pixels.
+
+```java
+public class ClassName extends Application {
+    @Override
+    public void start(Stage primaryStage) {
+        BorderPane root = new BorderPane();
+        primaryStage.setTitle("title");
+        primaryStage.setScene(new Scene(root, width, height));
+        primaryStage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+```
+
+Example: title `My app`, width `400`, height `300`.
+
+**`jfxProperty`**: the usual JavaFX model field: a property plus its getter, setter and `nameProperty()` accessor (used for binding). The snippet only declares the field and the three methods; you must create the property yourself in the constructor, for example `this.name = new SimpleStringProperty(name);`. `PropertyType` is the property class and `valueType` the plain Java type it holds; they go in pairs:
+
+| `PropertyType` | `valueType` | Create with |
+| --- | --- | --- |
+| `StringProperty` | `String` | `new SimpleStringProperty(...)` |
+| `IntegerProperty` | `int` | `new SimpleIntegerProperty(...)` |
+
+Imports: `javafx.beans.property.StringProperty` (or the property type you chose) and the matching `Simple...Property` class.
+
+```java
+private final PropertyType name;
+
+public valueType getName() {
+    return name.get();
+}
+
+public void setName(valueType value) {
+    name.set(value);
+}
+
+public PropertyType nameProperty() {
+    return name;
+}
+```
+
+Example: `StringProperty`, `title`, `String`, `Title` gives `getTitle()`, `setTitle(...)` and `titleProperty()`.
+
+**`jfxAlert`**: a pop-up dialog that waits for the user to close it. Imports: `javafx.scene.control.Alert`, `javafx.scene.control.Alert.AlertType`. `AlertType` examples: `INFORMATION` (a notice), `ERROR` (something failed); `WARNING` and `CONFIRMATION` also exist.
+
+```java
+Alert alert = new Alert(AlertType.alertType);
+alert.setTitle("title");
+alert.setHeaderText("headerText");
+alert.setContentText("content");
+alert.showAndWait();
+```
+
+Example: `INFORMATION`, title `Saved`, header `Done`, content `The file was saved.`. For a confirmation, `showAndWait()` returns the button the user pressed.
+
+**`jfxOnAction`**: runs code when a button is clicked. Example: `button` = `saveButton`, `event` = `e`.
+
+```java
+button.setOnAction((event) -> {
+    // code
+});
+```
 
 ## 10. Windows while running, testing and debugging
 
@@ -414,7 +1056,7 @@ See section 7 (windows) and the cheat sheet in section 2 for the same rows.
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `<Space>j...` shows `Java: jdtls not attached (open nvim inside the Java devShell)` | `java` is not on PATH (not in the devShell) or jdtls has not finished starting | Quit, `cd` into the project, check `direnv allow` and `which java`, start nvim again; inside the devShell wait about 10 s and check `:LspAttached` |
+| `<Space>j...` shows `Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)` | `java` is not on PATH (not in the devShell) or jdtls has not finished starting | Quit, `cd` into the project, check `direnv allow` and `which java`, start nvim again; inside the devShell wait about 10 s and check `:LspAttached` |
 | jdtls never attaches | Neovim started before direnv loaded; jdtls crashed | `:LspLog`, `:checkhealth vim.lsp`, `:edit` the file; check `which java` |
 | Tests or debugger do not start, adapter not found | The devShell was not entered since the extensions were linked, or the links broke | Enter the project with direnv once (the shell hook relinks `~/.local/share/nvim/nvim-java/packages/java-debug-adapter/extension` and `java-test/extension`), restart nvim |
 | `<Space>jrr` prints nothing | jdtls not finished importing, or the file is not under `src/main/java`, or no `main` method | Wait for the first import, `<Space>jbb`, then `<Space>jrr` again; a project that is its own git root and one nested in a bigger git repo both work |

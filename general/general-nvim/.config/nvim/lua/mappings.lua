@@ -397,7 +397,7 @@ local java_maps = {
 
 -- global fallbacks: one warning, no fall-through; the jdtls buffer-local maps below override them
 local function java_not_attached()
-  vim.notify("Java: jdtls not attached (open nvim inside the Java devShell)", vim.log.levels.WARN)
+  vim.notify("Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)", vim.log.levels.WARN)
 end
 for _, m in ipairs(java_maps) do
   keymap.set("n", m[1], java_not_attached, { desc = m[3] .. " (needs jdtls)" })

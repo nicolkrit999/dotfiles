@@ -478,6 +478,152 @@ In plain words:
 - The header file is found through `stdpath('config')`, i.e. `resources/head.tex` inside the Neovim config, so it works wherever the config is deployed.
 - `on_exit` runs `s:md_to_pdf_done`: a non-zero exit gives the warning, a zero exit is silent except on macOS (`open`) and Windows (`start`) where the PDF is opened.
 
+## Snippets
+
+Source: `my_snippets/markdown.snippets` (17 snippets, UltiSnips). Type the trigger in insert mode in a Markdown buffer and expand it with `<Ctrl-j>` (section 15); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. The text in quotes after each trigger is its description as the completion menu shows it. Placeholders are shown in tab-stop order; after the last one the cursor leaves the block (`$0`).
+
+Things to know first:
+
+- `img`, `link` and `detail` have the same trigger as entries of the shared vim-snippets collection. The personal ones have priority 0 and the vim-snippets ones -50, so the versions below win.
+- The blog-style snippets (`meta`, `more`, `font`, `detail`, `td`) come from a Hexo / Jekyll blog setup. They write plain text or HTML that a static-site generator understands; they do nothing special in a normal Markdown file.
+- Several snippets write raw HTML (`<kbd>`, `<p>`, `<font>`, `<details>`, the message boxes). That HTML shows when the Markdown is rendered by a tool that allows HTML (a browser preview, GitHub, a blog); a plain-text reader shows the tags.
+
+**Group: Keys**
+
+**`k1` or `kbd`**: "HTML <kbd> tag for one key (type k1 or kbd)". This trigger is a regular expression (`(k1|kbd)`), so both words expand the same way.
+
+```html
+<kbd>KEY</kbd>
+```
+
+**`k2`**: "Two keys joined by + as <kbd> tags". **`k3`**: "Three keys joined by + as <kbd> tags".
+
+```html
+<kbd>KEY</kbd> + <kbd>KEY</kbd>
+<kbd>KEY</kbd> + <kbd>KEY</kbd> + <kbd>KEY</kbd>
+```
+
+Example (`k2`): `Ctrl`, `s` gives `<kbd>Ctrl</kbd> + <kbd>s</kbd>`.
+
+**Group: Headings and structure**
+
+**`h1` ... `h6`**: "Heading of level 1 to 6: type h1 ... h6 at the start of a line". The trigger is the regular expression `h([1-6])`, only at the start of a line. After the expansion a small helper replaces the line with that many `#` characters and the placeholder `Section Name`; the cursor goes to the next line afterwards.
+
+```markdown
+## Section Name
+```
+
+(that is the result for `h2`; `h1` gives one `#`, `h3` three, and so on). Example: `h2`, then `Installation` gives `## Installation`.
+
+**`detail`**: "Collapsible details block with a clickable summary (start of line; overrides the vim-snippets detail)". The summary text is red and clickable; the content is hidden until the reader clicks it.
+
+```html
+<details>
+<summary><font size="2" color="red">Click to show the code.</font></summary>
+
+content
+</details>
+```
+
+**`meta`**: "YAML front matter with title, current date and time, tags and categories (start of line)". The date is filled in by the snippet (current local time with time zone) when it expands.
+
+```yaml
+---
+title: "title"
+date: 2026-01-31 12:00:00+0100
+tags: [tag1, tag2]
+categories: [category]
+---
+```
+
+(the date line shows an example value). Example: `title` = `My first post`, `tags` = `vim, notes`.
+
+**`more`**: "Blog read-more marker <!--more-->". No placeholder: inserts the marker that Hexo and Jekyll use to cut a post's excerpt.
+
+```html
+<!--more-->
+```
+
+**`td`**: "tl;dr line (start of line)". A summary line.
+
+```markdown
+tl;dr: summary
+```
+
+**Group: Links, images and text**
+
+**`link`**: "Markdown link `[text](url)` (overrides the vim-snippets link)".
+
+```markdown
+[text](url)
+```
+
+**`rlink`**: "Markdown reference link `[text][label]`". The matching definition `[label]: url` is written by hand elsewhere in the file (see "Reference links and tables").
+
+```markdown
+[link_text][label]
+```
+
+**`img`**: "Centered image with a width in pixels, written as HTML (overrides the vim-snippets img)". The width `800` is a pixel value you can overwrite.
+
+```html
+<p align="center">
+<img src="URL" width="800">
+</p>
+```
+
+**`font`**: "HTML font tag with a color (obsolete in HTML5)". It works in most renderers but is no longer valid HTML.
+
+```html
+<font color="blue">TEXT</font>
+```
+
+**`yh`**: "Corner brackets for quoting (CJK style)". Inserts the Japanese / Chinese quotation marks and puts the cursor between them.
+
+```markdown
+「」
+```
+
+**Group: Message boxes**
+
+**`info`**, **`warn`**, **`error`**, **`success`**: "Info message box (embeds its own style block; needs network for the Font Awesome 4.2.0 icons from a remote CDN)" (the same words for the other three with their own name). Each snippet writes a `<style>` block with the colours of the box, followed by a `<div>` with an icon, a label and your text. Two honest limits:
+
+- Every one of the four embeds its own copy of the style block, so a page with all four has four `<style>` blocks. They are not shared.
+- The style block imports Font Awesome 4.2.0 from a remote address (`maxcdn.bootstrapcdn.com`). The icon only shows when the reader is online and that address still answers; if it does not load, the box still shows its colours and text, but without the icon. Not verified here.
+
+The `info` expansion in full:
+
+```html
+<style type="text/css">
+@import url('//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css');
+
+.info-msg {
+	color: #059;
+	background-color: #BEF;
+	margin: 5px 0;
+	margin-bottom: 20px;
+	padding: 10px;
+	border-radius: 5px 5px 5px 5px;
+	border: 2px solid transparent;
+	border-color: transparent;
+}
+</style>
+
+<div class="info-msg">
+	<i class="fa fa-info-circle"> Info</i><br>
+	info text
+</div>
+```
+
+The other three have the same layout and differ only in these values:
+
+| Trigger | CSS class | Text colour | Background | Icon class and label | Placeholder |
+| --- | --- | --- | --- | --- | --- |
+| `info` | `info-msg` | `#059` | `#BEF` | `fa-info-circle`, Info | `info text` |
+| `warn` | `warning-msg` | `#9F6000` | `#FEEFB3` | `fa-warning`, Warning | `warning text` |
+| `error` | `error-msg` | `#D8000C` | `#FFBABA` | `fa-times-circle`, Error | `error text` |
+| `success` | `success-msg` | `#270` | `#DFF2BF` | `fa-check`, Success | `success text` |
+
 ## Writing quality
 
 ### ltex_plus (grammar, LanguageTool)
@@ -541,7 +687,7 @@ Checks common typos in every normal buffer (not help, terminal, quickfix, or sta
 
 ## Related sections
 
-Section 16 (Code commenting: `gc` in Markdown writes `<!-- -->`; `gcs` / `gcr` use the comment style of the fence language inside a fenced block), section 27 (short Markdown key list), section 28 (LaTeX and Typst: same latex dev shell and ltex_plus), and the sections on spelling, LSP diagnostics and big-file mode.
+Section 15 and 52 (snippets), section 16 (Code commenting: `gc` in Markdown writes `<!-- -->`; `gcs` / `gcr` use the comment style of the fence language inside a fenced block), section 27 (short Markdown key list), section 28 (LaTeX and Typst: same latex dev shell and ltex_plus), and the sections on spelling, LSP diagnostics and big-file mode.
 
 
 ---

@@ -1,196 +1,635 @@
 # Java Snippets Collection
+#
+# Conventions:
+# - Placeholder defaults are generic English words naming the kind of thing that goes there
+#   (type, name, condition, ...), never hardcoded values.
+# - The Scanner variable is always named "input".
+# - Triggers are camelCase and case-sensitive: pick them from the completion menu.
+# - Each snippet has a one-line description (shown by nvim-cmp above the snippet body).
 
-snippet fdijscanner "Java Scanner input template"
-package fondamentidiinformatica.$1;
+# ----------------------------------------------------------------------------
+# Program skeleton and input
+# ----------------------------------------------------------------------------
+
+snippet fdijscanner "Program skeleton with a Scanner named input (course package)" b
+package fondamentidiinformatica.${1:subpackage};
 
 import java.util.Scanner;
 
-public class $2 {
+public class ${2:`!p snip.rv = snip.basename`} {
     public static void main(String[] args) {
-        Scanner $3 = new Scanner(System.in);
+        Scanner input = new Scanner(System.in);
 
-        System.out.print("Inserisci $4: ");
-        String $5 = $3.nextLine();
+        System.out.print("${3:prompt}: ");
+        ${4:type} ${5:name} = input.next${6:Type}();
 
-        $3.close();
+        ${0:// code}
+
+        input.close();
     }
 }
-$0
 endsnippet
 
-snippet jarr "Java array definition"
-${1:int}[] ${2:arrayName} = new ${1:int}[${3:size}];$0
+snippet jPromptRead "Print a prompt and read a value (Type: Int, Double, Boolean, Line; import java.util.Scanner)"
+System.out.print("${1:prompt}: ");
+${2:type} ${3:name} = input.next${4:Type}();$0
 endsnippet
 
-snippet jarrlit "Java array with literal values"
-${1:int}[] ${2:arrayName} = {${3:value1}, ${4:value2}, ${5:value3}};$0
+snippet jReadValidated "Ask again until the input has the right type (Type: Int, Double, Boolean; import java.util.Scanner)"
+while (!input.hasNext${1:Type}()) {
+    System.out.print("${2:error message}: ");
+    input.nextLine();
+}
+${3:type} ${4:name} = input.next$1();$0
 endsnippet
 
-snippet jdict "Java HashMap definition"
-HashMap<${1:String}, ${2:Integer}> ${3:mapName} = new HashMap<>();$0
+snippet jReadNumberThenLine "Read a number and then a line, consuming the leftover newline (import java.util.Scanner)"
+${1:type} ${2:name} = input.next${3:Type}();
+input.nextLine(); // consume the leftover newline
+String ${4:text} = input.nextLine();$0
 endsnippet
 
-snippet jdictfull "Java HashMap with import"
-import java.util.HashMap;
+snippet jReadUntilInt "Loop reading numbers from input until a sentinel value (uses an existing Scanner named input; import java.util.Scanner)"
+while (true) {
+    System.out.print("${1:prompt}: ");
+    ${2:type} ${3:name} = input.next${4:Type}();
 
-HashMap<${1:String}, ${2:Integer}> ${3:mapName} = new HashMap<>();
-${3:mapName}.put(${4:key}, ${5:value});$0
-endsnippet
+    if ($3 == ${5:sentinel}) {
+        break;
+    }
 
-snippet jfor "Java for loop"
-for (${1:int} ${2:i} = ${3:0}; ${2:i} < ${4:length}; ${2:i}++) {
-    ${5:// code here}
+    ${6:// code}
 }$0
 endsnippet
 
-snippet jforeach "Java enhanced for loop"
-for (${1:String} ${2:item} : ${3:collection}) {
-    ${4:// code here}
+snippet jReadUntilString "Loop reading Strings from input until a sentinel text (uses an existing Scanner named input; import java.util.Scanner)"
+while (true) {
+    System.out.print("${1:prompt}: ");
+    String ${2:name} = input.nextLine();
+
+    if ($2.equals("${3:sentinel}")) {
+        break;
+    }
+
+    ${4:// code}
 }$0
 endsnippet
 
-snippet jwhile "Java while loop"
+snippet jRandomInt "Random int between a minimum and minimum + range - 1"
+int ${1:name} = (int) (Math.random() * ${2:range}) + ${3:min};$0
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Arrays, matrices and collections
+# ----------------------------------------------------------------------------
+
+snippet jArrayNew "Array created with a given size"
+${1:type}[] ${2:name} = new $1[${3:size}];$0
+endsnippet
+
+snippet jArrayLiteral "Array created from literal values"
+${1:type}[] ${2:name} = {${3:value1}, ${4:value2}, ${5:value3}};$0
+endsnippet
+
+snippet jMinArray "Find the minimum of an array (jMaxArray for the maximum)"
+${1:type} ${2:min} = ${3:array}[0];
+for (int ${4:i} = 1; $4 < $3.length; $4++) {
+    if ($3[$4] < $2) {
+        $2 = $3[$4];
+    }
+}$0
+endsnippet
+
+snippet jMaxArray "Find the maximum of an array (jMinArray for the minimum)"
+${1:type} ${2:max} = ${3:array}[0];
+for (int ${4:i} = 1; $4 < $3.length; $4++) {
+    if ($3[$4] > $2) {
+        $2 = $3[$4];
+    }
+}$0
+endsnippet
+
+snippet jforMatrix "Nested indexed for loops over a matrix"
+for (int ${2:i} = 0; $2 < ${1:matrix}.length; $2++) {
+    for (int ${3:j} = 0; $3 < $1[$2].length; $3++) {
+        ${4:// code}
+    }
+    ${5:// end of row}
+}$0
+endsnippet
+
+snippet jforeachMatrix "Nested foreach loops over a matrix"
+for (${1:type}[] ${2:row} : ${3:matrix}) {
+    for ($1 ${4:value} : $2) {
+        ${5:// code}
+    }
+}$0
+endsnippet
+
+snippet jArrayAdd "Add an element to a fixed array with a counter (returns false when null or full)"
+boolean ${1:methodName}(${2:Type} ${3:element}) {
+    if ($3 == null || ${4:count} >= ${5:array}.length) {
+        return false;
+    }
+    $5[$4++] = $3;
+    return true;
+}$0
+endsnippet
+
+snippet jArrayRemove "Remove an element from a fixed array with a counter (object arrays; returns false when not found)"
+boolean ${1:methodName}(${2:Type} ${3:element}) {
+    for (int ${4:i} = 0; $4 < ${5:count}; $4++) {
+        if (${6:array}[$4].equals($3)) {
+            for (int ${7:j} = $4; $7 < $5 - 1; $7++) {
+                $6[$7] = $6[$7 + 1];
+            }
+            $6[--$5] = null;
+            return true;
+        }
+    }
+    return false;
+}$0
+endsnippet
+
+snippet jHashMap "HashMap declaration (import java.util.HashMap)"
+HashMap<${1:KeyType}, ${2:ValueType}> ${3:name} = new HashMap<>();$0
+endsnippet
+
+snippet jTreeMap "TreeMap (sorted by key) declaration (import java.util.TreeMap)"
+TreeMap<${1:KeyType}, ${2:ValueType}> ${3:name} = new TreeMap<>();$0
+endsnippet
+
+snippet jArrayList "ArrayList declaration (import java.util.List, java.util.ArrayList)"
+List<${1:Type}> ${2:name} = new ArrayList<>();$0
+endsnippet
+
+snippet jHashSet "HashSet declaration (import java.util.Set, java.util.HashSet)"
+Set<${1:Type}> ${2:name} = new HashSet<>();$0
+endsnippet
+
+snippet jforMapEntry "Iterate over the entries of a map (import java.util.Map)"
+for (Map.Entry<${1:KeyType}, ${2:ValueType}> ${3:entry} : ${4:map}.entrySet()) {
+    ${5:// entry.getKey(), entry.getValue()}
+}$0
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Control flow
+# ----------------------------------------------------------------------------
+
+snippet jfor "Indexed for loop"
+for (int ${1:i} = ${2:start}; $1 < ${3:end}; $1++) {
+    ${4:// code}
+}$0
+endsnippet
+
+snippet jforeach "Enhanced for loop"
+for (${1:Type} ${2:item} : ${3:collection}) {
+    ${4:// code}
+}$0
+endsnippet
+
+snippet jwhile "While loop"
 while (${1:condition}) {
-    ${2:// code here}
+    ${2:// code}
 }$0
 endsnippet
 
-snippet jdowhile "Java do-while loop"
+snippet jdowhile "Do-while loop"
 do {
-    ${1:// code here}
+    ${1:// code}
 } while (${2:condition});$0
 endsnippet
 
-snippet jif "Java if statement"
+snippet jif "If statement"
 if (${1:condition}) {
-    ${2:// code here}
+    ${2:// code}
 }$0
 endsnippet
 
-snippet jifelse "Java if-else statement"
+snippet jifelse "If-else statement"
 if (${1:condition}) {
-    ${2:// code here}
+    ${2:// code}
 } else {
-    ${3:// code here}
+    ${3:// code}
 }$0
 endsnippet
 
-snippet jifelif "Java if-else if-else statement"
+snippet jifelif "If-else if-else statement"
 if (${1:condition}) {
-    ${2:// code here}
+    ${2:// code}
 } else if (${3:condition}) {
-    ${4:// code here}
+    ${4:// code}
 } else {
-    ${5:// code here}
+    ${5:// code}
 }$0
 endsnippet
 
-snippet jswitchtraditional "Java traditional switch statement"
+snippet jtern "Ternary conditional assigned to a variable"
+${1:type} ${2:name} = ${3:condition} ? ${4:valueIfTrue} : ${5:valueIfFalse};$0
+endsnippet
+
+snippet jswitchtraditional "Traditional switch statement with break"
 switch (${1:variable}) {
     case ${2:value1}:
-        ${3:// code here}
+        ${3:// code}
         break;
     case ${4:value2}:
-        ${5:// code here}
+        ${5:// code}
         break;
     default:
-        ${6:// code here}
+        ${6:// code}
         break;
 }$0
 endsnippet
 
-snippet jswitchmulti "Java traditional switch with multiple cases"
-switch (${1:month}) {
-    case ${2:12}: case ${3:1}: case ${4:2}:
-        ${5:season} = "${6:winter}";
-        break;
-    case ${7:3}: case ${8:4}: case ${9:5}:
-        ${5:season} = "${10:spring}";
-        break;
-    case ${11:6}: case ${12:7}: case ${13:8}:
-        ${5:season} = "${14:summer}";
-        break;
-    case ${15:9}: case ${16:10}: case ${17:11}:
-        ${5:season} = "${18:autumn}";
-        break;
-    default:
-        ${5:season} = "${19:unknown}";
-        break;
-}$0
-endsnippet
-
-snippet jswitcharrow "Java switch with arrow syntax"
+snippet jswitchmulti "Traditional switch with two labels per case"
 switch (${1:variable}) {
-    case ${2:value1} -> ${3:result1};
-    case ${4:value2} -> ${5:result2};
-    default -> ${6:defaultResult};
+    case ${2:value1}: case ${3:value2}:
+        ${4:// code}
+        break;
+    case ${5:value3}: case ${6:value4}:
+        ${7:// code}
+        break;
+    default:
+        ${8:// code}
+        break;
 }$0
 endsnippet
 
-snippet jswitcharrowmulti "Java switch arrow with multiple cases"
-switch (${1:month}) {
-    case ${2:12}, ${3:1}, ${4:2} -> ${5:season} = "${6:winter}";
-    case ${7:3}, ${8:4}, ${9:5} -> ${5:season} = "${10:spring}";
-    case ${11:6}, ${12:7}, ${13:8} -> ${5:season} = "${14:summer}";
-    case ${15:9}, ${16:10}, ${17:11} -> ${5:season} = "${18:autumn}";
-    default -> ${5:season} = "${19:unknown}";
+snippet jswitcharrow "Switch statement with arrow syntax"
+switch (${1:variable}) {
+    case ${2:value1} -> ${3:statement;}
+    case ${4:value2} -> ${5:statement;}
+    default -> ${6:statement;}
 }$0
 endsnippet
 
-snippet jswitchyield "Java switch expression with yield"
-${1:String} ${2:result} = switch (${3:variable}) {
+snippet jswitcharrowmulti "Switch with arrow syntax and two labels per case"
+switch (${1:variable}) {
+    case ${2:value1}, ${3:value2} -> ${4:statement;}
+    case ${5:value3}, ${6:value4} -> ${7:statement;}
+    default -> ${8:statement;}
+}$0
+endsnippet
+
+snippet jswitchyield "Switch expression assigned to a variable"
+${1:Type} ${2:result} = switch (${3:variable}) {
     case ${4:value1} -> "${5:result1}";
     case ${6:value2} -> "${7:result2}";
     default -> "${8:defaultResult}";
 };$0
 endsnippet
 
-snippet jswitchyieldblock "Java switch expression with yield blocks"
-${1:String} ${2:season} = switch (${3:month}) {
-    case ${4:12}, ${5:1}, ${6:2} -> "${7:winter}";
-    case ${8:3}, ${9:4}, ${10:5} -> "${11:spring}";
-    case ${12:6}, ${13:7}, ${14:8} -> "${15:summer}";
-    case ${16:9}, ${17:10}, ${18:11} -> "${19:autumn}";
-    default -> {
-        System.out.println("${20:Provided number is not a valid month!}");
-        yield "${21:not identifiable}";
+snippet jswitchyieldblock "Switch expression with a block and yield"
+${1:Type} ${2:result} = switch (${3:variable}) {
+    case ${4:value1}, ${5:value2} -> "${6:result1}";
+    case ${7:value3}, ${8:value4} -> {
+        ${9:// statements}
+        yield "${10:result2}";
     }
+    default -> "${11:defaultResult}";
 };$0
 endsnippet
 
-snippet jtrycatch "Java try-catch block"
+# ----------------------------------------------------------------------------
+# Methods
+# ----------------------------------------------------------------------------
+
+snippet jStaticMethod "Private static method"
+private static ${1:returnType} ${2:name}(${3:type param}) {
+    ${4:// code}
+}$0
+endsnippet
+
+snippet jRecursive "Recursive method with a base case"
+private static ${1:returnType} ${2:name}(${3:type param}) {
+    if (${4:baseCondition}) {
+        return ${5:baseValue};
+    }
+    return ${6:recursiveCase};
+}$0
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Classes
+# ----------------------------------------------------------------------------
+
+snippet jClass "Package-private class with 3 fields and a constructor (delete the extra fields)"
+class ${1:ClassName} {
+    ${2:type} ${3:field1};
+    ${4:type} ${5:field2};
+    ${6:type} ${7:field3};
+
+    $1($2 $3, $4 $5, $6 $7) {
+        this.$3 = $3;
+        this.$5 = $5;
+        this.$7 = $7;
+    }
+}$0
+endsnippet
+
+snippet jPublicClass "Public class with 3 private final fields and a constructor (delete the extra fields)"
+public class ${1:ClassName} {
+    private final ${2:type} ${3:field1};
+    private final ${4:type} ${5:field2};
+    private final ${6:type} ${7:field3};
+
+    public $1($2 $3, $4 $5, $6 $7) {
+        this.$3 = $3;
+        this.$5 = $5;
+        this.$7 = $7;
+    }
+}$0
+endsnippet
+
+snippet jSubclass "Subclass with a constructor calling super"
+public class ${1:SubClass} extends ${2:SuperClass} {
+    public $1(${3:type param}) {
+        super(${4:arguments});
+    }
+}$0
+endsnippet
+
+snippet jAbstractClass "Abstract class with one abstract method"
+public abstract class ${1:ClassName} {
+    ${2:// fields and constructor}
+
+    public abstract ${3:returnType} ${4:method}(${5:type param});
+}$0
+endsnippet
+
+snippet jInterface "Interface with one method"
+public interface ${1:InterfaceName} {
+    ${2:returnType} ${3:method}(${4:type param});
+}$0
+endsnippet
+
+snippet jImplements "Class implementing an interface (the counterpart of jInterface)"
+public class ${1:ClassName} implements ${2:InterfaceName} {
+    @Override
+    public ${3:returnType} ${4:method}(${5:type param}) {
+        ${6:// code}
+    }
+}$0
+endsnippet
+
+snippet jToString "toString with two fields"
+@Override
+public String toString() {
+    return "${1:ClassName}[${2:field1}=" + this.$2 + ", ${3:field2}=" + this.$3 + "]";
+}$0
+endsnippet
+
+snippet jToStringSuper "toString extending the superclass toString (for subclasses)"
+@Override
+public String toString() {
+    return super.toString() + ", ${1:label}: " + this.${2:field};
+}$0
+endsnippet
+
+snippet jEquals "equals using getClass (override hashCode too: jHashCode)"
+@Override
+public boolean equals(Object obj) {
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+        return false;
+    }
+    ${1:ClassName} ${2:other} = ($1) obj;
+    return ${3:comparison};
+}$0
+endsnippet
+
+snippet jHashCode "hashCode with Objects.hash (pair of jEquals; import java.util.Objects)"
+@Override
+public int hashCode() {
+    return Objects.hash(${1:field1}, ${2:field2});
+}$0
+endsnippet
+
+snippet jDefaultIfBlank "Constructor field: use a default when a String is null or blank"
+this.${1:field} = $1 == null || $1.isBlank() ? ${2:defaultValue} : $1;$0
+endsnippet
+
+snippet jDefaultIfBelowMin "Constructor field: use a default when a number is below a minimum"
+this.${1:field} = $1 < ${2:minimum} ? ${3:defaultValue} : $1;$0
+endsnippet
+
+snippet jRecord "Record with two components"
+public record ${1:RecordName}(${2:type} ${3:component1}, ${4:type} ${5:component2}) {}$0
+endsnippet
+
+snippet jRecordCompact "Record with a compact constructor for validation"
+public record ${1:RecordName}(${2:type} ${3:component}) {
+    public $1 {
+        ${4:// validation}
+    }
+}$0
+endsnippet
+
+snippet jEnum "Plain enum with three constants"
+public enum ${1:EnumName} { ${2:CONSTANT1}, ${3:CONSTANT2}, ${4:CONSTANT3} }$0
+endsnippet
+
+snippet jEnumFields "Enum whose constants carry a value"
+public enum ${1:EnumName} {
+    ${2:CONSTANT1}(${3:value1}), ${4:CONSTANT2}(${5:value2});
+
+    private final ${6:type} ${7:field};
+
+    private $1($6 $7) {
+        this.$7 = $7;
+    }
+
+    public $6 get${8:Field}() {
+        return $7;
+    }
+}$0
+endsnippet
+
+snippet jInstanceOf "Type test with a binding variable (pattern matching)"
+if (${1:object} instanceof ${2:Type} ${3:variable}) {
+    ${4:// code}
+}$0
+endsnippet
+
+snippet jComparable "compareTo method for natural ordering (add implements Comparable by hand)"
+@Override
+public int compareTo(${1:ClassName} ${2:other}) {
+    return ${3:comparison};
+}$0
+endsnippet
+
+snippet jComparator "Separate Comparator class (the counterpart of jComparable; import java.util.Comparator)"
+public class ${1:ComparatorName} implements Comparator<${2:Type}> {
+    @Override
+    public int compare($2 ${3:first}, $2 ${4:second}) {
+        return ${5:comparison};
+    }
+}$0
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Exceptions
+# ----------------------------------------------------------------------------
+
+snippet jException "Custom checked exception with a fixed message"
+public class ${1:Name}Exception extends Exception {
+    public $1Exception() {
+        super("${2:message}");
+    }
+}$0
+endsnippet
+
+snippet jExceptionData "Custom checked exception carrying a value"
+public class ${1:Name}Exception extends Exception {
+    private final ${2:type} ${3:field};
+
+    public $1Exception(final $2 $3) {
+        super(${4:messageExpression});
+        this.$3 = $3;
+    }
+
+    public $2 get${5:Field}() {
+        return $3;
+    }
+}$0
+endsnippet
+
+snippet jThrowIf "Guard that throws (ExceptionType: IllegalArgumentException, NullPointerException, ...)"
+if (${1:condition}) {
+    throw new ${2:ExceptionType}("${3:message}");
+}$0
+endsnippet
+
+snippet jtrycatch "Try-catch block"
 try {
-    ${1:// code here}
-} catch (${2:Exception} ${3:e}) {
+    ${1:// code}
+} catch (${2:ExceptionType} ${3:e}) {
     ${4:// handle exception}
 }$0
 endsnippet
 
-snippet jtryfinally "Java try-catch-finally block"
+snippet jtryfinally "Try-catch-finally block"
 try {
-    ${1:// code here}
-} catch (${2:Exception} ${3:e}) {
+    ${1:// code}
+} catch (${2:ExceptionType} ${3:e}) {
     ${4:// handle exception}
 } finally {
     ${5:// cleanup code}
 }$0
 endsnippet
 
-
-snippet jwhilescannerbreak "Java while loop with Scanner and break condition"
-Scanner ${1:scanner} = new Scanner(System.in);
-
-while (true) {
-    System.out.print("${2:Inserisci un valore}: ");
-    ${3:int} ${4:input} = ${1:scanner}.${5:nextInt}();
-
-    if (${4:input} == ${6:0}) {
-        break;
-    }
-
-    ${7:// process input}
-}
-
-${1:scanner}.close();$0
+snippet jtrywith "Generic try-with-resources block"
+try (${1:ResourceType} ${2:resource} = ${3:initializer}) {
+    ${4:// code}
+} catch (${5:ExceptionType} ${6:e}) {
+    ${7:// handle exception}
+}$0
 endsnippet
 
+# ----------------------------------------------------------------------------
+# File I/O and serialization
+# ----------------------------------------------------------------------------
+
+snippet jtwrScanner "Read a text file line by line with a Scanner (import java.util.Scanner, java.io.File, java.io.FileNotFoundException)"
+try (Scanner ${1:fileScanner} = new Scanner(new File("${2:path}"))) {
+    while ($1.hasNextLine()) {
+        String ${3:line} = $1.nextLine();
+        ${4:// code}
+    }
+} catch (FileNotFoundException ${5:e}) {
+    ${6:// handle exception}
+}$0
+endsnippet
+
+snippet jtwrPrintWriter "Write to a text file with a PrintWriter (the counterpart of jtwrScanner; import java.io.PrintWriter, java.io.FileOutputStream, java.io.FileNotFoundException)"
+try (PrintWriter ${1:writer} = new PrintWriter(new FileOutputStream("${2:path}"), true)) {
+    $1.println(${3:content});
+} catch (FileNotFoundException ${4:e}) {
+    ${5:// handle exception}
+}$0
+endsnippet
+
+snippet jtwrBufferedReader "Read a file with BufferedReader and readLine in a loop (import java.io.BufferedReader, java.io.FileReader, java.io.IOException)"
+try (BufferedReader ${1:reader} = new BufferedReader(new FileReader("${2:path}"))) {
+    String ${3:line};
+    while (($3 = $1.readLine()) != null) {
+        ${4:// code}
+    }
+} catch (IOException ${5:e}) {
+    ${6:// handle exception}
+}$0
+endsnippet
+
+snippet jtwrObjectOut "Serialize an object to a file (import java.io.ObjectOutputStream, java.io.FileOutputStream, java.io.IOException)"
+try (ObjectOutputStream ${1:out} = new ObjectOutputStream(new FileOutputStream("${2:path}"))) {
+    $1.writeObject(${3:object});
+} catch (IOException ${4:e}) {
+    ${5:// handle exception}
+}$0
+endsnippet
+
+snippet jtwrObjectIn "Read a serialized object from a file (the counterpart of jtwrObjectOut; import java.io.ObjectInputStream, java.io.FileInputStream, java.io.IOException)"
+try (ObjectInputStream ${1:in} = new ObjectInputStream(new FileInputStream("${2:path}"))) {
+    ${3:Type} ${4:name} = ($3) $1.readObject();
+} catch (IOException | ClassNotFoundException ${5:e}) {
+    ${6:// handle exception}
+}$0
+endsnippet
+
+snippet jSerialUID "serialVersionUID field for a Serializable class (class must implement java.io.Serializable)"
+private static final long serialVersionUID = ${1:1}L;$0
+endsnippet
+
+# ----------------------------------------------------------------------------
+# JavaFX
+# ----------------------------------------------------------------------------
+
+snippet jfxApp "JavaFX application skeleton (import javafx.application.Application, javafx.stage.Stage, javafx.scene.Scene, javafx.scene.layout.BorderPane)"
+public class ${1:ClassName} extends Application {
+    @Override
+    public void start(Stage ${2:primaryStage}) {
+        ${3:BorderPane} ${4:root} = new $3();
+        $2.setTitle("${5:title}");
+        $2.setScene(new Scene($4, ${6:width}, ${7:height}));
+        $2.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}$0
+endsnippet
+
+snippet jfxProperty "Model field with the JavaFX property trio (create the property in the constructor; import javafx.beans.property.StringProperty (or the property type used))"
+private final ${1:PropertyType} ${2:name};
+
+public ${3:valueType} get${4:Name}() {
+    return $2.get();
+}
+
+public void set$4($3 value) {
+    $2.set(value);
+}
+
+public $1 $2Property() {
+    return $2;
+}$0
+endsnippet
+
+snippet jfxAlert "JavaFX alert dialog (AlertType: INFORMATION, WARNING, ERROR, CONFIRMATION; import javafx.scene.control.Alert, javafx.scene.control.Alert.AlertType)"
+Alert ${1:alert} = new Alert(AlertType.${2:alertType});
+$1.setTitle("${3:title}");
+$1.setHeaderText("${4:headerText}");
+$1.setContentText("${5:content}");
+$1.showAndWait();$0
+endsnippet
+
+snippet jfxOnAction "JavaFX button event handler"
+${1:button}.setOnAction((${2:event}) -> {
+    ${3:// code}
+});$0
+endsnippet

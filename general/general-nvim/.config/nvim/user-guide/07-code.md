@@ -860,6 +860,53 @@ Diagnostics config --> errors/warnings appear as Nerd Font signs, a float opens 
 
 You don't need to start any of this manually. It all happens on file open.
 
+## Enter a language devShell from a running Neovim (`:DevEnv`)
+
+Language servers and tools come from per-language Nix devShells (see "Configured servers and what they provide" in section 44). Normally direnv loads the devShell when you `cd` into a project and you start `nvim` there. If Neovim is already running without the devShell (for example a `.java` file opened from outside its project, so `java` is not on PATH), you do not have to quit:
+
+1. `:DevEnv <lang>`  Type the command and a devShell name, for example `:DevEnv java`, then `<CR>`. Press `<Tab>` after `:DevEnv ` to list the available names.
+2. Wait. The first call for a flake takes about 10 seconds and shows a progress notification (`DevEnv: evaluating the java devShell (about 10 s) ...`). Neovim stays usable meanwhile.
+3. Read the result (a check, not an action): one INFO notification, `DevEnv: <lang> ready: ...`, lists what became available (language servers, `nvim-java`, `vimtex`, ...). If something fails you get a WARN notification instead.
+
+What it does, in order:
+
+- Runs `nix print-dev-env --json` on the flake folder, asynchronously.
+- Takes only an allowlist of variables from the result: `PATH` (prepended to the current one), `JAVA_HOME`, `CLASSPATH`, `NODE_PATH`, `XDG_DATA_DIRS`, `NIX_CFLAGS_COMPILE`, `NIX_LDFLAGS` and `JAVA_TOOL_OPTIONS` (the Lombok agent). Nothing else (not `HOME`, `SHELL`, ...) is changed.
+- Enables every language server whose programs are now on PATH (section 44) and replays the file type for open buffers, so a server attaches to the file you already have open.
+- Starts the language-specific parts: nvim-java, jdtls and spring-boot for `java`; vimtex for `latex`; typst.vim for `typst`.
+- Caches the result per flake (keyed on `flake.lock` and `flake.nix`), so the next call is instant. A cache whose Nix store paths were garbage-collected is ignored and evaluated again.
+
+Things to know:
+
+- It is a command only: there is no keybinding.
+- It needs `nix` with the `nix-command` and `flakes` features on the machine.
+- The flake's shell hook does not run, so the extension links the Java devShell makes (java-debug, java-test) are not created; see section 78 for what that means.
+- The environment applies to this Neovim session only. Quit and restart, and you have to run it again (or start Neovim from the devShell).
+- Opening a `.java` or `.tex` file without its tool shows a one-time hint: `java not found on PATH: run :DevEnv java to enter its devShell` (same for `latex`).
+- The folder holding the flakes is the default below. Change it with `vim.g.devenv_base` (Lua) or the `$NVIM_DEVENV_BASE` environment variable. Only sub-folders that contain a `flake.nix` are listed as devShells.
+
+Every devShell it supports (path: `~/nix/templates/krit/dev-environments/language-specific/<name>`):
+
+| `:DevEnv` name | Path | What it provides (from its `flake.nix`) |
+| --- | --- | --- |
+| `c-cpp` | `~/nix/templates/krit/dev-environments/language-specific/c-cpp` | clang-tools (clangd), cmake, conan, cppcheck, doxygen, gtest, lcov, vcpkg, codespell, CLion |
+| `go` | `~/nix/templates/krit/dev-environments/language-specific/go` | go, gopls, gotools, golangci-lint |
+| `haskell` | `~/nix/templates/krit/dev-environments/language-specific/haskell` | ghc, cabal-install, haskell-language-server, ormolu |
+| `java` | `~/nix/templates/krit/dev-environments/language-specific/java` | JDK (`JAVA_HOME`), Maven, Gradle, Lombok agent, jdtls wrapper, java-debug and java-test extensions (see section 78) |
+| `jupyter` | `~/nix/templates/krit/dev-environments/language-specific/jupyter` | python313, poetry, ruff, ipykernel, pip and a `.venv` virtual-environment hook |
+| `latex` | `~/nix/templates/krit/dev-environments/language-specific/latex` | texlive (scheme-full: `latex`, `latexmk`), texlab, tectonic, pandoc, zathura, latex2html, latex2mathml |
+| `nix` | `~/nix/templates/krit/dev-environments/language-specific/nix` | nixd, nixfmt, statix, nh, niv, cachix, lorri, vulnix, dhall-nix |
+| `node` | `~/nix/templates/krit/dev-environments/language-specific/node` | nodejs, typescript, typescript-language-server, eslint, prettier, pnpm, yarn |
+| `php` | `~/nix/templates/krit/dev-environments/language-specific/php` | php, composer, phpactor |
+| `python` | `~/nix/templates/krit/dev-environments/language-specific/python` | Python with black, flake8, isort, pylint, numpy, matplotlib, pip and a virtual-environment hook; pyright, ruff |
+| `r` | `~/nix/templates/krit/dev-environments/language-specific/r` | R with the `languageserver` and `knitr` packages |
+| `rust` | `~/nix/templates/krit/dev-environments/language-specific/rust` | Rust toolchain, rust-analyzer, cargo-deny, cargo-edit, cargo-watch, openssl, pkg-config |
+| `shell` | `~/nix/templates/krit/dev-environments/language-specific/shell` | shellcheck, shfmt, bash-language-server |
+| `swift` | `~/nix/templates/krit/dev-environments/language-specific/swift` | swift, sourcekit-lsp |
+| `typst` | `~/nix/templates/krit/dev-environments/language-specific/typst` | typst, tinymist, typstyle, prettypst, typstwriter, utpm, zathura |
+
+Language chapters: Java section 78, LaTeX section 80, Typst section 82.
+
 ---
 
 # 53. Documentation lookup
@@ -1045,7 +1092,7 @@ Result of step 2 (tested): the one-line file `{"a":1,"b":[2,3]}` becomes seven l
 
 # 35. Java development (`nvim-java`)
 
-The Java keys work only in a Java buffer with the Java language server (jdtls) attached: open nvim inside the Java devShell (`java` on PATH). Everywhere else the same keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell)". which-key groups: `<Space>j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
+The Java keys work only in a Java buffer with the Java language server (jdtls) attached: open nvim inside the Java devShell (`java` on PATH) or run `:DevEnv java` (section 43). Everywhere else the same keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)". which-key groups: `<Space>j` Java, `jb` build, `jr` runner, `jt` test, `je` extract.
 
 ### Build & run
 
@@ -1099,7 +1146,7 @@ nvim-java wraps the Eclipse JDT Language Server (jdtls) and adds:
 - Refactoring commands
 - DAP (Debug Adapter Protocol) for step-through debugging
 
-All of this only starts inside the Java devShell (`java` on PATH). Elsewhere `.java` files open without Java tooling, and the `<Space>j` keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell)".
+All of this only starts inside the Java devShell (`java` on PATH). Elsewhere `.java` files open without Java tooling, and the `<Space>j` keys show one warning "Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)".
 
 On Nix systems the JDK comes from the Java devShell (`JAVA_HOME`) and nvim-java never downloads one. On other systems nvim-java auto-installs a JDK.
 

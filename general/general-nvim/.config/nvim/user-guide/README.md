@@ -19,7 +19,7 @@ A hands-on manual for one specific Neovim setup (Catppuccin Mocha theme, plugins
 | Git | 20, 48 |
 | Claude Code, Markdown, LaTeX/Typst, spelling, URLs | 9, 27, 28, 31, 38, 49 |
 | Everything else: custom commands, configuration, automatic behaviors, shell commands, Neovide, other plugins | 34, 39 to 42, 66, 77 |
-| One chapter per language: Java, Python, LaTeX, Markdown, Typst | 78 to 82 |
+| Languages: Java, Python, LaTeX, Markdown, Typst, C++, Vim | 78 to 82, 84, 85 |
 | Catalog of every plugin, each linked to its section | 83 |
 
 **How it is organized.** Every topic is a numbered section, and the text "see section N" always means that number. Section 2 is a one-page cheat sheet of the daily keys, with pointers to the full sections. Sections with "in depth" in the title go further than the short section on the same topic. Start with section 1, then section 2; use the table of contents (or the plugin catalog, section 83) to find the rest.
@@ -63,6 +63,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
     - [Git day to day](README.md#git-day-to-day)
     - [Mouse](README.md#mouse)
     - [Language guides (tools that exist only for one language)](README.md#language-guides-tools-that-exist-only-for-one-language)
+    - [Language devShells (:DevEnv)](README.md#language-devshells-devenv)
     - [Neovide (Neovim in its own window)](README.md#neovide-neovim-in-its-own-window)
     - [Lists with a search bar (pickers)](README.md#lists-with-a-search-bar-pickers)
     - [Quickfix list (search results, errors)](README.md#quickfix-list-search-results-errors)
@@ -412,6 +413,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Debug adapter protocol (DAP, nvim-dap)](07-code.md#debug-adapter-protocol-dap-nvim-dap)
         - [GDB integration (nvim-gdb)](07-code.md#gdb-integration-nvim-gdb)
     - [43. How the development toolchain fits together](07-code.md#43-how-the-development-toolchain-fits-together)
+        - [Enter a language devShell from a running Neovim (:DevEnv)](07-code.md#enter-a-language-devshell-from-a-running-neovim-devenv)
     - [53. Documentation lookup](07-code.md#53-documentation-lookup)
         - [nvim-devdocs (plugin)](07-code.md#nvim-devdocs-plugin)
         - [Hover documentation (LSP)](07-code.md#hover-documentation-lsp)
@@ -626,6 +628,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Rendering inside the buffer (render-markdown.nvim)](languages/markdown.md#rendering-inside-the-buffer-render-markdownnvim)
         - [Formatting with prettier](languages/markdown.md#formatting-with-prettier)
         - [PDF export (:ToPDF)](languages/markdown.md#pdf-export-topdf)
+        - [Snippets](languages/markdown.md#snippets)
         - [Writing quality](languages/markdown.md#writing-quality)
             - [ltex_plus (grammar, LanguageTool)](languages/markdown.md#ltex_plus-grammar-languagetool)
             - [Vim spell checking](languages/markdown.md#vim-spell-checking)
@@ -648,6 +651,18 @@ Every section keeps its number; the text "see section N" in the guide refers to 
             - [What to try](languages/typst.md#what-to-try)
         - [Troubleshooting](languages/typst.md#troubleshooting)
         - [Related sections](languages/typst.md#related-sections)
+
+18. **[C++](languages/cpp.md)**
+    - [84. C++ (snippets, compile and run)](languages/cpp.md#84-c-snippets-compile-and-run)
+        - [What you get](languages/cpp.md#what-you-get)
+        - [Snippets](languages/cpp.md#snippets)
+        - [Related sections](languages/cpp.md#related-sections)
+
+19. **[Vimscript](languages/vim.md)**
+    - [85. Vimscript (snippets, source and settings)](languages/vim.md#85-vimscript-snippets-source-and-settings)
+        - [What you get](languages/vim.md#what-you-get)
+        - [Snippets](languages/vim.md#snippets)
+        - [Related sections](languages/vim.md#related-sections)
 
 <!-- toc:end -->
 
@@ -933,6 +948,14 @@ More: sections 7 and 32.
 | LaTeX | vimtex, texlab, ltex, compiling, the PDF viewer | 80 |
 | Markdown | marksman, rendering, preview, footnotes, `:ToPDF` | 81 |
 | Typst | tinymist, `<Space>tw` watch, the PDF viewer | 82 |
+
+### Language devShells (`:DevEnv`)
+
+| Command | What it does |
+| --- | --- |
+| `:DevEnv <lang>` | Enter a language devShell (`java`, `latex`, `typst`, `python`, ...) from the running Neovim, without restarting: adds its programs to `PATH`, enables the language servers and plugins that were waiting. `<Tab>` lists the names. First call about 10 s, then cached. Example: `:DevEnv java` |
+
+Full list of devShells and details: [section 43](07-code.md#43-how-the-development-toolchain-fits-together).
 
 ### Neovide (Neovim in its own window)
 

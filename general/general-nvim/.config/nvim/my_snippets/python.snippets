@@ -1,21 +1,21 @@
-snippet print "Print value of some variable"
-print("$1".format($2))
+snippet print "Print a text with the value of a variable (f-string: the variable name goes inside the braces)"
+print(f"${1:text} {${2:variable}}")
 $0
 endsnippet
 
-snippet impa "import FOO as BAR" b
+snippet impa "Import a module under an alias (import FOO as BAR, start of line)" b
 import ${1:FOO} as ${2:BAR}
 endsnippet
 
-snippet main "Main function boilerplate" b
+snippet main "Main function plus the if __name__ == "__main__" guard (start of line)" b
 def main():
-	$0
+	${0:# code}
 
 
 if __name__ == "__main__":
-	main()              
+	main()
 endsnippet
 
-snippet sol "solution" b
+snippet sol "LeetCode style: create a Solution object (needs a class Solution; start of line)" b
 solution = Solution()
 endsnippet

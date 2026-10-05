@@ -33,48 +33,183 @@ Plugin: UltiSnips + vim-snippets. Custom snippets in `my_snippets/` directory.
 
 Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `snippets`, `tex`, `vim`
 
-Example (tested in a Java buffer): type `jfor`, press `<Ctrl-j>`: it expands to a loop with the first placeholder (`int`) selected:
+Example: in a Java buffer type `jfor`, press `<Ctrl-j>`: it expands to a loop with the first placeholder (`i`) selected:
 
 ```
-for (int i = 0; i < length; i++) {
-    // code here
+for (int i = start; i < end; i++) {
+    // code
 }
 ```
 
-Type `long` (it replaces `int`), then `<Ctrl-j>` moves to the next placeholder (`i`), the next `<Ctrl-j>` to `0`, and so on. The full walk-through is in section 52 (How to use snippets).
+Type `index` (it replaces `i` everywhere it appears), then `<Ctrl-j>` moves to the next placeholder (`start`), the next `<Ctrl-j>` to `end`, then to `// code`. The full walk-through is in section 52 (How to use snippets).
 
 ### Java snippets
 
-| Trigger | Expansion |
+Source: `my_snippets/java.snippets` (71 snippets). Each section below follows the same grouping as the snippet file.
+
+The tables below are the quick reference. For each snippet's expanded code, the meaning of the placeholders and examples, see section 78 (Java chapter, `languages/java.md`, section 9).
+
+Conventions (the same in every Java snippet):
+
+- Triggers are camelCase and case-sensitive (`jPromptRead`, not `jpromptread`): pick them from the completion menu instead of typing them whole. Type `j` and read the list.
+- Placeholders are generic English words naming the kind of thing to fill in (`type`, `name`, `condition`, `ExceptionType`), never hardcoded values.
+- The Scanner variable is always named `input`. `fdijscanner` creates it; the other input snippets use an existing `input`.
+- The one-line description is shown by nvim-cmp above the snippet body in the completion menu (scroll it with `<Ctrl-d>` / `<Ctrl-f>`); expand with `<Ctrl-j>`, jump between placeholders with `<Ctrl-j>` / `<Ctrl-k>`.
+- `fdijscanner` uses the file name as the class name by default.
+- When a snippet needs an import, its description names the exact import(s). The snippets do not add imports themselves, so check that the import line exists at the top of the file.
+- Counterpart snippets name each other in their description (`jInterface` / `jImplements`, `jEquals` / `jHashCode`, `jComparable` / `jComparator`, `jtwrScanner` / `jtwrPrintWriter`, `jtwrObjectOut` / `jtwrObjectIn`, `jMinArray` / `jMaxArray`).
+
+**Program skeleton and input**
+
+| Trigger | Expands to / use it when |
 | --- | --- |
-| `fdijscanner` | Java Scanner input template |
-| `jarr` / `jarrlit` | Array / array with literal values |
-| `jdict` / `jdictfull` | HashMap / HashMap with import |
-| `jfor` / `jforeach` | For loop / enhanced for loop |
-| `jwhile` / `jdowhile` | While / do-while loop |
-| `jif` / `jifelse` / `jifelif` | If / if-else / if-else if-else |
-| `jswitchtraditional` / `jswitchmulti` / `jswitcharrow` / `jswitcharrowmulti` / `jswitchyield` / `jswitchyieldblock` | Switch variants |
-| `jtrycatch` / `jtryfinally` | Try-catch / try-catch-finally |
-| `jwhilescannerbreak` | While loop with Scanner and break condition |
+| `fdijscanner` | Program skeleton with a Scanner named input (course package) |
+| `jPromptRead` | Print a prompt and read a value (Type: Int, Double, Boolean, Line; import java.util.Scanner) |
+| `jReadValidated` | Ask again until the input has the right type (Type: Int, Double, Boolean; import java.util.Scanner) |
+| `jReadNumberThenLine` | Read a number and then a line, consuming the leftover newline (import java.util.Scanner) |
+| `jReadUntilInt` | Loop reading numbers from input until a sentinel value (uses an existing Scanner named input; import java.util.Scanner) |
+| `jReadUntilString` | Loop reading Strings from input until a sentinel text (uses an existing Scanner named input; import java.util.Scanner) |
+| `jRandomInt` | Random int between a minimum and minimum + range - 1 |
+
+**Arrays, matrices and collections**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jArrayNew` | Array created with a given size |
+| `jArrayLiteral` | Array created from literal values |
+| `jMinArray` | Find the minimum of an array (jMaxArray for the maximum) |
+| `jMaxArray` | Find the maximum of an array (jMinArray for the minimum) |
+| `jforMatrix` | Nested indexed for loops over a matrix |
+| `jforeachMatrix` | Nested foreach loops over a matrix |
+| `jArrayAdd` | Add an element to a fixed array with a counter (returns false when null or full) |
+| `jArrayRemove` | Remove an element from a fixed array with a counter (object arrays; returns false when not found) |
+| `jHashMap` | HashMap declaration (import java.util.HashMap) |
+| `jTreeMap` | TreeMap (sorted by key) declaration (import java.util.TreeMap) |
+| `jArrayList` | ArrayList declaration (import java.util.List, java.util.ArrayList) |
+| `jHashSet` | HashSet declaration (import java.util.Set, java.util.HashSet) |
+| `jforMapEntry` | Iterate over the entries of a map (import java.util.Map) |
+
+**Control flow**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jfor` | Indexed for loop |
+| `jforeach` | Enhanced for loop |
+| `jwhile` | While loop |
+| `jdowhile` | Do-while loop |
+| `jif` | If statement |
+| `jifelse` | If-else statement |
+| `jifelif` | If-else if-else statement |
+| `jtern` | Ternary conditional assigned to a variable |
+| `jswitchtraditional` | Traditional switch statement with break |
+| `jswitchmulti` | Traditional switch with two labels per case |
+| `jswitcharrow` | Switch statement with arrow syntax |
+| `jswitcharrowmulti` | Switch with arrow syntax and two labels per case |
+| `jswitchyield` | Switch expression assigned to a variable |
+| `jswitchyieldblock` | Switch expression with a block and yield |
+
+**Methods**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jStaticMethod` | Private static method |
+| `jRecursive` | Recursive method with a base case |
+
+**Classes**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jClass` | Package-private class with 3 fields and a constructor (delete the extra fields) |
+| `jPublicClass` | Public class with 3 private final fields and a constructor (delete the extra fields) |
+| `jSubclass` | Subclass with a constructor calling super |
+| `jAbstractClass` | Abstract class with one abstract method |
+| `jInterface` | Interface with one method |
+| `jImplements` | Class implementing an interface (the counterpart of jInterface) |
+| `jToString` | toString with two fields |
+| `jToStringSuper` | toString extending the superclass toString (for subclasses) |
+| `jEquals` | equals using getClass (override hashCode too: jHashCode) |
+| `jHashCode` | hashCode with Objects.hash (pair of jEquals; import java.util.Objects) |
+| `jDefaultIfBlank` | Constructor field: use a default when a String is null or blank |
+| `jDefaultIfBelowMin` | Constructor field: use a default when a number is below a minimum |
+| `jRecord` | Record with two components |
+| `jRecordCompact` | Record with a compact constructor for validation |
+| `jEnum` | Plain enum with three constants |
+| `jEnumFields` | Enum whose constants carry a value |
+| `jInstanceOf` | Type test with a binding variable (pattern matching) |
+| `jComparable` | compareTo method for natural ordering (add implements Comparable by hand) |
+| `jComparator` | Separate Comparator class (the counterpart of jComparable; import java.util.Comparator) |
+
+**Exceptions**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jException` | Custom checked exception with a fixed message |
+| `jExceptionData` | Custom checked exception carrying a value |
+| `jThrowIf` | Guard that throws (ExceptionType: IllegalArgumentException, NullPointerException, ...) |
+| `jtrycatch` | Try-catch block |
+| `jtryfinally` | Try-catch-finally block |
+| `jtrywith` | Generic try-with-resources block |
+
+**File I/O and serialization**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jtwrScanner` | Read a text file line by line with a Scanner (import java.util.Scanner, java.io.File, java.io.FileNotFoundException) |
+| `jtwrPrintWriter` | Write to a text file with a PrintWriter (the counterpart of jtwrScanner; import java.io.PrintWriter, java.io.FileOutputStream, java.io.FileNotFoundException) |
+| `jtwrBufferedReader` | Read a file with BufferedReader and readLine in a loop (import java.io.BufferedReader, java.io.FileReader, java.io.IOException) |
+| `jtwrObjectOut` | Serialize an object to a file (import java.io.ObjectOutputStream, java.io.FileOutputStream, java.io.IOException) |
+| `jtwrObjectIn` | Read a serialized object from a file (the counterpart of jtwrObjectOut; import java.io.ObjectInputStream, java.io.FileInputStream, java.io.IOException) |
+| `jSerialUID` | serialVersionUID field for a Serializable class (class must implement java.io.Serializable) |
+
+**JavaFX**
+
+| Trigger | Expands to / use it when |
+| --- | --- |
+| `jfxApp` | JavaFX application skeleton (import javafx.application.Application, javafx.stage.Stage, javafx.scene.Scene, javafx.scene.layout.BorderPane) |
+| `jfxProperty` | Model field with the JavaFX property trio (create the property in the constructor; import javafx.beans.property.StringProperty (or the property type used)) |
+| `jfxAlert` | JavaFX alert dialog (AlertType: INFORMATION, WARNING, ERROR, CONFIRMATION; import javafx.scene.control.Alert, javafx.scene.control.Alert.AlertType) |
+| `jfxOnAction` | JavaFX button event handler |
 
 ### Other snippets
 
-| File | Triggers |
-| --- | --- |
-| all | `arw` (right arrow), `ltx` (LaTeX symbol) |
-| cpp | `bare` (barebone template), `icd` (`#include`), `incvec` `incmap` `incset` `incqueue` `incstr` `incstack` (include that header), `vec` `map` `umap` `set` `uset` `queue` `stack` (std containers), `cout`, `plist` (print vector), `pmat` (print list of lists), `pqueue` (print queue), `random` (random list), `sol` (solution), `for`, `if`, `ifelse` |
-| markdown | `meta` (YAML front matter), `h1` ... `h6` (header), `link`, `rlink` (reference link), `img`, `font`, `more`, `detail` (clickable details), `k1` / `kbd`, `k2`, `k3` (keyboard keys), `info` `warn` `error` `success` (boxes), `td` (too long, did not read), `yh` (corner quotes) |
-| nix | `homepackages`, `systempackages`, `excludepackages`, `delibheaderhome`, `delibheadersystem`, `delibheaderhomealways`, `delibheadersystemalways`, `let`, `mkshell`, `mkderiv`, `flake`, `homefile`, `fetchgit`, `systemd` |
-| python | `print`, `impa` (import as), `main` (main boilerplate), `sol` (solution) |
-| snippets | `snip` (UltiSnips snippet definition) |
-| tex | `use` (`\usepackage{}`), `eqa` (equation environment) |
-| vim | `fun` (function), `aug` (augroup) |
+Every row gives the trigger and its description as the completion menu shows it. Explanations, expansions and placeholders are in the chapters named in the last column. The nix snippets are not described in this guide.
 
-Two examples (tested): in any file `arw` + `<Ctrl-j>` gives `--> ` with the cursor after the arrow. In a Python file `main` + `<Ctrl-j>` (at the start of a line) gives this block, with the cursor on the empty indented line inside `def main():`:
+| File | Trigger | Description | Chapter |
+| --- | --- | --- | --- |
+| all | `ltx` (regular expression `(?<!\w)ltx`) | Type ltx (not right after a word character) to insert the word LaTeX; works in every filetype | this section |
+| all | `arw` | ASCII right arrow (-->) followed by text | this section |
+| snippets | `snip` | Template for a new snippet definition (copied from vim-snippets; start of line) | this section |
+| cpp | `bare` | Barebone C++ program: common includes, using std:: declarations and main | `languages/cpp.md` |
+| cpp | `icd` | #include directive (start of line) | `languages/cpp.md` |
+| cpp | `incset` `incmap` `incqueue` `incstr` `incvec` `incstack` | Include the header and add the using line, for example "Include <set> and add using std::set (start of line)" | `languages/cpp.md` |
+| cpp | `vec` `map` `umap` `set` `uset` `queue` `stack` | std container declaration, for example "std::vector declaration (needs using std::vector: bare or incvec)"; `map` also "overrides the vim-snippets map" | `languages/cpp.md` |
+| cpp | `plist` | print a container as [a, b, c] (needs <iostream>, <string>, <iterator>) | `languages/cpp.md` |
+| cpp | `pmat` | print a vector of vectors, one [a, b, c] row per line (needs <iostream>, <vector>, <string>, <iterator>) | `languages/cpp.md` |
+| cpp | `pqueue` | print a priority_queue or stack by popping a copy (uses top(); std::queue has front() instead) | `languages/cpp.md` |
+| cpp | `cout` | Print a labelled variable with std::cout (needs #include <iostream>) | `languages/cpp.md` |
+| cpp | `random` | Function returning a vector of random ints in [low, high] (needs #include <random> and <vector>) | `languages/cpp.md` |
+| cpp | `sol` | LeetCode style: create a Solution object (needs a class Solution) | `languages/cpp.md` |
+| cpp | `for` `if` `ifelse` | for loop with init, condition and step (overrides the vim-snippets for); if statement; if-else statement | `languages/cpp.md` |
+| python | `print` | Print a text with the value of a variable (f-string: the variable name goes inside the braces) | `languages/python.md` |
+| python | `impa` `main` `sol` | Import a module under an alias (start of line); Main function plus the if __name__ == "__main__" guard (start of line); LeetCode style: create a Solution object (needs a class Solution; start of line) | `languages/python.md` |
+| tex | `use` | \usepackage line: type the package name (start of line) | `languages/latex.md` |
+| tex | `eqa` | Numbered equation environment with a label, referenced with \ref{label} (start of line) | `languages/latex.md` |
+| vim | `fun` | Vimscript function declared with abort (args are comma separated) | `languages/vim.md` |
+| vim | `aug` | Autocommand group that clears itself first (EVENT: BufWritePost, FileType, ...; PATTERN: *.vim, ...; start of line) | `languages/vim.md` |
+| markdown | `k1` / `kbd`, `k2`, `k3` | HTML <kbd> tag for one key (type k1 or kbd); two keys / three keys joined by + as <kbd> tags | `languages/markdown.md` |
+| markdown | `h1` ... `h6` | Heading of level 1 to 6: type h1 ... h6 at the start of a line | `languages/markdown.md` |
+| markdown | `meta`, `more`, `td` | YAML front matter with title, current date and time, tags and categories (start of line); Blog read-more marker; tl;dr line (start of line) | `languages/markdown.md` |
+| markdown | `img`, `link`, `detail` | Centered image / Markdown link / Collapsible details block; each overrides the vim-snippets entry of the same trigger | `languages/markdown.md` |
+| markdown | `rlink`, `font`, `yh` | Markdown reference link [text][label]; HTML font tag with a color (obsolete in HTML5); Corner brackets for quoting (CJK style) | `languages/markdown.md` |
+| markdown | `info` `warn` `error` `success` | Message box (embeds its own style block; needs network for the Font Awesome 4.2.0 icons from a remote CDN) | `languages/markdown.md` |
+
+**`ltx`** replaces the typed `ltx` with the word `LaTeX`. It does not fire when `ltx` follows a word character, so words that merely contain these letters are left alone. **`arw`** inserts `--> ` (two hyphens and a greater-than sign, plain ASCII, not a Unicode arrow) and selects the placeholder `text`, so you can type the text right after it. **`snip`** (start of line) writes a template for a new snippet definition in a `.snippets` file: the keyword `snippet`, then the placeholders `Tab_trigger`, `Description` and the options `b`, then a body line and `endsnippet`.
+
+Example: in a Python file `main` + `<Ctrl-j>` (at the start of a line) gives this block, with the `# code` placeholder on the indented line inside `def main():` selected:
 
 ```
 def main():
-    (cursor here)
+    # code
 
 
 if __name__ == "__main__":
@@ -179,15 +314,15 @@ Besides the personal files in `my_snippets/`, UltiSnips also loads the `vim-snip
 6. Press `<Ctrl-k>` to jump to the previous placeholder
 7. Fill in each placeholder, and you're done
 
-Example with `jfor` in a Java buffer (tested):
+Example with `jfor` in a Java buffer:
 
 ```
 jfor            <- you type the trigger
-(Ctrl-j)        -> for (int i = 0; i < length; i++) {
-                       // code here
-                   }                          the first placeholder, int, is selected
-long            -> for (long i = 0; ...       typing replaces the selected placeholder
-(Ctrl-j)        -> the next placeholder, i, is selected; (Ctrl-j) again: 0, then length, then the body
+(Ctrl-j)        -> for (int i = start; i < end; i++) {
+                       // code
+                   }                          the first placeholder, i, is selected
+index           -> for (int index = start; ... typing replaces the selected placeholder everywhere it is used
+(Ctrl-j)        -> the next placeholder, start, is selected; (Ctrl-j) again: end, then the body
 (Ctrl-k)        -> back to the previous placeholder
 ```
 
@@ -197,14 +332,14 @@ Custom snippets live in the `my_snippets/` directory. Each file targets a specif
 
 | File | Language | Notable snippets |
 | --- | --- | --- |
-| `all.snippets` | All filetypes | General-purpose snippets |
-| `java.snippets` | Java | Scanner, arrays, loops, conditionals, switch, try-catch (see full list in Snippets section) |
-| `python.snippets` | Python | Python-specific patterns |
-| `cpp.snippets` | C++ | C++ templates |
+| `all.snippets` | All filetypes | `ltx` (the word LaTeX), `arw` (ASCII `-->` then text); see section 15, Other snippets |
+| `java.snippets` | Java | 71 snippets: input, arrays and collections, control flow, methods, classes, exceptions, file I/O, JavaFX (full list in section 15, Java snippets) |
+| `python.snippets` | Python | `print` (f-string), `impa`, `main`, `sol` (chapter `languages/python.md`, Snippets) |
+| `cpp.snippets` | C++ | `bare` program, includes, container declarations, print helpers, `random`, control flow (chapter `languages/cpp.md`, section 84) |
 | `nix.snippets` | Nix | Nix language patterns |
-| `tex.snippets` | LaTeX | LaTeX environments and commands |
-| `markdown.snippets` | Markdown | Markdown structures |
-| `vim.snippets` | Vimscript | Vim plugin development |
+| `tex.snippets` | LaTeX | `use` (`\usepackage`), `eqa` (equation with label) (chapter `languages/latex.md`, Snippets) |
+| `markdown.snippets` | Markdown | 17 snippets: keys, headings, links, images, front matter, message boxes (chapter `languages/markdown.md`, Snippets) |
+| `vim.snippets` | Vimscript | `fun` (function), `aug` (augroup) (chapter `languages/vim.md`, section 85) |
 | `snippets.snippets` | Snippet files | `snip`: template for a new snippet definition |
 
 ## Creating your own snippets
