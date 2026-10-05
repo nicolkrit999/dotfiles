@@ -556,6 +556,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
             - [Change runtime (<Space>jj)](languages/java.md#change-runtime-spacejj)
         - [5. Language server features in a Java buffer](languages/java.md#5-language-server-features-in-a-java-buffer)
             - [Go to definition, back, hover, references](languages/java.md#go-to-definition-back-hover-references)
+            - [When a rename does nothing](languages/java.md#when-a-rename-does-nothing)
             - [Add a missing import (auto-import)](languages/java.md#add-a-missing-import-auto-import)
             - [Generate getters, setters and constructors](languages/java.md#generate-getters-setters-and-constructors)
         - [6. Tests (JUnit)](languages/java.md#6-tests-junit)
