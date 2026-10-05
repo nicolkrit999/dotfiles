@@ -576,6 +576,12 @@ After `zM` the whole function is one line: the first line of the fold, then `Û∞Å
 
 `za` on that line opens it again, `zR` opens every fold, and `<Space>K` shows the hidden lines in a popup without opening the fold.
 
+Java example (tested in a real Neovim on a class, without jdtls running: ufo then uses its other fold providers). A class `public class X {` holding several methods:
+
+- `zc` on any line inside a method closes that method; the line shows `Û∞ÅÇ  N` (N = hidden lines). `zo` opens it, `za` toggles it.
+- `zM` closes everything: only the class line `public class X {` is left, with the count of all hidden lines.
+- After `zM`, `za` on the class line opens ONLY the class: the methods inside stay folded (one level). `zR` opens everything.
+
 ---
 
 # 47. Code folding in depth (`nvim-ufo`)

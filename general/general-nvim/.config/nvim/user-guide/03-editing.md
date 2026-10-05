@@ -699,7 +699,7 @@ The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl
 | `sd'` | Delete surrounding single quotes | `'hello'` becomes `hello` |
 | `sd(` | Delete surrounding parentheses | `(hello)` becomes `hello` |
 | `sd{` | Delete surrounding curly braces | `{hello}` becomes `hello` |
-| `sdb` | Delete the nearest surrounding pair, whatever it is (`()`, `[]`, `{}` or quotes) | `[hello]` becomes `hello` |
+| `sdb` | Delete the surrounding pair without naming it (`()`, `[]`, `{}` or quotes). With the cursor on a letter it takes the INNERMOST pair; with the cursor ON a bracket or quote character it can pick the outer pair (see the note below) | `[hello]` becomes `hello` (tested headless) |
 | `sd[` | Delete surrounding square brackets | `[hello]` becomes `hello` |
 
 ## Replacing surrounding pairs (vim-sandwich plugin)
@@ -710,7 +710,28 @@ The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl
 | `sr({` | Replace `()` with `{}` | `(hello)` becomes `{hello}` |
 | `sr{[` | Replace `{}` with `[]` | `{hello}` becomes `[hello]` |
 | `sr'(` | Replace `'` with `()` | `'hello'` becomes `(hello)` |
-| `srb'` | Replace the nearest surrounding pair, whatever it is | `"hello"` becomes `'hello'` |
+| `srb'` | Replace the surrounding pair without naming it (same pair choice as `sdb`) | `"hello"` becomes `'hello'` |
+
+**Nested pairs, `b` and exactness** (tested headless in a scratch copy of the config, Java buffer, line `names.add("apple");`):
+
+- Cursor on a letter of `apple`: `sd"` gives `names.add(apple);`, `sd(` gives `names.add"apple";`, `sdb` gives `names.add(apple);` (the innermost pair, the quotes), `srb[` gives `names.add([apple]);` (the quotes became brackets).
+- Cursor ON a quote character or on a parenthesis: `sdb` gave `names.add"apple";` (the PARENTHESES were removed, not the quotes). The same happens with the cursor on the closing `)`.
+- A hands-on session reported the parentheses removed with the cursor "on `apple`". That was not reproduced with the cursor on a letter of `apple` (every column of `apple` removed the quotes), so check the exact cursor column first.
+- With nested pairs `b` is therefore not a safe guess: name the pair (`sd"`, `sd(`, `sr"'`, `sr({`) when it matters. `b` is fine for a single pair.
+
+More tested round trips on `names.add("apple");` with the cursor on `apple`: `sd"` then `saiw"` restores `"apple"`; `sr"'` gives `'apple'` and `sr'"` goes back; `sr({` gives `names.add{"apple"};` and `sr{(` goes back.
+
+### Wrap a whole list or part of it (tested headless in a scratch copy)
+
+Line `String.join(", ", "second", "first", "third")` with the cursor on `second`:
+
+| Keys | Result |
+| --- | --- |
+| `vi(` then `sa(` | `String.join((", ", "second", "first", "third"))`: the whole argument list is wrapped in a second pair of parentheses |
+| `sai((` | the same result in one go |
+| Select exactly `"second", "first"` in Visual mode (`v` on the first quote, move to the last quote of `"first"`), then `sa(` | `String.join(", ", ("second", "first"), "third")` |
+
+Check that the Visual highlight covers the LAST character you want inside the pair: a selection that stops one character short (before the comma) gave `("second", "first",) "third"`, and one that also takes the space after the last comma gave `("second", "first", )"third"`.
 
 ## Auto-pairing (nvim-autopairs plugin)
 
@@ -746,6 +767,17 @@ More examples (Python buffers; `gcc` and `gc` are plain vim-commentary: they use
 | `a = 1` / `b = 2` / blank / `c = 3` | `gcip` | `# a = 1` / `# b = 2` / blank / `c = 3` |
 | `# a = 1` / `# b = 2` / blank / `c = 3`, cursor on line 1 | `gcu` | `a = 1` / `b = 2` / blank / `c = 3` |
 | the same | `dgc` | `c = 3` only (the comment block is deleted; the blank line goes with it) |
+
+Java example (tested in a Java buffer; the Java marker is `//`):
+
+| Keys | Result |
+| --- | --- |
+| `gcc` | the current line becomes `// ...`; `gcc` again removes it |
+| `Vjjjgc` (`V`, then `3j`, then `gc`) | 4 lines are toggled to `// ...` and Visual mode ends |
+| `gcu` with the cursor on the first commented line | the adjacent commented lines are uncommented |
+| `:22,25Commentary` | lines 22 to 25 are toggled; the same command again toggles them back |
+
+These keys only toggle. A range that mixes commented and uncommented lines was not tried here and may surprise you, so check the lines afterwards (or use `gcs` / `gcr` below, which add and remove explicitly).
 
 ## Smart commenting (custom)
 
@@ -815,6 +847,8 @@ Quick reference:
 | `sd"` | Delete surrounding `"` |
 | `sr"'` | Replace `"` with `'` |
 | `%` | Jump to matching bracket |
+
+Nested pairs, the `b` shortcut and wrapping a whole argument list: see "Nested pairs, `b` and exactness" and "Wrap a whole list or part of it" in section 6.
 
 ---
 
@@ -949,6 +983,24 @@ Result: all 4 lines end with `; // ok`.
 - **Where the cursor ends**: one line **below** the last processed line (the final `j` of the last run). If that line is blank, the cursor is on the blank line. When the block is the last in the file the final `j` fails and the cursor stays on the last line.
 - **Count**: use `number of lines - 1`, because the recording already did the first line. A count that goes past the last line stops early with an error, which is harmless.
 - **Undo**: one `u` undoes the whole replay (lines 2-4); the line you edited by hand while recording needs a second `u` (tested).
+
+## Scenario: turn `// name` lines into `names.add("name");` calls (confirmed by the user)
+
+Starting with 7 lines, indented 8 spaces, each `// apple`, `// banana`, ..., `// orange`. Result: `names.add("apple");` and so on, same indent.
+
+1. Put the cursor on the first line, at any column.
+2. `Qa` -- start recording to register `a` (`Q` is `q`)
+3. `^` -- go to the first non-blank character (the `//`)
+4. `3x` -- delete `// ` (the two slashes and the space)
+5. `i` + `names.add("` + `<Esc>` -- insert the start of the call before the word
+6. `A` + `");` + `<Esc>` -- append the end of the call
+7. `j` -- move down one line
+8. `q` -- stop recording. Only line 1 has changed so far.
+9. `6@a` -- replay 6 more times (7 lines - 1)
+
+- **Why it repeats well**: same reasoning as in the semicolon scenario above. The macro starts from a fixed place (`^`, the first non-blank, whatever the column was) and ends on `j`, so every replay starts on the next line at the right spot.
+- **What is stored**: the register holds the raw keys; `:reg a` shows them.
+- **Dead-key keyboard layouts (for example US International)**: the keys `^` and `"` need a following `<Space>` while you type them (and while recording); see [Keyboard layouts with dead keys](01-basics.md#keyboard-layouts-with-dead-keys-for-example-us-international).
 
 ## Scenario: convert a list of variables to assignments
 
@@ -1161,7 +1213,7 @@ Example (tested): lines `a`, `b`, `c`, cursor on `a`: `dd` then `p` gives `b`, `
 
 ## Swap two words (vim-swap)
 
-Plugin: **vim-swap**. Put the cursor on an item of a comma-separated list (function arguments) and press `gs`: this starts "swap mode". There `h`/`l` move the current item left/right (swap with its neighbour), `j`/`k` choose another item, `1`-`9` choose the nth item, `s`/`S` sort ascending/descending, `r` reverses, `u`/`<Ctrl-r>` undo/redo, `<Esc>` leaves swap mode.
+Plugin: **vim-swap**. Put the cursor on an item of a comma-separated list (function arguments) and press `gs`: this starts "swap mode". There `h`/`l` move the current item left/right (swap with its neighbour), `j`/`k` choose another item, `1`-`9` choose the nth item, `s`/`S` sort ascending/descending, `r` reverses, `u`/`<Ctrl-r>` undo/redo, `<Esc>` leaves swap mode. The digits only choose an item, they do not move it: to move an item several places press `h`/`l` once per step (see [section 65](#65-swapping-function-arguments-vim-swap)).
 
 For manual word swap:
 1. On the first word: `diw` (delete inner word)
@@ -1247,6 +1299,12 @@ Place your cursor on one of the arguments inside parentheses:
 The keys inside swap mode (`h` `l` `j` `k` `1`-`9` `s` `S` `r` `u` `<Ctrl-r>`, plus `g` / `G` to group / ungroup items) are vim-swap's own defaults per its help (`:help swap.txt`), not set in this config; only the `gs` start key is defined here (`lua/plugin_specs.lua`), and the plugin's other default keys (`g<`, `g>`) are switched off so the builtin `g<` stays.
 
 **Example**: Given `func(a, b, c)` with the cursor on `b`, press `gs`, then `l`: `b` moves one place right, giving `func(a, c, b)`. Press `<Esc>` to leave swap mode (tested).
+
+**Moving an item several places** (tested): there is no key that sends an item straight to position N. Inside swap mode the digits `1`-`9` only CHOOSE which item is current, they do not move it. To move an item two places, stay in one swap-mode session and press one key per step: `gs`, then `h` twice, then `<Esc>`. Example: given `f(a, c, b)` with the cursor on `b`, press `gs`, `h`, `h`, `<Esc>`: `b` moves two places left, giving `f(b, a, c)`.
+
+- Inside swap mode `u` / `<Ctrl-r>` undo/redo a step, handy when you overshoot.
+- Counts inside swap mode (`2h`) have not been tried here, so the guide makes no claim about them.
+- Per `:help swap.txt` (not tried here): vim-swap's own `g<` / `g>` accept a count (`2g<` would move the item two places left in one command), but this config switches those mappings off on purpose, so they are not available.
 
 Works with any comma-separated list: function arguments, array literals, dictionary entries, etc.
 

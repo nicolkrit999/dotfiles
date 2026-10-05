@@ -11,7 +11,7 @@ Neovim is a modal editor. You are always in one of these modes:
 | **Insert** | `i`, `a`, `o`, `O`, `c` from Normal (`s` is disabled here: it is the vim-sandwich prefix) | Type text into the file. |
 | **Visual** | `v`, `V`, `<Ctrl-v>` from Normal | Select text (character, line, or block). |
 | **Command** | `;` or `:` from Normal | Type commands at the bottom of the screen (e.g., `:w` to save). |
-| **Terminal** | When inside a terminal buffer | Interact with a shell. Press `<Esc>` to go to Normal mode (in the Claude Code panel `<Esc>` goes to Claude: use `<Ctrl-\><Ctrl-n>` there). |
+| **Terminal** | When inside a terminal buffer | Interact with a shell. Press `<Esc>` to go to Normal mode (in a Claude terminal `<Esc>` goes to Claude: `<Ctrl-w>h/j/k/l` still move to another window, `<Ctrl-\><Ctrl-n>` leaves terminal mode). |
 
 ### Entering insert mode
 

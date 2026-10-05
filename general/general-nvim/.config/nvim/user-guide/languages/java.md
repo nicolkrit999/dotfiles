@@ -103,7 +103,7 @@ The other option is unchanged: quit, `cd` into the project and start `nvim` from
 1. In a terminal: `cd` into the project folder (the one with `pom.xml`). direnv loads the devShell and prints `Java Environment Active (JDK 25)`. First time: `direnv allow`.
 2. `nvim src/main/java/demo/Main.java`
 3. Wait about 10 seconds. The statusline shows `jdtls (+2)` (jdtls, spring-boot, typos_lsp). Tested: all three attach: `jdtls,spring-boot,typos_lsp`. Before that the `<Space>j` keys only show the warning. A big project's first start is slower.
-4. Run: `<Space>jrr`. A full-width, 15-line terminal split opens at the bottom with the program output.
+4. Run: `<Space>jrr`. A full-width, 15-line terminal split opens at the bottom with the program output. If the project has more than one class with a `main` method, a picker opens first (see [The runner window](#the-runner-window)).
 5. Test: open `CalcTest.java` and press `<Space>jtc`, then `<Space>jtr` for the result tree.
 6. Debug: `:DapToggleBreakpoint` on a line, then `<Space>jtC`. The window stops at the line with a `→` sign.
 
@@ -170,8 +170,10 @@ All `<Space>j` keys are normal mode only. The real maps are created per buffer w
 | `<Space>jev` | `:JavaRefactorExtractVariable` | Extract the expression to a local variable | n |
 | `<Space>jeo` | `:JavaRefactorExtractVariableAllOccurrence` | Same, and replace ALL occurrences | n |
 | `<Space>jec` | `:JavaRefactorExtractConstant` | Extract a constant | n |
-| `<Space>jem` | `:JavaRefactorExtractMethod` | Extract a method | n |
+| `<Space>jem` | `:JavaRefactorExtractMethod` | Extract a method (a whole statement needs a selection FIRST, see [section 8](#8-refactoring-extract)) | n |
 | `<Space>jef` | `:JavaRefactorExtractField` | Extract a field | n |
+
+`<Space>jev`, `<Space>jeo` and `<Space>jec` need no selection (cursor on the expression is enough). To extract a whole statement or several lines with `<Space>jem`, select the code first, press `<Esc>`, then `<Space>jem` (details in [section 8](#8-refactoring-extract)).
 
 ### Settings and debugger setup
 
@@ -200,6 +202,8 @@ Process finished with exit code::0
 ```
 
 (The `Picked up JAVA_TOOL_OPTIONS` line comes from the devShell's Lombok setting; it is harmless.) `<Space>jrl` hides and shows this window again. To go back to the code: `<Esc>`, then `<Ctrl-w>k` or `<Up>`.
+
+Several classes with a `main` method: `<Space>jrr` first opens a picker titled `Select the main class (module -> mainClass)`, with one line per class, for example `1. <project> -> pkg.Main` and `2. <project> -> pkg.Other`. `<C-n>` / `<C-p>` move, `<Enter>` on the wanted line runs that class. The output then appears in the bottom terminal split and ends with `Process finished with exit code::0`. Tested in a practice project with two main classes.
 
 Known quirk (an nvim-java bug): once the program has finished, typing a key in this terminal buffer gives `E900: Invalid channel id`. Press `<Esc>` (or `<Ctrl-\><Ctrl-n>`) first to leave terminal mode, then close the window with `:q` or `<Ctrl-w>c`.
 
@@ -236,11 +240,11 @@ All need jdtls attached. The general keys are described elsewhere ([section 13](
 
 | Key / command | What it does in Java |
 | --- | --- |
-| `gd` | Go to definition; several results open the location list |
-| `K` | Hover: type and Javadoc. Tested: a hover float shows a "java" progress bar while loading |
-| `<Space>rn` | Rename a class, method or variable in all files |
-| `<Space>ca` | Code actions: quick fix, organize imports, generate getters, constructors, `toString`; also the way to extract with a selection (see [Refactoring](#8-refactoring-extract)) |
-| `<Space>fm` | Format the file with the jdtls formatter (Eclipse style). Tested: `calc.add(2,3)*4` became `calc.add(2, 3) * 4`. Formatting is never automatic |
+| `gd` | Go to definition; several results open the location list. Opens the target file as a NEW buffer (the previous file stays open in the tab line); `<C-o>` jumps back to the call site, `<C-i>` forward again (default Neovim). Tested |
+| `K` | Hover: type and Javadoc. Tested: a hover float shows a "java" progress bar for a few seconds while loading; `<Esc>` closes it |
+| `<Space>rn` | Rename a class, method or variable in all files. Tested in a scratch copy (steps still to be confirmed): the `New Name` box opens already filled with the old name and the buffer changes live as you type; `<Enter>` applies it to ALL files that use the name, the other files are changed only in memory (hidden buffers, `:ls` shows them with `+`) until `:wa` (press `<Enter>` first if a "Press ENTER" prompt is showing); text in comments is not changed. A second `<Space>rn` starts from the NEW name (a mistaken second run gave `additaddition`) |
+| `<Space>ca` | Code actions: quick fix, organize imports, generate getters, constructors, `toString`; also the way to extract with a selection (see [Refactoring](#8-refactoring-extract)). Which generate entries work and how: see [Generate getters, setters and constructors](#generate-getters-setters-and-constructors) below |
+| `<Space>fm` | Format the file with the jdtls formatter (Eclipse style). Tested: `calc.add(2,3)*4` became `calc.add(2, 3) * 4`. Formatting is never automatic. It runs asynchronously: wait a moment. Tested: it can re-indent the whole file (the template's 4 spaces became 2) and wrap long lines (`int   x=1+2 ;` became `int x = 1 + 2;`) |
 | `:LspInlayHints enable` / `disable` | Inlay hints (parameter names, types); off by default (tested: enable turns hints on) |
 | `<Space>t` | Symbol outline (aerial); tested in Java: shows `Main` and `main` |
 | diagnostics | Compile errors and warnings appear while you type, without running anything |
@@ -252,6 +256,57 @@ Other notes:
 - **Completion** and **snippets** work as in other languages (sections [14](../04-completion-snippets.md#14-autocompletion-nvim-cmp) and [15](../04-completion-snippets.md#15-snippets-ultisnips)).
 - The coloured line marker (`colorcolumn`) is at 100 for Java.
 - spring-boot attaches next to jdtls in every Java buffer, even in a project without Spring; it is harmless.
+
+### Go to definition, back, hover, references
+
+Example: the cursor is on `add` in `calc.add(10, 3)`. Tested.
+
+1. `gd`  Opens the file with the definition (`public int add(...)`) as a new buffer; the previous file stays open in the tab line at the top.
+2. `<C-o>`  Jumps back to the call site (`<C-i>` goes forward again; default Neovim).
+3. `K`  Hover popup with the signature, for example `int pkg.Calc.add(int a, int b)`. It may show a `java` loading bar for a few seconds first. `<Esc>` closes it.
+4. `<Space>gr`  Opens Glance ([Peeking without jumping](../07-code.md#peeking-without-jumping-glancenvim)) with a panel `References (N)` listing every use, including the definition itself (in the practice project: 4 files); the preview is on the left. `<C-n>` / `<C-p>` move, `<Esc>` closes.
+
+### Add a missing import (auto-import)
+
+Example: a file contains `List<String> names = new ArrayList<>();` and no imports. Tested.
+
+1. Put the cursor ON the unknown word (`List`). If the cursor is elsewhere, the menu does not offer imports at all.
+2. `<Space>ca`  Opens the `Code actions` list (fzf-lua) with entries such as `Import 'List' (com.sun.tools.javac.util)`, `Import 'List' (java.awt)`, `Import 'List' (java.util)`, `Add all missing imports`, `Create class 'List<T>'`, `Change to ...`, `Organize imports`.
+3. `Import java.util`  Type this to filter the list, then CHECK that the highlighted line is `Import 'List' (java.util)`.
+4. `<Enter>`  `import java.util.List;` is added at the top (imports end up sorted, `ArrayList` before `List`).
+5. Repeat for `ArrayList`: cursor on it, `<Space>ca`, filter `Import java.util`, `<Enter>`.
+
+Traps (tested):
+
+- The filter order is not the numbering. After typing only `Import`, the first line was the `java.awt` entry: always read the highlighted line.
+- Filtering only `java.util` for `ArrayList` put `Change to 'List' (java.util)` on top, and `<Enter>` REPLACED `ArrayList` with `List`. Undo with `u`. Keep the word `Import` in the filter.
+- `Add all missing imports` failed in the test with the notification `Failed to choose imports ... java-refactor/action.lua:288: bad argument #1 to 'ipairs' (table expected, got nil)` (a file where `List` had several candidate packages and another name did not exist at all). Do not rely on it; use the single `Import '<Name>' (<package>)` entries.
+- `Organize imports` is in the list; not tried.
+
+### Generate getters, setters and constructors
+
+Example class `Person` with the fields `name` and `age`.
+
+1. Put the cursor on a field line inside the class. The cursor must be inside the class, on a field; elsewhere the menu offers fewer generate actions.
+2. `<Space>ca` opens the code-action list (an fzf-lua picker): type to filter, `<C-n>` / `<C-p>` or the arrows move, `Enter` runs the entry, `Esc` cancels.
+
+The list shows every generate action twice, and the numbers are only the order. One group has NO trailing dots (`Extract interface...`, `Generate Getters and Setters`, `Generate Getters`, `Generate Setters`, `Generate Constructors...`, `Generate hashCode() and equals()...`, `Generate toString()...`, `Override/Implement Methods...`, `Organize imports`), the other group has dots on the accessor entries too (`Generate Getters and Setters...`, `Generate Getters...`, `Generate Setters...`, `Generate Constructors...`, ...).
+
+| Entry | Result |
+| --- | --- |
+| `Generate Getters and Setters`, `Generate Getters`, `Generate Setters` (NO dots) | Tested: writes the methods for ALL fields at once, no questions asked (`getName`, `setName`, `getAge`, `setAge`). To get fewer, delete the extra methods afterwards |
+| The same three entries WITH dots | Tested: do NOT work. They show the notification `"java.action.generateAccessorsPrompt" is not supported yet!` and the file stays unchanged (nvim-java does not implement that prompt; see `lua/java-refactor/client-command-handlers.lua` in the nvim-java plugin). Use the entries without dots |
+| `Generate Constructors...` | Tested: works, opens a `Select Fields` list (see below) |
+| `Generate toString()...`, `Generate hashCode() and equals()...`, `Override/Implement Methods...` | Use the same multi-select as the constructor (per the nvim-java source, `lua/java-refactor/action.lua`). Not tried one by one |
+
+The `Select Fields` list (nvim-java's own multi-select) behaves differently from other pickers:
+
+- `Enter` does NOT finish: it TOGGLES the highlighted field (a `*` appears in front of it) and the list reopens.
+- `<C-n>` / `<C-p>` move; `Tab` does nothing here.
+- `<Esc>` finishes the selection and writes the constructor. Tested: the first `<Esc>` sometimes had to be pressed twice.
+- Tested result with both fields marked: `public Person(String name, int age) { this.name = name; this.age = age; }`; with only `name` marked: `public Person(String name) { this.name = name; }`. The constructor is inserted before the fields.
+
+Indentation: the inserted code uses TAB indentation (jdtls does not format what it inserts), so it looks off next to 4-space code. `<Space>fm` formats the file (Eclipse style, normally 2 spaces in this config); to confirm that this fixes the inserted code.
 
 ## 6. Tests (JUnit)
 
@@ -336,6 +391,8 @@ Notes:
 
 How it works: each `<Space>je...` key runs `vim.lsp.buf.code_action` filtered to one kind (`refactor.extract.variable`, `.constant`, `.function`, `.field`). So `<Space>je...` and `<Space>ca` use the same jdtls actions; the keys just pick the right one for you.
 
+**Rule: select first, then act.** To extract a whole statement or several lines into a method, the code MUST BE SELECTED BEFORE you press `<Space>jem`. Without a selection only the small expression under the cursor is extracted. Variable and constant extraction (`<Space>jev`, `<Space>jec`, `<Space>jeo`) are the opposite: they need NO selection, the cursor on the expression is enough.
+
 The cursor or selection decides what is extracted. After the action a small `New Name` window opens with a proposed name (tested: `i`, `_4`, `extracted`). The change is ALREADY applied; the window renames it:
 
 - `<Enter>` accepts the name in the box (to rename, delete the text with `<BS>` first, then type the new name; it must be a valid Java identifier or you get "is not a valid Java identifier").
@@ -357,15 +414,25 @@ System.out.println(label + ": " + total);
 | `<Space>jev` | on `calc.add(2, 3)` | `int i = calc.add(2, 3);` and `int total = i * 4;` (the `New Name` box proposes `i`) |
 | `<Space>jeo` | on an expression that appears several times | same, but every identical occurrence uses the new variable |
 | `<Space>jec` | on the `4` | `private static final int _4 = 4;` above the method and `... * _4;` (rename to `FACTOR` gives `private static final int FACTOR = 4;`) |
-| `<Space>jem` | on the identifier `calc` (no selection) | extracts only that identifier: `extracted(calc).add(2, 3)` and `private static Calc extracted(Calc calc) { return calc; }` |
-| `<Space>jem` | selection, see below | extracts the selected statements into a method |
+| `<Space>jem` | on the identifier `calc`, no selection | extracts only that identifier: `extracted(calc).add(2, 3)` and `private static Calc extracted(Calc calc) { return calc; }` |
+| `<Space>jem` | selection made first, see below | extracts the selected statement(s) into a method |
 | `<Space>jef` | on an expression | extracts to a field (same flow, not tested separately) |
 
-Extracting a whole statement or block into a method needs a selection, and the key is normal mode only:
+Extracting a whole statement or block into a method needs a selection, and the key is normal mode only. Select first, then leave Visual mode, then press the key. Exact flow (tested 2026-10-05), for the `System.out.println(label + ": " + total);` line:
 
-1. Select with `v` (characterwise), for example `v$` on the `System.out.println(...)` line (tested; `V` linewise gave a worse result: only `System.out` was extracted).
-2. Press `<Esc>` (the selection marks stay).
-3. `<Space>jem`
+1. `^` Put the cursor on the first character of the statement (`^` jumps to the first non-blank character).
+2. `v` Start a characterwise selection. The bottom line must say `-- VISUAL --`, NOT `-- VISUAL LINE --`.
+3. `$` Extend the selection to the end of the line, so the highlight covers the whole statement including the `;` (in this config `$` in Visual mode goes to the last visible character).
+4. `<Esc>` Leave Visual mode. The highlight disappears; that is normal, Neovim remembers the selection.
+5. `<Space>jem` The `New Name` box appears and the line is already replaced by the call.
+
+Why this order: `<Space>jem` (like all `<Space>j...` keys) is a Normal-mode mapping only (`keymap.set("n", ...)` in `lua/mappings.lua`), so it cannot be pressed while Visual mode is active; there `<Space>` and `j` are Visual-mode keys that move the selection. The command reads the range of the LAST Visual selection (the marks `'<` and `'>`), which Neovim keeps after `<Esc>`. `gv` re-selects the last selection (default Neovim behaviour, not tried here).
+
+What goes wrong (tested):
+
+- Capital `V` (linewise) selection: only a part was extracted. On a longer `println("sum=" + sum + ...)` line only the text `"sum="` was extracted: `System.out.println(extracted() + sum + ...` plus a method returning `"sum="`. On the try-it line only `System.out` was extracted.
+- Starting `v` in the middle of the line: partial selection, odd result.
+- `<Space>jem` before jdtls is ready: only a warning, nothing is extracted. Wait for jdtls (see section 2).
 
 Tested result:
 
@@ -377,6 +444,8 @@ Tested result:
         System.out.println(label + ": " + total);
     }
 ```
+
+Another tested statement: `System.out.println("sum=" + sum + " limited=" + limited + " product=" + product);` became `extracted(sum, limited, product);` plus a new `private static void extracted(int sum, int limited, int product)` method.
 
 Pressing `<Space>jem` while the selection is still active does NOT work (visual mode has no such key; `<Space>ca` there would even run `c`, change, on the selection).
 
@@ -1070,6 +1139,9 @@ See [section 7](../06-windows-terminal-sessions.md#7-windows-splits-and-buffers)
 | Debugger does not stop | No breakpoint, or the breakpoint is on a line without code | `:DapToggleBreakpoint` on a code line, then `<Space>jtC` |
 | `:DapStepInto` opens an empty `unknown` buffer | The step went into library code without source | `:DapStepOut`; step into your own methods only |
 | `<Space>rn` or `<Space>ca` warn "no attached language server supports it" | Only typos_lsp attached, jdtls missing | Same as "jdtls never attaches" |
+| `<Space>ca` shows no `Import ...` entries | The cursor is not on the unknown word | Put the cursor ON the word (`List`), then `<Space>ca` ([Add a missing import](#add-a-missing-import-auto-import)) |
+| `Add all missing imports` shows `Failed to choose imports ... bad argument #1 to 'ipairs'` | nvim-java error when a name has several candidate packages or does not exist | Use the single `Import '<Name>' (<package>)` entries one by one |
+| `"java.action.generateAccessorsPrompt" is not supported yet!` | You picked a generate entry WITH trailing dots | Use the entry without dots ([Generate getters, setters and constructors](#generate-getters-setters-and-constructors)) |
 | Spelling squiggles on valid names | typos_lsp does not know the word | Put a `typos.toml` with `[default.extend-words]` in the project root |
 | `.project`, `.classpath`, `.settings/` in `git status` | jdtls writes Eclipse files into the project | Add them to the project's `.gitignore` |
 | Refactor made a mess | The edit was applied before the rename step | `u` twice, then redo |
