@@ -190,6 +190,8 @@ In an automated test the dadbod result window opened after `<Space>S` but stayed
 | `<Space>ev` | Open `init.lua` in a new tab |
 | `<Space>sv` | Write all buffers and restart Neovim (windows, tabs and files are restored; terminals such as Claude Code are not restarted). Builtin `ZR` restarts without writing |
 | `:Lazy` | Open plugin manager UI |
+
+New or changed config needs a restart. Mappings, options and plugin specs in `lua/*.lua` are read at startup: a Neovim that was already running when keys were added or changed (for example by a tool or another editor) does not have them (observed: a newly added key did nothing until restart). The config's own comment says re-sourcing `$MYVIMRC` is not supported with lazy.nvim, so do not try `:source`. Restart with `<Space>sv` (see the row above); confirmed by the owner: after `<Space>sv` Neovim reloaded and the newly added keys were available. To check that a key exists afterwards, press `<Space>` and read the which-key popup, or run `:verbose nmap <Space>jp` (replace the key; `:verbose map` is default Neovim, not tested here).
 | `:Lazy update` | Update all plugins |
 
 ---

@@ -30,7 +30,7 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 
 - `nvim-java`: Wires the Java tooling together: starts the jdtls language server, test and debug extensions and adds the `:Java*` commands. Used here for building, running, testing, debugging and refactoring Java projects with the `<Space>j` key family. Only for Java files (it loads when you open one). In depth: [78. Java (nvim-java, jdtls, tests, debugging)](languages/java.md#78-java-nvim-java-jdtls-tests-debugging)
 - `spring-boot.nvim`: A second language server for Spring Boot projects that attaches next to jdtls. Brought in automatically by nvim-java; there is nothing to configure or press for it. In depth: [spring-boot (Spring Boot tools)](languages/java.md#spring-boot-spring-boot-tools)
-- `nvim-dap`: The general debugger client (breakpoints, stepping) implementing the Debug Adapter Protocol. Here it is installed only for Java debugging through nvim-java; there are no nvim-dap keymaps or panels, you use the `:Dap*` commands. In depth: [Debug Adapter Protocol (DAP)](07-code.md#debug-adapter-protocol-dap-nvim-dap)
+- `nvim-dap`: The general debugger client (breakpoints, stepping) implementing the Debug Adapter Protocol. Here it is installed only for Java debugging through nvim-java; there is no panel; four keys (`<Space>jp` breakpoint, `<Space>jP` clear all breakpoints, `<Space>jh` value under the cursor, `<Space>jx` stop) and the typed `:Dap*` commands (`:DapContinue`, `:DapStepOver`, ...) do the rest. In depth: [Debug Adapter Protocol (DAP)](07-code.md#debug-adapter-protocol-dap-nvim-dap)
 
 ### Debugging and running code
 
