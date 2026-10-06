@@ -20,7 +20,7 @@
 | `:Notifications` | Show the notification history (nvim-notify) |
 | `:Inspect` / `:InspectTree` | Show the highlight groups / the Treesitter tree at the cursor |
 
-Examples (tested, in the file `lua/mappings.lua` of a git repository at `/tmp/demo`):
+Examples (in the file `lua/mappings.lua` of a git repository at `/tmp/demo`):
 
 | Command | Result |
 | --- | --- |
@@ -91,7 +91,7 @@ Plugin: **vim-oscyank** (enabled on Linux only; loaded on its first command). It
 | `:OSCYankVisual` | Copy the Visual selection (run it from Visual mode) |
 | `:OSCYankRegister {reg}` | Copy the content of a register |
 
-Example (tested inside tmux with `set-clipboard on` and `allow-passthrough on`): `:OSCYank hello` shows `[oscyank] 5 characters copied` and the text `hello` arrives in the terminal's clipboard (in tmux it appeared in tmux's own paste buffer). Pasting on the local machine then gives `hello`.
+Example (inside tmux with `set-clipboard on` and `allow-passthrough on`): `:OSCYank hello` shows `[oscyank] 5 characters copied` and the text `hello` arrives in the terminal's clipboard (in tmux it appeared in tmux's own paste buffer). Pasting on the local machine then gives `hello`.
 
 ## Keyboard layout switching (vim-xkbswitch)
 
@@ -125,7 +125,7 @@ Plugin: **live-command.nvim**. When `norm` is typed as an Ex command (at the sta
 | `:g/<pattern>/norm dd` | The preview also works after `:g/.../` and `:v/.../` |
 | `:silent! norm ...` | The preview also works after command modifiers |
 
-Example (tested in a terminal): with the three lines `a` / `b` / `c`, typing `:%norm Atext` (without `<Enter>`) turns the buffer into `atext` / `btext` / `ctext` while you type, and the command line shows `:%Norm Atext`. `<Enter>` keeps the result, `<Esc>` restores `a` / `b` / `c`. The other rows of the table are standard `:norm` uses.
+Example (in a terminal): with the three lines `a` / `b` / `c`, typing `:%norm Atext` (without `<Enter>`) turns the buffer into `atext` / `btext` / `ctext` while you type, and the command line shows `:%Norm Atext`. `<Enter>` keeps the result, `<Esc>` restores `a` / `b` / `c`. The other rows of the table are standard `:norm` uses.
 
 ## Vim-script debugging (vim-scriptease)
 
@@ -168,7 +168,7 @@ Connections come from the environment (set them in an untracked shell file, dire
 - nvim-dbee: `$DBEE_CONNECTIONS`, a JSON array such as `[{"name":"local","type":"postgres","url":"postgres://user:pw@localhost:5432/db"}]`. Connections added inside the UI are not saved.
 - vim-dadbod-ui: `$DADBOD_CONNECTIONS`, a JSON object `{"name":"url"}`. Saved queries go to `~/.local/share/nvim/db_ui`.
 
-`:checkhealth` shows a known, accepted `vim.validate{}` deprecation warning from nvim-dbee. Connections come from the environment, never from the config: `$DBEE_CONNECTIONS` (JSON list, dbee) and `$DADBOD_CONNECTIONS` (JSON object name -> URL, dadbod), for example `export DBEE_CONNECTIONS='[{"name":"test","type":"sqlite","url":"/path/test.sqlite"}]'`. Tested keys:
+`:checkhealth` shows a known, accepted `vim.validate{}` deprecation warning from nvim-dbee. Connections come from the environment, never from the config: `$DBEE_CONNECTIONS` (JSON list, dbee) and `$DADBOD_CONNECTIONS` (JSON object name -> URL, dadbod), for example `export DBEE_CONNECTIONS='[{"name":"test","type":"sqlite","url":"/path/test.sqlite"}]'`. Keys:
 
 | Where | Keys | What it does |
 | --- | --- | --- |
@@ -177,7 +177,7 @@ Connections come from the environment (set them in an untracked shell file, dire
 | dbee editor | `BB`, `<CR>` | `BB` runs the whole file (Visual: the selection), `<CR>` runs the statement under the cursor; the rows appear in the result window |
 | dbee result | `L` / `H`, `E` / `F`, `yaj` / `yac`, `<C-c>` | next / previous page, last / first page, yank the row as JSON / CSV, cancel |
 | dadbod (`<Space>Du`) | `o`, `S`, `R`, `A`, `H`, `d`, `r`, `q`, `?` | in the drawer: open/toggle, open in a vertical split, redraw, add a connection, toggle details, delete, rename, close, help; the drawer tree shows connection, New query, Saved queries, Tables |
-| dadbod SQL buffer | `<Space>S`, `<Space>W`, `<Space>E` | run, save, edit bind parameters; `:DB sqlite:/path select ...` runs one query and shows the rows (tested) |
+| dadbod SQL buffer | `<Space>S`, `<Space>W`, `<Space>E` | run, save, edit bind parameters; `:DB sqlite:/path select ...` runs one query and shows the rows |
 
 In an automated test the dadbod result window opened after `<Space>S` but stayed empty, so check that step in a real terminal.
 
@@ -191,7 +191,7 @@ In an automated test the dadbod result window opened after `<Space>S` but stayed
 | `<Space>sv` | Write all buffers and restart Neovim (windows, tabs and files are restored; terminals such as Claude Code are not restarted). Builtin `ZR` restarts without writing |
 | `:Lazy` | Open plugin manager UI |
 
-New or changed config needs a restart. Mappings, options and plugin specs in `lua/*.lua` are read at startup: a Neovim that was already running when keys were added or changed (for example by a tool or another editor) does not have them (observed: a newly added key did nothing until restart). The config's own comment says re-sourcing `$MYVIMRC` is not supported with lazy.nvim, so do not try `:source`. Restart with `<Space>sv` (see the row above); confirmed by the owner: after `<Space>sv` Neovim reloaded and the newly added keys were available. To check that a key exists afterwards, press `<Space>` and read the which-key popup, or run `:verbose nmap <Space>jp` (replace the key; `:verbose map` is default Neovim, not tested here).
+New or changed config needs a restart. Mappings, options and plugin specs in `lua/*.lua` are read at startup: a Neovim that was already running when keys were added or changed (for example by a tool or another editor) does not have them (observed: a newly added key did nothing until restart). The config's own comment says re-sourcing `$MYVIMRC` is not supported with lazy.nvim, so do not try `:source`. Restart with `<Space>sv` (see the row above); after `<Space>sv` Neovim reloaded and the newly added keys were available. To check that a key exists afterwards, press `<Space>` and read the which-key popup, or run `:verbose nmap <Space>jp` (replace the key; `:verbose map` is default Neovim, not tested here).
 | `:Lazy update` | Update all plugins |
 
 ---
@@ -274,7 +274,7 @@ Everything below is aimed at developers. It explains the plugins and tools in th
 | `:%!sort` | Replace the entire buffer with its sorted version |
 | `:%!python -m json.tool` | Format the entire buffer as JSON with 4-space indent (`:JSONFormat` does the same with 2 spaces and leaves invalid JSON untouched) |
 
-Examples (tested):
+Examples:
 
 | Command | Before | After |
 | --- | --- | --- |
@@ -288,7 +288,7 @@ Examples (tested):
 2. Type `:!sort` -- the selected lines are replaced with the sorted result
 3. Or `:!awk '{print $2}'` -- replace with second column only
 
-Examples (tested): the four lines `z` / `c` / `b` / `a` with `Vj` on lines 2 and 3, then `:!sort` (the command line shows `:'<,'>!sort`): the result is `z` / `b` / `c` / `a`, only the selected lines are sorted. The two lines `1 x` / `2 y` selected with `Vj` and `:!awk '{print $2}'` become `x` / `y`.
+Examples: the four lines `z` / `c` / `b` / `a` with `Vj` on lines 2 and 3, then `:!sort` (the command line shows `:'<,'>!sort`): the result is `z` / `b` / `c` / `a`, only the selected lines are sorted. The two lines `1 x` / `2 y` selected with `Vj` and `:!awk '{print $2}'` become `x` / `y`.
 
 ## The asyncrun.vim plugin
 
@@ -301,7 +301,7 @@ Plugin: **asyncrun.vim**. Runs commands asynchronously (non-blocking) and sends 
 
 The quickfix window auto-opens (6 lines tall) when AsyncRun starts.
 
-Example (tested): `:AsyncRun echo hi` opens the quickfix window with three lines: `[echo hi]`, `hi` and `[Finished in 0 seconds]`.
+Example: `:AsyncRun echo hi` opens the quickfix window with three lines: `[echo hi]`, `hi` and `[Finished in 0 seconds]`.
 
 ---
 

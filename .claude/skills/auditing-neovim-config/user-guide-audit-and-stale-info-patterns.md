@@ -1,6 +1,6 @@
 # 05 - Auditing the user guide (self-contained)
 
-Contents: 1 Structure and conventions (layout, tone and notation, tested markers, policies) / 2 Audit procedure (per claim class) / 3 Wrong-info patterns found in past audits / 4 Rule: every change updates the guide, and the staleness checklist
+Contents: 1 Structure and conventions (layout, tone and notation, status markers (none allowed), policies) / 2 Audit procedure (per claim class) / 3 Wrong-info patterns found in past audits / 4 Rule: every change updates the guide, and the staleness checklist
 
 
 Goal: the guide must never contain stale or wrong information. Paths are relative to the config dir
@@ -40,9 +40,9 @@ Hard facts first:
 - Commands are written `:Name args`; shell lines go in ```bash fences; nix/lua in ```nix / ```lua fences. Code in the guide copied from the config (e.g. the nvim-java spec in section 78) must still equal the file (comments may be omitted).
 - Emoji or glyph descriptions must match the config (diagnostic signs are Nerd Font glyphs, not emoji).
 
-### 1.3 "tested" markers
+### 1.3 No status markers in the guide
 
-- `(tested)` / `Tested:` / `(tested: <what was observed>)` means a REAL key/command was run and the stated result observed (43 plain `(tested)` plus many with the observation). Never write it from reasoning, source reading or a headless guess about UI behaviour; if only the source was read, write what the source says without "tested".
+- The guide carries NO status labels: no `(tested)`, `Tested:`, "confirmed by the owner", "unverified", "assumption" (owner decision 2026-10-06; a few negative labels such as "not tested" from before that date may remain: report them, do not add new ones). Unlabelled text is understood to be verified. Never write a claim from reasoning, source reading or a headless guess about UI behaviour; if only the source was read, state what the source says and record the unconfirmed part ONLY in the memory file `~/.claude/projects/-home-krit-dotfiles/memory/neovim-guide-unverified-items.md`.
 - Open questions were once marked `<!-- CHECK-USER -->`; there are 0 now. Any new `CHECK-USER` marker needs an entry for the owner; none should remain unresolved in a finished guide (`grep -rc CHECK-USER user-guide/ | grep -v ':0'` must print nothing). Leftover draft text such as "not tested yet", "Manual test", "Claims to verify", "actually simpler" is a defect.
 - A claim that cannot be re-derived (needs a database, a PDF viewer click, a devShell tool that is absent) stays as-is but is listed as "not re-run" in the audit report, never silently approved.
 
@@ -97,12 +97,12 @@ For each claim class:
 | Claim class | How to verify | Typical failure |
 | --- | --- | --- |
 | Keys (lhs, mode, scope) | grep the dump; `vim.fn.maparg(lhs, mode, false, true)` gives `buffer`, `desc`, `rhs`; empty `{}` = no map. Then grep the source: `grep -rn '<space>zz' lua after plugin` (case-insensitive; lazy `keys = {}` stubs in `lua/plugin_specs.lua`; per-plugin `lua/config/*.lua`; `lua/mappings.lua`; `after/ftplugin/*`). Check duplicates (the later definition wins) | wrong mode letter, buffer-local key described as global, key that moved, key that never existed |
-| What a key DOES | feed real keys: `nvim_feedkeys` in headless for text edits, or a private tmux server (`tmux -L t new -d -x 200 -y 50`, `send-keys`, `capture-pane -p`, `kill-server` at the end) for UI/float/terminal/dashboard behaviour. Builtin motions: test them; do not trust memory | wrong "selects X" statements, counts, cursor end position |
+| What a key DOES | feed real keys: `nvim_feedkeys` in headless for text edits, or a private tmux server (`tmux -L t new -d -x 200 -y 50`, `send-keys`, `capture-pane -p`, stop it with the guarded `tn_stop` at the end, never a bare kill) for UI/float/terminal/dashboard behaviour. Builtin motions: test them; do not trust memory | wrong "selects X" statements, counts, cursor end position |
 | Commands | `vim.fn.exists(":Cmd")` (2 = exists) in fresh and loaded runs; `:verbose command Cmd`; compare with `commands.txt`; lazy `cmd = {}` lists in `plugin_specs.lua` | command only exists after first use, removed command, wrong args (`:Mkdir!`) |
 | Options | `:verbose set opt?` (shows who set it and where); `lua/options.lua`, `after/ftplugin/*`, `FileType` autocmds (colorcolumn) | value wrong, option leaks vs buffer-local, per-filetype value |
 | Plugin behaviour | read the plugin source/doc under `~/.local/share/nvim/lazy/<name>/` (`doc/*.txt`, `lua/`, `plugin/`); plugin list vs `lua/plugin_specs.lua` and `lazy-lock.json`; `require("lazy").stats()` / `:Lazy` | doc says what the plugin does by memory, `:Obsession!` deletes the session, cmp `<Ctrl-d>` scrolls UP |
 | Plugin loaded when? | spec triggers (`event`, `cmd`, `ft`, `keys`, `lazy`) vs fresh-start dump; `require("lazy.core.config").plugins[name]._.loaded` | "available at start" for lazy-only things |
-| "tested" claims | spot-check a sample by re-running the exact keys in tmux/headless; at least every claim whose neighbour code changed since the text was written (`git log`). Claims that cannot be reproduced (database, viewer click, devShell tool absent) are reported "not re-run" | observation was a guess; claim contradicted by later config change |
+| claims (all are understood as verified) | spot-check a sample by re-running the exact keys in tmux/headless; at least every claim whose neighbour code changed since the text was written (`git log`). Claims that cannot be reproduced (database, viewer click, devShell tool absent) are reported "not re-run" | observation was a guess; claim contradicted by later config change |
 | Section references | for every "section N" / "sections N, M": the target heading must exist (`grep -rn '^# N\. ' user-guide/`) and must be about the stated topic | closing floats is section 7 not 2; big files is section 42 not 41 |
 | Table integrity | script: for each table, the cell count of every row equals the header's; count pipes outside code spans; a row flagged only because of a double-backtick span is a false positive | unescaped `\|` inside code span splits the cell |
 | Code fences | per file the number of lines starting with three backticks must be even; no unclosed fence; nested fences use a longer fence | one stray fence swallows the rest of the file |
@@ -168,5 +168,5 @@ Staleness checklist (run in this order):
 5. Options/autocmds: `:verbose set` for each option the guide states; `custom-autocmd.lua` vs section 42 rows.
 6. LSP/tools/devShells: `lua/config/lsp.lua`, `after/lsp/`, `~/nix` devShell templates and `neovim.nix` vs sections 13, 44, 35, 78-82 (never copy private host names or secrets into the guide).
 7. Mechanical integrity: `user-guide/build-pdf.py --check` prints OK (a FAIL there is a finding: stale PDF, stale table of contents, broken link or anchor, heading missing from the PDF); section count/numbering, anchors, table columns, fences, chapter header comment and Back links, README Contents completeness, dashboard `u` target, skill paths, `grep -rc CHECK-USER`.
-8. Re-test a sample of "tested" claims, prioritising sections whose code changed since.
+8. Re-test a sample of the guide's claims, prioritising sections whose code changed since.
 9. Report: counts (rows/keys/commands/plugins checked), findings as a table `file:line | quote | class (WRONG/STALE/CHANGED/REMOVED/MISSING/UNSURE) | evidence (file:line or test) | exact replacement text`, plus "verified OK" and "not re-run" lists. Apply corrections to wrong/stale text; for MISSING content ask the owner (new examples need approval; plain key rows for new documented maps do not invent examples and may be added). Do not commit unless asked; the repo is public, never add secrets.

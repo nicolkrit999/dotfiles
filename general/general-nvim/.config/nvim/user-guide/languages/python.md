@@ -15,7 +15,7 @@ This section is one walk-through for everything Python in your config: what star
 | **typos_lsp** | Spell checker for identifiers and comments, attaches to every file type (also Python) | `typos-lsp` on PATH (installed globally by `neovim.nix`) |
 | **tree-sitter** | Syntax highlighting (the `python` parser) | Nothing on Nix systems (parsers come from the nix store) |
 | **Snippets** | `print` (f-string), `impa`, `main`, `sol` (see [Snippets](#snippets) below) | Nothing |
-| **uv awareness** | In a project with `uv.lock` and no active virtual environment, `<Space>rf` / `<F9>` and `<Space>f` go through `uv run` | `uv` on PATH (it is: `/run/current-system/sw/bin/uv`, tested) |
+| **uv awareness** | In a project with `uv.lock` and no active virtual environment, `<Space>rf` / `<F9>` and `<Space>f` go through `uv run` | `uv` on PATH (it is: `/run/current-system/sw/bin/uv`) |
 | **Statusline label** | Shows the active environment as `name (venv)` or `name (conda)` in Python buffers | An activated environment |
 | **Format check** | After saving, `black --check` runs in the background and warns `<file>: file is not formatted (black)` | `black` on PATH, otherwise silent |
 | **Run** | `<Space>rf` / `<F9>` (output in the quickfix window) and `<Space>rr` (output in a terminal split) | `python` / `python3` on PATH |
@@ -27,11 +27,11 @@ This section is one walk-through for everything Python in your config: what star
 ## Quick start
 
 1. Start nvim **inside the Python devShell** (a project folder with `.envrc` containing `use_dev_env python`, see "[Devshell and tools](#devshell-and-tools)"). Outside it, only pyright and typos_lsp exist.
-2. Open a file: `nvim hello.py`. Wait a second or two. `:LspAttached` lists the running servers; tested in the python devShell: `pyright`, `ruff`, `typos_lsp`. The statusline shows `pyright (+2)` (the first server and two more).
+2. Open a file: `nvim hello.py`. Wait a second or two. `:LspAttached` lists the running servers; in the python devShell: `pyright`, `ruff`, `typos_lsp`. The statusline shows `pyright (+2)` (the first server and two more).
 3. Type a small program, save with `:w`, then run it with `<Space>rf` (or `<F9>`). A 6-line quickfix window opens at the bottom and shows the output.
 4. Run it again as a full terminal with `<Space>rr`. A terminal split opens on the LEFT of the code.
 5. Format with `<Space>f` (black). The file on disk is rewritten and the buffer reloads (`File changed on disk. Buffer reloaded!`).
-6. Debug with `<Space>dp`. The code gets a `▶` marker and a pdb pane opens below it. Step with `<Space>dn` (or `<F10>`), quit with `:GdbDebugStop`. (`<F9>` and `<Space>rf` keep working afterwards; tested.)
+6. Debug with `<Space>dp`. The code gets a `▶` marker and a pdb pane opens below it. Step with `<Space>dn` (or `<F10>`), quit with `:GdbDebugStop`. (`<F9>` and `<Space>rf` keep working afterwards.)
 
 ## Why each tool exists
 
@@ -98,7 +98,7 @@ Your folders in `~/github-repos/personal/developing-projects/python-projects/`: 
 | `pyright` or `ruff` | That server is silently not enabled (no warning when opening the file). `:LspStart pyright` or `:LspStart ruff` names the missing program |
 | `black` | `<Space>f` shows ONE warning: `Python: black not found on PATH (open nvim inside the python devShell)`. The after-save format check stays silent |
 | `uv` (in a uv project) | Not a real case here (uv is installed system-wide). If it were missing, `<Space>f` would show the same black warning and `<Space>rf` / `<F9>` would fail inside the quickfix window |
-| `python` / `python3` | `<Space>rf` / `<F9>` shows the shell error in the quickfix window. `<Space>rr` has no PATH check for Python: tested with an empty PATH, the terminal shows `bash: line 1: python3: command not found` and no nvim warning appears |
+| `python` / `python3` | `<Space>rf` / `<F9>` shows the shell error in the quickfix window. `<Space>rr` has no PATH check for Python: with an empty PATH, the terminal shows `bash: line 1: python3: command not found` and no nvim warning appears |
 | `typos-lsp` | Silent |
 
 
@@ -391,7 +391,7 @@ Two ways, for different purposes.
 | `<Space>rf` / `<F9>` | `python -u "<file>"`, or `uv run python -u "<file>"` in a uv project (see below) | Quickfix window, 6 lines tall at the bottom (AsyncRun opens it by itself). The last line says `[Finished in N seconds]` on success and `[Finished in N seconds with code C]` when the exit code C is not 0 |
 | `<Space>rr` | `python3 <file>` (shell-escaped) | A new terminal in a vertical split on the LEFT of your code, titled like `term://...:python3 'file.py'`; Claude's panel stays on the right. When the program ends it shows `[Process exited 0]` |
 
-Facts that differ between the two (all tested):
+Facts that differ between the two:
 
 - `<Space>rf` and `<F9>` are **buffer-local** and the same command: it exists only in Python buffers. `-u` means unbuffered, so `print` output appears while the program runs.
 - `<Space>rr` is global and detects the file type. For Python it is always plain `python3 <file>`: **it never uses `uv run`, and has no `-u`**. In a uv project without an active environment use `<Space>rf`.
@@ -411,7 +411,7 @@ print(add(1, 2))
 print(sys.version_info[:2], os.environ.get("VIRTUAL_ENV"), sys.executable)
 ```
 
-Press `<Space>rf` (or `<F9>`). Expect in the quickfix window: `3`, then the Python version, the venv path (or `None`) and the interpreter path, then `[Finished in 0 seconds]`. A program that crashes ends with `code 1` and the traceback, as in the tested example `add(1, "two")`:
+Press `<Space>rf` (or `<F9>`). Expect in the quickfix window: `3`, then the Python version, the venv path (or `None`) and the interpreter path, then `[Finished in 0 seconds]`. A program that crashes ends with `code 1` and the traceback, as in the example `add(1, "two")`:
 
 ```
 TypeError: unsupported operand type(s) for +: 'int' and 'str'
@@ -432,10 +432,10 @@ vim.keymap.set("n", "<F9>", string.format(':<C-U>AsyncRun %s -u "%%"<CR>', py_cm
 | --- | --- | --- |
 | No project root (no `.git`, no `pyproject.toml`) | `python -u` | `black` |
 | An environment is active (`$VIRTUAL_ENV` or `$CONDA_DEFAULT_ENV` set) | `python -u` | `black` |
-| `uv.lock` in the project root and no active environment | `uv run python -u` (tested: quickfix title `:AsyncRun uv run python -u "hello.py"`) | `uv run black` |
+| `uv.lock` in the project root and no active environment | `uv run python -u` (quickfix title `:AsyncRun uv run python -u "hello.py"`) | `uv run black` |
 | Project root without `uv.lock`, no active environment | `python -u` | `black` |
 
-Tested: in a folder with `pyproject.toml` + `uv.lock` and a plain shell, the quickfix title showed `uv run python -u`; inside the python devShell (where `$VIRTUAL_ENV` is the project's `.venv`) it showed plain `python -u`.
+In a folder with `pyproject.toml` + `uv.lock` and a plain shell, the quickfix title showed `uv run python -u`; inside the python devShell (where `$VIRTUAL_ENV` is the project's `.venv`) it showed plain `python -u`.
 
 Because the check runs at file open, activate the environment (or create `uv.lock`) before opening the file, or reload with `:e!`.
 
@@ -453,17 +453,17 @@ nvim hello.py
 
 | Started with | How to stop |
 | --- | --- |
-| `<Space>rf` / `<F9>` | `:AsyncStop` (tested with a 60-second `time.sleep`: `ps` showed `python -u slow.py` before and nothing after; stronger kill: `:AsyncStop!`) |
-| `<Space>rr` | In the terminal press `<Ctrl-c>`, or delete the terminal buffer with `:bd!` (tested: `ps` showed `python3 slow.py` before `:bd!` and nothing after) |
+| `<Space>rf` / `<F9>` | `:AsyncStop` (with a 60-second `time.sleep`: `ps` showed `python -u slow.py` before and nothing after; stronger kill: `:AsyncStop!`) |
+| `<Space>rr` | In the terminal press `<Ctrl-c>`, or delete the terminal buffer with `:bd!` (`ps` showed `python3 slow.py` before `:bd!` and nothing after) |
 
-Warning, tested earlier: `<Space>q` on a terminal window only **closes the window**; the running program keeps running hidden. Stop it first. See section [55](../07-code.md#55-code-running-in-depth) and section [8](../06-windows-terminal-sessions.md#8-terminal-integration) for terminal navigation.
+Warning: `<Space>q` on a terminal window only **closes the window**; the running program keeps running hidden. Stop it first. See section [55](../07-code.md#55-code-running-in-depth) and section [8](../06-windows-terminal-sessions.md#8-terminal-integration) for terminal navigation.
 
 ## Formatting and linting
 
 | Key / command | What it does |
 | --- | --- |
-| `<Space>f` (Python buffers) | Runs `black` on the file **on disk** (`:silent !black %`); in a uv project `uv run black %`. Nvim then reloads the buffer and shows `File changed on disk. Buffer reloaded!` (tested) |
-| `<Space>fm` | LSP format, async, **in the buffer** (not saved). In Python the formatter is ruff's server, so it is `ruff format`, not black (tested: the buffer became modified, `●` in the tab, and `{"a":1,\n "b":2}` became `{"a": 1, "b": 2}`) |
+| `<Space>f` (Python buffers) | Runs `black` on the file **on disk** (`:silent !black %`); in a uv project `uv run black %`. Nvim then reloads the buffer and shows `File changed on disk. Buffer reloaded!` |
+| `<Space>fm` | LSP format, async, **in the buffer** (not saved). In Python the formatter is ruff's server, so it is `ruff format`, not black (the buffer became modified, `●` in the tab, and `{"a":1,\n "b":2}` became `{"a": 1, "b": 2}`) |
 
 Try it. Save as `messy.py`:
 
@@ -494,13 +494,13 @@ Key points:
 - Both formatters give almost the same result on normal code, but they are different programs. `<Space>f` (black) matches the after-save check; `<Space>fm` does not need black installed.
 - Nothing formats automatically on save.
 - **Format check after save:** every `:w` of a Python file runs `black --check --quiet <file>` in the background. If the file would change you get `<file>: file is not formatted (black)`. If black fails (for example a syntax error) you get `<file>: black could not check the file (syntax error?)` plus the first error line. Nothing is changed. If `black` is not on PATH the check is silent. It uses plain `black`, even in uv projects.
-- **Without black:** tested outside the devShell, `<Space>f` shows ONE warning `Python: black not found on PATH (open nvim inside the python devShell)`, and saving shows nothing. In a uv project (uv is on PATH) the key stays silent and changes nothing when the project has no black: the command fails inside `:silent`. When the project has black (tested with `uv add --dev black` in a scratch project), `<Space>f` runs `uv run black` and reformats the file, with the same `Buffer reloaded!` message.
+- **Without black:** outside the devShell, `<Space>f` shows ONE warning `Python: black not found on PATH (open nvim inside the python devShell)`, and saving shows nothing. In a uv project (uv is on PATH) the key stays silent and changes nothing when the project has no black: the command fails inside `:silent`. When the project has black (with `uv add --dev black` in a scratch project), `<Space>f` runs `uv run black` and reformats the file, with the same `Buffer reloaded!` message.
 - **Line length:** black's default is 88, and the `colorcolumn` marker for Python is also 88 (default for other files: 100). A line touching the marker is too long for black. Black does not wrap long strings or comments.
 - **Indentation:** `tabstop`, `softtabstop`, `shiftwidth` = 4, `expandtab` on. No wrapping (`wrap` off, `sidescroll` 5, `sidescrolloff` 2).
 
 ### Code actions from ruff
 
-Put the cursor on the first line of `messy.py` and press `<Space>ca`. Tested result (with `import os, sys` on line 1) is a list of eight ruff actions (one "Remove unused import" per unused name and one "Disable for this line" per diagnostic, so the exact number depends on how many diagnostics the line has):
+Put the cursor on the first line of `messy.py` and press `<Space>ca`. Result (with `import os, sys` on line 1) is a list of eight ruff actions (one "Remove unused import" per unused name and one "Disable for this line" per diagnostic, so the exact number depends on how many diagnostics the line has):
 
 ```
 1. Ruff (E401): Split imports [ruff]
@@ -517,7 +517,7 @@ Pick a number with `<CR>`. "Organize imports" sorts and groups the imports (pyri
 
 ### Linting from the command line (`:compiler ruff`)
 
-The ftplugin sets `vim.g.ruff_makeprg_params = ""` so that Neovim's built-in ruff compiler plugin works without `--preview`. Tested:
+The ftplugin sets `vim.g.ruff_makeprg_params = ""` so that Neovim's built-in ruff compiler plugin works without `--preview`:
 
 ```vim
 :compiler ruff
@@ -566,7 +566,7 @@ Who does what:
 | Import sorting | ruff (`organizeImports = true`); pyright's is disabled |
 | Spelling mistakes in names and comments | typos_lsp |
 
-Tested: after `:LspInlayHints enable` no inline hints appeared in a small Python file (pyright sends none for this code), so expect little or nothing in Python.
+After `:LspInlayHints enable` no inline hints appeared in a small Python file (pyright sends none for this code), so expect little or nothing in Python.
 
 Ruff reads its rules from `pyproject.toml` / `ruff.toml` in the project. Pyright reads `pyrightconfig.json` or `[tool.pyright]` in `pyproject.toml`. See section [13](../07-code.md#13-lsp-language-server-protocol) and section [44](../07-code.md#44-language-server-protocol-lsp-in-depth) for the LSP basics.
 
@@ -590,7 +590,7 @@ for i in range(3):
 print("total", total)
 ```
 
-Press `<Space>dp` in this file. After the session starts the cursor is in the pdb terminal pane, so the `<Space>d*` keys are typed into pdb until you move back to the source window (`<Ctrl-\><Ctrl-n>` then `<Ctrl-w>k`). Tested result: the source window shows the file with a `▶` mark in the sign column on line 1, and below it a terminal pane shows
+Press `<Space>dp` in this file. After the session starts the cursor is in the pdb terminal pane, so the `<Space>d*` keys are typed into pdb until you move back to the source window (`<Ctrl-\><Ctrl-n>` then `<Ctrl-w>k`). Result: the source window shows the file with a `▶` mark in the sign column on line 1, and below it a terminal pane shows
 
 ```
 > .../dbg.py(1)<module>()
@@ -598,9 +598,9 @@ Press `<Space>dp` in this file. After the session starts the cursor is in the pd
 (Pdb)
 ```
 
-Press `<Space>dn` (or `<F10>`) twice. The `▶` moves to line 6, then line 7, and the terminal shows `n` typed for you each time (tested). `<Space>dc` (or `<F5>`) continues; this small program finished and printed `total 5`, then pdb says `The program finished and will be restarted` and starts again at line 1.
+Press `<Space>dn` (or `<F10>`) twice. The `▶` moves to line 6, then line 7, and the terminal shows `n` typed for you each time. `<Space>dc` (or `<F5>`) continues; this small program finished and printed `total 5`, then pdb says `The program finished and will be restarted` and starts again at line 1.
 
-Keys during the session. The `<Space>d` keys work in Python buffers without function keys; the F-keys are nvim-gdb's own. Outside a debug session the `<Space>d` keys show one warning `pdb: no debug session here (start one with <Space>dp)`. All tested except `<F4>`; run them from the code window (go there with `<Ctrl-\><Ctrl-n>` then `<Ctrl-w>k` if you are in the pdb pane):
+Keys during the session. The `<Space>d` keys work in Python buffers without function keys; the F-keys are nvim-gdb's own. Outside a debug session the `<Space>d` keys show one warning `pdb: no debug session here (start one with <Space>dp)`. `<F4>` is not tested. Run them from the code window (go there with `<Ctrl-\><Ctrl-n>` then `<Ctrl-w>k` if you are in the pdb pane):
 
 | Key | Action | Command |
 | --- | --- | --- |
@@ -617,9 +617,9 @@ Other commands: `:GdbBreakpointClearAll`, `:GdbFrame` (jump to the current line)
 
 You can also type plain pdb commands in the terminal pane (`n`, `s`, `c`, `p var`, `l`, `bt`, `q`): go there with `<Ctrl-w>j`, press `i`, type, press `<Enter>`. Leave terminal mode with `<Ctrl-\><Ctrl-n>`.
 
-**Quit:** `:GdbDebugStop`. The debug layout was in the same tab here (tested: one tab, two windows during the session, one after). Closing the debug windows also ends it.
+**Quit:** `:GdbDebugStop`. The debug layout was in the same tab here (one tab, two windows during the session, one after). Closing the debug windows also ends it.
 
-**History (fixed, tested):** nvim-gdb used to bind `<F9>` itself (evaluate) and removed it from the code buffer after a session, which also removed your `<F9>` run key until `:e!`. Its evaluate key is now `<Space>dv`, so `<F9>`, `<Space>rf`, `<Space>f` and `<Space>dp` work before, during and after a debug session.
+**History (fixed):** nvim-gdb used to bind `<F9>` itself (evaluate) and removed it from the code buffer after a session, which also removed your `<F9>` run key until `:e!`. Its evaluate key is now `<Space>dv`, so `<F9>`, `<Space>rf`, `<Space>f` and `<Space>dp` work before, during and after a debug session.
 
 Notes:
 
@@ -638,7 +638,7 @@ Notes:
 | only `$CONDA_DEFAULT_ENV` | `<env name> (conda)` |
 | neither | nothing shown |
 
-`$VIRTUAL_ENV` wins when both are set. In a uv project with `uv.lock` and no active environment the label stays empty (tested), even though `uv run` will use the project's `.venv`. Tested in the python devShell: the label read `.venv (venv)` (the folder name of `$VIRTUAL_ENV`, with its dot).
+`$VIRTUAL_ENV` wins when both are set. In a uv project with `uv.lock` and no active environment the label stays empty, even though `uv run` will use the project's `.venv`. In the python devShell: the label read `.venv (venv)` (the folder name of `$VIRTUAL_ENV`, with its dot).
 
 **How to activate an environment.**
 
@@ -649,7 +649,7 @@ Notes:
 | uv project | Either `source .venv/bin/activate` before starting nvim, or leave it inactive and use `<Space>rf` / `<F9>` / `<Space>f`, which run through `uv run` |
 | Switch environment | Close nvim, change environment, start nvim again (the shell environment is inherited at start) |
 
-**How pyright finds packages (tested).** In a uv project (`.venv` with packages) opened from the python devShell (whose own `python` lacks them), `import pytokens` gave the error `Import "pytokens" could not be resolved`. After adding a `pyrightconfig.json` with `{"venvPath": ".", "venv": ".venv"}` the error was gone. So the `.venv` folder alone is not enough: pyright uses the `python` on PATH, unless `venvPath` / `venv` say otherwise. Background: Pyright runs as a child of nvim and uses the `python` on PATH. If `VIRTUAL_ENV` was set when nvim started, it resolves imports from that environment. With `autoSearchPaths` it also searches `src/`. To point pyright explicitly, put `venvPath` and `venv` in `pyrightconfig.json` or `[tool.pyright]` in `pyproject.toml`, then `:LspRestart`.
+**How pyright finds packages.** In a uv project (`.venv` with packages) opened from the python devShell (whose own `python` lacks them), `import pytokens` gave the error `Import "pytokens" could not be resolved`. After adding a `pyrightconfig.json` with `{"venvPath": ".", "venv": ".venv"}` the error was gone. So the `.venv` folder alone is not enough: pyright uses the `python` on PATH, unless `venvPath` / `venv` say otherwise. Background: Pyright runs as a child of nvim and uses the `python` on PATH. If `VIRTUAL_ENV` was set when nvim started, it resolves imports from that environment. With `autoSearchPaths` it also searches `src/`. To point pyright explicitly, put `venvPath` and `venv` in `pyrightconfig.json` or `[tool.pyright]` in `pyproject.toml`, then `:LspRestart`.
 
 
 ## Testing

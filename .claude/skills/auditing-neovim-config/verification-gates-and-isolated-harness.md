@@ -181,4 +181,4 @@ cd /tmp/x && nix develop ~/nix/templates/krit/dev-environments/language-specific
 16. Report honestly: failing check = FAIL with the observed output; skipped step = say it was skipped.
 
 ## 9. Clean-up checklist (always, also after failures)
-`tn_stop`/`at_stop`; `tmux -L <name> kill-server` for stragglers (`tmux -L name ls`); `rm -rf $AUDIT_OUT/scratch/* $AUDIT_OUT/t*`; `git worktree remove --force` for any worktree; `git -C <repo> status -sb` shows only intended changes and the lockfile is untouched; keep `$AUDIT_OUT/results/*` only if the user wants the snapshots.
+`tn_stop`/`at_stop`; `_tn_kill tn-<name>` (guarded) for stragglers (`tmux -L tn-<name> ls`); never a bare `tmux kill-*`, see TMUX SAFETY in SKILL.md 8b; `rm -rf $AUDIT_OUT/scratch/* $AUDIT_OUT/t*`; `git worktree remove --force` for any worktree; `git -C <repo> status -sb` shows only intended changes and the lockfile is untouched; keep `$AUDIT_OUT/results/*` only if the user wants the snapshots.

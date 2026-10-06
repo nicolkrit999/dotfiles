@@ -61,7 +61,7 @@ V           ->  [alpha beta gamma]         the whole line
 5. **Use text objects**. `ciw`, `di(`, `va"` are faster than selecting character-by-character.
 6. **Press `<Space>` and wait**. The which-key popup shows you all available keybindings.
 
-Example for habit 2: on `x = compute("old", 5)` with the cursor anywhere inside `"old"`, press `ci"`, type `new` and press `<Esc>`: the line becomes `x = compute("new", 5)` (tested).
+Example for habit 2: on `x = compute("old", 5)` with the cursor anywhere inside `"old"`, press `ci"`, type `new` and press `<Esc>`: the line becomes `x = compute("new", 5)`.
 
 ## Common mistakes and how to fix them
 
@@ -69,10 +69,10 @@ Example for habit 2: on `x = compute("old", 5)` with the cursor anywhere inside 
 | --- | --- | --- |
 | Typing random commands instead of text | You're in Normal mode | Press `i` to enter Insert mode first |
 | Text won't stop appearing | You're in Insert mode | Press `<Esc>` to go back to Normal |
-| Screen looks weird / frozen | You pressed `<Ctrl-s>` (terminal freeze) | Press `<Ctrl-q>` to unfreeze. (In kitty + tmux with this config `<Ctrl-s>` did not freeze the screen: tested. In Insert/Select mode `<Ctrl-s>` is LSP signature help.) |
+| Screen looks weird / frozen | You pressed `<Ctrl-s>` (terminal freeze) | Press `<Ctrl-q>` to unfreeze. (In kitty + tmux with this config `<Ctrl-s>` did not freeze the screen. In Insert/Select mode `<Ctrl-s>` is LSP signature help.) |
 | Can't exit Neovim | `:q` only closes the current window, and with unsaved changes it asks "Save changes?" instead of quitting (the `confirm` option is on) | Type `<Space>Q` and answer `y` to the confirmation, or `;qa!<Enter>` (no confirmation) |
 | Pasted text looks wrong | Paste from outside with `<Ctrl-v>` in terminal mode | Use `"+p` in Normal mode, or the terminal paste key |
-| Search highlight won't go away | Yellow boxes left over from a search or `*` | Type `;noh<Enter>` (tested). `<Esc>` does **not** clear it in this config |
+| Search highlight won't go away | Yellow boxes left over from a search or `*` | Type `;noh<Enter>`. `<Esc>` does **not** clear it in this config |
 | Accidentally opened a macro | Pressed `Q` | Press `q` to stop recording |
 | A key like `"` does nothing until you press another key, or an accented letter appears (`ë`, `è`) | Your keyboard layout uses **dead keys** (see below) | Press `<Space>` right after the key |
 
@@ -80,7 +80,7 @@ Example for habit 2: on `x = compute("old", 5)` with the cursor anywhere inside 
 
 Some layouts (for example US International, used on the main machine) treat certain keys as **dead keys**: the key does not type anything by itself, it waits for the next key to decide. `"` followed by `e` gives `ë`; `"` followed by `<Space>` gives a plain `"`. Neovim only receives the character after that decision, so commands that need `"` look like they do nothing.
 
-- **Symptom (tested with `"`)**: `vt"l` selected nothing, because `t` kept waiting for its character. `vt"<Space>l` works. In a search, `v/"<Enter>` worked because `<Enter>` also ends the wait.
+- **Symptom (with `"`)**: `vt"l` selected nothing, because `t` kept waiting for its character. `vt"<Space>l` works. In a search, `v/"<Enter>` worked because `<Enter>` also ends the wait.
 - **The rule**: after a dead key, press `<Space>` before continuing (`vt"<Space>l`).
 - **Keys that may be affected** (not confirmed, depends on the layout; `"` is the only one tested): `'` and `` ` `` (marks such as `` `a `` and `'a`), `"` (registers such as `"ay`, text objects such as `ci"`), `~` (toggle case) and `^` (start of line). Without the space, a dead key followed by a letter can become an accented letter (`"a` -> `ä`, `` `a `` -> `à`) and the Vim command never runs.
 - **This is not Neovim**: it happens in any application with that layout. A different PC may have a different layout, so if a key does nothing or types a strange character, check the layout before suspecting the config.
@@ -142,7 +142,7 @@ This is the single most important mental model for understanding Vim. Almost eve
 | `j` | Down one line |
 | `k` | Up one line |
 
-Where the cursor ends up, on the line `  total = price * 3;` (two leading spaces) with the cursor on the `t` of `total` (tested):
+Where the cursor ends up, on the line `  total = price * 3;` (two leading spaces) with the cursor on the `t` of `total`:
 
 | Keys | Cursor lands on |
 | --- | --- |
@@ -197,7 +197,7 @@ Every operator works with every motion and every text object. This creates hundr
 | `gcip` | comment | inner paragraph | Comment out the paragraph |
 | `gc3j` | comment | 3 lines down | Comment out 3 lines |
 
-Worked example (tested) on the line `call(foo, "bar baz", [1, 2])`; the cursor is on the word named in the first column:
+Worked example on the line `call(foo, "bar baz", [1, 2])`; the cursor is on the word named in the first column:
 
 | Cursor | Keys | After |
 | --- | --- | --- |
@@ -280,7 +280,7 @@ Auto-save is also active: files save on `FocusLost` (switching to another app) a
 | `<Ctrl-r>` | Redo (undo the undo) |
 | `U` | Undo all changes on the current line (rarely used) |
 
-Example (tested): on the line `one two three`, `ciw` + `A` + `<Esc>`, `w`, `ciw` + `B` + `<Esc>` give `A B three`. Then:
+Example: on the line `one two three`, `ciw` + `A` + `<Esc>`, `w`, `ciw` + `B` + `<Esc>` give `A B three`. Then:
 
 | Keys | Result |
 | --- | --- |
@@ -300,7 +300,7 @@ Vim's undo history is a tree, not a linear stack. If you undo several times and 
 
 Inside the panel just move the cursor (`j`/`k`): the buffer switches to that undo state. Close it with `<Space>u` again or `:q`.
 
-Example of a branch (tested, including the panel, in a real terminal):
+Example of a branch (including the panel, in a real terminal):
 
 1. In an empty buffer press `ione<Esc>`, then `ccTWO<Esc>`: the buffer is `TWO`.
 2. Press `u`: the buffer is `one` again.
@@ -365,7 +365,7 @@ You can also press any partial key sequence and wait:
 | `:vmap` | Show visual-mode mappings |
 | `:verbose nmap <Space>fg` | Show exactly where a specific mapping was defined (the file; for a mapping written in Lua there is no line number unless Neovim runs with `-V1`) |
 
-Real output of `:verbose nmap <Space>fg` (tested):
+Real output of `:verbose nmap <Space>fg`:
 
 ```
 n  <Space>fg   * <Cmd>FzfLua live_grep<CR>

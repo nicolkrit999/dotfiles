@@ -80,7 +80,7 @@ Claude Code uses your project's git root as the working directory. `:ClaudeCodeR
 | `<Space>mb{motion}` (or `<Space>mb` on a Visual selection) | Add a hard line break (a trailing `\`) to each line, e.g. `<Space>mbip`; blank lines and lines already ending in `\` are skipped |
 | `:AddRef <label> <url>` | Add reference link at end of buffer |
 
-Examples (all tested in a Markdown buffer):
+Examples (all in a Markdown buffer):
 
 | Keys | Before | After |
 | --- | --- | --- |
@@ -140,7 +140,7 @@ Languages: English, Italian, German, French.
 
 `spellfile` has one word list per language, in the order of `spelllang` (en, it, de, fr): `zg` adds to the first, a count picks another. The lists are `spell/*.utf-8.add` inside the config, which is tracked in a PUBLIC repository: `spell/README.md` says these words are public, so review new words before committing. At startup Neovim silently recompiles any list whose compiled `.add.spl` file is missing or older, so the words of the tracked lists are accepted on a fresh checkout.
 
-Example (tested): in a text file with the line `The recieve button`, `<Space>cz` switches spell checking on, `recieve` is marked, and with the cursor on it `z=` opens a popup titled "Spelling suggestions" that lists the suggestions, each with a key (`1 ➜ receive`, `2 ➜ relieve`, ...; this config's popup lists the keys `1`-`9`, `0` and `a`-`j`). Press `1` (no `<Enter>`): the line is now `The receive button`. `zg` on `recieve` instead adds the word to `spell/en.utf-8.add`, so it is no longer marked.
+Example: in a text file with the line `The recieve button`, `<Space>cz` switches spell checking on, `recieve` is marked, and with the cursor on it `z=` opens a popup titled "Spelling suggestions" that lists the suggestions, each with a key (`1 ➜ receive`, `2 ➜ relieve`, ...; this config's popup lists the keys `1`-`9`, `0` and `a`-`j`). Press `1` (no `<Enter>`): the line is now `The receive button`. `zg` on `recieve` instead adds the word to `spell/en.utf-8.add`, so it is no longer marked.
 
 Besides the builtin spell checker two language servers report problems as diagnostics: `ltex_plus` (grammar and spelling in prose files) and `typos_lsp` (typos in identifiers and comments of source files). The statusline shows `[SPELL]` while spell checking is on.
 
@@ -159,7 +159,7 @@ Besides the builtin spell checker two language servers report problems as diagno
 
 Commands: `:UnicodeSearch {name or U+hex}`, `:UnicodeName`, `:UnicodeTable`. The plugin loads on the first `ga`, `<Space>cu` or `:UnicodeSearch`; the insert keys, `<F4>` and `:UnicodeName` / `:UnicodeTable` exist only after that. Without function keys use `<Ctrl-k>` + two letters in Insert mode (built-in Vim digraph input, outside a snippet; `<Ctrl-k>` `a` `:` gives `ä`) or `<Ctrl-x><Ctrl-g>`. Example: `<F4>$` on `a:e:o:u:` gives the umlauts (per the plugin doc).
 
-Examples (tested): in Insert mode `<Ctrl-k>` `a` `:` types `ä`. `ga` with the cursor on that `ä` prints `'ä' U+00E4 Dec:228 LATIN SMALL LETTER A WITH DIAERESIS (a: a") &auml; /\%ue4 "\u00e4"`: the character, its code point and decimal value, its name, its digraph and its HTML entity.
+Examples: in Insert mode `<Ctrl-k>` `a` `:` types `ä`. `ga` with the cursor on that `ä` prints `'ä' U+00E4 Dec:228 LATIN SMALL LETTER A WITH DIAERESIS (a: a") &auml; /\%ue4 "\u00e4"`: the character, its code point and decimal value, its name, its digraph and its HTML entity.
 
 URLs in buffers are automatically highlighted (vim-highlighturl plugin).
 

@@ -18,7 +18,7 @@ Dispatch the `nvim-trial-runner` agent with a self-contained brief (it does not 
 ## Sandbox (rules of `./verification-gates-and-isolated-harness.md`, section 1, apply in full)
 
 - Scratch dir under `$AUDIT_OUT` (default `/tmp/nvim-audit`) or the session scratchpad. If the task involves git (fugitive, gitsigns, diffview, conflicts, blame), create a FRESH throwaway repo there: `git init`, fake commits, branches, a local bare clone as "remote". You may create, edit, stage, commit, branch, stash and reset freely inside it. Never push or fetch to a real or fake remote, never use `gh` or the user's credentials, never run state-changing git in the dotfiles checkout.
-- nvim through `scripts/isolated-nvim.sh <scratch> [args]` (scratch XDG dirs, lockfile sha-guard). Real keys through the private tmux harness (`scripts/tmux-lib.sh`, `tmux -L <name>`, `kill-server` at the end), `clipboard=` set. Prefer headless `nvim --headless` with `feedkeys` plus a fact query when no screen is needed (section 5 there). A language toolchain may need its devShell (section 6 there).
+- nvim through `scripts/isolated-nvim.sh <scratch> [args]` (scratch XDG dirs, lockfile sha-guard). Real keys through the private tmux harness (`scripts/tmux-lib.sh`, `tmux -L <name>`, stop with `tn_stop`/`at_stop` at the end, TMUX SAFETY rule in SKILL.md 8b applies: never a bare tmux command, never kill anything but your own `tn-*`/`at-*` server, verify the owner's tmux survives), `clipboard=` set. Prefer headless `nvim --headless` with `feedkeys` plus a fact query when no screen is needed (section 5 there). A language toolchain may need its devShell (section 6 there).
 - Evidence for every attempt: a fact query (buffer text, cursor, mode, `:messages`, `v:errmsg`) AND the screen when the result is visual. Verdicts: PASS, FAIL, NEEDS-HUMAN, BLOCKED. Unsure is NEEDS-HUMAN, never PASS.
 
 ## The loop
@@ -30,7 +30,7 @@ Dispatch the `nvim-trial-runner` agent with a self-contained brief (it does not 
    - **Found:** a PASS that reproduces the goal from the same starting state. Stop, clean up, report.
    - **Stale:** **20 failed attempts** without a PASS. Stop, clean up, report the log.
    - **NEEDS-HUMAN or BLOCKED:** the result cannot be judged automatically (looks, mouse, real clipboard, missing binary). It does not count as a failure or a pass: stop that branch, list it for the user.
-5. **Clean up always** (checklist in section 9 there): `rm -rf` the scratch dir, `tmux -L <name> kill-server`, confirm the lockfile and dotfiles git status are unchanged.
+5. **Clean up always** (checklist in section 9 there): `rm -rf` the scratch dir, `tn_stop`/`at_stop` (guarded kill; confirm the owner's tmux still lists sessions), confirm the lockfile and dotfiles git status are unchanged.
 
 ## Report (to the answering skill's conversation or to the user)
 

@@ -7,3 +7,1131 @@ snippet eqa "Numbered equation environment with a label, referenced with \ref{la
 	${2:content}
 \end{equation}
 endsnippet
+
+# ============================================================================
+# Math symbols
+#
+# Conventions:
+# - Symbol snippets are offered ONLY inside math ($..$, $$..$$, \(..\), \[..\] and
+#   equation-like environments); the check is nvim_in_math() below.
+# - Triggers are the human/LaTeX word, case-sensitive (Greek letters: the name itself).
+# - Cursor ends AFTER the expansion. Word-like commands (\leq, \alpha, ...) end with one
+#   trailing space so the next typed letter does not glue to the command; postfix snippets
+#   (sub, sup, inv, transpose, degree, celsius) have none.
+# - Placeholders are in left-to-right tab order, the final cursor is right after the construct.
+# - Each snippet has a one-line description (shown by nvim-cmp above the snippet body).
+# ============================================================================
+
+global !p
+import re as _re
+import vim as _vim
+
+# Environments whose body is math.
+_MATH_ENVS = {
+	"equation", "equation*", "align", "align*", "alignat", "alignat*", "aligned", "gather",
+	"gather*", "gathered", "multline", "multline*", "flalign", "flalign*", "eqnarray",
+	"eqnarray*", "displaymath", "math", "split", "dmath", "dmath*",
+}
+# Environments whose body is literal text (no math, no snippets for delimiters either).
+_VERB_ENVS = {"verbatim", "verbatim*", "Verbatim", "lstlisting", "minted", "comment", "alltt"}
+# Commands whose braced argument is plain text again, even inside math.
+_TEXT_CMDS = {"text", "textrm", "textit", "textbf", "mbox", "intertext"}
+
+
+def _tex_state():
+	"""Return "math", "text" or "verb" for the cursor position (insert mode).
+
+	Plain text scan of the buffer from the top to the cursor: needs no vimtex and no syntax
+	groups, so it also works with tree-sitter highlighting and in plaintex. Handles $..$, $$..$$,
+	\\(..\\), \\[..\\], math environments, % comments, escaped \\$ and \\%, \\text{..} groups
+	and verbatim-like environments. A blank line ends $..$, $$..$$ and \\(..\\).
+	"""
+	row, col = _vim.current.window.cursor
+	lines = list(_vim.current.buffer[:row])
+	lines[-1] = lines[-1][:col]
+	close = None       # closing token of the open math region, None = text mode
+	envs = []          # open math environments
+	verb = None        # open verbatim-like environment
+	text_depth = None  # brace depth that ends a \text{..} group
+	depth = 0
+	for li, line in enumerate(lines):
+		last = li == len(lines) - 1
+		if not line.strip():
+			if close in ("$", "$$", "\\)"):
+				close = None
+				text_depth = None
+			depth = 0
+			continue
+		i, n = 0, len(line)
+		while i < n:
+			c = line[i]
+			if verb:
+				k = line.find("\\end{" + verb + "}", i)
+				if k < 0:
+					break
+				i = k + len("\\end{" + verb + "}")
+				verb = None
+				continue
+			if c == "%":
+				if last:
+					return "verb"
+				break
+			if c == "\\":
+				nxt = line[i + 1] if i + 1 < n else ""
+				if nxt == "[" and close is None and not envs:
+					close = "\\]"
+				elif nxt == "]" and close == "\\]":
+					close = None
+				elif nxt == "(" and close is None and not envs:
+					close = "\\)"
+				elif nxt == ")" and close == "\\)":
+					close = None
+				elif nxt.isalpha():
+					m = _re.match(r"\\([A-Za-z]+)\*?", line[i:])
+					name = m.group(1)
+					i += len(m.group(0)) - 1
+					if name in ("begin", "end"):
+						e = _re.match(r"\{([^}]*)\}", line[i + 1:])
+						if e:
+							env = e.group(1)
+							if name == "begin" and env in _VERB_ENVS and close is None:
+								verb = env
+							elif name == "begin" and env in _MATH_ENVS and close is None:
+								envs.append(env)
+							elif name == "end" and envs and env == envs[-1]:
+								envs.pop()
+							i += len(e.group(0))
+					elif name in _TEXT_CMDS and (close or envs) and text_depth is None:
+						if line[i + 1:i + 2] == "{":
+							text_depth = depth
+					i += 1
+					continue
+				i += 2
+				continue
+			if c == "{":
+				depth += 1
+			elif c == "}":
+				depth -= 1
+				if text_depth is not None and depth == text_depth:
+					text_depth = None
+			elif c == "$" and not envs and text_depth is None:
+				if line[i + 1:i + 2] == "$":
+					close = None if close == "$$" else ("$$" if close is None else close)
+					i += 1
+				else:
+					close = None if close == "$" else ("$" if close is None else close)
+			i += 1
+	if verb:
+		return "verb"
+	return _fin(close, envs, text_depth)
+
+
+def _fin(close, envs, text_depth):
+	if text_depth is None and (close is not None or envs):
+		return "math"
+	return "text"
+
+
+def nvim_in_math():
+	"""True inside math, but not right after a backslash word (\\alpha typed by hand)."""
+	row, col = _vim.current.window.cursor
+	if _re.search(r"\\[A-Za-z]*$", _vim.current.line[:col]):
+		return False
+	return _tex_state() == "math"
+
+
+def nvim_not_verbatim():
+	"""True outside comments and verbatim-like environments (math or text)."""
+	return _tex_state() != "verb"
+endglobal
+
+# Remove the math-symbol / math-structure snippets that vim-snippets ships for tex, so only the
+# ones below are offered. The block's priority must be higher than vim-snippets' (0) for
+# clearsnippets to apply. Non-math snippets (environments, tables, bra/ket, ...) stay.
+priority 1
+clearsnippets cc inn Nn UU uuu nnn HH DD sum lim prod part ooo => =< == != <= >= lll xx <! !> srt srto ss __ compl conj bar taylor rij pmat bmat lrb lra (?<!\\)(sin|cos|arccot|cot|csc|ln|log|exp|star|perp) ((\d|\w)+)invs
+
+# ----------------------------------------------------------------------------
+# Math delimiters (work in text and in math; not in comments or verbatim)
+# ----------------------------------------------------------------------------
+
+context "nvim_not_verbatim()"
+snippet mk "Inline math $...$ (cursor inside)" w
+\$${1}\$$0
+endsnippet
+
+context "nvim_not_verbatim()"
+snippet dm "Display math \[ ... \] on its own lines (cursor inside)" w
+\[
+	${1}
+\]$0
+endsnippet
+
+# ---- Relations and operators ----
+# ---- Relations and operators ----
+
+context "nvim_in_math()"
+snippet neq "Not equal (\neq)" w
+\neq 
+endsnippet
+
+context "nvim_in_math()"
+snippet leq "Less or equal (\leq)" w
+\leq 
+endsnippet
+
+context "nvim_in_math()"
+snippet geq "Greater or equal (\geq)" w
+\geq 
+endsnippet
+
+context "nvim_in_math()"
+snippet ll "Much less (\ll)" w
+\ll 
+endsnippet
+
+context "nvim_in_math()"
+snippet gg "Much greater (\gg)" w
+\gg 
+endsnippet
+
+context "nvim_in_math()"
+snippet approx "Approximately equal (\approx)" w
+\approx 
+endsnippet
+
+context "nvim_in_math()"
+snippet equiv "Identical / congruent (\equiv)" w
+\equiv 
+endsnippet
+
+context "nvim_in_math()"
+snippet sim "Similar / distributed as (\sim)" w
+\sim 
+endsnippet
+
+context "nvim_in_math()"
+snippet simeq "Asymptotically equal (\simeq)" w
+\simeq 
+endsnippet
+
+context "nvim_in_math()"
+snippet cong "Congruent (\cong)" w
+\cong 
+endsnippet
+
+context "nvim_in_math()"
+snippet propto "Proportional to (\propto)" w
+\propto 
+endsnippet
+
+context "nvim_in_math()"
+snippet pm "Plus minus (\pm)" w
+\pm 
+endsnippet
+
+context "nvim_in_math()"
+snippet mp "Minus plus (\mp)" w
+\mp 
+endsnippet
+
+context "nvim_in_math()"
+snippet times "Multiplication cross (\times)" w
+\times 
+endsnippet
+
+context "nvim_in_math()"
+snippet cdot "Dot product / multiplication dot (\cdot)" w
+\cdot 
+endsnippet
+
+context "nvim_in_math()"
+snippet circ "Composition (\circ)" w
+\circ 
+endsnippet
+
+context "nvim_in_math()"
+snippet ast "Asterisk operator (\ast)" w
+\ast 
+endsnippet
+
+context "nvim_in_math()"
+snippet oplus "Direct sum (\oplus)" w
+\oplus 
+endsnippet
+
+context "nvim_in_math()"
+snippet otimes "Tensor product (\otimes)" w
+\otimes 
+endsnippet
+
+context "nvim_in_math()"
+snippet perp "Perpendicular (\perp)" w
+\perp 
+endsnippet
+
+context "nvim_in_math()"
+snippet parallel "Parallel (\parallel)" w
+\parallel 
+endsnippet
+
+context "nvim_in_math()"
+snippet angle "Angle (\angle)" w
+\angle 
+endsnippet
+
+context "nvim_in_math()"
+snippet degree "Degree sign (^\circ)" i
+^\circ
+endsnippet
+
+context "nvim_in_math()"
+snippet celsius "Degrees Celsius (^\circ\mathrm{C})" i
+^\circ\mathrm{C}
+endsnippet
+
+context "nvim_in_math()"
+snippet infinity "Infinity (\infty)" w
+\infty 
+endsnippet
+
+context "nvim_in_math()"
+snippet partial "Partial derivative symbol (\partial)" w
+\partial 
+endsnippet
+
+context "nvim_in_math()"
+snippet nabla "Nabla (\nabla)" w
+\nabla 
+endsnippet
+
+context "nvim_in_math()"
+snippet therefore "Therefore (\therefore)" w
+\therefore 
+endsnippet
+
+context "nvim_in_math()"
+snippet because "Because (\because)" w
+\because 
+endsnippet
+
+context "nvim_in_math()"
+snippet ldots "Dots on the line (\ldots)" w
+\ldots 
+endsnippet
+
+context "nvim_in_math()"
+snippet cdots "Centered dots (\cdots)" w
+\cdots 
+endsnippet
+
+context "nvim_in_math()"
+snippet vdots "Vertical dots (\vdots)" w
+\vdots 
+endsnippet
+
+context "nvim_in_math()"
+snippet ddots "Diagonal dots (\ddots)" w
+\ddots 
+endsnippet
+
+# ---- Logic and sets ----
+
+context "nvim_in_math()"
+snippet implies "Implies (\implies)" w
+\implies 
+endsnippet
+
+context "nvim_in_math()"
+snippet iff "If and only if (\iff)" w
+\iff 
+endsnippet
+
+context "nvim_in_math()"
+snippet to "Arrow right / maps to (\to)" w
+\to 
+endsnippet
+
+context "nvim_in_math()"
+snippet mapsto "Maps to (element) (\mapsto)" w
+\mapsto 
+endsnippet
+
+context "nvim_in_math()"
+snippet leftarrow "Arrow left (\leftarrow)" w
+\leftarrow 
+endsnippet
+
+context "nvim_in_math()"
+snippet forall "For all (\forall)" w
+\forall 
+endsnippet
+
+context "nvim_in_math()"
+snippet exists "Exists (\exists)" w
+\exists 
+endsnippet
+
+context "nvim_in_math()"
+snippet nexists "Does not exist (\nexists)" w
+\nexists 
+endsnippet
+
+context "nvim_in_math()"
+snippet neg "Not (\neg)" w
+\neg 
+endsnippet
+
+context "nvim_in_math()"
+snippet land "And (\land)" w
+\land 
+endsnippet
+
+context "nvim_in_math()"
+snippet lor "Or (\lor)" w
+\lor 
+endsnippet
+
+context "nvim_in_math()"
+snippet in "Element of (\in)" w
+\in 
+endsnippet
+
+context "nvim_in_math()"
+snippet notin "Not element of (\notin)" w
+\notin 
+endsnippet
+
+context "nvim_in_math()"
+snippet subset "Subset (\subset)" w
+\subset 
+endsnippet
+
+context "nvim_in_math()"
+snippet subseteq "Subset or equal (\subseteq)" w
+\subseteq 
+endsnippet
+
+context "nvim_in_math()"
+snippet supset "Superset (\supset)" w
+\supset 
+endsnippet
+
+context "nvim_in_math()"
+snippet cup "Union (\cup)" w
+\cup 
+endsnippet
+
+context "nvim_in_math()"
+snippet cap "Intersection (\cap)" w
+\cap 
+endsnippet
+
+context "nvim_in_math()"
+snippet setminus "Set difference (\setminus)" w
+\setminus 
+endsnippet
+
+context "nvim_in_math()"
+snippet emptyset "Empty set (\emptyset)" w
+\emptyset 
+endsnippet
+
+context "nvim_in_math()"
+snippet NN "Natural numbers (\mathbb{N})" w
+\mathbb{N}
+endsnippet
+
+context "nvim_in_math()"
+snippet ZZ "Integers (\mathbb{Z})" w
+\mathbb{Z}
+endsnippet
+
+context "nvim_in_math()"
+snippet QQ "Rationals (\mathbb{Q})" w
+\mathbb{Q}
+endsnippet
+
+context "nvim_in_math()"
+snippet RR "Reals (\mathbb{R})" w
+\mathbb{R}
+endsnippet
+
+context "nvim_in_math()"
+snippet CC "Complex numbers (\mathbb{C})" w
+\mathbb{C}
+endsnippet
+
+# ---- Greek letters ----
+
+context "nvim_in_math()"
+snippet alpha "Greek letter alpha (\alpha)" w
+\alpha 
+endsnippet
+
+context "nvim_in_math()"
+snippet beta "Greek letter beta (\beta)" w
+\beta 
+endsnippet
+
+context "nvim_in_math()"
+snippet gamma "Greek letter gamma (\gamma)" w
+\gamma 
+endsnippet
+
+context "nvim_in_math()"
+snippet delta "Greek letter delta (\delta)" w
+\delta 
+endsnippet
+
+context "nvim_in_math()"
+snippet epsilon "Greek letter epsilon (\epsilon)" w
+\epsilon 
+endsnippet
+
+context "nvim_in_math()"
+snippet varepsilon "Greek letter varepsilon (\varepsilon)" w
+\varepsilon 
+endsnippet
+
+context "nvim_in_math()"
+snippet zeta "Greek letter zeta (\zeta)" w
+\zeta 
+endsnippet
+
+context "nvim_in_math()"
+snippet eta "Greek letter eta (\eta)" w
+\eta 
+endsnippet
+
+context "nvim_in_math()"
+snippet theta "Greek letter theta (\theta)" w
+\theta 
+endsnippet
+
+context "nvim_in_math()"
+snippet vartheta "Greek letter vartheta (\vartheta)" w
+\vartheta 
+endsnippet
+
+context "nvim_in_math()"
+snippet iota "Greek letter iota (\iota)" w
+\iota 
+endsnippet
+
+context "nvim_in_math()"
+snippet kappa "Greek letter kappa (\kappa)" w
+\kappa 
+endsnippet
+
+context "nvim_in_math()"
+snippet lambda "Greek letter lambda (\lambda)" w
+\lambda 
+endsnippet
+
+context "nvim_in_math()"
+snippet mu "Greek letter mu (\mu)" w
+\mu 
+endsnippet
+
+context "nvim_in_math()"
+snippet nu "Greek letter nu (\nu)" w
+\nu 
+endsnippet
+
+context "nvim_in_math()"
+snippet xi "Greek letter xi (\xi)" w
+\xi 
+endsnippet
+
+context "nvim_in_math()"
+snippet pi "Greek letter pi (\pi)" w
+\pi 
+endsnippet
+
+context "nvim_in_math()"
+snippet rho "Greek letter rho (\rho)" w
+\rho 
+endsnippet
+
+context "nvim_in_math()"
+snippet sigma "Greek letter sigma (\sigma)" w
+\sigma 
+endsnippet
+
+context "nvim_in_math()"
+snippet tau "Greek letter tau (\tau)" w
+\tau 
+endsnippet
+
+context "nvim_in_math()"
+snippet phi "Greek letter phi (\phi)" w
+\phi 
+endsnippet
+
+context "nvim_in_math()"
+snippet varphi "Greek letter varphi (\varphi)" w
+\varphi 
+endsnippet
+
+context "nvim_in_math()"
+snippet chi "Greek letter chi (\chi)" w
+\chi 
+endsnippet
+
+context "nvim_in_math()"
+snippet psi "Greek letter psi (\psi)" w
+\psi 
+endsnippet
+
+context "nvim_in_math()"
+snippet omega "Greek letter omega (\omega)" w
+\omega 
+endsnippet
+
+context "nvim_in_math()"
+snippet Gamma "Greek letter Gamma (\Gamma)" w
+\Gamma 
+endsnippet
+
+context "nvim_in_math()"
+snippet Delta "Greek letter Delta (\Delta)" w
+\Delta 
+endsnippet
+
+context "nvim_in_math()"
+snippet Theta "Greek letter Theta (\Theta)" w
+\Theta 
+endsnippet
+
+context "nvim_in_math()"
+snippet Lambda "Greek letter Lambda (\Lambda)" w
+\Lambda 
+endsnippet
+
+context "nvim_in_math()"
+snippet Xi "Greek letter Xi (\Xi)" w
+\Xi 
+endsnippet
+
+context "nvim_in_math()"
+snippet Pi "Greek letter Pi (\Pi)" w
+\Pi 
+endsnippet
+
+context "nvim_in_math()"
+snippet Sigma "Greek letter Sigma (\Sigma)" w
+\Sigma 
+endsnippet
+
+context "nvim_in_math()"
+snippet Phi "Greek letter Phi (\Phi)" w
+\Phi 
+endsnippet
+
+context "nvim_in_math()"
+snippet Psi "Greek letter Psi (\Psi)" w
+\Psi 
+endsnippet
+
+context "nvim_in_math()"
+snippet Omega "Greek letter Omega (\Omega)" w
+\Omega 
+endsnippet
+
+# ---- Functions, fractions, roots, scripts ----
+
+context "nvim_in_math()"
+snippet frac "Fraction" w
+\frac{${1:a}}{${2:b}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet sqrt "Square root" w
+\sqrt{${1:x}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet nroot "N-th root" w
+\sqrt[${1:n}]{${2:x}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet absval "Absolute value" w
+\left\lvert ${1:x} \right\rvert$0
+endsnippet
+
+context "nvim_in_math()"
+snippet norm "Norm" w
+\left\lVert ${1:x} \right\rVert$0
+endsnippet
+
+context "nvim_in_math()"
+snippet floor "Floor" w
+\lfloor ${1:x} \rfloor$0
+endsnippet
+
+context "nvim_in_math()"
+snippet ceil "Ceiling" w
+\lceil ${1:x} \rceil$0
+endsnippet
+
+context "nvim_in_math()"
+snippet sub "Subscript" i
+_{${1:i}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet sup "Superscript" i
+^{${1:n}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet inv "Inverse (^{-1})" i
+^{-1}
+endsnippet
+
+context "nvim_in_math()"
+snippet transpose "Transpose (^\top)" i
+^\top
+endsnippet
+
+context "nvim_in_math()"
+snippet sin "Sin function (\sin)" w
+\sin 
+endsnippet
+
+context "nvim_in_math()"
+snippet cos "Cos function (\cos)" w
+\cos 
+endsnippet
+
+context "nvim_in_math()"
+snippet tan "Tan function (\tan)" w
+\tan 
+endsnippet
+
+context "nvim_in_math()"
+snippet ln "Ln function (\ln)" w
+\ln 
+endsnippet
+
+context "nvim_in_math()"
+snippet log "Log function (\log)" w
+\log 
+endsnippet
+
+context "nvim_in_math()"
+snippet exp "Exp function (\exp)" w
+\exp 
+endsnippet
+
+context "nvim_in_math()"
+snippet arcsin "Arcsin (inverse trig) (\arcsin)" w
+\arcsin 
+endsnippet
+
+context "nvim_in_math()"
+snippet arccos "Arccos (inverse trig) (\arccos)" w
+\arccos 
+endsnippet
+
+context "nvim_in_math()"
+snippet arctan "Arctan (inverse trig) (\arctan)" w
+\arctan 
+endsnippet
+
+# ---- Calculus and analysis ----
+
+# priority 2: above the clearsnippets line, so clearing vim-snippets sum/lim/prod does not remove these
+priority 2
+context "nvim_in_math()"
+snippet sum "sum sign (∑)" w
+\sum 
+endsnippet
+
+context "nvim_in_math()"
+snippet prod "product sign (∏)" w
+\prod 
+endsnippet
+
+context "nvim_in_math()"
+snippet lim "limit operator" w
+\lim 
+endsnippet
+
+context "nvim_in_math()"
+snippet int "integral sign (∫)" w
+\int 
+endsnippet
+
+priority 1
+
+context "nvim_in_math()"
+snippet limit "Limit" w
+\lim_{${1:x} \to ${2:a}} ${3:f(x)}$0
+endsnippet
+
+# limsup must win over the postfix snippet sup (its trigger ends in "sup")
+priority 2
+context "nvim_in_math()"
+snippet limsup "Limit superior" w
+\limsup_{${1:n} \to \infty}$0
+endsnippet
+priority 1
+
+context "nvim_in_math()"
+snippet liminf "Limit inferior" w
+\liminf_{${1:n} \to \infty}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet sumn "Sum with bounds" w
+\sum_{${1:i}=${2:1}}^{${3:n}} ${4:a_i}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet prodn "Product with bounds" w
+\prod_{${1:i}=${2:1}}^{${3:n}} ${4:a_i}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet integral "Indefinite integral" w
+\int ${1:f(x)} \, d${2:x}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet defint "Definite integral" w
+\int_{${1:a}}^{${2:b}} ${3:f(x)} \, d${4:x}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet iint "Double integral" w
+\iint_{${1:D}} ${2:f} \, dA$0
+endsnippet
+
+context "nvim_in_math()"
+snippet iiint "Triple integral" w
+\iiint_{${1:V}} ${2:f} \, dV$0
+endsnippet
+
+context "nvim_in_math()"
+snippet oint "Closed line integral" w
+\oint_{${1:C}} ${2:F} \cdot d\mathbf{r}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet deriv "Derivative d/dx" w
+\frac{d${1:f}}{d${2:x}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet pderiv "Partial derivative" w
+\frac{\partial ${1:f}}{\partial ${2:x}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet deriv2 "Second derivative" w
+\frac{d^2 ${1:f}}{d${2:x}^2}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet grad "Gradient" w
+\nabla ${1:f}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet divergence "Divergence" w
+\nabla \cdot ${1:\mathbf{F}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet curl "Curl" w
+\nabla \times ${1:\mathbf{F}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet laplacian "Laplacian" w
+\nabla^2 ${1:f}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet bigO "Big-O" w
+O\left(${1:n}\right)$0
+endsnippet
+
+context "nvim_in_math()"
+snippet seq "Sequence" w
+(${1:a}_{${2:n}})_{$2 \in \mathbb{N}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet epsdelta "Epsilon-delta (\forall \varepsilon > 0 \; \exists \delta > 0 :)" w
+\forall \varepsilon > 0 \; \exists \delta > 0 :
+endsnippet
+
+# ---- Linear algebra ----
+
+context "nvim_in_math()"
+snippet vecarrow "Vector with arrow" w
+\vec{${1:v}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet vecbold "Vector in bold" w
+\mathbf{${1:v}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet hat "Unit vector / estimator hat" w
+\hat{${1:x}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet colvec "Column vector" w
+\begin{pmatrix} ${1:a} \\\\ ${2:b} \\\\ ${3:c} \end{pmatrix}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet matrix2 "2x2 matrix" w
+\begin{pmatrix} ${1:a} & ${2:b} \\\\ ${3:c} & ${4:d} \end{pmatrix}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet matrix3 "3x3 matrix" w
+\begin{pmatrix} ${1:a} & ${2:b} & ${3:c} \\\\ ${4:d} & ${5:e} & ${6:f} \\\\ ${7:g} & ${8:h} & ${9:i} \end{pmatrix}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet det "Determinant" w
+\det(${1:A})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet detmat "Determinant bars" w
+\begin{vmatrix} ${1:a} & ${2:b} \\\\ ${3:c} & ${4:d} \end{vmatrix}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet trace "Trace" w
+\operatorname{tr}(${1:A})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet rank "Rank" w
+\operatorname{rank}(${1:A})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet dim "Dimension" w
+\dim(${1:V})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet kernel "Kernel" w
+\ker(${1:A})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet image "Image" w
+\operatorname{im}(${1:A})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet span "Span" w
+\operatorname{span}\\\{${1:v_1}, ${2:v_2}\\\}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet inner "Inner product" w
+\langle ${1:u}, ${2:v} \rangle$0
+endsnippet
+
+context "nvim_in_math()"
+snippet cross "Cross product" w
+${1:a} \times ${2:b}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet identity "Identity matrix" w
+I_{${1:n}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet eigen "Eigenvalue equation" w
+${1:A}\mathbf{v} = \lambda \mathbf{v}$0
+endsnippet
+
+# ---- Statistics and probability ----
+
+context "nvim_in_math()"
+snippet mean "Sample mean (bar)" w
+\bar{${1:x}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet variance "Variance" w
+\operatorname{Var}(${1:X})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet covariance "Covariance" w
+\operatorname{Cov}(${1:X}, ${2:Y})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet expect "Expected value" w
+\mathbb{E}\left[${1:X}\right]$0
+endsnippet
+
+context "nvim_in_math()"
+snippet Prob "Probability" w
+\mathbb{P}(${1:A})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet given "Conditional probability" w
+\mathbb{P}(${1:A} \mid ${2:B})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet binom "Binomial coefficient" w
+\binom{${1:n}}{${2:k}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet normaldist "Normal distribution" w
+${1:X} \sim \mathcal{N}(${2:\mu}, ${3:\sigma^2})$0
+endsnippet
+
+context "nvim_in_math()"
+snippet stddev "Standard deviation (\sigma)" w
+\sigma 
+endsnippet
+
+context "nvim_in_math()"
+snippet estimator "Estimator hat" w
+\hat{${1:\theta}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet tilde "Tilde accent" w
+\tilde{${1:x}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet chisq "Chi-squared (\chi^2)" w
+\chi^2
+endsnippet
+
+context "nvim_in_math()"
+snippet zscore "Z-score" w
+z = \frac{${1:x} - \mu}{\sigma}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet confint "Confidence interval (\bar{x} \pm z_{\alpha/2} \frac{\sigma}{\sqrt{n}})" w
+\bar{x} \pm z_{\alpha/2} \frac{\sigma}{\sqrt{n}}
+endsnippet
+
+# ---- Physics ----
+
+context "nvim_in_math()"
+snippet vecF "Force vector (\vec{F})" w
+\vec{F}
+endsnippet
+
+context "nvim_in_math()"
+snippet dot "Time derivative (one dot)" w
+\dot{${1:x}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet ddot "Second time derivative" w
+\ddot{${1:x}}$0
+endsnippet
+
+context "nvim_in_math()"
+snippet hbar "Reduced Planck constant (\hbar)" w
+\hbar 
+endsnippet
+
+context "nvim_in_math()"
+snippet kB "Boltzmann constant (k_{\mathrm{B}})" w
+k_{\mathrm{B}}
+endsnippet
+
+context "nvim_in_math()"
+snippet deltaT "Change in temperature (\Delta T)" w
+\Delta T 
+endsnippet
+
+context "nvim_in_math()"
+snippet deltaU "Change in internal energy (\Delta U)" w
+\Delta U 
+endsnippet
+
+context "nvim_in_math()"
+snippet dQ "Heat increment (\delta Q)" w
+\delta Q 
+endsnippet
+
+context "nvim_in_math()"
+snippet dW "Work increment (\delta W)" w
+\delta W 
+endsnippet
+
+context "nvim_in_math()"
+snippet newton2 "Newton's second law (\vec{F} = m\vec{a})" w
+\vec{F} = m\vec{a}
+endsnippet
+
+context "nvim_in_math()"
+snippet kinematic "V = v0 + a t (v = v_0 + a t)" w
+v = v_0 + a t 
+endsnippet
+
+context "nvim_in_math()"
+snippet workint "Work as integral (W = \int \vec{F} \cdot d\vec{r})" w
+W = \int \vec{F} \cdot d\vec{r}
+endsnippet
+
+context "nvim_in_math()"
+snippet kinetic "Kinetic energy (E_k = \frac{1}{2} m v^2)" w
+E_k = \frac{1}{2} m v^2
+endsnippet
+
+context "nvim_in_math()"
+snippet potential "Gravitational potential energy (E_p = m g h)" w
+E_p = m g h 
+endsnippet
+
+context "nvim_in_math()"
+snippet heatq "Heat capacity law (Q = m c \Delta T)" w
+Q = m c \Delta T 
+endsnippet
+
+context "nvim_in_math()"
+snippet firstlaw "First law of thermodynamics (\Delta U = Q - W)" w
+\Delta U = Q - W 
+endsnippet
+
+context "nvim_in_math()"
+snippet idealgas "Ideal gas law (p V = n R T)" w
+p V = n R T 
+endsnippet
+
+context "nvim_in_math()"
+snippet entropy "Entropy change (\Delta S = \int \frac{\delta Q}{T})" w
+\Delta S = \int \frac{\delta Q}{T}
+endsnippet
+
+context "nvim_in_math()"
+snippet conserve "Conservation of energy (E_i = E_f)" w
+E_i = E_f 
+endsnippet
+
+context "nvim_in_math()"
+snippet momentum "Momentum (\vec{p} = m\vec{v})" w
+\vec{p} = m\vec{v}
+endsnippet

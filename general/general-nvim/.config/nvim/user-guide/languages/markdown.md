@@ -5,7 +5,7 @@
 
 This section covers everything your config does that is specific to `.md` files: what each tool is for, how it works, the exact keys, and what to do when it fails. Global things (diagnostics keys, code actions, the spell keys, `gc` comments) are only mentioned briefly with a pointer. Section [27](../09-ai-and-writing.md#27-markdown-support) is the short key list; this one is the full story.
 
-Most results below were checked in a real Neovim session today (marked "tested"). The few things that could not be tested say so where they appear.
+Unless marked otherwise, the results below come from a real Neovim session. The few things that could not be tested say so where they appear.
 
 ## The tools and why they exist
 
@@ -34,7 +34,7 @@ setlocal synmaxcol=3000  " For long Chinese paragraphs
 setlocal wrap
 ```
 
-Tested in a Markdown buffer: `wrap` is on (the global default is off), `textwidth` is 0, `colorcolumn` is 100, `synmaxcol` is 3000, `conceallevel` is 3. `concealcursor` shows as empty: render-markdown.nvim sets its own conceal options on the window after the ftplugin, so the `concealcursor=c` line in the file has no visible effect. Facts that follow from this:
+In a Markdown buffer: `wrap` is on (the global default is off), `textwidth` is 0, `colorcolumn` is 100, `synmaxcol` is 3000, `conceallevel` is 3. `concealcursor` shows as empty: render-markdown.nvim sets its own conceal options on the window after the ftplugin, so the `concealcursor=c` line in the file has no visible effect. Facts that follow from this:
 
 - Long lines wrap at word boundaries (`linebreak` is on globally). Neovim never hard-wraps while you type (no `textwidth`), and prettier keeps your line breaks.
 - Syntax colours stop after column 3000 of a very long line.
@@ -56,7 +56,7 @@ Tested in a Markdown buffer: `wrap` is on (the global default is off), `textwidt
 | A web browser | Your system default | `<Alt-m>` |
 | pandoc, xelatex | Only in the latex dev shell (`~/nix/templates/krit/dev-environments/language-specific/latex/flake.nix`: `pandoc` and `texlive.combined.scheme-full`) | `:ToPDF` |
 
-Tested: inside the latex dev shell `prettier`, `pandoc`, `xelatex` and `marksman` are all found by Neovim, and the attached LSP clients on a `.md` file are `ltex_plus`, `marksman`, `typos_lsp`. Note that `pandoc` is also found on this system outside the dev shell (it is on the system PATH), but `xelatex` and `prettier` are not found by a plain shell: Neovim must be started from a shell where they are on PATH (the dev shell, or the nix profile that provides them).
+Inside the latex dev shell `prettier`, `pandoc`, `xelatex` and `marksman` are all found by Neovim, and the attached LSP clients on a `.md` file are `ltex_plus`, `marksman`, `typos_lsp`. Note that `pandoc` is also found on this system outside the dev shell (it is on the system PATH), but `xelatex` and `prettier` are not found by a plain shell: Neovim must be started from a shell where they are on PATH (the dev shell, or the nix profile that provides them).
 
 If a tool is missing, nothing falls back to a plain Vim key:
 
@@ -111,25 +111,25 @@ All keys work only in Markdown buffers unless stated. `<Space>` is the leader ke
 | `+` | x | Same on a Visual selection |
 | `ic`, `ac` | o, x | Fenced code block, without or with the fence lines: `vic`, `dic`, `yac`, `cic` |
 | `]]` / `[[` | n, x | Next / previous heading (levels 1 to 5) |
-| `gO` | n | Outline: opens a location list window with one line per heading, indented by level (tested: `Heading One`, `  Heading Two`, `    Heading Three`). `<CR>` jumps to the heading, `:lclose` closes it |
+| `gO` | n | Outline: opens a location list window with one line per heading, indented by level (`Heading One`, `  Heading Two`, `    Heading Three`). `<CR>` jumps to the heading, `:lclose` closes it |
 | `<Space>t` | n | Aerial symbol outline panel; `]t` / `[t` next / previous symbol |
 | `<Space>cz` | n | Toggle spell checking (global key, see [Writing quality](#writing-quality)) |
-| `<Space><Space>` | n | Trailing-space remover, but in Markdown it only warns `markdown: trailing spaces are hard line breaks, not stripped` (tested) |
+| `<Space><Space>` | n | Trailing-space remover, but in Markdown it only warns `markdown: trailing spaces are hard line breaks, not stripped` |
 | `:AddRef <label> <url>` | cmd | Add a reference link at the end of the file |
 | `:Tabularize /\|` | cmd | Align table columns |
 | `:ToPDF` | cmd | Export a PDF |
 | `:RenderMarkdown toggle` | cmd | Turn the rendering off / on |
 
-Global keys that also work here: `<Space>ca` (code action, for example a ltex_plus fix), `<Space>dd`, `]d`, `[d` (diagnostics), `<Space>rn` renames through marksman (headings and links; tested: marksman advertises rename).
+Global keys that also work here: `<Space>ca` (code action, for example a ltex_plus fix), `<Space>dd`, `]d`, `[d` (diagnostics), `<Space>rn` renames through marksman (headings and links; marksman advertises rename).
 
 Accepted effects of the footnote maps:
 
 - A single `^` or `@` typed in insert mode appears after 500 ms, because Neovim waits for a possible second key. `^` followed by any other key comes out at once.
-- In normal mode `@@` is not "repeat last macro" in Markdown (tested: it is `<Plug>ReturnFromFootnote`). Use `@a` with the register name instead.
+- In normal mode `@@` is not "repeat last macro" in Markdown (it is `<Plug>ReturnFromFootnote`). Use `@a` with the register name instead.
 
 ## Text objects and operators
 
-These live in `after/ftplugin/markdown.vim`. Tested on the example file:
+These live in `after/ftplugin/markdown.vim`. On the example file:
 
 | You do (cursor on a line inside the code block) | Result |
 | --- | --- |
@@ -180,14 +180,14 @@ In plain words:
 - The loop removes the plugin's buffer-local `<Leader>f` and `<Leader>r` maps (insert and normal mode). With Space as leader they would swallow the start of `<Space>f...` and `<Space>r...` keys typed quickly. The `get(maparg(...), 'buffer', 0)` check makes it unmap only the plugin's buffer-local map, never a global one.
 - `^^` (normal and insert) inserts a footnote; `@@` returns from the footnote. They are set from Lua so they get a `desc` for which-key; `remap = true` on `@@` is needed because the right side is a `<Plug>` map.
 
-Tested flow (normal mode):
+Flow (normal mode):
 
 1. Cursor on the last letter of `Some text here.` (`$` puts it on the period).
 2. `<Space>mf`. The line becomes `Some text here.[^1]` (the mark is inserted after the character under the cursor) and the cursor sits on the new last line `[^1]: ` in normal mode.
 3. Press `A`, type `My note`, press `<Esc>`.
 4. Press `@@` (or `<Space>mr`). The cursor is back at the `[^1]` in the sentence.
 
-Tested flow (insert mode, the `^^` variant):
+Flow (insert mode, the `^^` variant):
 
 ```text
 Mid word done.   (cursor before "word", in insert mode, type ^^)
@@ -195,7 +195,7 @@ Mid word done.   (cursor before "word", in insert mode, type ^^)
 
 The result is `Mid [^1]word done.` and you are still in insert mode on the note line: type the note, then `<Esc>`, then `@@` to go back. A second footnote becomes `[^2]` and its note is added under `[^1]: ...`.
 
-The off-by-one at the end of a line (tested): in insert mode with the cursor at the very end of a line, `^^` puts the mark one character too early (`Neovim is fas[^1]t`). The reason is that the `<C-O>` command inside the map first moves the cursor onto the last character, and `^^` inserts before that character. Typing `^^` in the middle of a line is exact. At the end of a line, end the sentence in normal mode instead: `<Esc>`, `<Space>mf` (inserts after the last character). In normal mode `^^` inserts before the character under the cursor, `<Space>mf` after it.
+The off-by-one at the end of a line: in insert mode with the cursor at the very end of a line, `^^` puts the mark one character too early (`Neovim is fas[^1]t`). The reason is that the `<C-O>` command inside the map first moves the cursor onto the last character, and `^^` inserts before that character. Typing `^^` in the middle of a line is exact. At the end of a line, end the sentence in normal mode instead: `<Esc>`, `<Space>mf` (inserts after the last character). In normal mode `^^` inserts before the character under the cursor, `<Space>mf` after it.
 
 ## Reference links and tables
 
@@ -203,7 +203,7 @@ The off-by-one at the end of a line (tested): in insert mode with the cursor at 
 :AddRef docs https://neovim.io/doc
 ```
 
-Tested result at the end of the buffer (a blank line, a comment line once, then the definition):
+Result at the end of the buffer (a blank line, a comment line once, then the definition):
 
 ```markdown
 <!-- Reference links -->
@@ -212,7 +212,7 @@ Tested result at the end of the buffer (a blank line, a comment line once, then 
 
 A second `:AddRef two https://a.b` adds only `[two]: https://a.b` under it (the comment line is not repeated). In the text you write `[the docs][docs]`. The first argument completes from labels already used as `[text][label]` in the file. Label and URL cannot contain spaces; there is no title argument.
 
-Tables (tested): select the table lines and run `:'<,'>Tabularize /|`:
+Tables: select the table lines and run `:'<,'>Tabularize /|`:
 
 ```markdown
 | a           | b   |
@@ -220,7 +220,7 @@ Tables (tested): select the table lines and run `:'<,'>Tabularize /|`:
 | longer cell | x   |
 ```
 
-Tabularize pads the separator row with spaces. `<Space>fm` is the better table aligner: prettier makes the separator row `| ----------- | --- |` (tested).
+Tabularize pads the separator row with spaces. `<Space>fm` is the better table aligner: prettier makes the separator row `| ----------- | --- |`.
 
 Checkboxes (`- [ ]`): render-markdown draws them; no key toggles them.
 
@@ -250,8 +250,8 @@ Config (from `lua/plugin_specs.lua`):
 | `:MarkdownPreviewStop` | Stop it |
 | `:MarkdownPreviewToggle` | Start or stop (what `<Alt-m>` runs) |
 
-- Tested: the three commands exist in a Markdown buffer and `vim.g.mkdp_auto_close` is `0`.
-- Tested server life cycle (browser launch replaced by a no-op function, port fixed to 18765): before `<Alt-m>` nothing listens; after `<Alt-m>` a server listens on `127.0.0.1:18765` and the plugin reports `Preview page: http://localhost:18765/page/1`; after the second `<Alt-m>` the port is closed. By default the port is random and only the local machine can connect (`mkdp_open_to_the_world = 0`).
+- The three commands exist in a Markdown buffer and `vim.g.mkdp_auto_close` is `0`.
+- Server life cycle (browser launch replaced by a no-op function, port fixed to 18765): before `<Alt-m>` nothing listens; after `<Alt-m>` a server listens on `127.0.0.1:18765` and the plugin reports `Preview page: http://localhost:18765/page/1`; after the second `<Alt-m>` the port is closed. By default the port is random and only the local machine can connect (`mkdp_open_to_the_world = 0`).
 - To try this yourself without a browser tab: `:let g:mkdp_browserfunc = 'NoBrowser'` after defining `function! NoBrowser(url)` that does nothing, and `:let g:mkdp_echo_preview_url = 1` to see the address.
 - `mkdp_auto_close = 0`: the browser tab stays open when you switch to another buffer. It ends when you press `<Alt-m>` again or leave Neovim.
 - No browser, port or theme is set, so the plugin defaults and your system default browser are used.
@@ -312,7 +312,7 @@ In plain words:
 | `max_file_size = 1.5` | Files over 1.5 MB are not rendered (and the big-file mode takes over, see below) |
 | `anti_conceal` | The line under the cursor shows raw text so you can edit it |
 
-Commands (all tested to run without error; the global state changed `true`, `false`, `true` with two `toggle` calls):
+Commands (all run without error; the global state changed `true`, `false`, `true` with two `toggle` calls):
 
 | Command | Effect |
 | --- | --- |
@@ -329,7 +329,7 @@ Big files: above 1.5 MB (or lines averaging over 5000 characters) the file gets 
 
 Why: marksman has no formatting. Without this key `<Space>fm` (the global format key) would do nothing in Markdown.
 
-How: the key runs `prettier --parser markdown --stdin-filepath <file>` on the buffer text (so a project `.prettierrc` is honoured) and writes back only the changed hunks. Tested result on the example file:
+How: the key runs `prettier --parser markdown --stdin-filepath <file>` on the buffer text (so a project `.prettierrc` is honoured) and writes back only the changed hunks. Result on the example file:
 
 ```text
 * item a            ->  - item a
@@ -341,7 +341,7 @@ How: the key runs `prettier --parser markdown --stdin-filepath <file>` on the bu
 
 The code block and the `plain one` / `plain two` lines (two lines, no blank between) stayed as they were. Also `*emphasis*` becomes `_emphasis_` and a final newline is added (prettier defaults, not shown in the test).
 
-Why not `:%!prettier --parser markdown`? It would replace the whole buffer: one giant change, all marks lost, and the cursor jumps. The key changes only the differing lines, in one undo step (tested: `u` restores everything), keeps marks and puts the cursor back on the same text. Nothing is written to disk. If you type while prettier runs, the result is discarded with a warning (`prettier: buffer changed while formatting, result discarded`): press the key again. A prettier error appears as `prettier failed: ...`.
+Why not `:%!prettier --parser markdown`? It would replace the whole buffer: one giant change, all marks lost, and the cursor jumps. The key changes only the differing lines, in one undo step (`u` restores everything), keeps marks and puts the cursor back on the same text. Nothing is written to disk. If you type while prettier runs, the result is discarded with a warning (`prettier: buffer changed while formatting, result discarded`): press the key again. A prettier error appears as `prettier failed: ...`.
 
 The core of the real code (`after/ftplugin/markdown.lua`, abridged: the cursor-restoring helpers `fm_cursor`, `squash` and `remap_col` above it, lines 15-90, and the two places marked `-- ...` that save and restore the cursors are left out; read the file for them):
 
@@ -413,7 +413,7 @@ pandoc --pdf-engine=xelatex --highlight-style=zenburn --table-of-content
 
 - The output is `<same name>.pdf` next to the file; an old PDF is overwritten.
 - You get a table of contents, coloured links, zenburn code colours, and your LaTeX header `resources/head.tex`.
-- Spaces and special characters in the file name are safe (an argument list, no shell). Tested on `my notes.md`: a valid PDF, no error.
+- Spaces and special characters in the file name are safe (an argument list, no shell). On `my notes.md`: a valid PDF, no error.
 - Save first. An unnamed buffer gives `ToPDF: save the buffer to a file first`, and unsaved edits are not in the PDF.
 - The first run took more than 25 seconds. Neovim stays usable. There is no message when it finishes.
 - Success is silent and on Linux no viewer opens (a viewer is started only on macOS and Windows): open the PDF yourself.
@@ -480,7 +480,7 @@ In plain words:
 
 ## Snippets
 
-Source: `my_snippets/markdown.snippets` (17 snippets, UltiSnips). Type the trigger in insert mode in a Markdown buffer and expand it with `<Ctrl-j>` (section [15](../04-completion-snippets.md#15-snippets-ultisnips)); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. The text in quotes after each trigger is its description as the completion menu shows it. Placeholders are shown in tab-stop order; after the last one the cursor leaves the block (`$0`).
+Source: `my_snippets/markdown.snippets` (208 snippets, UltiSnips). Type the trigger in insert mode in a Markdown buffer and expand it with `<Ctrl-j>` (section [15](../04-completion-snippets.md#15-snippets-ultisnips)); `<Ctrl-j>` / `<Ctrl-k>` jump to the next / previous placeholder. The text in quotes after each trigger is its description as the completion menu shows it. Placeholders are shown in tab-stop order; after the last one the cursor leaves the block (`$0`).
 
 Things to know first:
 
@@ -624,6 +624,266 @@ The other three have the same layout and differ only in these values:
 | `error` | `error-msg` | `#D8000C` | `#FFBABA` | `fa-times-circle`, Error | `error text` |
 | `success` | `success-msg` | `#270` | `#DFF2BF` | `fa-check`, Success | `success text` |
 
+### Math symbols
+
+Inside math, a symbol is one typed word: you type its name instead of remembering the LaTeX command. The math snippets use LaTeX syntax, which is what Markdown math (`$...$` and `$$...$$`) renders. This part of the file has 191 snippets: 2 math delimiters and 189 symbols.
+
+How to use them, step by step:
+
+1. Type `mk` for inline math or `dm` for a display math block, then press `<Ctrl-j>` (hold the Ctrl key and press j). `mk` writes `$` `$` on the line and puts the cursor between them; `dm` writes `$$`, an empty line and `$$` on three lines, then one more empty line below them, and puts the cursor on the empty middle line (the last empty line is where the cursor goes after the final `<Ctrl-j>`). Typing the `$` characters yourself works too.
+2. Inside the math, type a symbol name such as `leq` and press `<Ctrl-j>` (or accept the name in the completion menu). The name is replaced by the symbol and the cursor ends right after it. The symbol snippets expand only while the cursor is inside math: outside math `<Ctrl-j>` does not expand them and only does what it does without a snippet (it starts a new line); the completion menu may still list the names.
+3. A snippet with placeholders (for example `frac`) selects the first placeholder; type over it, then press `<Ctrl-j>` to go to the next one. After the last placeholder, `<Ctrl-j>` moves the cursor to the end of the symbol, still inside the math. One more `<Ctrl-j>` then moves it past the closing `$` (for `dm`: onto the line below the closing `$$`). When the math contains only plain symbols (no placeholders), the first `<Ctrl-j>` after you finish typing already leaves the closing delimiter.
+
+After the expansion the cursor is always after the symbol. Word-like commands (`\leq`, `\alpha`, `\infty`, `\cdot`, ...) get one trailing space so the next letter you type does not stick to the command; the space is not shown in the tables. `sub`, `sup`, `inv`, `transpose`, `degree` and `celsius` attach to what you typed before, so they add no space and also work in the middle of a word (`xsub` gives `x_{i}`). In the Produces column the words in a placeholder show the text you can type over (for example `\frac{a}{b}`).
+
+Worked example: inline math `x \leq y`.
+
+| You type | You get (`<cursor>` marks the cursor) |
+| --- | --- |
+| `mk`, then `<Ctrl-j>` | `$<cursor>$` |
+| `x` | `$x<cursor>$` |
+| a space, then `leq`, then `<Ctrl-j>` | `$x \leq <cursor>$` |
+| `y` | `$x \leq y<cursor>$` |
+| `<Ctrl-j>` | `$x \leq y$<cursor>` (the cursor is after the closing `$`) |
+
+Where they work: the math symbols and the delimiters follow the Markdown structure of the file. These count as math: text between a pair of `$`, text after an opening `$` that is not closed yet on that line, and everything between `$$` and `$$` (also over several lines, also when the closing `$$` is not typed yet). These do not count as math: fenced code blocks (backticks or `~~~`), the YAML block at the top of the file, inline code between backticks, a `\$` with a backslash, and a lone dollar sign in prose such as `it costs $5` or `pay $ now`. `mk` and `dm` expand anywhere except in those code places. Limits: inline math that is split over several lines is not recognised; an indented code block (four spaces) is not recognised as code, so a `$` there still starts math; a `$` in front of a word without backticks (for example `$HOME`) is read as the start of math until the end of the line; a `$` followed directly by a digit is read as a price, so math that starts with a digit right after the `$` (for example `$30degree`) is not recognised until other text follows; an unclosed `$$` makes everything below it count as math.
+
+#### Math delimiters
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `mk` | `$` `$` | Inline math, cursor between the dollar signs |
+| `dm` | `$$`, empty line, `$$`, empty line | Display math on its own lines, cursor on the empty line |
+
+#### Relations and operators
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `neq` | `\neq` | Not equal |
+| `leq` | `\leq` | Less or equal |
+| `geq` | `\geq` | Greater or equal |
+| `ll` | `\ll` | Much less |
+| `gg` | `\gg` | Much greater |
+| `approx` | `\approx` | Approximately equal |
+| `equiv` | `\equiv` | Identical / congruent |
+| `sim` | `\sim` | Similar / distributed as |
+| `simeq` | `\simeq` | Asymptotically equal |
+| `cong` | `\cong` | Congruent |
+| `propto` | `\propto` | Proportional to |
+| `pm` | `\pm` | Plus minus |
+| `mp` | `\mp` | Minus plus |
+| `times` | `\times` | Multiplication cross |
+| `cdot` | `\cdot` | Dot product / multiplication dot |
+| `circ` | `\circ` | Composition |
+| `ast` | `\ast` | Asterisk operator |
+| `oplus` | `\oplus` | Direct sum |
+| `otimes` | `\otimes` | Tensor product |
+| `perp` | `\perp` | Perpendicular |
+| `parallel` | `\parallel` | Parallel |
+| `angle` | `\angle` | Angle |
+| `degree` | `^\circ` | Degree sign |
+| `celsius` | `^\circ\mathrm{C}` | Degrees Celsius |
+| `infinity` | `\infty` | Infinity |
+| `partial` | `\partial` | Partial derivative symbol |
+| `nabla` | `\nabla` | Nabla |
+| `therefore` | `\therefore` | Therefore |
+| `because` | `\because` | Because |
+| `ldots` | `\ldots` | Dots on the line |
+| `cdots` | `\cdots` | Centered dots |
+| `vdots` | `\vdots` | Vertical dots |
+| `ddots` | `\ddots` | Diagonal dots |
+
+#### Logic and sets
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `implies` | `\implies` | Implies |
+| `iff` | `\iff` | If and only if |
+| `to` | `\to` | Arrow right / maps to |
+| `mapsto` | `\mapsto` | Maps to |
+| `leftarrow` | `\leftarrow` | Arrow left |
+| `forall` | `\forall` | For all |
+| `exists` | `\exists` | Exists |
+| `nexists` | `\nexists` | Does not exist |
+| `neg` | `\neg` | Not |
+| `land` | `\land` | And |
+| `lor` | `\lor` | Or |
+| `in` | `\in` | Element of |
+| `notin` | `\notin` | Not element of |
+| `subset` | `\subset` | Subset |
+| `subseteq` | `\subseteq` | Subset or equal |
+| `supset` | `\supset` | Superset |
+| `cup` | `\cup` | Union |
+| `cap` | `\cap` | Intersection |
+| `setminus` | `\setminus` | Set difference |
+| `emptyset` | `\emptyset` | Empty set |
+| `NN` | `\mathbb{N}` | Natural numbers |
+| `ZZ` | `\mathbb{Z}` | Integers |
+| `QQ` | `\mathbb{Q}` | Rationals |
+| `RR` | `\mathbb{R}` | Reals |
+| `CC` | `\mathbb{C}` | Complex numbers |
+
+#### Greek letters
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `alpha` | `\alpha` | Greek letter alpha |
+| `beta` | `\beta` | Greek letter beta |
+| `gamma` | `\gamma` | Greek letter gamma |
+| `delta` | `\delta` | Greek letter delta |
+| `epsilon` | `\epsilon` | Greek letter epsilon |
+| `varepsilon` | `\varepsilon` | Greek letter varepsilon |
+| `zeta` | `\zeta` | Greek letter zeta |
+| `eta` | `\eta` | Greek letter eta |
+| `theta` | `\theta` | Greek letter theta |
+| `vartheta` | `\vartheta` | Greek letter vartheta |
+| `iota` | `\iota` | Greek letter iota |
+| `kappa` | `\kappa` | Greek letter kappa |
+| `lambda` | `\lambda` | Greek letter lambda |
+| `mu` | `\mu` | Greek letter mu |
+| `nu` | `\nu` | Greek letter nu |
+| `xi` | `\xi` | Greek letter xi |
+| `pi` | `\pi` | Greek letter pi |
+| `rho` | `\rho` | Greek letter rho |
+| `sigma` | `\sigma` | Greek letter sigma |
+| `tau` | `\tau` | Greek letter tau |
+| `phi` | `\phi` | Greek letter phi |
+| `varphi` | `\varphi` | Greek letter varphi |
+| `chi` | `\chi` | Greek letter chi |
+| `psi` | `\psi` | Greek letter psi |
+| `omega` | `\omega` | Greek letter omega |
+| `Gamma` | `\Gamma` | Greek letter Gamma |
+| `Delta` | `\Delta` | Greek letter Delta |
+| `Theta` | `\Theta` | Greek letter Theta |
+| `Lambda` | `\Lambda` | Greek letter Lambda |
+| `Xi` | `\Xi` | Greek letter Xi |
+| `Pi` | `\Pi` | Greek letter Pi |
+| `Sigma` | `\Sigma` | Greek letter Sigma |
+| `Phi` | `\Phi` | Greek letter Phi |
+| `Psi` | `\Psi` | Greek letter Psi |
+| `Omega` | `\Omega` | Greek letter Omega |
+
+#### Functions, fractions, roots, scripts
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `frac` | `\frac{a}{b}` | Fraction |
+| `sqrt` | `\sqrt{x}` | Square root |
+| `nroot` | `\sqrt[n]{x}` | N-th root |
+| `absval` | `\left\lvert x \right\rvert` | Absolute value |
+| `norm` | `\left\lVert x \right\rVert` | Norm |
+| `floor` | `\lfloor x \rfloor` | Floor |
+| `ceil` | `\lceil x \rceil` | Ceiling |
+| `sub` | `_{i}` | Subscript |
+| `sup` | `^{n}` | Superscript |
+| `inv` | `^{-1}` | Inverse |
+| `transpose` | `^\top` | Transpose |
+| `sin` | `\sin` | Sin function |
+| `cos` | `\cos` | Cos function |
+| `tan` | `\tan` | Tan function |
+| `ln` | `\ln` | Ln function |
+| `log` | `\log` | Log function |
+| `exp` | `\exp` | Exp function |
+| `arcsin` | `\arcsin` | Arcsin |
+| `arccos` | `\arccos` | Arccos |
+| `arctan` | `\arctan` | Arctan |
+
+#### Calculus and analysis
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `sum` | `\sum` | sum sign (∑) |
+| `prod` | `\prod` | product sign (∏) |
+| `lim` | `\lim` | limit operator |
+| `int` | `\int` | integral sign (∫) |
+| `limit` | `\lim_{x \to a} f(x)` | Limit |
+| `limsup` | `\limsup_{n \to \infty}` | Limit superior |
+| `liminf` | `\liminf_{n \to \infty}` | Limit inferior |
+| `sumn` | `\sum_{i=1}^{n} a_i` | Sum with bounds |
+| `prodn` | `\prod_{i=1}^{n} a_i` | Product with bounds |
+| `integral` | `\int f(x) \, dx` | Indefinite integral |
+| `defint` | `\int_{a}^{b} f(x) \, dx` | Definite integral |
+| `iint` | `\iint_{D} f \, dA` | Double integral |
+| `iiint` | `\iiint_{V} f \, dV` | Triple integral |
+| `oint` | `\oint_{C} F \cdot d\mathbf{r}` | Closed line integral |
+| `deriv` | `\frac{df}{dx}` | Derivative d/dx |
+| `pderiv` | `\frac{\partial f}{\partial x}` | Partial derivative |
+| `deriv2` | `\frac{d^2 f}{dx^2}` | Second derivative |
+| `grad` | `\nabla f` | Gradient |
+| `divergence` | `\nabla \cdot \mathbf{F}` | Divergence |
+| `curl` | `\nabla \times \mathbf{F}` | Curl |
+| `laplacian` | `\nabla^2 f` | Laplacian |
+| `bigO` | `O\left(n\right)` | Big-O |
+| `seq` | `(a_{n})_{n \in \mathbb{N}}` | Sequence |
+| `epsdelta` | `\forall \varepsilon > 0 \; \exists \delta > 0 :` | Epsilon-delta |
+
+#### Linear algebra
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `vecarrow` | `\vec{v}` | Vector with arrow |
+| `vecbold` | `\mathbf{v}` | Vector in bold |
+| `hat` | `\hat{x}` | Unit vector / estimator hat |
+| `colvec` | `\begin{pmatrix} a \\ b \\ c \end{pmatrix}` | Column vector |
+| `matrix2` | `\begin{pmatrix} a & b \\ c & d \end{pmatrix}` | 2x2 matrix |
+| `matrix3` | `\begin{pmatrix} a & b & c \\ d & e & f \\ g & h & i \end{pmatrix}` | 3x3 matrix |
+| `det` | `\det(A)` | Determinant |
+| `detmat` | `\begin{vmatrix} a & b \\ c & d \end{vmatrix}` | Determinant bars |
+| `trace` | `\operatorname{tr}(A)` | Trace |
+| `rank` | `\operatorname{rank}(A)` | Rank |
+| `dim` | `\dim(V)` | Dimension |
+| `kernel` | `\ker(A)` | Kernel |
+| `image` | `\operatorname{im}(A)` | Image |
+| `span` | `\operatorname{span}\{v_1, v_2\}` | Span |
+| `inner` | `\langle u, v \rangle` | Inner product |
+| `cross` | `a \times b` | Cross product |
+| `identity` | `I_{n}` | Identity matrix |
+| `eigen` | `A\mathbf{v} = \lambda \mathbf{v}` | Eigenvalue equation |
+
+#### Statistics and probability
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `mean` | `\bar{x}` | Sample mean (bar) |
+| `variance` | `\operatorname{Var}(X)` | Variance |
+| `covariance` | `\operatorname{Cov}(X, Y)` | Covariance |
+| `expect` | `\mathbb{E}\left[X\right]` | Expected value |
+| `Prob` | `\mathbb{P}(A)` | Probability |
+| `given` | `\mathbb{P}(A \mid B)` | Conditional probability |
+| `binom` | `\binom{n}{k}` | Binomial coefficient |
+| `normaldist` | `X \sim \mathcal{N}(\mu, \sigma^2)` | Normal distribution |
+| `stddev` | `\sigma` | Standard deviation |
+| `estimator` | `\hat{\theta}` | Estimator hat |
+| `tilde` | `\tilde{x}` | Tilde accent |
+| `chisq` | `\chi^2` | Chi-squared |
+| `zscore` | `z = \frac{x - \mu}{\sigma}` | Z-score |
+| `confint` | `\bar{x} \pm z_{\alpha/2} \frac{\sigma}{\sqrt{n}}` | Confidence interval |
+
+#### Physics
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `vecF` | `\vec{F}` | Force vector |
+| `dot` | `\dot{x}` | Time derivative (one dot) |
+| `ddot` | `\ddot{x}` | Second time derivative |
+| `hbar` | `\hbar` | Reduced Planck constant |
+| `kB` | `k_{\mathrm{B}}` | Boltzmann constant |
+| `deltaT` | `\Delta T` | Change in temperature |
+| `deltaU` | `\Delta U` | Change in internal energy |
+| `dQ` | `\delta Q` | Heat increment |
+| `dW` | `\delta W` | Work increment |
+| `newton2` | `\vec{F} = m\vec{a}` | Newton's second law |
+| `kinematic` | `v = v_0 + a t` | V = v0 + a t |
+| `workint` | `W = \int \vec{F} \cdot d\vec{r}` | Work as integral |
+| `kinetic` | `E_k = \frac{1}{2} m v^2` | Kinetic energy |
+| `potential` | `E_p = m g h` | Gravitational potential energy |
+| `heatq` | `Q = m c \Delta T` | Heat capacity law |
+| `firstlaw` | `\Delta U = Q - W` | First law of thermodynamics |
+| `idealgas` | `p V = n R T` | Ideal gas law |
+| `entropy` | `\Delta S = \int \frac{\delta Q}{T}` | Entropy change |
+| `conserve` | `E_i = E_f` | Conservation of energy |
+| `momentum` | `\vec{p} = m\vec{v}` | Momentum |
+
 ## Writing quality
 
 ### ltex_plus (grammar, LanguageTool)
@@ -643,11 +903,11 @@ settings = { ltex = {
 ```
 
 - The language is fixed to `en-US`: LanguageTool checks one language per file. Italian, German or French text is flagged; change `language` in that file (`"auto"` detects the language, less reliable on short texts) or run `:lsp stop` for the buffer.
-- Tested: the status line shows `Completed Checking document` and `ltex_plus` after opening a file. The first start is slow.
+- The status line shows `Completed Checking document` and `ltex_plus` after opening a file. The first start is slow.
 - Use the diagnostics: `]d` / `[d`, `<Space>dd` (message), `<Space>ca` (fixes).
 - No personal dictionary or disabled-rule list is configured in the repo.
-- Tested code actions on an unknown word (`Zorblat`, `<Space>ca`): `Use 'Format'`, `Use 'Combat'`, `Use 'Orbit'`, `Use 'Cobalt'`, `Use 'Oblast'`, `Add 'Zorblat' to dictionary`, `Hide false positive`, `Disable rule`, and `Create a Table of Contents` (from marksman). Choosing a replacement works: the word changes and `u` undoes it.
-- `Add ... to dictionary`, `Hide false positive` and `Disable rule` do NOT work in this setup (tested). They are client-side commands (`_ltex.addToDictionary` ...) that Neovim must implement, and your config has no handler; the server answers `Unknown command '_ltex.addToDictionary', ignoring`, nothing is saved, the warning stays. To silence a word use Vim's `zg` (see below), which only affects the Vim spell checker, not ltex_plus; to silence ltex_plus for a word, add it to the `ltex.dictionary` setting in `after/lsp/ltex_plus.lua` yourself.
+- Code actions on an unknown word (`Zorblat`, `<Space>ca`): `Use 'Format'`, `Use 'Combat'`, `Use 'Orbit'`, `Use 'Cobalt'`, `Use 'Oblast'`, `Add 'Zorblat' to dictionary`, `Hide false positive`, `Disable rule`, and `Create a Table of Contents` (from marksman). Choosing a replacement works: the word changes and `u` undoes it.
+- `Add ... to dictionary`, `Hide false positive` and `Disable rule` do NOT work in this setup. They are client-side commands (`_ltex.addToDictionary` ...) that Neovim must implement, and your config has no handler; the server answers `Unknown command '_ltex.addToDictionary', ignoring`, nothing is saved, the warning stays. To silence a word use Vim's `zg` (see below), which only affects the Vim spell checker, not ltex_plus; to silence ltex_plus for a word, add it to the `ltex.dictionary` setting in `after/lsp/ltex_plus.lua` yourself.
 
 ### Vim spell checking
 
@@ -682,7 +942,7 @@ Checks common typos in every normal buffer (not help, terminal, quickfix, or sta
 | `^^` puts the mark one letter early | At the end of a line in insert mode (see [Footnotes](#footnotes-vim-markdownfootnotes)). Use `<Space>mf` in normal mode |
 | `<Space><Space>` does not remove trailing spaces | Intended in Markdown (hard line breaks) |
 | Grammar warnings on Italian or German text | ltex_plus is `en-US` only |
-| `^^` does nothing | The footnote plugin is not loaded: `:echo exists(':FootnoteNumber')` must give `2` (tested) |
+| `^^` does nothing | The footnote plugin is not loaded: `:echo exists(':FootnoteNumber')` must give `2` |
 | Maps do nothing in a huge file | Big-file mode: `:set ft=markdown` |
 
 ## Related sections

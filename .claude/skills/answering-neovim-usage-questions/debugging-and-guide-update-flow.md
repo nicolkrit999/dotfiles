@@ -42,7 +42,7 @@ Dispatch the `nvim-guide-maintainer` agent (sonnet; it already knows this skill'
 
 Agent task list:
 
-1. **Guide.** Find the right place with the README table of contents and the chapter file names. Record the PREVIOUS text (or "no entry"). Fix wrong text first, then add or extend the entry. Mark "tested" only because the user confirmed.
+1. **Guide.** Find the right place with the README table of contents and the chapter file names. Record the PREVIOUS text (or "no entry"). Fix wrong text first, then add or extend the entry. Add only what the user confirmed, stated plainly with no "tested" or "unverified" label (unconfirmed items go only to the memory file `neovim-guide-unverified-items.md`, never into the guide).
 2. **Keymap desc.** Find the mapping of the working key in the Lua config (`lua/mappings.lua`, `lua/config/*.lua`, `lua/plugin_specs.lua`, `after/`, `plugin/`).
    - It has a `desc`: check it is still true for what the key does and follows the style of the config ("Git: get permalink", no trailing period). If outdated, change it.
    - It has no `desc` and one can be added by editing our own config line: add it.

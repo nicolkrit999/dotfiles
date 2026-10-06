@@ -33,7 +33,7 @@ All navigation happens in **Normal mode**. Press `<Esc>` first if you are in Ins
 | `$` | Jump to the **end of the line** |
 | `g_` | Jump to the last non-blank character of the line |
 
-Where the cursor lands, on the line `    return foo(bar);  ` (4 leading spaces, 2 trailing spaces, cursor on `foo`; tested):
+Where the cursor lands, on the line `    return foo(bar);  ` (4 leading spaces, 2 trailing spaces, cursor on `foo`):
 
 | Keys | Cursor lands on |
 | --- | --- |
@@ -42,7 +42,7 @@ Where the cursor lands, on the line `    return foo(bar);  ` (4 leading spaces, 
 | `$` | the last trailing space |
 | `0` | column 1 (a leading space) |
 
-With an operator, `dg_` on `foo` deletes up to and including the `;` and leaves `    return   ` (tested).
+With an operator, `dg_` on `foo` deletes up to and including the `;` and leaves `    return   `.
 
 ## Moving by word
 
@@ -58,7 +58,7 @@ With an operator, `dg_` on `foo` deletes up to and including the `;` and leaves 
 
 **word vs WORD**: A "word" stops at punctuation (e.g., `foo.bar` is 3 words: `foo`, `.`, `bar`). A "WORD" only stops at whitespace (e.g., `foo.bar` is 1 WORD).
 
-Example on `foo.bar baz` with the cursor on the first `f` (tested):
+Example on `foo.bar baz` with the cursor on the first `f`:
 
 | Keys | Cursor lands on |
 | --- | --- |
@@ -89,7 +89,7 @@ Example on `foo.bar baz` with the cursor on the first `f` (tested):
 | `(` | Jump to the beginning of the previous sentence |
 | `)` | Jump to the beginning of the next sentence |
 
-Where the cursor line ends up on the screen (a window 21 lines high; `scrolloff` is 5 here, so `zt` and `zb` leave 5 lines of context instead of putting the line on the very edge; tested):
+Where the cursor line ends up on the screen (a window 21 lines high; `scrolloff` is 5 here, so `zt` and `zb` leave 5 lines of context instead of putting the line on the very edge):
 
 ```
       zt                 zz                 zb
@@ -115,7 +115,7 @@ Where the cursor line ends up on the screen (a window 21 lines high; `scrolloff`
 
 The `matchpairs` option also includes: `<>`, and several CJK bracket pairs.
 
-Examples (tested): on `if (a && (b || c)) {` with the cursor on the first `(`, `%` jumps to the last `)` of the outer pair (the one before ` {`). With an operator, `d%` on `x(a, b)y` with the cursor on the `(` gives `xy`.
+Examples: on `if (a && (b || c)) {` with the cursor on the first `(`, `%` jumps to the last `)` of the outer pair (the one before ` {`). With an operator, `d%` on `x(a, b)y` with the cursor on the `(` gives `xy`.
 
 ## Jumping to specific characters
 
@@ -134,7 +134,7 @@ Examples (tested): on `if (a && (b || c)) {` with the cursor on the first `(`, `
 | --- | --- | --- |
 | `f` | n, x, o | Press `f`, then type 2 characters. All matches on screen get labeled. Press the label letter to jump there instantly. Case insensitive. Press `<Esc>` to cancel. |
 
-Example (tested in a real terminal): the visible text is `the first foo and the second foo end` and the cursor is on the `t` of `the`.
+Example (in a real terminal): the visible text is `the first foo and the second foo end` and the cursor is on the `t` of `the`.
 
 ```
 visible text:         the first foo and the second foo end
@@ -153,7 +153,7 @@ The label letters depend on the screen (here `a` and `s`), so read them from the
 
 Every time you use a jump command (like `gg`, `G`, `/search`, `gd`, etc.), your position is saved. You can then go back and forth through your history with these keys.
 
-Example (tested): on line 10 of a 12-line file, press `gg` (line 1), then `G` (last line), then `<Ctrl-o>`: you are back on line 1. `<Ctrl-o>` again: back on line 10, where you started. `<Ctrl-i>`: line 1 again.
+Example: on line 10 of a 12-line file, press `gg` (line 1), then `G` (last line), then `<Ctrl-o>`: you are back on line 1. `<Ctrl-o>` again: back on line 10, where you started. `<Ctrl-i>`: line 1 again.
 
 ## Word references (vim-illuminate)
 
@@ -165,7 +165,7 @@ Other uses of the word under the cursor are highlighted when there are at least 
 | `<Alt-p>` | n | Jump to the previous reference |
 | `<Alt-i>` | x, o | Text object: the reference under the cursor (e.g. `d<Alt-i>`) |
 
-Example (`<Alt-n>` tested in a Lua file): with `local Config = {}` on line 6 and `function Config.get(key)` on line 8, put the cursor on `Config` in line 8 and press `<Alt-n>`: the cursor jumps to the `Config` on line 6. Pressed again it goes back to line 8 (it wraps around at the end). Both `Config` words carry the plugin's highlight (read from its extmarks: `IlluminatedWordWrite` on the line 6 one, `IlluminatedWordRead` on the line 8 one, tested).
+Example (`<Alt-n>` in a Lua file): with `local Config = {}` on line 6 and `function Config.get(key)` on line 8, put the cursor on `Config` in line 8 and press `<Alt-n>`: the cursor jumps to the `Config` on line 6. Pressed again it goes back to line 8 (it wraps around at the end). Both `Config` words carry the plugin's highlight (read from its extmarks: `IlluminatedWordWrite` on the line 6 one, `IlluminatedWordRead` on the line 8 one).
 
 These three keys are plugin defaults of vim-illuminate: the plugin sets them only when nothing else uses the key, and the config does not define them itself.
 
@@ -184,7 +184,7 @@ Commands: `:IlluminateToggle`, `:IlluminatePause`, `:IlluminateResume`.
 
 Marks `a-z` are local to the file. Marks `A-Z` are global (across files).
 
-Example (tested): the file has the lines `a`, `  b c d`, `c`, `d`, `e` and the cursor is on the `c` of line 2 (column 5). Press `ma`, then `5G` (last line). `` `a `` returns to line 2, column 5 (the exact spot); `'a` returns to line 2 but on the first non-blank, the `b` (column 3). Marks also work with an operator: on the lines `a`, `b`, `c` with the cursor on `a`, `ma`, `jj`, then ``d`a`` deletes from the mark to the cursor and leaves `c`.
+Example: the file has the lines `a`, `  b c d`, `c`, `d`, `e` and the cursor is on the `c` of line 2 (column 5). Press `ma`, then `5G` (last line). `` `a `` returns to line 2, column 5 (the exact spot); `'a` returns to line 2 but on the first non-blank, the `b` (column 3). Marks also work with an operator: on the lines `a`, `b`, `c` with the cursor on `a`, `ma`, `jj`, then ``d`a`` deletes from the mark to the cursor and leaves `c`.
 
 ---
 
@@ -207,7 +207,7 @@ Example (tested): the file has the lines `a`, `  b c d`, `c`, `d`, `e` and the c
 | `*` | Search the word under the cursor forward as a whole word (the cursor stays on the word; with a count, e.g. `3*`, it jumps 3 matches forward from the cursor, like `3n`) |
 | `#` | Same, backward |
 
-Example (tested in a real terminal): after `/count<Enter>` and `n` in a file where `count` appears 4 times, the line with the second match ends with a small virtual text:
+Example (in a real terminal): after `/count<Enter>` and `n` in a file where `count` appears 4 times, the line with the second match ends with a small virtual text:
 
 ```
 local count = 0
@@ -228,7 +228,7 @@ The outline comes from Treesitter or the LSP server (no ctags needed).
 
 Commands: `:AerialToggle`, `:AerialOpen`, `:AerialNavToggle`.
 
-What it looks like (tested in a real terminal, on a Lua file; the sidebar opens on the right and each symbol has a small icon in front of it that depends on the font):
+What it looks like (in a real terminal, on a Lua file; the sidebar opens on the right and each symbol has a small icon in front of it that depends on the font):
 
 ```
  code window                              Outline sidebar

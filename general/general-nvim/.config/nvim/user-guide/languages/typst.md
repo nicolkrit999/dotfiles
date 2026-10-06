@@ -15,9 +15,10 @@ Typst is a modern markup language that compiles to PDF (like LaTeX, but much fas
 | `typstyle` | The formatter that `tinymist` uses (`<Space>fm`) | typst devShell |
 | `zathura` | PDF viewer that reloads by itself when the PDF changes | typst devShell |
 | `ltex_plus` and `typos_lsp` | Grammar, spelling and typo diagnostics in the prose | global (see "[Prose checking](#prose-checking-in-typst)") |
+| `my_snippets/typst.snippets` | `mk` / `dm` for inline and display math and 104 math-symbol snippets (`leq`, `integral`, `matrix2`, ...), expanded with `<Ctrl-j>` | personal UltiSnips file (see "[Snippets](#snippets)") |
 | Buffer settings | `textwidth=100`, wrap on, colour marker at column 100, indent of 2 spaces | `after/ftplugin/typst.lua`, `lua/options.lua`, typst.vim |
 
-There are no Typst snippets (`my_snippets/` has no `typst.snippets`) and no Typst-specific completion source: completion comes from the language server ([section 14](../04-completion-snippets.md#14-autocompletion-nvim-cmp)).
+Completion has no Typst-specific source: it comes from the language server ([section 14](../04-completion-snippets.md#14-autocompletion-nvim-cmp)). `my_snippets/typst.snippets` adds math snippets (see "[Snippets](#snippets)").
 
 ## Requirements: the Typst devShell
 
@@ -43,9 +44,9 @@ which typst tinymist typstyle zathura
 
 | What | Result |
 | --- | --- |
-| `typst` not on PATH | The plugin `typst.vim` does not load: no `:TypstWatch`, no `:Toc`. Tested: `exists(':TypstWatch')` is 0 |
+| `typst` not on PATH | The plugin `typst.vim` does not load: no `:TypstWatch`, no `:Toc` (`exists(':TypstWatch')` is 0) |
 | `<Space>tw` | Still mapped (buffer-local); it shows ONE warning: "Typst: typst not found on PATH (open nvim inside the typst devShell)". Nothing starts |
-| `tinymist` not on PATH | No Typst language server. Tested: only `ltex_plus` and `typos_lsp` attach |
+| `tinymist` not on PATH | No Typst language server. Only `ltex_plus` and `typos_lsp` attach |
 | Filetype | `*.typ` is still recognised as `typst`; prose checking (`ltex_plus`, `typos_lsp`) still works |
 
 ## Quick start
@@ -56,20 +57,20 @@ which typst tinymist typstyle zathura
 4. Press `<Space>tw`. The command line shows `Starting: typst watch  --diagnostic-format short 'main.typ' --open zathura` and the PDF opens in zathura.
 5. Edit the text and save with `:w` (Typst files are never saved automatically, see "Auto-save" below). The PDF is rebuilt and zathura reloads it.
 6. If the document has an error, a quickfix window opens at the bottom with the message. Fix it and save again: the window closes by itself.
-7. To stop: quit Neovim (`:qa`). The watcher is a child job and ends with Neovim (tested: no `typst watch` process was left). Closing the zathura window alone does not stop the watcher.
+7. To stop: quit Neovim (`:qa`). The watcher is a child job and ends with Neovim (no `typst watch` process was left). Closing the zathura window alone does not stop the watcher.
 
 ## Keys and commands
 
 | Key / command | Where | Description |
 | --- | --- | --- |
-| `<Space>tw` | Typst buffers only | Runs `:TypstWatch`: `typst watch --diagnostic-format short <file> --open <viewer>` as a background job. Pressing it again stops the old job and starts a new one (tested: new process id) |
+| `<Space>tw` | Typst buffers only | Runs `:TypstWatch`: `typst watch --diagnostic-format short <file> --open <viewer>` as a background job. Pressing it again stops the old job and starts a new one (new process id) |
 | `:TypstWatch {args}` | needs typst.vim | Same, with extra `typst` options, e.g. `:TypstWatch --root ..` |
 | `:make` | needs typst.vim | Compiles the file once (`typst compile --diagnostic-format short %`); errors go to the quickfix list ([section 26](../05-search-and-files.md#26-quickfix--location-list)) |
 | `:Toc` / `:Tocv` | needs typst.vim | Table of contents of the `=` headings in a vertical location list on the right; `:Toch` horizontal, `:Toct` in a new tab. Press `Enter` on a line to jump |
-| `<Space>fm` | global | Format the whole file with the language server (typstyle). Tested: `#greet(   "x"  )   #let   y=3` became `#greet("x")   #let y = 3` |
+| `<Space>fm` | global | Format the whole file with the language server (typstyle). Example: `#greet(   "x"  )   #let   y=3` became `#greet("x")   #let y = 3` |
 | `gq` | global | Reformats prose lines to `textwidth` (100); not the Typst formatter |
-| `K` | LSP | Hover: signature and parameters of a function (tested on `greet` and `text`) |
-| `gd` | LSP | Go to definition: from a function call to its `#let`, from `@intro` to the `<intro>` label (tested) |
+| `K` | LSP | Hover: signature and parameters of a function (on `greet` and `text`) |
+| `gd` | LSP | Go to definition: from a function call to its `#let`, from `@intro` to the `<intro>` label |
 | `<Space>rn` | LSP | Rename symbol (`tinymist` supports rename) |
 | `<Space>ca` | LSP | Code action menu at the cursor |
 | `]d` / `[d`, `<Space>dd` | global | Next / previous diagnostic; `<Space>dd` shows a float with the diagnostic of the current line ([section 13](../07-code.md#13-lsp-language-server-protocol)) |
@@ -105,12 +106,12 @@ tinymist = {
 
 | Setting | Meaning |
 | --- | --- |
-| `root_dir` | The project root is the nearest folder above the file with `typst.toml` (a Typst package) or `.git`; with neither, the folder of the file. Tested: a file in a folder without `.git` got that folder as root |
+| `root_dir` | The project root is the nearest folder above the file with `typst.toml` (a Typst package) or `.git`; with neither, the folder of the file. Example: a file in a folder without `.git` got that folder as root |
 | `exportPdf = "never"` | The server does not export PDFs; only `typst watch` does. So there is one PDF writer, not two |
 | `outputPath` | Only used when the server exports (it does not here); it is a leftover default |
 | `formatterMode = "typstyle"` | `<Space>fm` formats with typstyle |
 
-What it provides, as tested in a real session:
+What it provides, in a real session:
 
 | Feature | How to see it |
 | --- | --- |
@@ -204,12 +205,12 @@ The `<Space>tw` part of this file is the block above ("[Watch, compile and the P
 | --- | --- |
 | What runs? | `typst watch  --diagnostic-format short '<file>' --open <viewer>` in a background job, started from the current folder of Neovim |
 | Which viewer? | `$TYPST_PDF_VIEWER` if set, else `zathura` if installed, else (empty value) `--open` alone, i.e. the system default PDF program |
-| Where is the PDF? | Next to the `.typ` file with the same name (`main.typ` gives `main.pdf`). Tested. (`g:typst_output_to_tmp` is not set, so `/tmp/typst_out` is not used) |
+| Where is the PDF? | Next to the `.typ` file with the same name (`main.typ` gives `main.pdf`). (`g:typst_output_to_tmp` is not set, so `/tmp/typst_out` is not used) |
 | When does it recompile? | Every time the `.typ` file (or a file it imports) is saved |
 | Why is auto-save off for Typst? | A recompile on every focus change would restart the watcher over and over; save with `:w` ([section 42](../10-various.md#42-automatic-behaviors)) |
 | Where are compile errors? | In the quickfix list (opens at the bottom, cursor stays in your window). Lines look like `main.typ\|19 col 13\| error: unexpected argument`. `]q`-style quickfix keys are in [section 26](../05-search-and-files.md#26-quickfix--location-list) |
-| What happens to the PDF on an error? | The old PDF stays (tested: file time unchanged) until the error is fixed |
-| Does a fixed error clear the window? | Yes: the next successful compile empties the list and closes the window (tested) |
+| What happens to the PDF on an error? | The old PDF stays (file time unchanged) until the error is fixed |
+| Does a fixed error clear the window? | Yes: the next successful compile empties the list and closes the window |
 | How to stop? | Quit Neovim. A second `<Space>tw` replaces the running watcher. There is no stop command |
 | One watcher only | The plugin keeps one watcher job; watching another file with `<Space>tw` stops the first |
 
@@ -270,7 +271,7 @@ $ E = m c^2 $
 | Do | Expected result |
 | --- | --- |
 | Open the file, wait 5 seconds | Statusline shows `tinymist (+2)`; signs for line 7 (`smal`) |
-| `<Space>tw` | Message `Starting: typst watch ... --open zathura`; `main.pdf` appears; zathura opens it (tested) |
+| `<Space>tw` | Message `Starting: typst watch ... --open zathura`; `main.pdf` appears; zathura opens it |
 | Change `a5` to `a4`, `:w` | The PDF is recompiled and zathura shows the bigger page |
 | Add a line `#greet( 1 ,  2 )` at the end, `:w` | Quickfix window with `error: unexpected argument`; the error sign on the line; PDF unchanged |
 | Delete that line, `:w` | Quickfix window closes; PDF updated |
@@ -282,6 +283,195 @@ $ E = m c^2 $
 | `:Tocv` | Location list at the right with `Introduction` and `Math` |
 | `<Space>t` and wait | Symbol outline (aerial): `Introduction`, `Math`, `greet` |
 | `:make` | Compiles once; empty quickfix when everything is fine |
+
+## Snippets
+
+Source: `my_snippets/typst.snippets` (106 snippets, UltiSnips: 2 math delimiters and 104 math symbols). Type the trigger in insert mode in a Typst buffer and expand it with `<Ctrl-j>` (hold Ctrl and press `j`), or accept the entry in the completion menu (section [15](../04-completion-snippets.md#15-snippets-ultisnips)). The symbol snippets are offered only while the cursor is inside math (between two `$`). `<Ctrl-j>` jumps to the next placeholder and `<Ctrl-k>` back to the previous one. Triggers are case-sensitive.
+
+### Starting flow
+
+1. Type `mk` (inline math) or `dm` (display math, with spaces inside the dollars) and press `<Ctrl-j>`. The dollars appear and the cursor sits inside them.
+2. Inside the math, type a symbol trigger such as `leq` and press `<Ctrl-j>` (or accept it in the completion menu). It becomes `lt.eq` followed by a space, and the cursor ends after that space. These snippets are not offered outside math.
+3. Keep typing. `<Ctrl-j>` jumps through the placeholders of a structured snippet and, after the last one, past the closing `$`. Typing the closing `$` yourself works too.
+
+Example, step by step:
+
+| You type | You get (\| is the cursor) |
+| --- | --- |
+| `mk` then `<Ctrl-j>` | `$\|$` |
+| `x leq` then `<Ctrl-j>` | `$x lt.eq \|$` |
+| `y` | `$x lt.eq y\|$` |
+| `<Ctrl-j>` | `$x lt.eq y$\|` |
+
+Cursor and spacing rules: the cursor always ends after the expansion. Symbol names made of letters (`lt.eq`, `plus.minus`, `arrow.r`, ...) are followed by one space so that the next letter you type does not glue onto the name. `sub`, `sup`, `inv`, `transpose` and `celsius` attach to what you typed before and leave no space. In structured snippets the placeholders are visited from left to right and the final cursor sits right after the whole construct. The default word of a placeholder (for example `x`) is selected: type to replace it, or press `<Ctrl-j>` to keep it.
+
+### Where they work and limits
+
+Where they work: the check counts the unescaped `$` characters in the file from the top down to the cursor; an odd number means the cursor is inside math. Comments (`// ...`), a `\$` with a backslash, and raw text (backticks, also code blocks with three backticks) are ignored when counting. `mk` and `dm` expand outside math and outside raw text only. `sub`, `sup`, `inv`, `transpose` and `celsius` also expand in the middle of a word (`xsub`); all other snippets need a space or an operator in front of the trigger (`xneq` does nothing, `x neq` expands).
+
+Limits:
+
+- The completion menu may list the symbol names outside math. Outside math `<Ctrl-j>` does not expand them; it only does what it does without a snippet (it starts a new line).
+- `integral` and `sup` are also names of Typst's own completions with another meaning: the language server's `integral` is the bare integral sign, the snippet `integral` writes `integral f(x) dif x`; the language server's `sup` is the supremum operator, the snippet `sup` writes a superscript. Both entries appear in the completion menu; the snippet is the one marked as a snippet.
+- Typing the Typst word `limsup` and pressing `<Ctrl-j>` right after it expands the `sup` at its end into a superscript (`lim^(n)`), because `sup` also expands in the middle of a word. Accepting `limsup` from the completion menu is not affected.
+
+### Math delimiters
+
+These two work outside math only (not inside a `$ ... $` pair and not inside raw text or code blocks). Spaces inside the dollars make display (block) math in Typst; no spaces make inline math.
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `mk` | `$$` | Inline math; the cursor is between the two dollars |
+| `dm` | `$  $` | Display math (spaces inside the dollars); the cursor is between the two spaces |
+
+### Math symbols
+
+104 snippets, offered only inside math. The Produces column shows the text that is inserted (a trailing space after word-like symbols is not shown).
+
+**Relations and operators**
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `neq` | `eq.not` | not equal (≠) |
+| `leq` | `lt.eq` | less or equal (≤) |
+| `geq` | `gt.eq` | greater or equal (≥) |
+| `ll` | `lt.double` | much less (≪) |
+| `gg` | `gt.double` | much greater (≫) |
+| `sim` | `tilde.op` | similar, distributed as (∼) |
+| `simeq` | `tilde.eq` | asymptotically equal (≃) |
+| `cong` | `tilde.equiv` | congruent (≅) |
+| `propto` | `prop` | proportional to (∝) |
+| `pm` | `plus.minus` | plus minus (±) |
+| `mp` | `minus.plus` | minus plus (∓) |
+| `cdot` | `dot.op` | dot product, multiplication dot (⋅) |
+| `circ` | `compose` | composition (∘) |
+| `oplus` | `plus.o` | direct sum (⊕) |
+| `otimes` | `times.o` | tensor product (⊗) |
+| `celsius` | `degree "C"` | degrees Celsius, attaches to the number before (°C) |
+| `ldots` | `dots.h` | dots on the line (…) |
+| `cdots` | `dots.h.c` | centered dots (⋯) |
+| `vdots` | `dots.v` | vertical dots (⋮) |
+| `ddots` | `dots.down` | diagonal dots (⋱) |
+
+**Logic and sets**
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `implies` | `arrow.r.double` | implies (⇒) |
+| `iff` | `arrow.l.r.double` | if and only if (⇔) |
+| `to` | `arrow.r` | arrow right, maps to (→) |
+| `leftarrow` | `arrow.l` | arrow left (←) |
+| `nexists` | `exists.not` | does not exist (∄) |
+| `neg` | `not` | not (¬) |
+| `land` | `and` | and (∧) |
+| `lor` | `or` | or (∨) |
+| `notin` | `in.not` | not element of (∉) |
+| `subseteq` | `subset.eq` | subset or equal (⊆) |
+| `cup` | `union` | union (∪) |
+| `cap` | `inter` | intersection (∩) |
+| `setminus` | `without` | set difference (∖) |
+
+**Greek letter variants**
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `varepsilon` | `epsilon.alt` | epsilon, variant form (ε) |
+| `vartheta` | `theta.alt` | theta, variant form (ϑ) |
+| `varphi` | `phi.alt` | phi, variant form (φ) |
+
+**Roots and scripts**
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `nroot` | `root(n, x)` | n-th root |
+| `sub` | `_(i)` | subscript, attaches to what is before |
+| `sup` | `^(n)` | superscript, attaches to what is before |
+| `inv` | `^(-1)` | inverse exponent -1, attaches to what is before |
+| `transpose` | `^(T)` | transpose exponent T, attaches to what is before |
+
+**Calculus and analysis**
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `limit` | `lim_(x -> a) f(x)` | limit |
+| `sumn` | `sum_(i=1)^(n) a_i` | sum with bounds |
+| `prodn` | `product_(i=1)^(n) a_i` | product with bounds |
+| `integral` | `integral f(x) dif x` | indefinite integral with dif x |
+| `defint` | `integral_(a)^(b) f(x) dif x` | definite integral with bounds |
+| `iint` | `integral.double_(D) f dif A` | double integral |
+| `iiint` | `integral.triple_(V) f dif V` | triple integral |
+| `oint` | `integral.cont_(C) F dot.op dif bold(r)` | closed line integral |
+| `deriv` | `(dif f)/(dif x)` | derivative d f / d x |
+| `pderiv` | `(partial f)/(partial x)` | partial derivative |
+| `deriv2` | `(dif^2 f)/(dif x^2)` | second derivative |
+| `grad` | `nabla f` | gradient |
+| `divergence` | `nabla dot.op bold(F)` | divergence |
+| `curl` | `nabla times bold(F)` | curl |
+| `laplacian` | `nabla^2 f` | Laplacian |
+| `bigO` | `O(n)` | big-O |
+| `seq` | `(a_(n))_( in NN)` | sequence indexed by the naturals |
+| `epsdelta` | `forall epsilon.alt > 0 thick exists delta > 0 :` | epsilon-delta quantifiers |
+
+**Linear algebra**
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `vecarrow` | `arrow(v)` | vector with arrow |
+| `vecbold` | `bold(v)` | vector in bold |
+| `colvec` | `vec(a, b, c)` | column vector |
+| `matrix2` | `mat(a, b; c, d)` | 2x2 matrix |
+| `matrix3` | `mat(a, b, c; d, e, f; g, h, i)` | 3x3 matrix |
+| `detmat` | `mat(delim: "\|", a, b; c, d)` | determinant bars around a 2x2 matrix |
+| `trace` | `op("tr")(A)` | trace |
+| `rank` | `op("rank")(A)` | rank |
+| `image` | `op("im")(A)` | image of a map |
+| `span` | `op("span")(v_1, v_2)` | span |
+| `inner` | `chevron.l u, v chevron.r` | inner product |
+| `cross` | `a times b` | cross product |
+| `identity` | `I_(n)` | identity matrix |
+| `eigen` | `A bold(v) = lambda bold(v)` | eigenvalue equation |
+
+**Statistics and probability**
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `mean` | `overline(x)` | sample mean (bar) |
+| `variance` | `op("Var")(X)` | variance |
+| `covariance` | `op("Cov")(X, Y)` | covariance |
+| `expect` | `bb(E)[X]` | expected value |
+| `Prob` | `bb(P)(A)` | probability |
+| `given` | `bb(P)(A \| B)` | conditional probability |
+| `normaldist` | `X tilde.op cal(N)(mu, sigma^2)` | normal distribution |
+| `stddev` | `sigma` | standard deviation (σ) |
+| `estimator` | `hat(theta)` | estimator with hat |
+| `chisq` | `chi^2` | chi-squared (χ²) |
+| `zscore` | `z = (x - mu)/sigma` | z-score |
+| `confint` | `overline(x) plus.minus z_(alpha/2) sigma/sqrt(n)` | confidence interval for the mean |
+
+**Physics**
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `vecF` | `arrow(F)` | force vector |
+| `ddot` | `dot.double(x)` | second time derivative (double dot) |
+| `hbar` | `planck` | reduced Planck constant (ħ) |
+| `kB` | `k_"B"` | Boltzmann constant |
+| `deltaT` | `Delta T` | change in temperature |
+| `deltaU` | `Delta U` | change in internal energy |
+| `dQ` | `delta Q` | heat increment |
+| `dW` | `delta W` | work increment |
+| `newton2` | `arrow(F) = m arrow(a)` | Newton's second law |
+| `kinematic` | `v = v_0 + a t` | velocity with constant acceleration |
+| `workint` | `W = integral arrow(F) dot.op dif arrow(r)` | work as a line integral |
+| `kinetic` | `E_k = 1/2 m v^2` | kinetic energy |
+| `potential` | `E_p = m g h` | gravitational potential energy |
+| `heatq` | `Q = m c Delta T` | heat from heat capacity |
+| `firstlaw` | `Delta U = Q - W` | first law of thermodynamics |
+| `idealgas` | `p V = n R T` | ideal gas law |
+| `entropy` | `Delta S = integral (delta Q)/T` | entropy change |
+| `conserve` | `E_i = E_f` | conservation of energy |
+| `momentum` | `arrow(p) = m arrow(v)` | momentum |
+
 
 ## Troubleshooting
 
@@ -302,4 +492,4 @@ $ E = m c^2 $
 
 ## Related sections
 
-Section [13](../07-code.md#13-lsp-language-server-protocol) (LSP), [14](../04-completion-snippets.md#14-autocompletion-nvim-cmp) (autocompletion), [18](../07-code.md#18-code-folding-nvim-ufo) (folding), [26](../05-search-and-files.md#26-quickfix--location-list) (quickfix and location list), [27](../09-ai-and-writing.md#27-markdown-support) (Markdown), [28](../09-ai-and-writing.md#28-latex-and-typst-support) (LaTeX and Typst overview), [31](../09-ai-and-writing.md#31-spell-checking) (spell checking), [32](../06-windows-terminal-sessions.md#32-statusline-lualinenvim) (statusline), [37](../02-navigation.md#37-symbol-outline-aerialnvim) (symbol outline), [41](../10-various.md#41-filetype-specific-settings) (filetype settings), [42](../10-various.md#42-automatic-behaviors) (automatic behaviours), [44](../07-code.md#44-language-server-protocol-lsp-in-depth) (LSP in depth).
+Section [13](../07-code.md#13-lsp-language-server-protocol) (LSP), [14](../04-completion-snippets.md#14-autocompletion-nvim-cmp) (autocompletion), [15](../04-completion-snippets.md#15-snippets-ultisnips) (snippets), [18](../07-code.md#18-code-folding-nvim-ufo) (folding), [26](../05-search-and-files.md#26-quickfix--location-list) (quickfix and location list), [27](../09-ai-and-writing.md#27-markdown-support) (Markdown), [28](../09-ai-and-writing.md#28-latex-and-typst-support) (LaTeX and Typst overview), [31](../09-ai-and-writing.md#31-spell-checking) (spell checking), [32](../06-windows-terminal-sessions.md#32-statusline-lualinenvim) (statusline), [37](../02-navigation.md#37-symbol-outline-aerialnvim) (symbol outline), [41](../10-various.md#41-filetype-specific-settings) (filetype settings), [42](../10-various.md#42-automatic-behaviors) (automatic behaviours), [44](../07-code.md#44-language-server-protocol-lsp-in-depth) (LSP in depth).

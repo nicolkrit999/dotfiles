@@ -1,0 +1,609 @@
+# Typst snippets (filetype typst; loaded by UltiSnips from my_snippets/)
+#
+# Conventions:
+# - Triggers are the human/LaTeX word and case-sensitive. The math-symbol snippets are offered
+#   ONLY inside Typst math ($ ... $); typst_math() below decides that without any plugin.
+# - Symbols Typst already completes under the same word (alpha, infinity, sum, integral sign,
+#   forall, in, subset, ...) have no snippet here; only words Typst does not know (neq, leq,
+#   pm, cdot, implies, ...) and structured forms with placeholders.
+# - Cursor rules: the cursor ends AFTER the expansion. Word-like symbols end with one space so the
+#   next letter does not glue to the name (eq.not x, not eq.notx). Attaching snippets (sub, sup,
+#   inv, transpose, celsius) have no space. Placeholders go left to right, $0 after the construct.
+# - Each snippet has a one-line description (shown by nvim-cmp above the snippet body).
+# - Option w: the trigger is also recognised right after ( [ , and the like, not only after a space.
+# - Option i (sub sup inv transpose celsius): attaches to what was typed before, also in mid-word (xsub).
+
+priority 0
+
+global !p
+import re
+
+def _typst_before_cursor():
+	"""Source text from the start of the buffer up to the cursor, with comments, escapes and
+	closed raw blocks blanked out. Returns (text, in_raw)."""
+	row, _ = vim.current.window.cursor
+	before = vim.eval("strpart(getline('.'), 0, col('.') - 1)")
+	text = "\n".join(list(vim.current.buffer[: row - 1]) + [before])
+	text = re.sub(r"\\.", "  ", text)                      # escaped chars such as \$ and \`
+	text = re.sub(r"/\*.*?\*/", " ", text, flags=re.S)       # block comments
+	text = re.sub(r"(?m)(?<![:\w])//.*$", "", text)          # line comments (not URLs like https://)
+	text = re.sub(r"```.*?```", " ", text, flags=re.S)       # closed fenced raw blocks
+	text = re.sub(r"`[^`\n]*`", " ", text)                  # closed inline raw
+	return text, ("`" in text)                               # a leftover backtick = inside raw
+
+def typst_math():
+	"""True when the cursor is inside $ ... $ (inline or display): odd number of unescaped $ before it."""
+	text, in_raw = _typst_before_cursor()
+	return (not in_raw) and text.count("$") % 2 == 1
+
+def typst_text():
+	"""True when the cursor is outside math and outside raw/code text."""
+	text, in_raw = _typst_before_cursor()
+	return (not in_raw) and text.count("$") % 2 == 0
+endglobal
+
+# ----------------------------------------------------------------------------
+# Math delimiters (outside math only)
+# ----------------------------------------------------------------------------
+
+context "typst_text()"
+snippet mk "Inline math $...$ (no spaces inside the dollars), cursor inside" w
+\$${1}\$$0
+endsnippet
+
+context "typst_text()"
+snippet dm "Display math $ ... $ (spaces inside the dollars), cursor inside" w
+\$ ${1} \$$0
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Relations and operators
+# ----------------------------------------------------------------------------
+
+context "typst_math()"
+snippet neq "not equal (≠)" w
+eq.not 
+endsnippet
+
+context "typst_math()"
+snippet leq "less or equal (≤)" w
+lt.eq 
+endsnippet
+
+context "typst_math()"
+snippet geq "greater or equal (≥)" w
+gt.eq 
+endsnippet
+
+context "typst_math()"
+snippet ll "much less (≪)" w
+lt.double 
+endsnippet
+
+context "typst_math()"
+snippet gg "much greater (≫)" w
+gt.double 
+endsnippet
+
+context "typst_math()"
+snippet sim "similar, distributed as (∼)" w
+tilde.op 
+endsnippet
+
+context "typst_math()"
+snippet simeq "asymptotically equal (≃)" w
+tilde.eq 
+endsnippet
+
+context "typst_math()"
+snippet cong "congruent (≅)" w
+tilde.equiv 
+endsnippet
+
+context "typst_math()"
+snippet propto "proportional to (∝)" w
+prop 
+endsnippet
+
+context "typst_math()"
+snippet pm "plus minus (±)" w
+plus.minus 
+endsnippet
+
+context "typst_math()"
+snippet mp "minus plus (∓)" w
+minus.plus 
+endsnippet
+
+context "typst_math()"
+snippet cdot "dot product, multiplication dot (⋅)" w
+dot.op 
+endsnippet
+
+context "typst_math()"
+snippet circ "composition (∘)" w
+compose 
+endsnippet
+
+context "typst_math()"
+snippet oplus "direct sum (⊕)" w
+plus.o 
+endsnippet
+
+context "typst_math()"
+snippet otimes "tensor product (⊗)" w
+times.o 
+endsnippet
+
+context "typst_math()"
+snippet celsius "degrees Celsius, attaches to the number before (°C)" i
+degree "C"$0
+endsnippet
+
+context "typst_math()"
+snippet ldots "dots on the line (…)" w
+dots.h 
+endsnippet
+
+context "typst_math()"
+snippet cdots "centered dots (⋯)" w
+dots.h.c 
+endsnippet
+
+context "typst_math()"
+snippet vdots "vertical dots (⋮)" w
+dots.v 
+endsnippet
+
+context "typst_math()"
+snippet ddots "diagonal dots (⋱)" w
+dots.down 
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Logic and sets
+# ----------------------------------------------------------------------------
+
+context "typst_math()"
+snippet implies "implies (⇒)" w
+arrow.r.double 
+endsnippet
+
+context "typst_math()"
+snippet iff "if and only if (⇔)" w
+arrow.l.r.double 
+endsnippet
+
+context "typst_math()"
+snippet to "arrow right, maps to (→)" w
+arrow.r 
+endsnippet
+
+context "typst_math()"
+snippet leftarrow "arrow left (←)" w
+arrow.l 
+endsnippet
+
+context "typst_math()"
+snippet nexists "does not exist (∄)" w
+exists.not 
+endsnippet
+
+context "typst_math()"
+snippet neg "not (¬)" w
+not 
+endsnippet
+
+context "typst_math()"
+snippet land "and (∧)" w
+and 
+endsnippet
+
+context "typst_math()"
+snippet lor "or (∨)" w
+or 
+endsnippet
+
+context "typst_math()"
+snippet notin "not element of (∉)" w
+in.not 
+endsnippet
+
+context "typst_math()"
+snippet subseteq "subset or equal (⊆)" w
+subset.eq 
+endsnippet
+
+context "typst_math()"
+snippet cup "union (∪)" w
+union 
+endsnippet
+
+context "typst_math()"
+snippet cap "intersection (∩)" w
+inter 
+endsnippet
+
+context "typst_math()"
+snippet setminus "set difference (∖)" w
+without 
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Greek letter variants
+# ----------------------------------------------------------------------------
+
+context "typst_math()"
+snippet varepsilon "epsilon, variant form (ε)" w
+epsilon.alt 
+endsnippet
+
+context "typst_math()"
+snippet vartheta "theta, variant form (ϑ)" w
+theta.alt 
+endsnippet
+
+context "typst_math()"
+snippet varphi "phi, variant form (φ)" w
+phi.alt 
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Roots and scripts
+# ----------------------------------------------------------------------------
+
+context "typst_math()"
+snippet nroot "n-th root" w
+root(${1:n}, ${2:x})$0
+endsnippet
+
+context "typst_math()"
+snippet sub "subscript, attaches to what is before" i
+_(${1:i})$0
+endsnippet
+
+context "typst_math()"
+snippet sup "superscript, attaches to what is before" i
+^(${1:n})$0
+endsnippet
+
+context "typst_math()"
+snippet inv "inverse exponent -1, attaches to what is before" i
+^(-1)$0
+endsnippet
+
+context "typst_math()"
+snippet transpose "transpose exponent T, attaches to what is before" i
+^(T)$0
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Calculus and analysis
+# ----------------------------------------------------------------------------
+
+context "typst_math()"
+snippet limit "limit" w
+lim_(${1:x} -> ${2:a}) ${3:f(x)} $0
+endsnippet
+
+context "typst_math()"
+snippet sumn "sum with bounds" w
+sum_(${1:i}=${2:1})^(${3:n}) ${4:a_i} $0
+endsnippet
+
+context "typst_math()"
+snippet prodn "product with bounds" w
+product_(${1:i}=${2:1})^(${3:n}) ${4:a_i} $0
+endsnippet
+
+context "typst_math()"
+snippet integral "indefinite integral with dif x" w
+integral ${1:f(x)} dif ${2:x} $0
+endsnippet
+
+context "typst_math()"
+snippet defint "definite integral with bounds" w
+integral_(${1:a})^(${2:b}) ${3:f(x)} dif ${4:x} $0
+endsnippet
+
+context "typst_math()"
+snippet iint "double integral" w
+integral.double_(${1:D}) ${2:f} dif A $0
+endsnippet
+
+context "typst_math()"
+snippet iiint "triple integral" w
+integral.triple_(${1:V}) ${2:f} dif V $0
+endsnippet
+
+context "typst_math()"
+snippet oint "closed line integral" w
+integral.cont_(${1:C}) ${2:F} dot.op dif bold(r)$0
+endsnippet
+
+context "typst_math()"
+snippet deriv "derivative d f / d x" w
+(dif ${1:f})/(dif ${2:x})$0
+endsnippet
+
+context "typst_math()"
+snippet pderiv "partial derivative" w
+(partial ${1:f})/(partial ${2:x})$0
+endsnippet
+
+context "typst_math()"
+snippet deriv2 "second derivative" w
+(dif^2 ${1:f})/(dif ${2:x}^2)$0
+endsnippet
+
+context "typst_math()"
+snippet grad "gradient" w
+nabla ${1:f} $0
+endsnippet
+
+context "typst_math()"
+snippet divergence "divergence" w
+nabla dot.op ${1:bold(F)} $0
+endsnippet
+
+context "typst_math()"
+snippet curl "curl" w
+nabla times ${1:bold(F)} $0
+endsnippet
+
+context "typst_math()"
+snippet laplacian "Laplacian" w
+nabla^2 ${1:f} $0
+endsnippet
+
+context "typst_math()"
+snippet bigO "big-O" w
+O(${1:n})$0
+endsnippet
+
+context "typst_math()"
+snippet seq "sequence indexed by the naturals" w
+(${1:a}_(${2:n}))_($2 in NN)$0
+endsnippet
+
+context "typst_math()"
+snippet epsdelta "epsilon-delta quantifiers" w
+forall epsilon.alt > 0 thick exists delta > 0 : $0
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Linear algebra
+# ----------------------------------------------------------------------------
+
+context "typst_math()"
+snippet vecarrow "vector with arrow" w
+arrow(${1:v})$0
+endsnippet
+
+context "typst_math()"
+snippet vecbold "vector in bold" w
+bold(${1:v})$0
+endsnippet
+
+context "typst_math()"
+snippet colvec "column vector" w
+vec(${1:a}, ${2:b}, ${3:c})$0
+endsnippet
+
+context "typst_math()"
+snippet matrix2 "2x2 matrix" w
+mat(${1:a}, ${2:b}; ${3:c}, ${4:d})$0
+endsnippet
+
+context "typst_math()"
+snippet matrix3 "3x3 matrix" w
+mat(${1:a}, ${2:b}, ${3:c}; ${4:d}, ${5:e}, ${6:f}; ${7:g}, ${8:h}, ${9:i})$0
+endsnippet
+
+context "typst_math()"
+snippet detmat "determinant bars around a 2x2 matrix" w
+mat(delim: "|", ${1:a}, ${2:b}; ${3:c}, ${4:d})$0
+endsnippet
+
+context "typst_math()"
+snippet trace "trace" w
+op("tr")(${1:A})$0
+endsnippet
+
+context "typst_math()"
+snippet rank "rank" w
+op("rank")(${1:A})$0
+endsnippet
+
+context "typst_math()"
+snippet image "image of a map" w
+op("im")(${1:A})$0
+endsnippet
+
+context "typst_math()"
+snippet span "span" w
+op("span")(${1:v_1}, ${2:v_2})$0
+endsnippet
+
+context "typst_math()"
+snippet inner "inner product" w
+chevron.l ${1:u}, ${2:v} chevron.r $0
+endsnippet
+
+context "typst_math()"
+snippet cross "cross product" w
+${1:a} times ${2:b} $0
+endsnippet
+
+context "typst_math()"
+snippet identity "identity matrix" w
+I_(${1:n})$0
+endsnippet
+
+context "typst_math()"
+snippet eigen "eigenvalue equation" w
+${1:A} bold(v) = lambda bold(v)$0
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Statistics and probability
+# ----------------------------------------------------------------------------
+
+context "typst_math()"
+snippet mean "sample mean (bar)" w
+overline(${1:x})$0
+endsnippet
+
+context "typst_math()"
+snippet variance "variance" w
+op("Var")(${1:X})$0
+endsnippet
+
+context "typst_math()"
+snippet covariance "covariance" w
+op("Cov")(${1:X}, ${2:Y})$0
+endsnippet
+
+context "typst_math()"
+snippet expect "expected value" w
+bb(E)[${1:X}]$0
+endsnippet
+
+context "typst_math()"
+snippet Prob "probability" w
+bb(P)(${1:A})$0
+endsnippet
+
+context "typst_math()"
+snippet given "conditional probability" w
+bb(P)(${1:A} | ${2:B})$0
+endsnippet
+
+context "typst_math()"
+snippet normaldist "normal distribution" w
+${1:X} tilde.op cal(N)(${2:mu}, ${3:sigma^2})$0
+endsnippet
+
+context "typst_math()"
+snippet stddev "standard deviation (σ)" w
+sigma 
+endsnippet
+
+context "typst_math()"
+snippet estimator "estimator with hat" w
+hat(${1:theta})$0
+endsnippet
+
+context "typst_math()"
+snippet chisq "chi-squared (χ²)" w
+chi^2 
+endsnippet
+
+context "typst_math()"
+snippet zscore "z-score" w
+z = (${1:x} - mu)/sigma $0
+endsnippet
+
+context "typst_math()"
+snippet confint "confidence interval for the mean" w
+overline(x) plus.minus z_(alpha/2) sigma/sqrt(n)$0
+endsnippet
+
+# ----------------------------------------------------------------------------
+# Physics
+# ----------------------------------------------------------------------------
+
+context "typst_math()"
+snippet vecF "force vector" w
+arrow(F)$0
+endsnippet
+
+context "typst_math()"
+snippet ddot "second time derivative (double dot)" w
+dot.double(${1:x})$0
+endsnippet
+
+context "typst_math()"
+snippet hbar "reduced Planck constant (ħ)" w
+planck 
+endsnippet
+
+context "typst_math()"
+snippet kB "Boltzmann constant" w
+k_"B"$0
+endsnippet
+
+context "typst_math()"
+snippet deltaT "change in temperature" w
+Delta T $0
+endsnippet
+
+context "typst_math()"
+snippet deltaU "change in internal energy" w
+Delta U $0
+endsnippet
+
+context "typst_math()"
+snippet dQ "heat increment" w
+delta Q $0
+endsnippet
+
+context "typst_math()"
+snippet dW "work increment" w
+delta W $0
+endsnippet
+
+context "typst_math()"
+snippet newton2 "Newton's second law" w
+arrow(F) = m arrow(a)$0
+endsnippet
+
+context "typst_math()"
+snippet kinematic "velocity with constant acceleration" w
+v = v_0 + a t $0
+endsnippet
+
+context "typst_math()"
+snippet workint "work as a line integral" w
+W = integral arrow(F) dot.op dif arrow(r)$0
+endsnippet
+
+context "typst_math()"
+snippet kinetic "kinetic energy" w
+E_k = 1/2 m v^2 $0
+endsnippet
+
+context "typst_math()"
+snippet potential "gravitational potential energy" w
+E_p = m g h $0
+endsnippet
+
+context "typst_math()"
+snippet heatq "heat from heat capacity" w
+Q = m c Delta T $0
+endsnippet
+
+context "typst_math()"
+snippet firstlaw "first law of thermodynamics" w
+Delta U = Q - W $0
+endsnippet
+
+context "typst_math()"
+snippet idealgas "ideal gas law" w
+p V = n R T $0
+endsnippet
+
+context "typst_math()"
+snippet entropy "entropy change" w
+Delta S = integral (delta Q)/T $0
+endsnippet
+
+context "typst_math()"
+snippet conserve "conservation of energy" w
+E_i = E_f $0
+endsnippet
+
+context "typst_math()"
+snippet momentum "momentum" w
+arrow(p) = m arrow(v)$0
+endsnippet

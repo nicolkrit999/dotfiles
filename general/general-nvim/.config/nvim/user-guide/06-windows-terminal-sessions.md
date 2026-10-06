@@ -62,11 +62,11 @@ One above the other: the same, but `:sbuffer <name or number>` without `vert`. T
 
 Example with four open buffers (`:ls` shows `1 a.txt`, `2 b.txt`, `3 c.txt`, `4 d.txt`): to see `a.txt` and `d.txt` side by side, run `:b 1` then `:vert sbuffer 4`, or by name `:b a` then `:vert sbuffer d`. No need to go through 2 and 3.
 
-Tested (headless Neovim with this config, 4 buffers open): `:vert sbuffer <name>` with another buffer in the current window gave two windows side by side (current buffer left, requested buffer right, cursor in the new right window); `:sbuffer <name>` gave a stacked layout (new window below, cursor in it); `:vs <file>` gave side by side; `:sbuffer 99` (no such buffer) gives `E86: Buffer 99 does not exist`.
+Headless Neovim with this config, 4 buffers open: `:vert sbuffer <name>` with another buffer in the current window gave two windows side by side (current buffer left, requested buffer right, cursor in the new right window); `:sbuffer <name>` gave a stacked layout (new window below, cursor in it); `:vs <file>` gave side by side; `:sbuffer 99` (no such buffer) gives `E86: Buffer 99 does not exist`.
 
 Gotchas:
 
-- If the current window already shows the buffer you name, you get the same buffer twice (tested for the horizontal case).
+- If the current window already shows the buffer you name, you get the same buffer twice (for the horizontal case).
 - Closing one of the windows (`:q`, or `<Space>q`, which also saves) does not close the buffer: it stays in `:ls`. Only `\d` closes the buffer (see "Buffer management").
 
 ## Navigating between windows
@@ -89,7 +89,7 @@ Gotchas:
 +-----------+
 ```
 
-C spans the full width, so `<Ctrl-w>k` from C goes to the window that lies above the cursor's screen column: A while the cursor is in the left half, B in the right half (tested with the cursor at columns 0 to 39 and 45 to 70 of an 80 column screen). `<Ctrl-w>j` from A or B always lands in C.
+C spans the full width, so `<Ctrl-w>k` from C goes to the window that lies above the cursor's screen column: A while the cursor is in the left half, B in the right half (with the cursor at columns 0 to 39 and 45 to 70 of an 80 column screen). `<Ctrl-w>j` from A or B always lands in C.
 
 ## Resizing windows
 
@@ -124,7 +124,7 @@ Example (two windows, one above the other, the cursor in the upper one): `<Ctrl-
 | `<Ctrl-w>x` | **Swap** current window with the next one |
 | `<Ctrl-w>T` | Move current window to a **new tab** |
 
-Example, starting with A and B side by side and C below them, the cursor in A (tested):
+Example, starting with A and B side by side and C below them, the cursor in A:
 
 ```
 start                 <Ctrl-w>L on A          <Ctrl-w>J on A          <Ctrl-w>x on A
@@ -165,9 +165,9 @@ The tabs are sorted by buffer number, which is the order in which the files were
 | `:BufferLineMovePrev` | Move the current tab one place to the left |
 | `:BufferLineMoveNext` | Move the current tab one place to the right |
 
-Example (tested): you opened `hello.java` and then `calculator.java`, so the tabs read `hello.java | calculator.java` and `calculator.java` is the current buffer. `:BufferLineMovePrev` makes them `calculator.java | hello.java`; `:BufferLineMoveNext` puts them back. The new order stays while you switch between the buffers (tested within one Neovim session).
+Example: you opened `hello.java` and then `calculator.java`, so the tabs read `hello.java | calculator.java` and `calculator.java` is the current buffer. `:BufferLineMovePrev` makes them `calculator.java | hello.java`; `:BufferLineMoveNext` puts them back. The new order stays while you switch between the buffers (within one Neovim session).
 
-This only changes the order of the tabs. If the two files are shown side by side in two split windows and you want to swap which one is on the left, that is a window operation: `<Ctrl-w>x` (see "[Moving windows around](#moving-windows-around)" above); tested: with `hello.java` on the left and `calculator.java` on the right, `<Ctrl-w>x` gives `calculator.java | hello.java`.
+This only changes the order of the tabs. If the two files are shown side by side in two split windows and you want to swap which one is on the left, that is a window operation: `<Ctrl-w>x` (see "[Moving windows around](#moving-windows-around)" above); with `hello.java` on the left and `calculator.java` on the right, `<Ctrl-w>x` gives `calculator.java | hello.java`.
 
 ## Closing windows
 
@@ -187,7 +187,7 @@ This only changes the order of the tabs. If the two files are shown side by side
 | `gb` | Go to the **next** buffer; `{N}gb` (e.g. `3gb`) goes to buffer number N (an invalid number warns "Invalid bufnr") |
 | `gB` | Go to the **previous** buffer. Do not give it a count: `{N}gB` does nothing (an invalid number warns "Invalid bufnr"); use `{N}gb` to jump to buffer N |
 | `<Space>bp` | **Pick** a buffer: each open buffer shows a letter, press it to switch |
-| `\d` | Close/delete the current buffer (window stays open, shows previous buffer). On the last buffer an empty buffer is left. A named file with changes is saved first by auto-save (BufLeave); a buffer auto-save does not save (unnamed, read-only, Typst/LaTeX) is not deleted: you land in the previous buffer and the unsaved one stays loaded. On the only, unnamed buffer with typed text, Vim's confirm dialog "Save changes?" appears (the unsaved buffer is shown for a moment while it asks); your answer decides whether it is closed (tested in a real terminal). |
+| `\d` | Close/delete the current buffer (window stays open, shows previous buffer). On the last buffer an empty buffer is left. A named file with changes is saved first by auto-save (BufLeave); a buffer auto-save does not save (unnamed, read-only, Typst/LaTeX) is not deleted: you land in the previous buffer and the unsaved one stays loaded. On the only, unnamed buffer with typed text, Vim's confirm dialog "Save changes?" appears (the unsaved buffer is shown for a moment while it asks); your answer decides whether it is closed (in a real terminal). |
 | `\D` | Close all other buffers, but **keep** buffers with unsaved changes and terminals that are still running (one message "kept N buffer(s) (unsaved or running terminal)") |
 | `<Ctrl-^>` | Switch to the **alternate buffer**: the buffer you were in before this one. Press it again to come back, so you can flip between two files. It is the same as `:b#` or `:e #`. On a US keyboard `^` is Shift-6, so the keys are Ctrl-Shift-6; many terminals cannot send that, which is why Neovide gets the plain `<Ctrl-6>` as well (see [section 77](10-various.md#77-neovide-graphical-neovim)) |
 | `:ls` or `:buffers` | List all open buffers; the flag columns are explained below ("Reading the `:ls` flags") |
@@ -196,16 +196,16 @@ This only changes the order of the tabs. If the two files are shown side by side
 
 ### Reading the `:ls` flags
 
-Each `:ls` line shows the buffer number, then up to four flag columns, then the name. Example (tested, headless Neovim): ` 1 #a + "a.txt"`, ` 2  h   "b.txt"`, ` 3 %aF "term://..."`.
+Each `:ls` line shows the buffer number, then up to four flag columns, then the name. Example (headless Neovim): ` 1 #a + "a.txt"`, ` 2  h   "b.txt"`, ` 3 %aF "term://..."`.
 
 | Flag | Meaning | Status |
 | --- | --- | --- |
-| `%` | The buffer in the current window (tested: line 3 above) | tested |
-| `#` | The alternate buffer, the one `<Ctrl-^>` flips to (tested: line 1) | tested |
-| `a` | Active: loaded and visible in a window (tested) | tested |
-| `h` | Hidden: loaded but shown in no window (tested: line 2) | tested |
-| `+` | Modified, unsaved changes (tested: line 1) | tested |
-| `F` | Terminal buffer whose job has finished (tested: a terminal showing `Process exited`) | tested |
+| `%` | The buffer in the current window (line 3 above) | tested |
+| `#` | The alternate buffer, the one `<Ctrl-^>` flips to (line 1) | tested |
+| `a` | Active: loaded and visible in a window | tested |
+| `h` | Hidden: loaded but shown in no window (line 2) | tested |
+| `+` | Modified, unsaved changes (line 1) | tested |
+| `F` | Terminal buffer whose job has finished (a terminal showing `Process exited`) | tested |
 | `u` | Unlisted buffer; only shown with `:ls!` | from `:help :ls`, not tested |
 | `R` | Terminal buffer with a running job | from `:help :ls`, not tested |
 | `?` | Terminal buffer without a job (`:terminal NONE`) | from `:help :ls`, not tested |
@@ -249,7 +249,7 @@ Some plugins open floating windows (diagnostics, hover docs, etc.):
 | `:vs \| term` | Open terminal in a vertical split to the right |
 | `<Space>rr` | Run code (opens a terminal in a vertical split on the **left** of the code window) |
 
-The terminal automatically starts in insert mode (you can type immediately) and hides line numbers. (tested in a real terminal: both start in insert mode).
+The terminal automatically starts in insert mode (you can type immediately) and hides line numbers. (in a real terminal: both start in insert mode).
 
 ## Navigating in and out of terminal
 
@@ -267,8 +267,8 @@ The terminal automatically starts in insert mode (you can type immediately) and 
 | Method | Description |
 | --- | --- |
 | `<Space>q` | While the terminal window is focused (press `<Esc>` first), close the window. A program that is still running keeps running in a hidden buffer (`\D` keeps such buffers) |
-| Type `exit` | In an interactive shell terminal (`:term`), `exit` ends the shell and the window closes. A `<Space>rr` run does NOT close its window when the program ends: the output stays (tested: it ends with the line `[Process exited 0]`) until you close it with `<Space>q` |
-| `\d` | Delete the terminal buffer If the program is still running, Vim asks `Close "term://..."? [Y]es, (N)o, (C)ancel` first (tested in a real terminal). |
+| Type `exit` | In an interactive shell terminal (`:term`), `exit` ends the shell and the window closes. A `<Space>rr` run does NOT close its window when the program ends: the output stays (it ends with the line `[Process exited 0]`) until you close it with `<Space>q` |
+| `\d` | Delete the terminal buffer If the program is still running, Vim asks `Close "term://..."? [Y]es, (N)o, (C)ancel` first (in a real terminal). |
 
 ---
 
@@ -301,7 +301,7 @@ Plugin: **instant.nvim**. Real-time collaborative editing.
 - The plugin loads on its first `:Instant...` command. Host and port are arguments of `:InstantStartServer` / `:InstantStartSession` / `:InstantJoinSession` (e.g. `:InstantStartSession 127.0.0.1 8081`); the built-in server defaults to port 8080.
 - Uses your system username automatically
 
-Example (tested with two Neovim instances on one machine): the host runs `:InstantStartServer 127.0.0.1 8081`, then `:InstantStartSession 127.0.0.1 8081`; the guest runs `:InstantJoinSession 127.0.0.1 8081` and sees "Connected!" (the host sees "Peer connected! 2 connected."). The host's open buffers appear in the guest's buffer list (`:ls`; the buffer numbers are the guest's own). What either side types in a shared buffer shows up in the other one at once (tested in both directions), together with the other person's name at their cursor line.
+Example (with two Neovim instances on one machine): the host runs `:InstantStartServer 127.0.0.1 8081`, then `:InstantStartSession 127.0.0.1 8081`; the guest runs `:InstantJoinSession 127.0.0.1 8081` and sees "Connected!" (the host sees "Peer connected! 2 connected."). The host's open buffers appear in the guest's buffer list (`:ls`; the buffer numbers are the guest's own). What either side types in a shared buffer shows up in the other one at once (in both directions), together with the other person's name at their cursor line.
 
 ---
 
@@ -316,7 +316,7 @@ Example (tested with two Neovim instances on one machine): the host runs `:Insta
 | Y | Right | Encoding (only when not UTF-8) and file format (only when not unix), both in red; `[CN]` input-method badge on macOS |
 | Z | Rightmost | Progress through the file (%). The line:column position is shown only in inactive windows |
 
-Example (tested in a git repo, the cursor in the first line of a Lua file with one added, one changed and one removed line; the Nerd Font icons are left out, the real line has a branch icon before `main`, a diagnostic icon before the count `5` and a gear before `lua_ls`):
+Example (in a git repo, the cursor in the first line of a Lua file with one added, one changed and one removed line; the Nerd Font icons are left out, the real line has a branch icon before `main`, a diagnostic icon before the count `5` and a gear before `lua_ls`):
 
 ```
  a.lua   main \ +1 ~1 -1 \ <icon> 5                      lua_ls (+1)  Top
@@ -426,7 +426,7 @@ The column at the left of every window is drawn by statuscol.nvim as one column 
 | Number | The line number; `number` and `relativenumber` are both on (see "[Automatic behaviors](10-various.md#42-automatic-behaviors)" for which window gets relative numbers). `relculright` is off, so the number of the cursor line is not right-aligned |
 | Folds | The fold markers; fold levels deeper than 3 show a blank instead |
 
-Example (tested in a git repository, the cursor in line 1 of a file with no diagnostics; compared with the last commit, line 3 was changed, one line below it was deleted and two lines were added at the end; the cursor line shows its absolute number, the other lines their distance from the cursor):
+Example (in a git repository, the cursor in line 1 of a file with no diagnostics; compared with the last commit, line 3 was changed, one line below it was deleted and two lines were added at the end; the cursor line shows its absolute number, the other lines their distance from the cursor):
 
 ```
  sign number text
@@ -481,7 +481,7 @@ The dashboard opens for a bare `nvim` (no file, no directory, no stdin) or with 
 
 The other items show their normal key: Find File `<Space>ff`, Recently opened files `<Space>fr`, Project grep `<Space>fg`, Open tree view `<Space>s`, Search help `<Space>fh`, Claude Code `<Space>cc`, Open Nvim config `<Space>ev`. With nothing saved, `r` / `L` show one warning ("no saved session for this folder" / "no saved session"). Sessions are never restored automatically.
 
-What a bare `nvim` shows (tested in a terminal; the header picture is random, here a penguin, and the Nerd Font icons before each item are left out; the real list continues below "Open tree view"):
+What a bare `nvim` shows (in a terminal; the header picture is random, here a penguin, and the Nerd Font icons before each item are left out; the real list continues below "Open tree view"):
 
 ```
                   .---.
