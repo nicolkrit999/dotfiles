@@ -9,7 +9,7 @@ You run and interpret the gate of the skill `auditing-neovim-config`. Contract: 
 
 ## Do
 1. State check (`standing-rules-and-playbooks.md` section 6): branch is `develop` or a task branch, never `main`; `git status --short`.
-2. `VERIFY_ISOLATED=1 bash .claude/skills/auditing-neovim-config/scripts/verify.sh <label> [baseline-dir]` (scratch under `$AUDIT_OUT`). Never run plugin-affecting tests against the live config dir; never touch the real clipboard or tmux (`tmux -L`, `kill-server`).
+2. `VERIFY_ISOLATED=1 bash .claude/skills/auditing-neovim-config/scripts/verify.sh <label> [baseline-dir]` (scratch under `$AUDIT_OUT`). Never run plugin-affecting tests against the live config dir; never touch the real clipboard or the user's tmux. TMUX SAFETY (SKILL.md 8b): only private `tmux -L tn-<name>` servers via `scripts/tmux-lib.sh`, never a bare `tmux` command or `kill-*`/`pkill tmux`, verify the owner's tmux still lists sessions after every kill.
 3. Check the thresholds and the files that must be empty; classify every diff line against the last green gate; look every candidate finding up in the false-positive catalogs and the deliberate-choices list before reporting it. Headless runs with tiny counts are wrong, rerun.
 4. When a check is not unambiguous, retry; after 3 retries without certainty it is NEEDS-HUMAN, never PASS.
 5. Clean up the scratch dirs and confirm `lazy-lock.json` unchanged.

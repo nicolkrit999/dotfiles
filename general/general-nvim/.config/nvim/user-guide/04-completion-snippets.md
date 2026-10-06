@@ -35,7 +35,7 @@ Plugin: UltiSnips + vim-snippets. Custom snippets in `my_snippets/` directory.
 
 Available snippet files: `all`, `cpp`, `java`, `markdown`, `nix`, `python`, `snippets`, `tex`, `vim`
 
-Example: in a Java buffer type `jfor`, press `<Ctrl-j>`: it expands to a loop with the first placeholder (`i`) selected:
+Example: in a Java buffer type `for`, press `<Ctrl-j>`: it expands to a loop with the first placeholder (`i`) selected:
 
 ```
 for (int i = start; i < end; i++) {
@@ -53,124 +53,124 @@ The tables below are the quick reference. For each snippet's expanded code, the 
 
 Conventions (the same in every Java snippet):
 
-- Triggers are camelCase and case-sensitive (`jPromptRead`, not `jpromptread`): pick them from the completion menu instead of typing them whole. Type `j` and read the list.
+- Triggers are camelCase and case-sensitive (`promptRead`, not `jpromptread`): pick them from the completion menu instead of typing them whole. Type `j` and read the list.
 - Placeholders are generic English words naming the kind of thing to fill in (`type`, `name`, `condition`, `ExceptionType`), never hardcoded values.
-- The Scanner variable is always named `input`. `fdijscanner` creates it; the other input snippets use an existing `input`.
+- The Scanner variable is always named `input`. `fdiScanner` creates it; the other input snippets use an existing `input`.
 - The one-line description is shown by nvim-cmp above the snippet body in the completion menu (scroll it with `<Ctrl-d>` / `<Ctrl-f>`); expand with `<Ctrl-j>`, jump between placeholders with `<Ctrl-j>` / `<Ctrl-k>`.
-- `fdijscanner` uses the file name as the class name by default.
+- `fdiScanner` uses the file name as the class name by default.
 - When a snippet needs an import, its description names the exact import(s). The snippets do not add imports themselves, so check that the import line exists at the top of the file.
-- Counterpart snippets name each other in their description (`jInterface` / `jImplements`, `jEquals` / `jHashCode`, `jComparable` / `jComparator`, `jtwrScanner` / `jtwrPrintWriter`, `jtwrObjectOut` / `jtwrObjectIn`, `jMinArray` / `jMaxArray`).
+- Counterpart snippets name each other in their description (`interface` / `implements`, `equals` / `hashCode`, `comparable` / `comparator`, `twrScanner` / `twrPrintWriter`, `twrObjectOut` / `twrObjectIn`, `minArray` / `maxArray`).
 
 **Program skeleton and input**
 
 | Trigger | Expands to / use it when |
 | --- | --- |
-| `fdijscanner` | Program skeleton with a Scanner named input (course package) |
-| `jPromptRead` | Print a prompt and read a value (Type: Int, Double, Boolean, Line; import java.util.Scanner) |
-| `jReadValidated` | Ask again until the input has the right type (Type: Int, Double, Boolean; import java.util.Scanner) |
-| `jReadNumberThenLine` | Read a number and then a line, consuming the leftover newline (import java.util.Scanner) |
-| `jReadUntilInt` | Loop reading numbers from input until a sentinel value (uses an existing Scanner named input; import java.util.Scanner) |
-| `jReadUntilString` | Loop reading Strings from input until a sentinel text (uses an existing Scanner named input; import java.util.Scanner) |
-| `jRandomInt` | Random int between a minimum and minimum + range - 1 |
+| `fdiScanner` | Program skeleton with a Scanner named input (course package) |
+| `promptRead` | Print a prompt and read a value (Type: Int, Double, Boolean, Line; import java.util.Scanner) |
+| `readValidated` | Ask again until the input has the right type (Type: Int, Double, Boolean; import java.util.Scanner) |
+| `readNumberThenLine` | Read a number and then a line, consuming the leftover newline (import java.util.Scanner) |
+| `readUntilInt` | Loop reading numbers from input until a sentinel value (uses an existing Scanner named input; import java.util.Scanner) |
+| `readUntilString` | Loop reading Strings from input until a sentinel text (uses an existing Scanner named input; import java.util.Scanner) |
+| `randomInt` | Random int between a minimum and minimum + range - 1 |
 
 **Arrays, matrices and collections**
 
 | Trigger | Expands to / use it when |
 | --- | --- |
-| `jArrayNew` | Array created with a given size |
-| `jArrayLiteral` | Array created from literal values |
-| `jMinArray` | Find the minimum of an array (jMaxArray for the maximum) |
-| `jMaxArray` | Find the maximum of an array (jMinArray for the minimum) |
-| `jforMatrix` | Nested indexed for loops over a matrix |
-| `jforeachMatrix` | Nested foreach loops over a matrix |
-| `jArrayAdd` | Add an element to a fixed array with a counter (returns false when null or full) |
-| `jArrayRemove` | Remove an element from a fixed array with a counter (object arrays; returns false when not found) |
-| `jHashMap` | HashMap declaration (import java.util.HashMap) |
-| `jTreeMap` | TreeMap (sorted by key) declaration (import java.util.TreeMap) |
-| `jArrayList` | ArrayList declaration (import java.util.List, java.util.ArrayList) |
-| `jHashSet` | HashSet declaration (import java.util.Set, java.util.HashSet) |
-| `jforMapEntry` | Iterate over the entries of a map (import java.util.Map) |
+| `arrayNew` | Array created with a given size |
+| `arrayLiteral` | Array created from literal values |
+| `minArray` | Find the minimum of an array (maxArray for the maximum) |
+| `maxArray` | Find the maximum of an array (minArray for the minimum) |
+| `forMatrix` | Nested indexed for loops over a matrix |
+| `foreachMatrix` | Nested foreach loops over a matrix |
+| `arrayAdd` | Add an element to a fixed array with a counter (returns false when null or full) |
+| `arrayRemove` | Remove an element from a fixed array with a counter (object arrays; returns false when not found) |
+| `hashMap` | HashMap declaration (import java.util.HashMap) |
+| `treeMap` | TreeMap (sorted by key) declaration (import java.util.TreeMap) |
+| `arrayList` | ArrayList declaration (import java.util.List, java.util.ArrayList) |
+| `hashSet` | HashSet declaration (import java.util.Set, java.util.HashSet) |
+| `forMapEntry` | Iterate over the entries of a map (import java.util.Map) |
 
 **Control flow**
 
 | Trigger | Expands to / use it when |
 | --- | --- |
-| `jfor` | Indexed for loop |
-| `jforeach` | Enhanced for loop |
-| `jwhile` | While loop |
-| `jdowhile` | Do-while loop |
-| `jif` | If statement |
-| `jifelse` | If-else statement |
-| `jifelif` | If-else if-else statement |
-| `jtern` | Ternary conditional assigned to a variable |
-| `jswitchtraditional` | Traditional switch statement with break |
-| `jswitchmulti` | Traditional switch with two labels per case |
-| `jswitcharrow` | Switch statement with arrow syntax |
-| `jswitcharrowmulti` | Switch with arrow syntax and two labels per case |
-| `jswitchyield` | Switch expression assigned to a variable |
-| `jswitchyieldblock` | Switch expression with a block and yield |
+| `for` | Indexed for loop |
+| `foreach` | Enhanced for loop |
+| `while` | While loop |
+| `dowhile` | Do-while loop |
+| `if` | If statement |
+| `ifelse` | If-else statement |
+| `ifelif` | If-else if-else statement |
+| `tern` | Ternary conditional assigned to a variable |
+| `switchtraditional` | Traditional switch statement with break |
+| `switchmulti` | Traditional switch with two labels per case |
+| `switcharrow` | Switch statement with arrow syntax |
+| `switcharrowmulti` | Switch with arrow syntax and two labels per case |
+| `switchyield` | Switch expression assigned to a variable |
+| `switchyieldblock` | Switch expression with a block and yield |
 
 **Methods**
 
 | Trigger | Expands to / use it when |
 | --- | --- |
-| `jStaticMethod` | Private static method |
-| `jRecursive` | Recursive method with a base case |
+| `staticMethod` | Private static method |
+| `recursive` | Recursive method with a base case |
 
 **Classes**
 
 | Trigger | Expands to / use it when |
 | --- | --- |
-| `jClass` | Package-private class with 3 fields and a constructor (delete the extra fields) |
-| `jPublicClass` | Public class with 3 private final fields and a constructor (delete the extra fields) |
-| `jSubclass` | Subclass with a constructor calling super |
-| `jAbstractClass` | Abstract class with one abstract method |
-| `jInterface` | Interface with one method |
-| `jImplements` | Class implementing an interface (the counterpart of jInterface) |
-| `jToString` | toString with two fields |
-| `jToStringSuper` | toString extending the superclass toString (for subclasses) |
-| `jEquals` | equals using getClass (override hashCode too: jHashCode) |
-| `jHashCode` | hashCode with Objects.hash (pair of jEquals; import java.util.Objects) |
-| `jDefaultIfBlank` | Constructor field: use a default when a String is null or blank |
-| `jDefaultIfBelowMin` | Constructor field: use a default when a number is below a minimum |
-| `jRecord` | Record with two components |
-| `jRecordCompact` | Record with a compact constructor for validation |
-| `jEnum` | Plain enum with three constants |
-| `jEnumFields` | Enum whose constants carry a value |
-| `jInstanceOf` | Type test with a binding variable (pattern matching) |
-| `jComparable` | compareTo method for natural ordering (add implements Comparable by hand) |
-| `jComparator` | Separate Comparator class (the counterpart of jComparable; import java.util.Comparator) |
+| `class` | Package-private class with 3 fields and a constructor (delete the extra fields) |
+| `publicClass` | Public class with 3 private final fields and a constructor (delete the extra fields) |
+| `subclass` | Subclass with a constructor calling super |
+| `abstractClass` | Abstract class with one abstract method |
+| `interface` | Interface with one method |
+| `implements` | Class implementing an interface (the counterpart of interface) |
+| `toString` | toString with two fields |
+| `toStringSuper` | toString extending the superclass toString (for subclasses) |
+| `equals` | equals using getClass (override hashCode too: hashCode) |
+| `hashCode` | hashCode with Objects.hash (pair of equals; import java.util.Objects) |
+| `defaultIfBlank` | Constructor field: use a default when a String is null or blank |
+| `defaultIfBelowMin` | Constructor field: use a default when a number is below a minimum |
+| `record` | Record with two components |
+| `recordCompact` | Record with a compact constructor for validation |
+| `enum` | Plain enum with three constants |
+| `enumFields` | Enum whose constants carry a value |
+| `instanceOf` | Type test with a binding variable (pattern matching) |
+| `comparable` | compareTo method for natural ordering (add implements Comparable by hand) |
+| `comparator` | Separate Comparator class (the counterpart of comparable; import java.util.Comparator) |
 
 **Exceptions**
 
 | Trigger | Expands to / use it when |
 | --- | --- |
-| `jException` | Custom checked exception with a fixed message |
-| `jExceptionData` | Custom checked exception carrying a value |
-| `jThrowIf` | Guard that throws (ExceptionType: IllegalArgumentException, NullPointerException, ...) |
-| `jtrycatch` | Try-catch block |
-| `jtryfinally` | Try-catch-finally block |
-| `jtrywith` | Generic try-with-resources block |
+| `exception` | Custom checked exception with a fixed message |
+| `exceptionData` | Custom checked exception carrying a value |
+| `throwIf` | Guard that throws (ExceptionType: IllegalArgumentException, NullPointerException, ...) |
+| `trycatch` | Try-catch block |
+| `tryfinally` | Try-catch-finally block |
+| `trywith` | Generic try-with-resources block |
 
 **File I/O and serialization**
 
 | Trigger | Expands to / use it when |
 | --- | --- |
-| `jtwrScanner` | Read a text file line by line with a Scanner (import java.util.Scanner, java.io.File, java.io.FileNotFoundException) |
-| `jtwrPrintWriter` | Write to a text file with a PrintWriter (the counterpart of jtwrScanner; import java.io.PrintWriter, java.io.FileOutputStream, java.io.FileNotFoundException) |
-| `jtwrBufferedReader` | Read a file with BufferedReader and readLine in a loop (import java.io.BufferedReader, java.io.FileReader, java.io.IOException) |
-| `jtwrObjectOut` | Serialize an object to a file (import java.io.ObjectOutputStream, java.io.FileOutputStream, java.io.IOException) |
-| `jtwrObjectIn` | Read a serialized object from a file (the counterpart of jtwrObjectOut; import java.io.ObjectInputStream, java.io.FileInputStream, java.io.IOException) |
-| `jSerialUID` | serialVersionUID field for a Serializable class (class must implement java.io.Serializable) |
+| `twrScanner` | Read a text file line by line with a Scanner (import java.util.Scanner, java.io.File, java.io.FileNotFoundException) |
+| `twrPrintWriter` | Write to a text file with a PrintWriter (the counterpart of twrScanner; import java.io.PrintWriter, java.io.FileOutputStream, java.io.FileNotFoundException) |
+| `twrBufferedReader` | Read a file with BufferedReader and readLine in a loop (import java.io.BufferedReader, java.io.FileReader, java.io.IOException) |
+| `twrObjectOut` | Serialize an object to a file (import java.io.ObjectOutputStream, java.io.FileOutputStream, java.io.IOException) |
+| `twrObjectIn` | Read a serialized object from a file (the counterpart of twrObjectOut; import java.io.ObjectInputStream, java.io.FileInputStream, java.io.IOException) |
+| `serialUID` | serialVersionUID field for a Serializable class (class must implement java.io.Serializable) |
 
 **JavaFX**
 
 | Trigger | Expands to / use it when |
 | --- | --- |
-| `jfxApp` | JavaFX application skeleton (import javafx.application.Application, javafx.stage.Stage, javafx.scene.Scene, javafx.scene.layout.BorderPane) |
-| `jfxProperty` | Model field with the JavaFX property trio (create the property in the constructor; import javafx.beans.property.StringProperty (or the property type used)) |
-| `jfxAlert` | JavaFX alert dialog (AlertType: INFORMATION, WARNING, ERROR, CONFIRMATION; import javafx.scene.control.Alert, javafx.scene.control.Alert.AlertType) |
-| `jfxOnAction` | JavaFX button event handler |
+| `fxApp` | JavaFX application skeleton (import javafx.application.Application, javafx.stage.Stage, javafx.scene.Scene, javafx.scene.layout.BorderPane) |
+| `fxProperty` | Model field with the JavaFX property trio (create the property in the constructor; import javafx.beans.property.StringProperty (or the property type used)) |
+| `fxAlert` | JavaFX alert dialog (AlertType: INFORMATION, WARNING, ERROR, CONFIRMATION; import javafx.scene.control.Alert, javafx.scene.control.Alert.AlertType) |
+| `fxOnAction` | JavaFX button event handler |
 
 ### Other snippets
 
@@ -232,7 +232,7 @@ if __name__ == "__main__":
 When you type in insert mode, **nvim-cmp** queries multiple sources and shows a popup menu with suggestions:
 
 1. **LSP** (highest priority): Function names, variables, methods, types from the language server
-2. **UltiSnips**: Snippet triggers (e.g., type `jfor` in a Java file)
+2. **UltiSnips**: Snippet triggers (e.g., type `for` in a Java file)
 3. **Path**: File paths when you start typing a path
 4. **Buffer** (lowest priority, min 2 chars): Words already in the current buffer
 
@@ -256,7 +256,7 @@ For LaTeX files the sources are **omni** (BibTeX/citations), the texlab LSP (onl
 | `<Ctrl-d>` | Scroll docs up | Delete the character right of the cursor |
 | `<Ctrl-f>` | Scroll docs down | (nothing) |
 
-Example (tested in a Python buffer with the pyright language server): line 1 is `pri_value = 1`, and on line 2 you type `prin`. The menu opens by itself, with the language server entries first and the snippets after them:
+Example (in a Python buffer with the pyright language server): line 1 is `pri_value = 1`, and on line 2 you type `prin`. The menu opens by itself, with the language server entries first and the snippets after them:
 
 ```
 prin|
@@ -269,7 +269,7 @@ prin|
 
 1. `<Tab>` selects the first entry: the line now reads `print`.
 2. `<CR>` confirms it, and no newline is inserted.
-3. If you do NOT pick an entry (no `<Tab>`) and press `<CR>`, you get a normal newline and the menu closes (it may open again on the new line when something matches there), so `<CR>` never inserts a completion you did not choose (tested: `prin` then `<CR>` left `prin` and started line 3).
+3. If you do NOT pick an entry (no `<Tab>`) and press `<CR>`, you get a normal newline and the menu closes (it may open again on the new line when something matches there), so `<CR>` never inserts a completion you did not choose (`prin` then `<CR>` left `prin` and started line 3).
 
 ## Visual indicators
 
@@ -313,7 +313,7 @@ Besides the personal files in `my_snippets/`, UltiSnips also loads the `vim-snip
 
 ## How to use snippets
 
-1. In insert mode, type a trigger word (e.g., `jfor` in a Java file)
+1. In insert mode, type a trigger word (e.g., `for` in a Java file)
 2. The trigger appears in the completion menu as a snippet
 3. Press `<Ctrl-j>` to expand it
 4. The snippet expands with **placeholders** (highlighted fields you need to fill in)
@@ -321,10 +321,10 @@ Besides the personal files in `my_snippets/`, UltiSnips also loads the `vim-snip
 6. Press `<Ctrl-k>` to jump to the previous placeholder
 7. Fill in each placeholder, and you're done
 
-Example with `jfor` in a Java buffer:
+Example with `for` in a Java buffer:
 
 ```
-jfor            <- you type the trigger
+for            <- you type the trigger
 (Ctrl-j)        -> for (int i = start; i < end; i++) {
                        // code
                    }                          the first placeholder, i, is selected
@@ -333,9 +333,9 @@ index           -> for (int index = start; ... typing replaces the selected plac
 (Ctrl-k)        -> back to the previous placeholder
 ```
 
-Filling the loop in (tested in a real Neovim, empty line inside a Java method): `jfor`, `<Ctrl-j>`, type `index` (every `i` is renamed), `<Ctrl-j>`, type `0` for `start`, `<Ctrl-j>`, type `10` for `end`, `<Ctrl-j>` jumps to the body.
+Filling the loop in (in a real Neovim, empty line inside a Java method): `for`, `<Ctrl-j>`, type `index` (every `i` is renamed), `<Ctrl-j>`, type `0` for `start`, `<Ctrl-j>`, type `10` for `end`, `<Ctrl-j>` jumps to the body.
 
-Gotchas (tested):
+Gotchas:
 
 - `<Ctrl-j>` with no snippet trigger in front of the cursor does not expand anything: it just inserts a new line.
 - An expanded snippet starts at the column where the cursor was. On a completely empty, unindented line it comes out unindented; format afterwards with `<Space>fm` (see the Java chapter).
@@ -350,7 +350,7 @@ The completion menu also lists the hundreds of built-in `vim-snippets` entries. 
 4. Press `<Enter>` to insert the snippet: from insert mode it lands exactly at the cursor, from normal mode right after the character under the cursor (like `a`); the usual placeholders work, jump with `<Ctrl-j>` / `<Ctrl-k>`
 5. Press `<Esc>` to cancel: nothing is inserted (from insert mode you return to insert mode)
 
-Before pressing `<Enter>`, check which line is HIGHLIGHTED, not just which lines the filter left. Example (tested in Normal mode in a Java buffer): typing `jArrayL` leaves two entries and the highlighted one was `jArrayLiteral`, not `jArrayList`. Move with `<Ctrl-n>` / `<Ctrl-p>` to the one you want first. `<Enter>` on the highlighted `jArrayLiteral` inserted `type[] name = {value1, value2, value3};`, and its fields worked with `<Ctrl-j>` / `<Ctrl-k>`.
+Before pressing `<Enter>`, check which line is HIGHLIGHTED, not just which lines the filter left. Example (in Normal mode in a Java buffer): typing `arrayL` leaves two entries and the highlighted one was `arrayLiteral`, not `arrayList`. Move with `<Ctrl-n>` / `<Ctrl-p>` to the one you want first. `<Enter>` on the highlighted `arrayLiteral` inserted `type[] name = {value1, value2, value3};`, and its fields worked with `<Ctrl-j>` / `<Ctrl-k>`.
 
 Notes:
 
@@ -370,8 +370,9 @@ Custom snippets live in the `my_snippets/` directory. Each file targets a specif
 | `python.snippets` | Python | `print` (f-string), `impa`, `main`, `sol` (chapter [`languages/python.md`](languages/python.md#snippets), Snippets) |
 | `cpp.snippets` | C++ | `bare` program, includes, container declarations, print helpers, `random`, control flow (chapter [`languages/cpp.md`](languages/cpp.md#84-c-snippets-compile-and-run), [section 84](languages/cpp.md#84-c-snippets-compile-and-run)) |
 | `nix.snippets` | Nix | 12 snippets: package lists, `delibmodule` / `delibalways`, `mkshell`, `mkderiv`, `flake`, `fetchgithub`, `systemd` (chapter [`languages/nix.md`](languages/nix.md#86-nix-snippets-and-delib-modules), [section 86](languages/nix.md#86-nix-snippets-and-delib-modules)) |
-| `tex.snippets` | LaTeX | `use` (`\usepackage`), `eqa` (equation with label) (chapter [`languages/latex.md`](languages/latex.md#snippets), Snippets) |
-| `markdown.snippets` | Markdown | 17 snippets: keys, headings, links, images, front matter, message boxes (chapter [`languages/markdown.md`](languages/markdown.md#snippets), Snippets) |
+| `tex.snippets` | LaTeX | `use` (`\usepackage`), `eqa` (equation with label), `mk` / `dm` (inline / display math) and 189 math-symbol snippets such as `leq`, `alpha`, `frac`, `matrix2` (chapter [`languages/latex.md`](languages/latex.md#snippets), Snippets) |
+| `markdown.snippets` | Markdown | 208 snippets: keys, headings, links, images, front matter, message boxes, `mk` / `dm` (inline / display math) and 189 math-symbol snippets (chapter [`languages/markdown.md`](languages/markdown.md#snippets), Snippets) |
+| `typst.snippets` | Typst | `mk` / `dm` (inline / display math) and 104 math-symbol snippets such as `leq`, `neq`, `integral`, `matrix2` (chapter [`languages/typst.md`](languages/typst.md#snippets), Snippets) |
 | `vim.snippets` | Vimscript | `fun` (function), `aug` (augroup) (chapter [`languages/vim.md`](languages/vim.md#85-vimscript-snippets-source-and-settings), [section 85](languages/vim.md#85-vimscript-snippets-source-and-settings)) |
 | `snippets.snippets` | Snippet files | `snip`: template for a new snippet definition |
 
@@ -390,13 +391,13 @@ endsnippet
 - `b` means it only triggers at the beginning of a line
 - `${1}`, `${2}`, `${3}` are tab-stop placeholders (jump between them with `<Ctrl-j>`)
 
-Result (tested with exactly this definition in a Python file): typing `trigger` at the start of a line and pressing `<Ctrl-j>` gives
+Result (with exactly this definition in a Python file): typing `trigger` at the start of a line and pressing `<Ctrl-j>` gives
 
 ```
 def function_name(args):
     pass
 ```
 
-with the cursor on the first placeholder, `function_name`: type the real name, `<Ctrl-j>` jumps to `args`, then to `pass` (tested: `load` typed, `<Ctrl-j>`, `path` typed, `<Ctrl-j>`, `return 1` gives `def load(path):` / `    return 1`).
+with the cursor on the first placeholder, `function_name`: type the real name, `<Ctrl-j>` jumps to `args`, then to `pass` (`load` typed, `<Ctrl-j>`, `path` typed, `<Ctrl-j>`, `return 1` gives `def load(path):` / `    return 1`).
 
 ---

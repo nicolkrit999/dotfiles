@@ -5,7 +5,7 @@
 
 This section covers everything that is specific to LaTeX in this config: what each tool is for, how it works, the keys, and what to do when something fails. Global things (LSP keys, completion menu, windows, spell checking) are only mentioned with a pointer to their own section. [Typst](typst.md#82-typst-typstvim-tinymist-watch-and-preview) and [Markdown](markdown.md#81-markdown-writing-preview-footnotes-pdf) have their own sections.
 
-Everything marked "(tested)" was run in a real Neovim inside the LaTeX devShell with a scratch project (October 2026).
+Unless marked otherwise, everything below was run in a real Neovim inside the LaTeX devShell with a scratch project (October 2026).
 
 ## The big picture
 
@@ -17,11 +17,11 @@ Writing LaTeX means: a `.tex` source file, a compiler (`latexmk` runs `pdflatex`
 | **texlab** (language server) | Understands the whole project (labels, citations, includes) | Completion of `\ref{` / `\cite{` / commands, diagnostics, hover (`K`), symbols, rename, `:LspTexlabBuild` |
 | **ltex_plus** (language server) | Grammar and spelling for prose | Underlines mistakes in the text (not in commands) as diagnostics |
 | **typos_lsp** (language server) | Catches common typos in any file | Same diagnostics channel; it attaches to every file type |
-| **UltiSnips snippets** | Typing shortcuts | `use`, `eqa` (file `my_snippets/tex.snippets`) |
+| **UltiSnips snippets** | Typing shortcuts | `use`, `eqa`, and 191 math snippets (`mk`, `dm`, symbol names such as `leq`) (file `my_snippets/tex.snippets`) |
 | **zathura** (PDF viewer) | Light viewer that reloads when the PDF changes and supports forward/inverse search | Shows the result |
 | **LaTeX devShell** | Provides all the programs | `latex`, `latexmk`, `texlab`, `zathura`, `pandoc` |
 
-In a `.tex` buffer the config also sets `textwidth = 120`, `wrap` on and a column marker at 120 (`after/ftplugin/tex.lua`, `lua/options.lua`). The statusline shows `texlab (+2)` when texlab, ltex_plus and typos_lsp are attached (tested).
+In a `.tex` buffer the config also sets `textwidth = 120`, `wrap` on and a column marker at 120 (`after/ftplugin/tex.lua`, `lua/options.lua`). The statusline shows `texlab (+2)` when texlab, ltex_plus and typos_lsp are attached.
 
 ## What it needs (the devShell)
 
@@ -189,21 +189,21 @@ One more cross-plugin setting belongs to vimtex: `vim.g.matchup_override_vimtex 
 
 ## Compiling
 
-`<Space>rf` and `<F9>` (buffer-local, set by an autocommand for `tex` files; description "LaTeX: start/stop compiling (vimtex)") and `\ll` are the same command, `<Plug>(vimtex-compile)` (tested). It starts `latexmk` in the background in **continuous mode** (recompiles whenever a source file changes); pressing it again stops it. `\` is the local leader: the config sets only `mapleader = <Space>`, so vimtex keeps the backslash.
+`<Space>rf` and `<F9>` (buffer-local, set by an autocommand for `tex` files; description "LaTeX: start/stop compiling (vimtex)") and `\ll` are the same command, `<Plug>(vimtex-compile)`. It starts `latexmk` in the background in **continuous mode** (recompiles whenever a source file changes); pressing it again stops it. `\` is the local leader: the config sets only `mapleader = <Space>`, so vimtex keeps the backslash.
 
-**Where the output goes.** Tested: `main.pdf`, `main.aux`, `main.log`, `main.bbl` and the other files are written **next to `main.tex`**, not into a `build/` folder. The config contains
+**Where the output goes.** `main.pdf`, `main.aux`, `main.log`, `main.bbl` and the other files are written **next to `main.tex`**, not into a `build/` folder. The config contains
 
 ```vim
 let g:vimtex_compiler_latexmk = { 'build_dir' : 'build' }
 ```
 
-but the installed vimtex has no `build_dir` option (its documentation does not mention it; the current name is `out_dir`), so this line has no effect. `:LspTexlabBuild` (texlab's own one-shot build) also writes `main.pdf` next to the source (tested). If you want a `build/` folder, the option to set is `out_dir`.
+but the installed vimtex has no `build_dir` option (its documentation does not mention it; the current name is `out_dir`), so this line has no effect. `:LspTexlabBuild` (texlab's own one-shot build) also writes `main.pdf` next to the source. If you want a `build/` folder, the option to set is `out_dir`.
 
 | Command / key | What it does |
 | --- | --- |
-| `<Space>rf`, `<F9>` or `\ll` (`:VimtexCompile`) | Start or stop continuous compiling (tested) |
-| `\lk` (`:VimtexStop`) | Stop. Message "VimTeX: Compiler stopped (name.tex)" (tested) |
-| `\lc` (`:VimtexClean`) | Remove auxiliary files; keeps `main.pdf`, `main.bbl`, `main.synctex.gz`. Message "VimTeX: Compiler clean finished" (tested) |
+| `<Space>rf`, `<F9>` or `\ll` (`:VimtexCompile`) | Start or stop continuous compiling |
+| `\lk` (`:VimtexStop`) | Stop. Message "VimTeX: Compiler stopped (name.tex)" |
+| `\lc` (`:VimtexClean`) | Remove auxiliary files; keeps `main.pdf`, `main.bbl`, `main.synctex.gz`. Message "VimTeX: Compiler clean finished" |
 | `\lC` | Clean everything including the PDF |
 | `\lo` | Show the compiler output |
 | `\lg` / `\lG` | Status of this / all compilers |
@@ -213,13 +213,13 @@ but the installed vimtex has no `build_dir` option (its documentation does not m
 | `\lx` / `\lX` | Reload vimtex / reload its state (use after changing the document structure) |
 | `\ls` | Toggle the main file (`:VimtexToggleMain`) |
 | `\la` | Context menu for the item under the cursor |
-| `:LspTexlabBuild` | texlab's own build, once (tested: produces `main.pdf`). For daily work use `<Space>rf`: it keeps recompiling. |
+| `:LspTexlabBuild` | texlab's own build, once (produces `main.pdf`). For daily work use `<Space>rf`: it keeps recompiling. |
 
-All `\l...` keys above were checked in the live buffer; each points at the `<Plug>(vimtex-...)` map named in the vimtex documentation (tested).
+Each of the `\l...` keys above points at the `<Plug>(vimtex-...)` map named in the vimtex documentation.
 
 ### Errors
 
-When a compile fails vimtex opens the **quickfix list** by itself, titled "VimTeX errors (LaTeX logfile)", and shows "VimTeX: Compilation failed!" (tested with a file containing `\foobar`; the entry was `Undefined control sequence. \foobar`, with the line number). texlab also puts the problem in the text as a diagnostic (`]d` / `[d`, `<Space>dd`; see the [LSP section](../07-code.md#13-lsp-language-server-protocol)).
+When a compile fails vimtex opens the **quickfix list** by itself, titled "VimTeX errors (LaTeX logfile)", and shows "VimTeX: Compilation failed!" (with a file containing `\foobar`; the entry was `Undefined control sequence. \foobar`, with the line number). texlab also puts the problem in the text as a diagnostic (`]d` / `[d`, `<Space>dd`; see the [LSP section](../07-code.md#13-lsp-language-server-protocol)).
 
 | Key / command | What it does |
 | --- | --- |
@@ -240,19 +240,19 @@ Compile always starts from the **main file** (the one with `\documentclass`). Wh
 Chapter text.
 ```
 
-Tested: opening `chap/c1.tex` with this comment gives `b:vimtex.tex` = the full path of `main.tex`, and `<Space>rf` in the chapter built `main.pdf`. Without the comment vimtex tries to find the main file itself, but in my test it picked a different `main.tex` from a neighbouring folder, so always add the comment in chapters. `\ls` toggles between the file and the main file.
+Opening `chap/c1.tex` with this comment gives `b:vimtex.tex` = the full path of `main.tex`, and `<Space>rf` in the chapter built `main.pdf`. Without the comment vimtex tries to find the main file itself, but in my test it picked a different `main.tex` from a neighbouring folder, so always add the comment in chapters. `\ls` toggles between the file and the main file.
 
 ## The viewer
 
 `vim.g.vimtex_view_method` is `zathura` when `zathura` is on PATH, otherwise `general` (the system default PDF program). Windows uses SumatraPDF and macOS Skim (config lines for those platforms exist in the same spec).
 
-- **A zathura window opens by itself after the first successful compile.** This is vimtex's default (`g:vimtex_view_automatic = 1`), not a bug. Later compiles only refresh the open window. If you do not want it: `:let g:vimtex_view_automatic = 0` (until you quit); you then open the PDF yourself with `\lv`. For a permanent change the line has to go into the config. (Tested both ways: without the option a zathura window titled with the full path of `main.pdf` opened about 14 seconds after `<Space>rf` in a fresh Neovim; with `view_automatic=0` nothing opened until `\lv`.)
-- `\lv` (`:VimtexView`) opens the viewer or, if open, jumps to the place of the cursor (forward search). Tested from a chapter file with `%! TEX root`: zathura opened the PDF of the **main** file (`main.pdf`), and the process got `--synctex-forward 1:1:<path>/chap/c1.tex`, i.e. the cursor position of the chapter.
-- **Inverse search** (Ctrl+click in the PDF jumps back to the source): the config writes the address of the running Neovim into `/tmp/vimtexserver.txt` every time a `tex` file is opened (`v:servername`). It is only a helper file; never edit it. With two Neovims open, the last one wins (the file is shared in `/tmp`). Tested prerequisites: the file exists and holds the same address as the running Neovim (`:echo v:servername`); the zathura process was started by vimtex with the inverse-search callback `-x "nvim --headless -c \"VimtexInverseSearch %{line}:%{column} '%{input}'\""`. The jump itself is tested by running that same callback in a second Neovim: the first Neovim jumped to the clicked line and column. This only works because vimtex is loaded at startup (not only for `tex` files): the callback Neovim has no `tex` file open and needs the `:VimtexInverseSearch` command (found and fixed 2026-10-03; before, the click did nothing and showed no error).
+- **A zathura window opens by itself after the first successful compile.** This is vimtex's default (`g:vimtex_view_automatic = 1`), not a bug. Later compiles only refresh the open window. If you do not want it: `:let g:vimtex_view_automatic = 0` (until you quit); you then open the PDF yourself with `\lv`. For a permanent change the line has to go into the config. (Both ways: without the option a zathura window titled with the full path of `main.pdf` opened about 14 seconds after `<Space>rf` in a fresh Neovim; with `view_automatic=0` nothing opened until `\lv`.)
+- `\lv` (`:VimtexView`) opens the viewer or, if open, jumps to the place of the cursor (forward search). From a chapter file with `%! TEX root`: zathura opened the PDF of the **main** file (`main.pdf`), and the process got `--synctex-forward 1:1:<path>/chap/c1.tex`, i.e. the cursor position of the chapter.
+- **Inverse search** (Ctrl+click in the PDF jumps back to the source): the config writes the address of the running Neovim into `/tmp/vimtexserver.txt` every time a `tex` file is opened (`v:servername`). It is only a helper file; never edit it. With two Neovims open, the last one wins (the file is shared in `/tmp`). Prerequisites: the file exists and holds the same address as the running Neovim (`:echo v:servername`); the zathura process was started by vimtex with the inverse-search callback `-x "nvim --headless -c \"VimtexInverseSearch %{line}:%{column} '%{input}'\""`. Running that same callback in a second Neovim made the first Neovim jump to the clicked line and column. This only works because vimtex is loaded at startup (not only for `tex` files): the callback Neovim has no `tex` file open and needs the `:VimtexInverseSearch` command (found and fixed 2026-10-03; before, the click did nothing and showed no error).
 
 ## Table of contents
 
-`\lT` toggles, `\lt` opens the vimtex table of contents (`:VimtexTocToggle`, `:VimtexTocOpen`) (tested). It is a 30-column window on the left called TOC; the help lines are shown on top (config: `split_width = 30`, `show_help = 1`, layers content, todo, include). It lists sections, labelled equations, `\input` files and `TODO`/`FIXME` comments of the whole project.
+`\lT` toggles, `\lt` opens the vimtex table of contents (`:VimtexTocToggle`, `:VimtexTocOpen`). It is a 30-column window on the left called TOC; the help lines are shown on top (config: `split_width = 30`, `show_help = 1`, layers content, todo, include). It lists sections, labelled equations, `\input` files and `TODO`/`FIXME` comments of the whole project.
 
 | Key in the TOC | Action |
 | --- | --- |
@@ -271,7 +271,7 @@ Move between the TOC and the text with `<Ctrl-w>h` / `<Ctrl-w>l` or `<Left>` / `
 
 ## Moving and editing (vimtex)
 
-Example text for the tests below (all keys tested in this exact file):
+Example text for the tests below (all keys run in this exact file):
 
 ```latex
 \section{One}
@@ -294,26 +294,26 @@ x = 1
 | `]r` / `[r`, `]R` / `[R` | Frames (beamer) |
 | `]/` / `[/`, `]*` / `[*` | Comment blocks |
 | `K` | In this config **LSP hover** (texlab), not vimtex's package-documentation lookup |
-| `%` | Jumps between `\begin` and `\end` and brackets, but here the map belongs to **matchup** (`<Plug>(matchup-%)`), not vimtex (tested: from `\begin{equation}` it went to the `\end`) |
+| `%` | Jumps between `\begin` and `\end` and brackets, but here the map belongs to **matchup** (`<Plug>(matchup-%)`), not vimtex (from `\begin{equation}` it went to the `\end`) |
 
 ### Text objects (use after `d`, `y`, `c`, `v`)
 
 | Keys | Object | Result in the example |
 | --- | --- | --- |
-| `ie` / `ae` | Environment: inside / with `\begin..\end` | cursor on `x = 1`: `yie` = `x = 1`, `yae` = whole equation (tested) |
-| `ic` / `ac` | Command: name only / whole command | cursor on `textbf`: `yic` = `textbf`, `yac` = `\textbf{bold}` (tested) |
-| `id` / `ad` | Delimiter pair: inside / with delimiters | cursor in `{bold}`: `yid` = `bold`, `yad` = `{bold}` (tested) |
-| `i$` / `a$` | Maths | **unreliable**: on display maths it gives `x = 1` (`yi$` inside the equation), but on inline `$a+b$` it selected the display equation instead (tested; tree-sitter highlighting replaces vim's syntax for maths), see the note below |
-| `iP` / `aP` | Section | `yaP` on the heading line = from `\section{One}` up to before `\section{Two}` (tested) |
+| `ie` / `ae` | Environment: inside / with `\begin..\end` | cursor on `x = 1`: `yie` = `x = 1`, `yae` = whole equation |
+| `ic` / `ac` | Command: name only / whole command | cursor on `textbf`: `yic` = `textbf`, `yac` = `\textbf{bold}` |
+| `id` / `ad` | Delimiter pair: inside / with delimiters | cursor in `{bold}`: `yid` = `bold`, `yad` = `{bold}` |
+| `i$` / `a$` | Maths | **unreliable**: on display maths it gives `x = 1` (`yi$` inside the equation), but on inline `$a+b$` it selected the display equation instead (tree-sitter highlighting replaces vim's syntax for maths), see the note below |
+| `iP` / `aP` | Section | `yaP` on the heading line = from `\section{One}` up to before `\section{Two}` |
 | `im` / `am` | List item | needs an `itemize`/`enumerate` item |
 
 `ic` / `ac` also exist in Markdown buffers with a different meaning (a config map for Markdown only); in `.tex` they are vimtex's.
 
-**Note on maths detection.** Tree-sitter colours `.tex` files here, so Vim's own syntax is off, and vimtex shows a hint at start ("For more info, see :help vimtex-faq-treesitter"). Features that need the syntax groups to know "this is maths" are therefore unreliable for inline maths: `i$` / `a$`, `]n`, and the math insert maps. Environments, commands, delimiters and sections work (tested).
+**Note on maths detection.** Tree-sitter colours `.tex` files here, so Vim's own syntax is off, and vimtex shows a hint at start ("For more info, see :help vimtex-faq-treesitter"). Features that need the syntax groups to know "this is maths" are therefore unreliable for inline maths: `i$` / `a$`, `]n`, and the math insert maps. Environments, commands, delimiters and sections work.
 
 ### Change, delete, toggle
 
-| Keys | Action | Tested result |
+| Keys | Action | Result |
 | --- | --- | --- |
 | `dse` | Delete the surrounding environment | the `\begin..\end` lines vanish, the body stays |
 | `cse` | Change the environment name (prompt "Change surrounding environment: equation", type the new name, Enter) | `equation` became `align` in both places |
@@ -328,7 +328,7 @@ x = 1
 | `<F7>` | Create a command from the word (insert and normal mode; vimtex default, no leader alternative) | map exists |
 | `<F8>` | Add `\left`/`\right` to delimiters (vimtex default, no leader alternative) | map exists |
 | `]]` in insert mode | Close the open environment/delimiter | map exists |
-| `` ` `` + letter in insert mode | Maths shortcuts (`` `a `` = `\alpha`), made by `vimtex#imaps#wrap_math`. `\lm` (`:VimtexImapsList`) opens a "VimTeX imaps" window that lists all of them; close it with `:close` | The maps exist but **did not expand** in the test, even inside `equation`: they only fire when `vimtex#syntax#in_mathzone()` is true, and it returned 0 there (tree-sitter note below). `\lm` itself was tested |
+| `` ` `` + letter in insert mode | Maths shortcuts (`` `a `` = `\alpha`), made by `vimtex#imaps#wrap_math`. `\lm` (`:VimtexImapsList`) opens a "VimTeX imaps" window that lists all of them; close it with `:close` | The maps exist but **did not expand** in the test, even inside `equation`: they only fire when `vimtex#syntax#in_mathzone()` is true, and it returned 0 there (tree-sitter note below). `\lm` itself ran in the same test |
 
 These do not clash with the vim-sandwich keys of the config (`sa`, `sd`, `sr`).
 
@@ -338,7 +338,7 @@ texlab attaches to `tex` files when `texlab` is on PATH. It reads the whole proj
 
 - **Completion**: commands, environments, `\ref{` labels, `\cite{` keys. The menu opens while you type; `<Ctrl-n>` opens it manually, `<Tab>` / `<Ctrl-n>` move down, `<CR>` confirms only an item you picked, `<Ctrl-e>` or `<Esc>` closes it (see [section 14](../04-completion-snippets.md#14-autocompletion-nvim-cmp)).
 - **Diagnostics** (including errors from the build log), hover (`K`), symbols, rename, code actions (`<Space>ca`): the global LSP keys, see the [LSP section](../07-code.md#13-lsp-language-server-protocol).
-- `:LspTexlabBuild`: one build (tested).
+- `:LspTexlabBuild`: one build.
 
 The server entry (`lua/config/lsp.lua`):
 
@@ -363,7 +363,7 @@ cmp.setup.filetype("tex", {
 })
 ```
 
-**Duplicates are normal**: typing `\sec` and `<Ctrl-n>` shows entries from vimtex (omni) and texlab (nvim_lsp), 26 entries with several "section" (tested). Either inserts the same text.
+**Duplicates are normal**: typing `\sec` and `<Ctrl-n>` shows entries from vimtex (omni) and texlab (nvim_lsp), 26 entries with several "section". Either inserts the same text.
 
 ## Citations (bibliography)
 
@@ -381,7 +381,7 @@ with `refs.bib`:
 @book{knuth, author={Knuth}, title={TAOCP}, year={1968}, publisher={AW}}
 ```
 
-Typing `\cite{kn` and `<Ctrl-n>` shows `knuth [book] Knuth (1968), "TAOCP"` in the menu (tested). `latexmk` runs BibTeX itself during compile; the first compile after adding a `\cite` may show `[?]` until the next automatic run (tested: `main.bbl` was created by the first run). With biblatex use `\usepackage{biblatex}` and `\addbibresource{refs.bib}`; `latexmk` then runs biber (not tested here).
+Typing `\cite{kn` and `<Ctrl-n>` shows `knuth [book] Knuth (1968), "TAOCP"` in the menu. `latexmk` runs BibTeX itself during compile; the first compile after adding a `\cite` may show `[?]` until the next automatic run (`main.bbl` was created by the first run). With biblatex use `\usepackage{biblatex}` and `\addbibresource{refs.bib}`; `latexmk` then runs biber (not tested here).
 
 ## Grammar and spelling (ltex_plus)
 
@@ -413,17 +413,17 @@ The file is quoted in full (`after/lsp/ltex_plus.lua`). `enabled` lists language
 
 - **One language per document: `en-US`**, although `spelllang` is `en,it,de,fr`. LaTeX commands are skipped; only the prose is checked.
 - Problems are diagnostics. In my test a misspelled word got **two** underlines, one from `typos` and one from `LTeX`; this is normal.
-- **Fix**: `<Space>ca` on the word opens the list (tested):
+- **Fix**: `<Space>ca` on the word opens the list:
 
   | Entry | Result |
   | --- | --- |
-  | `Use 'sentence'` | Replaces the word. Works (tested) |
+  | `Use 'sentence'` | Replaces the word. Works |
   | `Use 'sen tense'` | Other suggestion |
   | `Add 'sentense' to dictionary` | **Had no effect in my test**: the LTeX diagnostic stayed (the config has no handler for ltex's client commands). Do not rely on it |
-  | `Hide false positive`, `Disable rule` | No effect, same as `Add to dictionary` (tested, see [section 81](markdown.md#81-markdown-writing-preview-footnotes-pdf)) |
+  | `Hide false positive`, `Disable rule` | No effect, same as `Add to dictionary` (see [section 81](markdown.md#81-markdown-writing-preview-footnotes-pdf)) |
   | `sentence`, `Ignore ... in the project` (typos_lsp) | typos fix; "Ignore" is a typos command |
 
-- **What works for false positives**: ltex magic comments in the file (tested). `% LTeX: enabled=false` on a line of its own switches ltex off for the file (the LTeX underlines disappeared, typos stayed). `% LTeX: language=de-DE` makes the file checked as German (tested: German messages). Remove the line to undo.
+- **What works for false positives**: ltex magic comments in the file. `% LTeX: enabled=false` on a line of its own switches ltex off for the file (the LTeX underlines disappeared, typos stayed). `% LTeX: language=de-DE` makes the file checked as German (German messages). Remove the line to undo.
 - **Built-in spell checker** (different thing): `<Space>cz` toggles, `]s` / `[s`, `z=`, `zg` (adds to `spell/en.utf-8.add`, a file in the public repo). More in [section 31](../09-ai-and-writing.md#31-spell-checking).
 
 ## Snippets
@@ -452,6 +452,266 @@ Example: `package` = `amsmath` gives `\usepackage{amsmath}`.
 ```
 
 Example: `label` = `eq:energy`, `content` = `E = mc^2`; later `\ref{eq:energy}` prints the equation number.
+
+### Math symbols
+
+Inside math, a symbol is one typed word: you type its name instead of remembering the LaTeX command. This part of the file has 191 snippets: 2 math delimiters and 189 symbols.
+
+How to use them, step by step:
+
+1. Type `mk` for inline math or `dm` for a display math block, then press `<Ctrl-j>` (hold the Ctrl key and press j). `mk` writes `$` `$` and puts the cursor between them; `dm` writes `\[`, an indented empty line and `\]` on three lines and puts the cursor on the empty middle line. Typing the `$` characters yourself works too.
+2. Inside the math, type a symbol name such as `leq` and press `<Ctrl-j>` (or accept the name in the completion menu). The name is replaced by the symbol and the cursor ends right after it. The symbol snippets expand only while the cursor is inside math: outside math `<Ctrl-j>` does not expand them and only does what it does without a snippet (it starts a new line); the completion menu may still list the names.
+3. A snippet with placeholders (for example `frac`) selects the first placeholder; type over it, then press `<Ctrl-j>` to go to the next one. After the last placeholder, `<Ctrl-j>` moves the cursor to the end of the symbol, still inside the math. For `mk`, one more `<Ctrl-j>` then moves it past the closing `$`; for `dm`, past the closing `\]` (the cursor stays on that line). When the math contains only plain symbols (no placeholders), the first `<Ctrl-j>` after you finish typing already leaves the closing delimiter.
+
+After the expansion the cursor is always after the symbol. Word-like commands (`\leq`, `\alpha`, `\infty`, `\cdot`, ...) get one trailing space so the next letter you type does not stick to the command; the space is not shown in the tables. `sub`, `sup`, `inv`, `transpose`, `degree` and `celsius` attach to what you typed before, so they add no space and also expand right after a letter (`x` then `sub` gives `x_{i}`). In the Produces column the words in a placeholder show the text you can type over (for example `\frac{a}{b}`).
+
+Worked example: inline math `x \leq y`.
+
+| You type | You get (`<cursor>` marks the cursor) |
+| --- | --- |
+| `mk`, then `<Ctrl-j>` | `$<cursor>$` |
+| `x` | `$x<cursor>$` |
+| a space, then `leq`, then `<Ctrl-j>` | `$x \leq <cursor>$` |
+| `y` | `$x \leq y<cursor>$` |
+| `<Ctrl-j>` | `$x \leq y$<cursor>` (the cursor is after the closing `$`) |
+
+Where they work: the check reads the text of the file from the top down to the cursor, so it does not depend on vimtex or on syntax colours. These count as math: text between a pair of `$`, between `$$` and `$$`, between `\(` and `\)`, between `\[` and `\]`, and the body of `equation`, `align`, `gather`, `multline`, `flalign`, `eqnarray`, `displaymath`, `math` and `split` (with or without the `*`). These do not count as math: text outside those places, a `\text{...}`, `\textrm{...}`, `\mbox{...}` group inside math, a line after a `%` comment sign, a `\$` with a backslash, and the body of `verbatim`, `lstlisting`, `minted` and `comment` environments. A blank line ends an unclosed `$...$`, `$$...$$` or `\(...\)`. The symbol names are not offered straight after a backslash (`\alpha` typed by hand stays as typed). `mk` and `dm` expand in text and in math, but not in a comment or a verbatim environment. The snippets belong to the file type `tex`: a `.tex` file whose first lines do not look like LaTeX (no `\documentclass`) is opened as `plaintex` and gets no snippets until you run `:set filetype=tex`.
+
+#### Math delimiters
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `mk` | `$` `$` | Inline math, cursor between the dollar signs |
+| `dm` | `\[`, empty line, `\]` | Display math on its own lines, cursor on the empty line |
+
+#### Relations and operators
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `neq` | `\neq` | Not equal |
+| `leq` | `\leq` | Less or equal |
+| `geq` | `\geq` | Greater or equal |
+| `ll` | `\ll` | Much less |
+| `gg` | `\gg` | Much greater |
+| `approx` | `\approx` | Approximately equal |
+| `equiv` | `\equiv` | Identical / congruent |
+| `sim` | `\sim` | Similar / distributed as |
+| `simeq` | `\simeq` | Asymptotically equal |
+| `cong` | `\cong` | Congruent |
+| `propto` | `\propto` | Proportional to |
+| `pm` | `\pm` | Plus minus |
+| `mp` | `\mp` | Minus plus |
+| `times` | `\times` | Multiplication cross |
+| `cdot` | `\cdot` | Dot product / multiplication dot |
+| `circ` | `\circ` | Composition |
+| `ast` | `\ast` | Asterisk operator |
+| `oplus` | `\oplus` | Direct sum |
+| `otimes` | `\otimes` | Tensor product |
+| `perp` | `\perp` | Perpendicular |
+| `parallel` | `\parallel` | Parallel |
+| `angle` | `\angle` | Angle |
+| `degree` | `^\circ` | Degree sign |
+| `celsius` | `^\circ\mathrm{C}` | Degrees Celsius |
+| `infinity` | `\infty` | Infinity |
+| `partial` | `\partial` | Partial derivative symbol |
+| `nabla` | `\nabla` | Nabla |
+| `therefore` | `\therefore` | Therefore |
+| `because` | `\because` | Because |
+| `ldots` | `\ldots` | Dots on the line |
+| `cdots` | `\cdots` | Centered dots |
+| `vdots` | `\vdots` | Vertical dots |
+| `ddots` | `\ddots` | Diagonal dots |
+
+#### Logic and sets
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `implies` | `\implies` | Implies |
+| `iff` | `\iff` | If and only if |
+| `to` | `\to` | Arrow right / maps to |
+| `mapsto` | `\mapsto` | Maps to |
+| `leftarrow` | `\leftarrow` | Arrow left |
+| `forall` | `\forall` | For all |
+| `exists` | `\exists` | Exists |
+| `nexists` | `\nexists` | Does not exist |
+| `neg` | `\neg` | Not |
+| `land` | `\land` | And |
+| `lor` | `\lor` | Or |
+| `in` | `\in` | Element of |
+| `notin` | `\notin` | Not element of |
+| `subset` | `\subset` | Subset |
+| `subseteq` | `\subseteq` | Subset or equal |
+| `supset` | `\supset` | Superset |
+| `cup` | `\cup` | Union |
+| `cap` | `\cap` | Intersection |
+| `setminus` | `\setminus` | Set difference |
+| `emptyset` | `\emptyset` | Empty set |
+| `NN` | `\mathbb{N}` | Natural numbers |
+| `ZZ` | `\mathbb{Z}` | Integers |
+| `QQ` | `\mathbb{Q}` | Rationals |
+| `RR` | `\mathbb{R}` | Reals |
+| `CC` | `\mathbb{C}` | Complex numbers |
+
+#### Greek letters
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `alpha` | `\alpha` | Greek letter alpha |
+| `beta` | `\beta` | Greek letter beta |
+| `gamma` | `\gamma` | Greek letter gamma |
+| `delta` | `\delta` | Greek letter delta |
+| `epsilon` | `\epsilon` | Greek letter epsilon |
+| `varepsilon` | `\varepsilon` | Greek letter varepsilon |
+| `zeta` | `\zeta` | Greek letter zeta |
+| `eta` | `\eta` | Greek letter eta |
+| `theta` | `\theta` | Greek letter theta |
+| `vartheta` | `\vartheta` | Greek letter vartheta |
+| `iota` | `\iota` | Greek letter iota |
+| `kappa` | `\kappa` | Greek letter kappa |
+| `lambda` | `\lambda` | Greek letter lambda |
+| `mu` | `\mu` | Greek letter mu |
+| `nu` | `\nu` | Greek letter nu |
+| `xi` | `\xi` | Greek letter xi |
+| `pi` | `\pi` | Greek letter pi |
+| `rho` | `\rho` | Greek letter rho |
+| `sigma` | `\sigma` | Greek letter sigma |
+| `tau` | `\tau` | Greek letter tau |
+| `phi` | `\phi` | Greek letter phi |
+| `varphi` | `\varphi` | Greek letter varphi |
+| `chi` | `\chi` | Greek letter chi |
+| `psi` | `\psi` | Greek letter psi |
+| `omega` | `\omega` | Greek letter omega |
+| `Gamma` | `\Gamma` | Greek letter Gamma |
+| `Delta` | `\Delta` | Greek letter Delta |
+| `Theta` | `\Theta` | Greek letter Theta |
+| `Lambda` | `\Lambda` | Greek letter Lambda |
+| `Xi` | `\Xi` | Greek letter Xi |
+| `Pi` | `\Pi` | Greek letter Pi |
+| `Sigma` | `\Sigma` | Greek letter Sigma |
+| `Phi` | `\Phi` | Greek letter Phi |
+| `Psi` | `\Psi` | Greek letter Psi |
+| `Omega` | `\Omega` | Greek letter Omega |
+
+#### Functions, fractions, roots, scripts
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `frac` | `\frac{a}{b}` | Fraction |
+| `sqrt` | `\sqrt{x}` | Square root |
+| `nroot` | `\sqrt[n]{x}` | N-th root |
+| `absval` | `\left\lvert x \right\rvert` | Absolute value |
+| `norm` | `\left\lVert x \right\rVert` | Norm |
+| `floor` | `\lfloor x \rfloor` | Floor |
+| `ceil` | `\lceil x \rceil` | Ceiling |
+| `sub` | `_{i}` | Subscript |
+| `sup` | `^{n}` | Superscript |
+| `inv` | `^{-1}` | Inverse |
+| `transpose` | `^\top` | Transpose |
+| `sin` | `\sin` | Sin function |
+| `cos` | `\cos` | Cos function |
+| `tan` | `\tan` | Tan function |
+| `ln` | `\ln` | Ln function |
+| `log` | `\log` | Log function |
+| `exp` | `\exp` | Exp function |
+| `arcsin` | `\arcsin` | Arcsin |
+| `arccos` | `\arccos` | Arccos |
+| `arctan` | `\arctan` | Arctan |
+
+#### Calculus and analysis
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `sum` | `\sum` | sum sign (∑) |
+| `prod` | `\prod` | product sign (∏) |
+| `lim` | `\lim` | limit operator |
+| `int` | `\int` | integral sign (∫) |
+| `limit` | `\lim_{x \to a} f(x)` | Limit |
+| `limsup` | `\limsup_{n \to \infty}` | Limit superior |
+| `liminf` | `\liminf_{n \to \infty}` | Limit inferior |
+| `sumn` | `\sum_{i=1}^{n} a_i` | Sum with bounds |
+| `prodn` | `\prod_{i=1}^{n} a_i` | Product with bounds |
+| `integral` | `\int f(x) \, dx` | Indefinite integral |
+| `defint` | `\int_{a}^{b} f(x) \, dx` | Definite integral |
+| `iint` | `\iint_{D} f \, dA` | Double integral |
+| `iiint` | `\iiint_{V} f \, dV` | Triple integral |
+| `oint` | `\oint_{C} F \cdot d\mathbf{r}` | Closed line integral |
+| `deriv` | `\frac{df}{dx}` | Derivative d/dx |
+| `pderiv` | `\frac{\partial f}{\partial x}` | Partial derivative |
+| `deriv2` | `\frac{d^2 f}{dx^2}` | Second derivative |
+| `grad` | `\nabla f` | Gradient |
+| `divergence` | `\nabla \cdot \mathbf{F}` | Divergence |
+| `curl` | `\nabla \times \mathbf{F}` | Curl |
+| `laplacian` | `\nabla^2 f` | Laplacian |
+| `bigO` | `O\left(n\right)` | Big-O |
+| `seq` | `(a_{n})_{n \in \mathbb{N}}` | Sequence |
+| `epsdelta` | `\forall \varepsilon > 0 \; \exists \delta > 0 :` | Epsilon-delta |
+
+#### Linear algebra
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `vecarrow` | `\vec{v}` | Vector with arrow |
+| `vecbold` | `\mathbf{v}` | Vector in bold |
+| `hat` | `\hat{x}` | Unit vector / estimator hat |
+| `colvec` | `\begin{pmatrix} a \\ b \\ c \end{pmatrix}` | Column vector |
+| `matrix2` | `\begin{pmatrix} a & b \\ c & d \end{pmatrix}` | 2x2 matrix |
+| `matrix3` | `\begin{pmatrix} a & b & c \\ d & e & f \\ g & h & i \end{pmatrix}` | 3x3 matrix |
+| `det` | `\det(A)` | Determinant |
+| `detmat` | `\begin{vmatrix} a & b \\ c & d \end{vmatrix}` | Determinant bars |
+| `trace` | `\operatorname{tr}(A)` | Trace |
+| `rank` | `\operatorname{rank}(A)` | Rank |
+| `dim` | `\dim(V)` | Dimension |
+| `kernel` | `\ker(A)` | Kernel |
+| `image` | `\operatorname{im}(A)` | Image |
+| `span` | `\operatorname{span}\{v_1, v_2\}` | Span |
+| `inner` | `\langle u, v \rangle` | Inner product |
+| `cross` | `a \times b` | Cross product |
+| `identity` | `I_{n}` | Identity matrix |
+| `eigen` | `A\mathbf{v} = \lambda \mathbf{v}` | Eigenvalue equation |
+
+#### Statistics and probability
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `mean` | `\bar{x}` | Sample mean (bar) |
+| `variance` | `\operatorname{Var}(X)` | Variance |
+| `covariance` | `\operatorname{Cov}(X, Y)` | Covariance |
+| `expect` | `\mathbb{E}\left[X\right]` | Expected value |
+| `Prob` | `\mathbb{P}(A)` | Probability |
+| `given` | `\mathbb{P}(A \mid B)` | Conditional probability |
+| `binom` | `\binom{n}{k}` | Binomial coefficient |
+| `normaldist` | `X \sim \mathcal{N}(\mu, \sigma^2)` | Normal distribution |
+| `stddev` | `\sigma` | Standard deviation |
+| `estimator` | `\hat{\theta}` | Estimator hat |
+| `tilde` | `\tilde{x}` | Tilde accent |
+| `chisq` | `\chi^2` | Chi-squared |
+| `zscore` | `z = \frac{x - \mu}{\sigma}` | Z-score |
+| `confint` | `\bar{x} \pm z_{\alpha/2} \frac{\sigma}{\sqrt{n}}` | Confidence interval |
+
+#### Physics
+
+| Trigger | Produces | Meaning |
+| --- | --- | --- |
+| `vecF` | `\vec{F}` | Force vector |
+| `dot` | `\dot{x}` | Time derivative (one dot) |
+| `ddot` | `\ddot{x}` | Second time derivative |
+| `hbar` | `\hbar` | Reduced Planck constant |
+| `kB` | `k_{\mathrm{B}}` | Boltzmann constant |
+| `deltaT` | `\Delta T` | Change in temperature |
+| `deltaU` | `\Delta U` | Change in internal energy |
+| `dQ` | `\delta Q` | Heat increment |
+| `dW` | `\delta W` | Work increment |
+| `newton2` | `\vec{F} = m\vec{a}` | Newton's second law |
+| `kinematic` | `v = v_0 + a t` | V = v0 + a t |
+| `workint` | `W = \int \vec{F} \cdot d\vec{r}` | Work as integral |
+| `kinetic` | `E_k = \frac{1}{2} m v^2` | Kinetic energy |
+| `potential` | `E_p = m g h` | Gravitational potential energy |
+| `heatq` | `Q = m c \Delta T` | Heat capacity law |
+| `firstlaw` | `\Delta U = Q - W` | First law of thermodynamics |
+| `idealgas` | `p V = n R T` | Ideal gas law |
+| `entropy` | `\Delta S = \int \frac{\delta Q}{T}` | Entropy change |
+| `conserve` | `E_i = E_f` | Conservation of energy |
+| `momentum` | `\vec{p} = m\vec{v}` | Momentum |
 
 ## Troubleshooting
 

@@ -23,14 +23,14 @@ One bullet per plugin, starting with the plugin name exactly as lazy.nvim names 
 
 **Restriction wording.** Beyond the startup label, mention a loading condition only when it changes what the reader can do: a plugin restricted to a git repository (`event = "User InGitRepo"`: its keys do not exist outside one), to a file type (`ft`: "Only in Markdown files"), or enabled only on some machines (`enabled`/`cond`: "Only loaded when `latex` is on PATH", "macOS only"). One short sentence before "In depth:". Do not describe plain `cmd`, `keys` or generic event triggers.
 
-**Declared but unverifiable plugins** (for example macOS-only ones on a Linux machine) still get a catalog entry and an in-depth section, written as a best effort from the spec and the plugin's documentation, with an explicit "Unverified" disclaimer in both places.
+**Declared but unverifiable plugins** (for example macOS-only ones on a Linux machine) still get a catalog entry and an in-depth section, written as a best effort from the spec and the plugin's documentation. The guide text carries NO "Unverified" label; list the plugin and what could not be checked only in the memory file `~/.claude/projects/-home-krit-dotfiles/memory/neovim-guide-unverified-items.md`, and tell the user in the report.
 
 `11-plugins.md` also carries `<!-- plugin-count: N -->` with the current total. `build-pdf.py --check` FAILS when: a plugin has no entry; an entry has no link outside `11-plugins.md`; a link does not resolve; the linked section (heading plus its subsections) never mentions the plugin name; an entry names a plugin that is not in the config; or the count is wrong. So "every plugin has an in-depth description" is enforced, not a convention. Shared sections (colorschemes, libraries) are fine as long as each plugin is named inside them.
 
 ## Steps
 
 1. Get the real plugin list and the facts: spec in `lua/plugin_specs.lua` or `lua/config/*.lua` (`enabled`, `cond`, `ft`, `cmd`, `keys`), its keymap `desc`s, its commands. Document only behavior you verified; never invent keys. Say so when a plugin is disabled or conditional.
-2. Write or extend the in-depth section first (fix wrong text before adding; existing format; no renumbering; "tested" only because the user confirmed).
+2. Write or extend the in-depth section first (fix wrong text before adding; existing format; no renumbering; no "tested"/"unverified" labels in the guide, unconfirmed items go only to the memory file).
 3. Add the catalog entry with a link to that section. Link form: relative `NN-name.md#anchor`, anchor per the slug rules of `build-pdf.py`.
 4. Removed or renamed plugin: delete or rename its catalog entry and every guide mention in the same change.
 5. `./build-pdf.py` then `./build-pdf.py --check` must print `OK`. `--check` compares `11-plugins.md` with that declared list and fails on a missing or extra plugin or a broken link; fix the markdown, never the PDF.

@@ -41,7 +41,7 @@ A server is enabled only when ALL its programs are on PATH; otherwise it is skip
 | `<Space>ca` | **Code action**: show available fixes/refactors |
 | `<Space>fm` | **Format** the file on demand (LSP formatter, async). Lua: stylua. Markdown: prettier. Lua, Python and JSON have `<Space>f` (stylua / black / `:JSONFormat`) |
 
-Example (tested with pyright; the same file is used for the next examples):
+Example (with pyright; the same file is used for the next examples):
 
 ```python
 def load(path):          # line 1
@@ -55,13 +55,13 @@ x = load("a.txt")        # line 10, the cursor is on "load"
 | `K` | A small bordered float shows the signature: `(function) def load(path: Unknown) -> str` (the type text comes from pyright); it closes when you move |
 | `<Space>rn` | A "New Name" popup opens with `load` in it; erase it with `<BS>`, type `read`, `<Enter>`: line 1 becomes `def read(path):` and line 10 `x = read("a.txt")`. To cancel: `<Esc>` only leaves Insert mode (the popup stays open, in Normal mode); then `:q<Enter>` closes it with nothing renamed and your file still open |
 
-**Why press `K` twice (going into the hover float).** The first `K` shows the documentation in a small float and leaves your cursor where it was; the float disappears as soon as you move. A second `K` moves the cursor INTO the float, where it stays until you close it. The float is then a read-only Markdown window (tested in a Lua file with `lua_ls`), so you can use normal Neovim keys on the documentation:
+**Why press `K` twice (going into the hover float).** The first `K` shows the documentation in a small float and leaves your cursor where it was; the float disappears as soon as you move. A second `K` moves the cursor INTO the float, where it stays until you close it. The float is then a read-only Markdown window (in a Lua file with `lua_ls`), so you can use normal Neovim keys on the documentation:
 
 | Keys in the float | What happens |
 | --- | --- |
 | `j` `k`, `gg`, `G` | Move and scroll through a long documentation text that does not fit in the small float |
 | `V` then `j`, then `y` | Copy lines of the documentation into a register, to paste them into your code or notes (it is read-only, so nothing in the float can be changed) |
-| `/word<Enter>` | Search inside the documentation (tested: `/Returns` jumped to the line with that word) |
+| `/word<Enter>` | Search inside the documentation (`/Returns` jumped to the line with that word) |
 | `q` or `<Esc>` | Close the float; the cursor is back in your file on the same spot |
 
 So going inside is not only "more readable": it is how you scroll long docs, search them and copy from them. For a short signature the first `K` is enough.
@@ -106,7 +106,7 @@ Plugin: glance.nvim. Preview definitions/references in a popup, without leaving 
 | `<Space>gr` | Peek at all references |
 | `<Space>gi` | Peek at implementations |
 
-Example (tested; `<Space>gr` with the cursor on `load` in `x = load("a.txt")`): a panel opens across the window with two panes. The left pane previews the code (the file with its line numbers), the right pane is titled `References (2)` and lists `def load(path):` and `x = load("a.txt")`. `<Esc>` closes the panel and the cursor is back on the line where it was.
+Example (`<Space>gr` with the cursor on `load` in `x = load("a.txt")`): a panel opens across the window with two panes. The left pane previews the code (the file with its line numbers), the right pane is titled `References (2)` and lists `def load(path):` and `x = load("a.txt")`. `<Esc>` closes the panel and the cursor is back on the line where it was.
 
 ```
 +----------------------------------+-------------------------+
@@ -131,7 +131,7 @@ Nerd Font signs in the gutter: 󰅚 (error), 󰀪 (warning), 󰋽 (info), 󰌶 (
 | `<Space>qw` | Send the diagnostics of all open buffers to the quickfix list |
 | `<Space>qb` | Send buffer diagnostics to quickfix list |
 
-Example (tested with pyright on a file whose last line is `print(undefined_name)`): the line gets a 󰅚 sign in the gutter, and after a moment a float appears under it:
+Example (with pyright on a file whose last line is `print(undefined_name)`): the line gets a 󰅚 sign in the gutter, and after a moment a float appears under it:
 
 ```
  󰅚 11   print(undefined_name)
@@ -558,7 +558,7 @@ Plugin: nvim-ufo. Folds code blocks using the LSP folding ranges, falling back t
 | `<Space>K` | Preview folded lines in a popup |
 | `zi` | Toggle folding feature on/off |
 
-Example (tested, a Python file; `zM` closes every fold). Before:
+Example (a Python file; `zM` closes every fold). Before:
 
 ```
  1  def load(path):
@@ -576,7 +576,7 @@ After `zM` the whole function is one line: the first line of the fold, then `�
 
 `za` on that line opens it again, `zR` opens every fold, and `<Space>K` shows the hidden lines in a popup without opening the fold.
 
-Java example (tested in a real Neovim on a class, without jdtls running: ufo then uses its other fold providers). A class `public class X {` holding several methods:
+Java example (in a real Neovim on a class, without jdtls running: ufo then uses its other fold providers). A class `public class X {` holding several methods:
 
 - `zc` on any line inside a method closes that method; the line shows `󰁂  N` (N = hidden lines). `zo` opens it, `za` toggles it.
 - `zM` closes everything: only the class line `public class X {` is left, with the count of all hidden lines.
@@ -664,9 +664,9 @@ Adds many additional text objects for quotes, brackets, arguments, separators. W
 
 ## vim-matchup (plugin)
 
-Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, etc.). Shows offscreen match in popup. Also: `g%` (backwards `%`), `[%` / `]%` (start / end of the enclosing pair), `z%` (into the next pair), text objects `i%` / `a%`. `g%` and `[%` / `]%` were tested (`g%` from `if` goes backwards to `end`). `z%` was tested in a real terminal: from `if` it moves to the closing `)` of the next pair inside the block.
+Enhanced `%` matching for language keywords (`if`/`else`/`end`, `do`/`while`, etc.). Shows offscreen match in popup. Also: `g%` (backwards `%`), `[%` / `]%` (start / end of the enclosing pair), `z%` (into the next pair), text objects `i%` / `a%`. With `g%` and `[%` / `]%`, `g%` from `if` goes backwards to `end`. `z%` in a real terminal: from `if` it moves to the closing `)` of the next pair inside the block.
 
-Example (tested in a real `.lua` file):
+Example (in a real `.lua` file):
 
 ```lua
 if x then      -- line 1
@@ -691,7 +691,7 @@ Plugin: **nvim-treesitter**. It parses your code into a syntax tree (like an AST
 
 ## Installed parsers
 
-On Nix-managed systems (a folder `/etc/nixos` or `/etc/nix` exists) the parsers come from the nix store (home-manager); Neovim installs nothing. On other systems Neovim installs this fixed set at startup: cpp, diff, dockerfile, git_config, git_rebase, gitcommit, html, json, lua, python, toml, vim. Neovim itself bundles the parsers for c, lua, vim, vimdoc, query and markdown, so those highlight everywhere. Other languages get no tree-sitter highlighting there until you run `:TSInstall <lang>`. Tested on a simulated non-nix system: each of the 12 grammars is downloaded, but the install needs the `tree-sitter` command and a C compiler (`gcc`/`cc`); without the `tree-sitter` command every grammar fails with `Error during "tree-sitter build": ... ENOENT ... 'tree-sitter'` and nothing is installed (the error lines appear again at every start). So on a non-nix machine install `tree-sitter` (the CLI) and a C compiler first.
+On Nix-managed systems (a folder `/etc/nixos` or `/etc/nix` exists) the parsers come from the nix store (home-manager); Neovim installs nothing. On other systems Neovim installs this fixed set at startup: cpp, diff, dockerfile, git_config, git_rebase, gitcommit, html, json, lua, python, toml, vim. Neovim itself bundles the parsers for c, lua, vim, vimdoc, query and markdown, so those highlight everywhere. Other languages get no tree-sitter highlighting there until you run `:TSInstall <lang>`. On a simulated non-nix system: each of the 12 grammars is downloaded, but the install needs the `tree-sitter` command and a C compiler (`gcc`/`cc`); without the `tree-sitter` command every grammar fails with `Error during "tree-sitter build": ... ENOENT ... 'tree-sitter'` and nothing is installed (the error lines appear again at every start). So on a non-nix machine install `tree-sitter` (the CLI) and a C compiler first.
 
 ---
 
@@ -705,7 +705,7 @@ Custom function in `lua/mappings.lua`. Opens the output in a vertical split term
 
 Supported: Python, Java, C, C++, C#, JavaScript, TypeScript, Go, Rust, Bash, Lua, Ruby, PHP. Special cases: Java with jdtls attached runs `:JavaRunnerRunMain` (nvim-java's own runner split at the bottom, not the `<Space>rr` terminal on the left); Rust inside a cargo project runs `cargo run`; C# with a `.csproj` runs `dotnet run --project`; Go runs `go run .` for the whole package.
 
-Example (tested): in a saved `hi.py` containing `print("hi")`, `<Space>rr` opens the output on the left and keeps your code on the right. The output stays after the program ends, with a line `[Process exited 0]` below it, until you close it with `<Space>q`:
+Example: in a saved `hi.py` containing `print("hi")`, `<Space>rr` opens the output on the left and keeps your code on the right. The output stays after the program ends, with a line `[Process exited 0]` below it, until you close it with `<Space>q`:
 
 ```
 +---------------------------+----------------------+
@@ -813,7 +813,7 @@ Plugin: **nvim-gdb**. A visual front end for GDB, LLDB, pdb and a few other debu
 
 The command forms are the plugin's documented usage (its README); the pdb one is what `<Space>dp` runs, the others were not run for this guide.
 
-Example (tested with gdb 17 on a small C file): compile with `gcc -g a.c -o a.out`, open `a.c` in Neovim and run `:GdbStart gdb -q ./a.out`. A gdb terminal opens below the source. Move to the source window (`<Ctrl-\><Ctrl-n>`, then `<Ctrl-w>k`), put the cursor on `int y = x * 3;` and press `<F8>`: a `●` appears in the sign column. `<F5>` (continue) only works while the program runs: before that it prints "The program is not being run." in the gdb pane; start it with `:GdbRun`. It stops at the breakpoint and the line is marked with `▶`. `<F10>` steps over to the next line (the `▶` moves down one line).
+Example (with gdb 17 on a small C file): compile with `gcc -g a.c -o a.out`, open `a.c` in Neovim and run `:GdbStart gdb -q ./a.out`. A gdb terminal opens below the source. Move to the source window (`<Ctrl-\><Ctrl-n>`, then `<Ctrl-w>k`), put the cursor on `int y = x * 3;` and press `<F8>`: a `●` appears in the sign column. `<F5>` (continue) only works while the program runs: before that it prints "The program is not being run." in the gdb pane; start it with `:GdbRun`. It stops at the breakpoint and the line is marked with `▶`. `<F10>` steps over to the next line (the `▶` moves down one line).
 
 ```
  ●  5   int y = x * 3;          before :GdbRun: breakpoint
@@ -936,7 +936,7 @@ Plugin: **nvim-devdocs**. Browse programming documentation without leaving Neovi
 
 The plugin loads only when you run one of these commands. Without an argument, `:DevdocsOpen`, `:DevdocsInstall` and the others use a Telescope picker. Installing builds the documentation synchronously (large sets can block input for a while) and needs the network; `:DevdocsFetch`, `:DevdocsInstall` and the updates download, reading an installed set is local. The command descriptions follow the plugin's README (not run for this guide). No keys are mapped; the plugin's own "open in browser" key is disabled in `lua/config/devdocs.lua`.
 
-Example (tested with the Python 3.9 set; downloading and building it took about 40 seconds and freezes Neovim meanwhile, after the question "Building large docs can freeze neovim, continue? y/n"; answer `y` and `<Enter>`):
+Example (with the Python 3.9 set; downloading and building it took about 40 seconds and freezes Neovim meanwhile, after the question "Building large docs can freeze neovim, continue? y/n"; answer `y` and `<Enter>`):
 
 1. `:DevdocsFetch` downloads the list of available sets.
 2. `:DevdocsInstall` opens a picker; type `python`, move to the set you want (the list offers `python-3.9`, `python-3.14`, ...) and press `<Enter>`.
@@ -951,7 +951,7 @@ Press `K` on any symbol to see its documentation in a floating window. This pull
 - Docstrings / JSDoc / Javadoc
 - Type information
 
-Example (tested, Python buffer): `K` on `open` in `with open(path) as f:` shows a bordered float with the signature, one parameter per line (`(function) def open(` / `file: FileDescriptorOrPath,` / `mode: OpenTextMode = "r",` / ... / `) -> TextIOWrapper[_WrappedBuffer]`). On a keyword such as `with` there is nothing to show and the message "No information available" appears instead.
+Example (Python buffer): `K` on `open` in `with open(path) as f:` shows a bordered float with the signature, one parameter per line (`(function) def open(` / `file: FileDescriptorOrPath,` / `mode: OpenTextMode = "r",` / ... / `) -> TextIOWrapper[_WrappedBuffer]`). On a keyword such as `with` there is nothing to show and the message "No information available" appears instead.
 
 ---
 
@@ -1059,7 +1059,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 5. `ci"` to change a value inside quotes
 6. `<Space>w` to save
 
-Result of step 2 (tested): the one-line file `{"a":1,"b":[2,3]}` becomes seven lines with two-space indentation:
+Result of step 2: the one-line file `{"a":1,"b":[2,3]}` becomes seven lines with two-space indentation:
 
 ```json
 {
@@ -1187,7 +1187,7 @@ On Nix systems the JDK comes from the Java devShell (`JAVA_HOME`) and nvim-java 
 | --- | --- | --- |
 | `<Space>jd` | `:JavaDapConfig` | Configure the debug adapter (auto-runs on Java file open, but can be re-triggered) |
 
-DAP is configured automatically when jdtls starts. Four global keys (all tested in a scratch copy of the config and confirmed by the owner):
+DAP is configured automatically when jdtls starts. Four global keys (all in a scratch copy of the config):
 
 | Keymap | Same as | What it does |
 | --- | --- | --- |

@@ -32,7 +32,7 @@ The fugitive keys (and the [gitlinker keys](#gitlinkernvim-plugin) below) exist 
 | `<Space>gf` | n | Puts `:Git fetch ` on the command line (add arguments, then Enter) |
 | `<Space>gbl` | n | Fuzzy-search git branches and check one out (fzf-lua) |
 
-Example (tested): in a repository with one changed tracked file and one new file, `<Space>gs` opens the status window:
+Example: in a repository with one changed tracked file and one new file, `<Space>gs` opens the status window:
 
 ```
 Head: main
@@ -74,7 +74,7 @@ A **hunk** is a contiguous block of changed lines. With the hunk keys you can st
 | `<Space>hd` | n | Diff the file against the index |
 | `<Space>ht` | n | Toggle showing deleted lines |
 
-Example (tested): compared with the last commit, `b = 2,` was changed to `b = 20,`, the line `d = 4,` was deleted and two lines were added at the end. The gutter shows:
+Example: compared with the last commit, `b = 2,` was changed to `b = 20,`, the line `d = 4,` was deleted and two lines were added at the end. The gutter shows:
 
 ```
    1  return {
@@ -87,7 +87,7 @@ Example (tested): compared with the last commit, `b = 2,` was changed to `b = 20
    8  }
 ```
 
-The cursor on the `b = 20,` line and `<Space>hs` stages only that hunk (tested): `git diff --staged` then contains just the `b` change, while the deleted and added lines are still unstaged, and the sign of that hunk changes to `┃`. `<Space>hu` unstages it again. `<Space>hr` asks `Reset this hunk (discard the change)? (Y)es, [N]o:`; with `y` the line is `b = 2,` again.
+The cursor on the `b = 20,` line and `<Space>hs` stages only that hunk: `git diff --staged` then contains just the `b` change, while the deleted and added lines are still unstaged, and the sign of that hunk changes to `┃`. `<Space>hu` unstages it again. `<Space>hr` asks `Reset this hunk (discard the change)? (Y)es, [N]o:`; with `y` the line is `b = 2,` again.
 
 ## gitlinker.nvim (plugin)
 
@@ -96,7 +96,7 @@ The cursor on the `b = 20,` line and `<Space>hs` stages only that hunk (tested):
 | `<Space>gl` | n, x | Copy permalink for current line(s) |
 | `<Space>gbr` | n | Open repository in browser |
 
-Example (tested, with the placeholder remote `https://github.com/user/repo.git`): select lines 3 to 5 of `lua/mappings.lua` (`Vjj`) and press `<Space>gl`; the link is
+Example (with the placeholder remote `https://github.com/user/repo.git`): select lines 3 to 5 of `lua/mappings.lua` (`Vjj`) and press `<Space>gl`; the link is
 `https://github.com/user/repo/blob/<full commit hash>/lua/mappings.lua#L3-L5`.
 The link needs the current commit to exist on the remote branch (the local `origin/<branch>` has to contain it): without that nothing is copied and no message appears.
 
@@ -127,7 +127,7 @@ vim-flog shows the history of the repository as a graph: one line per commit, wi
 | `u` (inside Flog) | Reload the graph |
 | `gq` or `ZZ` (inside Flog) | Quit Flog |
 
-Example (tested; a merge of two branches, hashes shortened):
+Example (a merge of two branches, hashes shortened):
 
 ```
    • [0ed345a] (HEAD -> main) Merge branch 'feature'
@@ -188,7 +188,7 @@ During a merge, `:DiffviewOpen` opens the 3-way merge tool. Inside a diffview vi
 | `<Space>gCb` / `<Space>gCa` | Choose BASE / BOTH |
 | `]C` / `[C` | Next / previous conflict (capital C; `]c` / `[c` stay the gitsigns hunk keys) |
 
-Example (tested; `main` and `feature` both changed the line `b = 2,`): `:DiffviewOpen` shows OURS and THEIRS side by side at the top and the working file (LOCAL) below, with the conflict markers in it. In the LOCAL window `]C` jumps to the conflict, then:
+Example (`main` and `feature` both changed the line `b = 2,`): `:DiffviewOpen` shows OURS and THEIRS side by side at the top and the working file (LOCAL) below, with the conflict markers in it. In the LOCAL window `]C` jumps to the conflict, then:
 
 ```
 <<<<<<< HEAD                 <Space>gCo (ours)    <Space>gCt (theirs)    <Space>gCa (both)
@@ -198,7 +198,7 @@ Example (tested; `main` and `feature` both changed the line `b = 2,`): `:Diffvie
 >>>>>>> feature
 ```
 
-`<Space>gCb` (BASE) gives the part between the `|||||||` and `=======` markers; with git's default conflict style that part does not exist, so the conflicting lines simply disappear (tested). `u` undoes a choice.
+`<Space>gCb` (BASE) gives the part between the `|||||||` and `=======` markers; with git's default conflict style that part does not exist, so the conflicting lines simply disappear. `u` undoes a choice.
 
 `<Space>cb` and `<Space>ca` keep their normal meaning inside diffview. fugitive's `:Gvdiffsplit!` is the other way to resolve a conflict.
 

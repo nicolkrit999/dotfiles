@@ -181,7 +181,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Adding surrounding pairs (vim-sandwich plugin)](03-editing.md#adding-surrounding-pairs-vim-sandwich-plugin)
         - [Removing surrounding pairs (vim-sandwich plugin)](03-editing.md#removing-surrounding-pairs-vim-sandwich-plugin)
         - [Replacing surrounding pairs (vim-sandwich plugin)](03-editing.md#replacing-surrounding-pairs-vim-sandwich-plugin)
-            - [Wrap a whole list or part of it (tested headless in a scratch copy)](03-editing.md#wrap-a-whole-list-or-part-of-it-tested-headless-in-a-scratch-copy)
+            - [Wrap a whole list or part of it (headless in a scratch copy)](03-editing.md#wrap-a-whole-list-or-part-of-it-headless-in-a-scratch-copy)
         - [Auto-pairing (nvim-autopairs plugin)](03-editing.md#auto-pairing-nvim-autopairs-plugin)
     - [16. Code commenting](03-editing.md#16-code-commenting)
         - [vim-commentary (plugin)](03-editing.md#vim-commentary-plugin)
@@ -197,8 +197,8 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Playing a macro](03-editing.md#playing-a-macro)
         - [Scenario: add semicolons to the end of 20 lines](03-editing.md#scenario-add-semicolons-to-the-end-of-20-lines)
         - [Scenario: wrap each line in double quotes](03-editing.md#scenario-wrap-each-line-in-double-quotes)
-        - [Scenario: append the same text to a block of lines (tested)](03-editing.md#scenario-append-the-same-text-to-a-block-of-lines-tested)
-        - [Scenario: turn // name lines into names.add("name"); calls (confirmed by the user)](03-editing.md#scenario-turn--name-lines-into-namesaddname-calls-confirmed-by-the-user)
+        - [Scenario: append the same text to a block of lines](03-editing.md#scenario-append-the-same-text-to-a-block-of-lines)
+        - [Scenario: turn // name lines into names.add("name"); calls](03-editing.md#scenario-turn--name-lines-into-namesaddname-calls)
         - [Scenario: convert a list of variables to assignments](03-editing.md#scenario-convert-a-list-of-variables-to-assignments)
         - [Scenario: turn CSV into SQL VALUES](03-editing.md#scenario-turn-csv-into-sql-values)
         - [Tips for writing macros](03-editing.md#tips-for-writing-macros)
@@ -632,6 +632,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Citations (bibliography)](languages/latex.md#citations-bibliography)
         - [Grammar and spelling (ltex_plus)](languages/latex.md#grammar-and-spelling-ltex_plus)
         - [Snippets](languages/latex.md#snippets)
+            - [Math symbols](languages/latex.md#math-symbols)
         - [Troubleshooting](languages/latex.md#troubleshooting)
         - [Related sections](languages/latex.md#related-sections)
 
@@ -650,6 +651,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Formatting with prettier](languages/markdown.md#formatting-with-prettier)
         - [PDF export (:ToPDF)](languages/markdown.md#pdf-export-topdf)
         - [Snippets](languages/markdown.md#snippets)
+            - [Math symbols](languages/markdown.md#math-symbols)
         - [Writing quality](languages/markdown.md#writing-quality)
             - [ltex_plus (grammar, LanguageTool)](languages/markdown.md#ltex_plus-grammar-languagetool)
             - [Vim spell checking](languages/markdown.md#vim-spell-checking)
@@ -670,6 +672,10 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Filetype settings](languages/typst.md#filetype-settings)
         - [Example document](languages/typst.md#example-document)
             - [What to try](languages/typst.md#what-to-try)
+        - [Snippets](languages/typst.md#snippets)
+            - [Starting flow](languages/typst.md#starting-flow)
+            - [Math delimiters](languages/typst.md#math-delimiters)
+            - [Math symbols](languages/typst.md#math-symbols)
         - [Troubleshooting](languages/typst.md#troubleshooting)
         - [Related sections](languages/typst.md#related-sections)
 
@@ -772,6 +778,9 @@ More: sections [3](02-navigation.md#3-core-navigation-moving-without-the-mouse),
 | `diw` / `ciw` / `yiw` | Delete / change / copy the word under the cursor (`c` does not overwrite your paste register) |
 | `5dd` / `5yy` | Delete / copy 5 lines |
 | `<Alt-j>` / `<Alt-k>` | Move the line (or selection) down / up |
+| `;3m10<CR>` / `;.m+2<CR>` | Move line 3 below line 10 / move the current line below the line 2 further down (`;` is `:`; `m` puts the line BELOW the target, `m0` = top) |
+| `;.t+2<CR>` | Copy the current line below the line 2 further down (`t` copies, `m` moves) |
+| `d` / `dd` / `D` / `x` then `p` | Delete is cut: there is no separate cut key. `c` / `C` / `cc` do not fill the register |
 | `<Space>y` | Copy the whole buffer |
 | `<Space>p` / `<Space>P` | Paste on a new line below / above |
 | `p` in Visual mode | Replace the selection with what you copied |
@@ -779,7 +788,7 @@ More: sections [3](02-navigation.md#3-core-navigation-moving-without-the-mouse),
 | `:Rename <name>` / `:Move <path>` / `:Duplicate <name>` / `:Delete` | Rename, move, copy or delete the current FILE |
 | tree: `a` `d` `r` `c` `x` `p` | Create, delete, rename, copy, cut, paste files in the file tree |
 
-More: sections [4](03-editing.md#4-editing), [11](05-search-and-files.md#11-file-explorer-nvim-tree), [24](03-editing.md#24-yank-history-yankynvim), [57](05-search-and-files.md#57-file-management-for-developers).
+More (moving lines by number, a selection, part of a line: [Non-contiguous lines](03-editing.md#non-contiguous-lines-for-example-line-3-and-line-10-together)): sections [4](03-editing.md#4-editing), [11](05-search-and-files.md#11-file-explorer-nvim-tree), [24](03-editing.md#24-yank-history-yankynvim), [57](05-search-and-files.md#57-file-management-for-developers).
 
 ### Indented blocks
 
@@ -1083,7 +1092,7 @@ More: section [79](languages/python.md#79-python-pyright-ruff-black-uv-running-a
 
 ### Java debugger keys (nvim-dap through nvim-java)
 
-Global keys; all four (`<Space>jp`, `<Space>jh`, `<Space>jP`, `<Space>jx`) confirmed by the owner. Stepping and continuing have no keys: type the commands.
+Global keys; all four (`<Space>jp`, `<Space>jh`, `<Space>jP`, `<Space>jx`). Stepping and continuing have no keys: type the commands.
 
 | Keys | What it does |
 | --- | --- |
@@ -1092,8 +1101,8 @@ Global keys; all four (`<Space>jp`, `<Space>jh`, `<Space>jP`, `<Space>jx`) confi
 | `:DapStepOver` / `:DapStepInto` / `:DapStepOut` | Next line / into the call / back to the caller |
 | `<Space>jh` | While paused: show the value of the variable under the cursor |
 | `<Space>jx` | Stop the debug session |
-| `<Space>jP` | Remove ALL breakpoints in all files at once (capital P; no undo; confirmed by the owner) |
-| `:DapClearBreakpoints` | Same as `<Space>jP` (confirmed by the owner; `<Space>jp` removes only the one on the line) |
+| `<Space>jP` | Remove ALL breakpoints in all files at once (capital P; no undo) |
+| `:DapClearBreakpoints` | Same as `<Space>jP` (`<Space>jp` removes only the one on the line) |
 
 More: section [78](languages/java.md#7-debugging).
 

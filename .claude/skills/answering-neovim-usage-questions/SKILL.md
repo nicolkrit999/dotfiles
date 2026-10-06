@@ -31,7 +31,7 @@ The guide is large; never read it whole. It is divided on purpose, and chapter n
 ## Hard rules
 
 1. **Never invent a solution.** If the thing cannot be done the way the user asked, say so plainly. If it needs several steps, list the steps and say it needs several steps. Do not present a workaround as if it were one command.
-2. **Adding to the guide needs the user's confirmation that it worked.** The user reporting the working keymap or command is the approval, and then the update in `./debugging-and-guide-update-flow.md` section 3 runs automatically. Without that report, add nothing and do not write "tested" or "verified" from reasoning alone.
+2. **Adding to the guide needs the user's confirmation that it worked.** The user reporting the working keymap or command is the approval, and then the update in `./debugging-and-guide-update-flow.md` section 3 runs automatically. Without that report, add nothing to the guide. Items not yet confirmed are tracked ONLY in the memory file `~/.claude/projects/-home-krit-dotfiles/memory/neovim-guide-unverified-items.md` (what, where it would go, what must be tried), never in the guide, and move into the guide, unlabelled, once the user confirms.
 3. **If unsure, say so clearly** (see "Uncertain answers").
 4. **Be skeptical of both sources, every time** (next section).
 
@@ -59,7 +59,7 @@ Never trust the guide alone, and never answer from generic Vim knowledge alone. 
 - Is the plugin enabled, or commented out in `plugin_specs.lua`?
 - Options that change behaviour (`nowrap`, `ignorecase smartcase`, `relativenumber`): check `lua/options.lua`.
 - A quick sandbox test is allowed (scratch copy under `/tmp` or the scratchpad, `isolated-nvim.sh`, private `tmux -L`; never push, never credentials; see the auditing skill's verification doc, section 1 rule 4).
-- **Toolchain tests (devShells).** If a check needs a language toolchain, git history or a real project, build a fake repo under `/tmp` (copy of this repo or a small well-known project in that language) and run `nix develop ~/nix/templates/krit/dev-environments/language-specific/<lang>` there, then `nvim --headless` from inside it (no `direnv allow` needed). Test tool availability with `vim.fn.exepath` inside nvim, not `which` (global on nvim's PATH: prettier, pyright, stylua, lua-language-server, nixd, typos-lsp, ltex-ls-plus, marksman; devShell-only: black, ruff, rust-analyzer, gopls, tinymist/typst, texlab/latex). Never write inside `~/dotfiles` for tests. Leave UNVERIFIED only what still fails after several attempts (UI-only, visual look, inconsistent results) and record it in `~/.claude/projects/-home-krit-dotfiles/memory/neovim-guide-unverified-items.md`. Full rule: `skills/auditing-neovim-config/verification-gates-and-isolated-harness.md` section 6.1.
+- **Toolchain tests (devShells).** If a check needs a language toolchain, git history or a real project, build a fake repo under `/tmp` (copy of this repo or a small well-known project in that language) and run `nix develop ~/nix/templates/krit/dev-environments/language-specific/<lang>` there, then `nvim --headless` from inside it (no `direnv allow` needed). Test tool availability with `vim.fn.exepath` inside nvim, not `which` (global on nvim's PATH: prettier, pyright, stylua, lua-language-server, nixd, typos-lsp, ltex-ls-plus, marksman; devShell-only: black, ruff, rust-analyzer, gopls, tinymist/typst, texlab/latex). Never write inside `~/dotfiles` for tests. Leave UNVERIFIED only what still fails after several attempts (UI-only, visual look, inconsistent results) and record it ONLY in `~/.claude/projects/-home-krit-dotfiles/memory/neovim-guide-unverified-items.md`. Full rule: `skills/auditing-neovim-config/verification-gates-and-isolated-harness.md` section 6.1.
 
 If a check is not possible, say which part could not be verified.
 
@@ -94,7 +94,7 @@ If a key sequence does nothing, needs an extra key, or types a strange or accent
 
 - The usual layout is US International (with dead keys) but the user works from different PCs: never assume, always ask. Do not blame the config before the answer. The guide has a section on dead-key keyboard layouts (find it through the table of contents).
 - Quick test: type the key then a letter in Insert mode and see whether an accented letter appears.
-- Only write confirmed layout facts into the guide.
+- Only write confirmed layout facts into the guide (unlabelled); unconfirmed ones go to the memory file only.
 
 ### 5. Always end by asking whether it worked
 Last line of every answer that gave steps, plain and short, for example: **"Did these steps work?"** Then act on the reply, following `./debugging-and-guide-update-flow.md`:
@@ -111,7 +111,7 @@ Last line of every answer that gave steps, plain and short, for example: **"Did 
 - Generalize: no variable names, file names or snippets from the user's current code. Neutral placeholders (`foo`, `X`, `<char>`).
 - Put it in the matching chapter and section, found with the table of contents and file names. Extend an existing subsection before creating a new one. Do not renumber sections; update any quick-lookup table the entry belongs in.
 - Match the format: Markdown tables for key / effect, short bullets for caveats, backticked keys. Include what surprised the user: remaps, modes, counts, what a selection includes.
-- State status honestly: "tested" only because the user confirmed the exact keys.
+- **No status labels in the guide, ever.** Never write "tested", "confirmed by the owner", "unverified", "assumption", "not tested" or any similar marker in `user-guide/`: guide text is understood to be verified. What is unverified lives only in the memory file `neovim-guide-unverified-items.md`; so only user-confirmed (or sandbox-confirmed and then user-confirmed) facts enter the guide, stated plainly. Any such marker found while editing a section you touch is removed or, if it flags something truly unconfirmed, moved to the memory file and the unconfirmed claim taken out of the guide.
 - Never duplicate: edit a nearly identical entry instead. Fix wrong text before adding new.
 - Plugins: a new, removed or changed plugin is documented in TWO places, a brief entry in `user-guide/11-plugins.md` and an in-depth section in a chapter the agent chooses. Full procedure: `./documenting-plugins-in-the-guide.md`.
 - Touch only the files in `user-guide/` for the guide part (the keymap `desc` check may touch the Lua config line of the key). Do not commit unless the user asks. The repo is public: no secrets or private paths.
