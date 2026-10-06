@@ -362,6 +362,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Session management (persistence.nvim, vim-obsession)](06-windows-terminal-sessions.md#session-management-persistencenvim-vim-obsession)
         - [Collaborative editing (instant.nvim)](06-windows-terminal-sessions.md#collaborative-editing-instantnvim)
     - [32. Statusline (lualine.nvim)](06-windows-terminal-sessions.md#32-statusline-lualinenvim)
+        - [Long-line warning](06-windows-terminal-sessions.md#long-line-warning)
     - [33. UI features](06-windows-terminal-sessions.md#33-ui-features)
         - [Breadcrumb bar (dropbar.nvim)](06-windows-terminal-sessions.md#breadcrumb-bar-dropbarnvim)
         - [LSP progress messages (fidget.nvim)](06-windows-terminal-sessions.md#lsp-progress-messages-fidgetnvim)

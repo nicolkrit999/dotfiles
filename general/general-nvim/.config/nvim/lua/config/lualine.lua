@@ -230,6 +230,103 @@ local function mixed_indent()
   return ""
 end
 
+-- "line too long" warning: lines that reach the colored column ('colorcolumn', set per filetype in
+-- lua/options.lua). Switched on/off with :LongLineWarn (global, on by default).
+vim.g.long_line_warn = true
+
+--- the column of the marker: the first plain number in 'colorcolumn' ("+1"/"-1" are relative to
+--- 'textwidth' and are not used); nil when there is no marker
+local function marker_column()
+  for item in vim.gsplit(vim.wo.colorcolumn, ",", { plain = true }) do
+    if item:match("^%d+$") then
+      return tonumber(item)
+    end
+  end
+end
+
+--- first over-long line (1-based), their count and the width of the first, for ONE buffer
+local function scan_long_lines(buf, limit)
+  local n = vim.api.nvim_buf_line_count(buf)
+  local r = { count = 0 }
+  local CHUNK = 5000
+  for s = 0, n - 1, CHUNK do
+    local lines = vim.api.nvim_buf_get_lines(buf, s, math.min(s + CHUNK, n), false)
+    for i, l in ipairs(lines) do
+      -- display width is never more than the byte length, except for tabs: only measure candidates
+      if #l >= limit or l:find("\t", 1, true) then
+        if fn.strdisplaywidth(l) >= limit then
+          r.count = r.count + 1
+          r.first = r.first or (s + i)
+        end
+      end
+    end
+  end
+  return r
+end
+
+-- the scan runs at most once per buffer change / marker change, not on every redraw
+local ll_cache = {} -- bufnr -> { tick, limit, tabstop, result }
+
+local function long_line()
+  if not vim.g.long_line_warn or vim.bo.buftype ~= "" then
+    return ""
+  end
+  -- do not warn while typing (insert mode, incl. ic/ix completion sub-modes)
+  if vim.api.nvim_get_mode().mode:sub(1, 1) == "i" then
+    return ""
+  end
+  local limit = marker_column()
+  if not limit then
+    return ""
+  end
+
+  local buf = vim.api.nvim_get_current_buf()
+  local tick, ts = vim.api.nvim_buf_get_changedtick(buf), vim.bo.tabstop
+  local c = ll_cache[buf]
+  if not c or c.tick ~= tick or c.limit ~= limit or c.tabstop ~= ts then
+    c = { tick = tick, limit = limit, tabstop = ts, result = scan_long_lines(buf, limit) }
+    ll_cache[buf] = c
+  end
+  local r = c.result
+  if not r.first then
+    return ""
+  end
+  local msg = string.format("[%d]>%d", r.first, limit)
+  if r.count > 1 then
+    msg = msg .. string.format(" (+%d)", r.count - 1)
+  end
+  return msg
+end
+
+vim.api.nvim_create_autocmd("BufWipeout", {
+  group = vim.api.nvim_create_augroup("lualine_ll_cache", { clear = true }),
+  callback = function(ev)
+    ll_cache[ev.buf] = nil
+  end,
+  desc = "lualine: drop the long-line cache of a wiped buffer",
+})
+
+vim.api.nvim_create_user_command("LongLineWarn", function(opts)
+  local arg = opts.args
+  if arg == "on" then
+    vim.g.long_line_warn = true
+  elseif arg == "off" then
+    vim.g.long_line_warn = false
+  else
+    vim.g.long_line_warn = not vim.g.long_line_warn
+  end
+  pcall(function()
+    require("lualine").refresh()
+  end)
+  vim.notify("Long-line warning " .. (vim.g.long_line_warn and "ON" or "OFF"), vim.log.levels.INFO)
+end, {
+  nargs = "?",
+  complete = function()
+    return { "on", "off", "toggle" }
+  end,
+  desc = "Statusline warning for lines that reach the colorcolumn: on, off or toggle (default)",
+})
+
 -- show encoding only when it is not UTF-8
 local function show_encoding()
   local fileencoding = vim.api.nvim_get_option_value("fileencoding", { buf = 0 })
@@ -487,6 +584,10 @@ require("lualine").setup {
         get_active_lsp,
         icon = "\u{f013}",
         on_click = show_lsp_menu,
+      },
+      {
+        long_line,
+        color = "WarningMsg",
       },
       {
         trailing_space,
