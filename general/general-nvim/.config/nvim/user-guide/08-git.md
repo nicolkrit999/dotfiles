@@ -24,8 +24,8 @@ The fugitive keys (and the [gitlinker keys](#gitlinkernvim-plugin) below) exist 
 | `<Space>gm` / `<Space>gR` | n | Puts `:Git merge ` / `:Git rebase ` on the command line: type the rest and press Enter |
 | `<Space>gn` | n | Open Neogit (`:Neogit`) |
 | `<Space>gD` | n | Open Diffview (`:DiffviewOpen`) |
-| `<Space>gpl` | n | Git pull |
-| `<Space>gpu` | n | Git push (opens terminal split) |
+| `<Space>gp` | n | Git pull |
+| `<Space>gP` | n | Git push (opens terminal split) |
 | `<Space>gb` | x | Git blame selected lines |
 | `<Space>gbn` | n | Create new branch (prompts for name) |
 | `<Space>gbd` | n | Puts `:Git branch -D ` on the command line: type the branch name and press Enter (force delete) |
@@ -231,8 +231,8 @@ A typical workflow entirely from within Neovim:
 2. **Stage**: `<Space>gw` stages the current file, `<Space>ga` stages everything in the repository, `<Space>hs` stages only the hunk under the cursor (or use `s` in the status window); `<Space>gu` unstages the current file
 3. **Review changes**: `<Space>hp` to preview hunks, or `]c`/`[c` to navigate between them
 4. **Commit**: `<Space>gc` opens a commit message buffer. Write message, then `:wq`
-5. **Push**: `<Space>gpu` pushes (opens a terminal split showing progress)
-6. **Pull**: `<Space>gpl` pulls latest changes
+5. **Push**: `<Space>gP` pushes (opens a terminal split showing progress)
+6. **Pull**: `<Space>gp` pulls latest changes
    (`<Space>gz` stashes your changes first, `<Space>gZ` pops the stash)
 7. **Blame**: Select lines in visual mode, then `<Space>gb` to see who wrote them
 8. **Create branch**: `<Space>gbn` prompts for a branch name

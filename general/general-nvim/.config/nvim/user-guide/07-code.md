@@ -1082,7 +1082,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 6. `<Space>ca` -- apply code action fixes
 7. `<Space>gw` -- stage the file
 8. `<Space>gc` -- commit
-9. `<Space>gpu` -- push
+9. `<Space>gP` -- push
 
 ## Workflow: quickly editing a config file
 
