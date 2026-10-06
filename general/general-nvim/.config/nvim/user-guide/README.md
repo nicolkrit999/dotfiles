@@ -395,6 +395,9 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Lua: lua_ls and stylua](07-code.md#lua-lua_ls-and-stylua)
         - [typos_lsp: where it attaches](07-code.md#typos_lsp-where-it-attaches)
         - [LSP keymaps (all languages)](07-code.md#lsp-keymaps-all-languages)
+        - [Formatting (conform.nvim)](07-code.md#formatting-conformnvim)
+            - [Format on save](07-code.md#format-on-save)
+            - [Keys and commands](07-code.md#keys-and-commands)
         - [Peeking without jumping (glance.nvim)](07-code.md#peeking-without-jumping-glancenvim)
         - [Diagnostics in depth](07-code.md#diagnostics-in-depth)
         - [The lightbulb (nvim-lightbulb)](07-code.md#the-lightbulb-nvim-lightbulb)
@@ -585,7 +588,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Related sections](languages/java.md#related-sections)
 
 14. **[Python](languages/python.md)**
-    - [79. Python (pyright, ruff, black, uv, running and debugging)](languages/python.md#79-python-pyright-ruff-black-uv-running-and-debugging)
+    - [79. Python (pyright, ruff, uv, running and debugging)](languages/python.md#79-python-pyright-ruff-uv-running-and-debugging)
         - [What you get](languages/python.md#what-you-get)
         - [Quick start](languages/python.md#quick-start)
         - [Why each tool exists](languages/python.md#why-each-tool-exists)
@@ -595,7 +598,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
             - [pyright settings (after/lsp/pyright.lua)](languages/python.md#pyright-settings-afterlsppyrightlua)
             - [ruff settings (after/lsp/ruff.lua)](languages/python.md#ruff-settings-afterlsprufflua)
             - [Which environment: get_py_env (lua/utils.lua)](languages/python.md#which-environment-get_py_env-luautilslua)
-            - [Run and format keys (after/ftplugin/python.lua)](languages/python.md#run-and-format-keys-afterftpluginpythonlua)
+            - [Run keys (after/ftplugin/python.lua)](languages/python.md#run-keys-afterftpluginpythonlua)
             - [AsyncRun (lua/plugin_specs.lua)](languages/python.md#asyncrun-luaplugin_specslua)
             - [pdb through nvim-gdb (plugin spec and ftplugin)](languages/python.md#pdb-through-nvim-gdb-plugin-spec-and-ftplugin)
         - [Running code](languages/python.md#running-code)
@@ -918,7 +921,7 @@ More: section [7](06-windows-terminal-sessions.md#7-windows-splits-and-buffers).
 | `<Space>q` | Save and close this window |
 | `<Space>Q` | Quit nvim, asks first (default No), discards unsaved work |
 | `:wa` / `:q!` | Save all buffers / close this window and discard changes |
-| (automatic) | Auto-save: a changed file saves itself when you switch buffer or leave the nvim window; a message "AutoSave: saved at ..." appears (not for unnamed or read-only buffers, terminals, LaTeX and Typst files) |
+| (automatic) | Auto-save: a changed file saves itself when you switch buffer or leave the nvim window; a small popup "AutoSave: saved at ..." appears and the file is not formatted (not for unnamed or read-only buffers, terminals, LaTeX and Typst files) |
 
 More: section [72](01-basics.md#72-saving-quitting-and-file-state).
 
@@ -943,7 +946,8 @@ More: sections [30](05-search-and-files.md#30-working-with-directories) and [58]
 | `gd` / `K` | Go to definition / hover documentation |
 | `<Space>gd` / `<Space>gr` / `<Space>gi` | Peek definitions / references / implementations |
 | `<Space>rn` / `<Space>ca` | Rename symbol / code actions |
-| `<Space>fm` | Format the file |
+| `<Space>fm` | Format the file (Visual mode: the selection) |
+| `<Space>fo` | Toggle format on save (on by default for `:w`) |
 | `]d` / `[d` | Next / previous diagnostic |
 | `<Space>dd` | Show the diagnostic under the cursor |
 
@@ -1003,7 +1007,7 @@ More: sections [7](06-windows-terminal-sessions.md#7-windows-splits-and-buffers)
 | Language | What the guide covers | Section |
 | --- | --- | --- |
 | Java | nvim-java, jdtls, running, JUnit tests, debugging, refactoring, profiles | [78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging) |
-| Python | pyright, ruff, black, uv, `<Space>rf` / `<F9>` and `<Space>rr`, pdb debugging | [79](languages/python.md#79-python-pyright-ruff-black-uv-running-and-debugging) |
+| Python | pyright, ruff, uv, `<Space>rf` / `<F9>` and `<Space>rr`, pdb debugging | [79](languages/python.md#79-python-pyright-ruff-uv-running-and-debugging) |
 | LaTeX | vimtex, texlab, ltex, compiling, the PDF viewer | [80](languages/latex.md#80-latex-vimtex-texlab-ltex-pdf-viewer) |
 | Markdown | marksman, rendering, preview, footnotes, `:ToPDF` | [81](languages/markdown.md#81-markdown-writing-preview-footnotes-pdf) |
 | Typst | tinymist, `<Space>tw` watch, the PDF viewer | [82](languages/typst.md#82-typst-typstvim-tinymist-watch-and-preview) |
@@ -1089,7 +1093,7 @@ Start with `<Space>dp` in a Python buffer (pdb through nvim-gdb); the keys work 
 | `<Space>dv` | Evaluate the word under the cursor (Visual: the selection) |
 | `:GdbDebugStop` | Quit the debugger |
 
-More: section [79](languages/python.md#79-python-pyright-ruff-black-uv-running-and-debugging).
+More: section [79](languages/python.md#79-python-pyright-ruff-uv-running-and-debugging).
 
 ### Java debugger keys (nvim-dap through nvim-java)
 

@@ -280,7 +280,7 @@ Plugin: **auto-save.nvim**. Files are automatically saved when you:
 - Switch to another application (`FocusLost`)
 - Leave the current buffer (`BufLeave`)
 
-It never saves unnamed, read-only or special buffers (terminals, help, ...) and never saves Typst and LaTeX files (their watchers would recompile on every save). After each save the message "AutoSave: saved at HH:MM:SS" appears.
+It never saves unnamed, read-only or special buffers (terminals, help, ...) and never saves Typst and LaTeX files (their watchers would recompile on every save). After each save a small popup (nvim-notify, title "AutoSave") shows "AutoSave: saved at HH:MM:SS"; if the format-check hint ("file is not formatted") appears too, the popups stack one under the other without overlapping. Auto-saves never format the file (see [Formatting (conform.nvim)](07-code.md#formatting-conformnvim)): format on save runs only on explicit saves (`:w`, `:x`, `ZZ`). For Typst and LaTeX, which are never auto-saved, use `<Space>fm` or `:w`.
 
 ## Session management (persistence.nvim, vim-obsession)
 

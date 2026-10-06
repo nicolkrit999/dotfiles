@@ -244,7 +244,7 @@ All the ways to save and quit, consolidated in one place.
 | `:wall` or `:wa` | Save ALL open buffers |
 | `:saveas filename.txt` | Save as new file AND switch to it |
 
-Auto-save is also active: files save on `FocusLost` (switching to another app) and `BufLeave` (switching buffers).
+Auto-save is also active: files save on `FocusLost` (switching to another app) and `BufLeave` (switching buffers). Auto-saves do not format the file; saving yourself with `:w` does (see [Formatting (conform.nvim)](07-code.md#formatting-conformnvim)).
 
 ## Quitting
 

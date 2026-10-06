@@ -1084,6 +1084,33 @@ local plugin_specs = {
 
 
   {
+    -- formatter front end: format on explicit save + <Space>fm (config: lua/config/conform.lua)
+    "stevearc/conform.nvim",
+    event = "BufWritePre",
+    cmd = { "ConformInfo", "FormatDisable", "FormatEnable" }, -- the last two are defined by the config
+    init = function()
+      -- auto-save.nvim fires these two events around its (synchronous) :write; format on save skips
+      -- writes made in between. Registered at startup because conform itself loads lazily on BufWritePre.
+      local group = vim.api.nvim_create_augroup("conform_skip_autosave", { clear = true })
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "AutoSaveWritePre",
+        group = group,
+        desc = "Conform: mark an auto-save write (no format on save)",
+        callback = function() vim.g.autosave_writing = true end,
+      })
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "AutoSaveWritePost",
+        group = group,
+        desc = "Conform: auto-save write finished",
+        callback = function() vim.g.autosave_writing = false end,
+      })
+    end,
+    config = function()
+      require("config.conform")
+    end,
+  },
+
+  {
     -- maintained fork of the archived Pocco81/auto-save.nvim
     "okuuva/auto-save.nvim",
     event = "VeryLazy", -- its triggers (BufLeave/FocusLost) cannot happen before the first screen
@@ -1119,17 +1146,18 @@ local plugin_specs = {
         end,
       }
 
-      -- the fork dropped the built-in "saved" message; show it once (the old plugin echoed it twice)
-      -- and clear the message area again after 1.25 s, as before
+      -- the fork dropped the built-in "saved" message. Shown as an nvim-notify popup (not an echo: the
+      -- redraw of the buffer switch wiped the echo, and a "file is not formatted" warning of
+      -- lua/custom-autocmd.lua can follow right after). nvim-notify stacks popups, so the two never overlap.
       vim.api.nvim_create_autocmd("User", {
         pattern = "AutoSaveWritePost",
         group = vim.api.nvim_create_augroup("auto_save_message", { clear = true }),
         desc = "AutoSave: show 'saved at' message",
         callback = function()
-          vim.api.nvim_echo({ { "AutoSave: saved at " .. vim.fn.strftime("%H:%M:%S"), "MsgArea" } }, true, {})
-          vim.defer_fn(function()
-            vim.cmd("echon ''")
-          end, 1250)
+          local msg = "AutoSave: saved at " .. vim.fn.strftime("%H:%M:%S")
+          vim.schedule(function() -- outside the `silent! write` of the plugin
+            vim.notify(msg, vim.log.levels.INFO, { title = "AutoSave" })
+          end)
         end,
       })
     end,

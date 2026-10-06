@@ -128,7 +128,34 @@ end, { silent = true, desc = "run file the editor's own way (needs lua, vim, pyt
 keymap.set("n", "<leader>q", "<cmd>x<cr>", { silent = true, desc = "save if modified and quit window" })
 
 -- Auto format --
-keymap.set("n", "<space>fm", function() vim.lsp.buf.format({ async = true }) end, { desc = "LSP: format file" })
+-- conform.nvim formatter per file type (lua/config/conform.lua); LSP formatting where none is installed.
+-- Visual mode formats the selection only. Also format on save (explicit saves, not auto-save).
+keymap.set({ "n", "x" }, "<space>fm", function()
+  local opts = { async = true, lsp_format = "fallback" }
+  local mode = vim.fn.mode()
+  if mode == "v" or mode == "V" or mode == "\22" then
+    -- selection from the visual anchor to the cursor, in either direction
+    local a, b = vim.fn.getpos("v"), vim.fn.getpos(".")
+    if a[2] > b[2] or (a[2] == b[2] and a[3] > b[3]) then
+      a, b = b, a
+    end
+    local last = vim.api.nvim_buf_get_lines(0, b[2] - 1, b[2], false)[1] or ""
+    if mode == "V" then
+      -- linewise: whole lines, whatever the columns of anchor and cursor are
+      opts.range = { start = { a[2], 0 }, ["end"] = { b[2], #last } }
+    else
+      opts.range = { start = { a[2], a[3] - 1 }, ["end"] = { b[2], math.min(b[3], #last) } }
+    end
+    vim.api.nvim_feedkeys(vim.keycode("<Esc>"), "nx", false) -- leave visual mode like gq does
+  end
+  require("conform").format(opts)
+end, { desc = "Format file/selection (conform, LSP fallback)" })
+
+-- toggle format on save for ALL buffers (:FormatDisable! / :FormatEnable also work per buffer)
+keymap.set("n", "<space>fo", function()
+  vim.g.disable_autoformat = not vim.g.disable_autoformat
+  vim.notify("Format on save: " .. (vim.g.disable_autoformat and "off" or "on"))
+end, { desc = "Format: toggle format on save" })
 
 -- Force quit nvim, discarding unsaved changes, but only after an explicit confirmation (default = No)
 keymap.set("n", "<leader>Q", function()

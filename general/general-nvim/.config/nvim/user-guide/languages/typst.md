@@ -11,8 +11,8 @@ Typst is a modern markup language that compiles to PDF (like LaTeX, but much fas
 | --- | --- | --- |
 | `kaarmu/typst.vim` | `:TypstWatch`, `:Toc`/`:Toch`/`:Tocv`/`:Toct`, `:make` (compiles once), indentation, `//` comments, Typst syntax colours | plugin, loaded only when `typst` is on PATH |
 | `<Space>tw` | Starts `typst watch` for the current file (recompile on every save, open the PDF) | `after/ftplugin/typst.lua` |
-| `tinymist` | Language server: diagnostics, completion, hover, go to definition, rename, symbols, formatter | typst devShell |
-| `typstyle` | The formatter that `tinymist` uses (`<Space>fm`) | typst devShell |
+| `tinymist` | Language server: diagnostics, completion, hover, go to definition, rename, symbols | typst devShell |
+| `typstyle` | The formatter (`<Space>fm`, run by conform.nvim) | installed globally with Neovim, or the typst devShell |
 | `zathura` | PDF viewer that reloads by itself when the PDF changes | typst devShell |
 | `ltex_plus` and `typos_lsp` | Grammar, spelling and typo diagnostics in the prose | global (see "[Prose checking](#prose-checking-in-typst)") |
 | `my_snippets/typst.snippets` | `mk` / `dm` for inline and display math and 104 math-symbol snippets (`leq`, `integral`, `matrix2`, ...), expanded with `<Ctrl-j>` | personal UltiSnips file (see "[Snippets](#snippets)") |
@@ -67,7 +67,7 @@ which typst tinymist typstyle zathura
 | `:TypstWatch {args}` | needs typst.vim | Same, with extra `typst` options, e.g. `:TypstWatch --root ..` |
 | `:make` | needs typst.vim | Compiles the file once (`typst compile --diagnostic-format short %`); errors go to the quickfix list ([section 26](../05-search-and-files.md#26-quickfix--location-list)) |
 | `:Toc` / `:Tocv` | needs typst.vim | Table of contents of the `=` headings in a vertical location list on the right; `:Toch` horizontal, `:Toct` in a new tab. Press `Enter` on a line to jump |
-| `<Space>fm` | global | Format the whole file with the language server (typstyle). Example: `#greet(   "x"  )   #let   y=3` became `#greet("x")   #let y = 3` |
+| `<Space>fm` | global | Format the whole file (Visual mode: the selection) with typstyle, run by conform.nvim. Typst files are never auto-saved, so `:w` formats them too (see [Formatting (conform.nvim)](../07-code.md#formatting-conformnvim)). Example: `#greet(   "x"  )   #let   y=3` became `#greet("x")   #let y = 3` |
 | `gq` | global | Reformats prose lines to `textwidth` (100); not the Typst formatter |
 | `K` | LSP | Hover: signature and parameters of a function (on `greet` and `text`) |
 | `gd` | LSP | Go to definition: from a function call to its `#let`, from `@intro` to the `<intro>` label |
@@ -109,7 +109,7 @@ tinymist = {
 | `root_dir` | The project root is the nearest folder above the file with `typst.toml` (a Typst package) or `.git`; with neither, the folder of the file. Example: a file in a folder without `.git` got that folder as root |
 | `exportPdf = "never"` | The server does not export PDFs; only `typst watch` does. So there is one PDF writer, not two |
 | `outputPath` | Only used when the server exports (it does not here); it is a leftover default |
-| `formatterMode = "typstyle"` | `<Space>fm` formats with typstyle |
+| `formatterMode = "typstyle"` | The server's own formatter is typstyle too; it is used only when conform.nvim finds no `typstyle` program |
 
 What it provides, in a real session:
 
@@ -120,7 +120,7 @@ What it provides, in a real session:
 | Hover | `K` on a function shows its signature, e.g. `let greet(name: str) = str` |
 | Definition | `gd` on a call or on a `@label` |
 | Symbols | The outline (`<Space>t`) lists headings and `#let` definitions |
-| Formatter | `<Space>fm` (typstyle) |
+| Formatter | `<Space>fm` and `:w` (typstyle) |
 
 Check which servers are attached: `:LspAttached` (popup) or the statusline (right side, first name is the main server `tinymist`, `(+2)` the others). `:LspInfo` shows details; `:LspLog` opens the log ([section 13](../07-code.md#13-lsp-language-server-protocol)).
 

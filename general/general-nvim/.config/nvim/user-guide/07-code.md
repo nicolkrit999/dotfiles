@@ -39,7 +39,8 @@ A server is enabled only when ALL its programs are on PATH; otherwise it is skip
 | `K` | **Hover**: show documentation in a floating window |
 | `<Space>rn` | **Rename**: rename the symbol everywhere it's used |
 | `<Space>ca` | **Code action**: show available fixes/refactors |
-| `<Space>fm` | **Format** the file on demand (LSP formatter, async). Lua: stylua. Markdown: prettier. Lua, Python and JSON have `<Space>f` (stylua / black / `:JSONFormat`) |
+| `<Space>fm` | **Format** the file (or only the selection in Visual mode) on demand with the formatter of the file type, async; see [Formatting (conform.nvim)](#formatting-conformnvim). Saving with `:w` formats too |
+| `<Space>fo` | **Toggle format on save** for all buffers; prints `Format on save: on` or `off` |
 
 Example (with pyright; the same file is used for the next examples):
 
@@ -156,7 +157,7 @@ LSP is a protocol that lets Neovim communicate with language-specific servers (p
 - **Hover**: Show documentation for the symbol under cursor
 - **Rename**: Rename a symbol across the entire project
 - **Code actions**: Quick fixes, auto-imports, refactorings
-- **Formatting**: Auto-format your code according to language standards
+- **Formatting**: Auto-format your code according to language standards (in this config the file formatters of [Formatting (conform.nvim)](#formatting-conformnvim) do the work; the language server formats only where no formatter is installed)
 - **Completion**: Suggestions as you type
 
 ## How LSP is managed (nvim-lspconfig)
@@ -168,11 +169,11 @@ Each server is configured in `lua/config/lsp.lua` (plus `after/lsp/<name>.lua`) 
 | Server | Language | What it provides |
 | --- | --- | --- |
 | **pyright** | Python | Type checking, import resolution, diagnostics. Disables import sorting (ruff handles that). |
-| **ruff** | Python | Fast linting and formatting. Complementary to pyright. |
-| **lua_ls** | Lua | Full Lua analysis with `vim` global recognized. Its formatting is switched off: Lua is formatted by stylua (`<Space>f` / `<Space>fm`). |
+| **ruff** | Python | Fast linting, quick fixes and import sorting. Complementary to pyright. Formatting is `ruff format` through conform.nvim. |
+| **lua_ls** | Lua | Full Lua analysis with `vim` global recognized. Its formatting is switched off: Lua is formatted by stylua (on save and with `<Space>fm`, see [Formatting (conform.nvim)](#formatting-conformnvim)). |
 | **bashls** | Bash/Shell | Shell script analysis and diagnostics. |
 | **yamlls** | YAML | Schema validation and formatting for YAML files. |
-| **marksman** | Markdown | Link validation, heading completion. Formatting is done by `<Space>fm` with Prettier (not by marksman). |
+| **marksman** | Markdown | Link validation, heading completion. Formatting is done with Prettier on save and with `<Space>fm` (not by marksman). |
 | **nixd** | Nix | Nix language analysis. Formatter: nixpkgs-fmt. |
 | **jdtls** | Java | Full Java IDE features via nvim-java (see [Java section](#54-java-development-in-depth)). Auto-configured. |
 | **clangd** | C/C++ | Compilation, diagnostics, code completion for C/C++. |
@@ -230,7 +231,7 @@ local servers = {
     end,
     settings = {
       Lua = {
-        -- one Lua formatter: stylua (<Space>f / <Space>fm in after/ftplugin/lua.lua)
+        -- one Lua formatter: stylua (through conform.nvim)
         format = { enable = false },
         diagnostics = {
           disable = { "duplicate-set-field" },
@@ -297,7 +298,7 @@ local servers = {
 In plain words:
 
 - Each entry is `name = { cmd = {...}, ... }`. Only what differs from nvim-lspconfig's default definition is written; anything left out (filetypes, root markers) is the default. More settings of a server live in `after/lsp/<name>.lua`.
-- **Python:** `pyright` and `ruff`, see the [Python chapter](languages/python.md#79-python-pyright-ruff-black-uv-running-and-debugging).
+- **Python:** `pyright` and `ruff`, see the [Python chapter](languages/python.md#79-python-pyright-ruff-uv-running-and-debugging).
 - **Nix (`nixd`):** `--log=error` because the default level writes every request into the LSP log file; the formatter is `nixpkgs-fmt`.
 - **LaTeX (`texlab`):** only the command; texlab comes from the LaTeX devShell.
 - **Rust (`rust_analyzer`) and Go (`gopls`):** the comment says which devShell supplies them. `gopls` trims nvim-lspconfig's filetype list to `go`, `gomod`, `gowork` (the default also lists `gotmpl`, which no filetype detection sets, and `:checkhealth vim.lsp` would warn about it).
@@ -383,7 +384,7 @@ In plain words:
 
 ## Lua: lua_ls and stylua
 
-Two things stop `lua_ls` from formatting, so that stylua is the only Lua formatter: `format = { enable = false }` in the settings, and `on_init` removes the formatting capabilities (lua_ls still advertises them with the setting off). Both are in the `lua_ls` entry above. The rest of the Lua server settings are in `after/lsp/lua_ls.lua` (verbatim):
+Two things stop `lua_ls` from formatting, so that stylua (run by conform.nvim, see [Formatting (conform.nvim)](#formatting-conformnvim)) is the only Lua formatter: `format = { enable = false }` in the settings, and `on_init` removes the formatting capabilities (lua_ls still advertises them with the setting off). Both are in the `lua_ls` entry above. The rest of the Lua server settings are in `after/lsp/lua_ls.lua` (verbatim):
 
 ```lua
 -- settings for lua-language-server can be found on https://luals.github.io/wiki/settings/
@@ -406,7 +407,7 @@ return {
 
 In plain words: `runtime.version = "LuaJIT"` (Neovim runs LuaJIT), `hint.enable = true` turns on inlay hints (shown with `:LspInlayHints enable`), and the `lua_ls` entry adds `globals = { "vim" }` and ignores `duplicate-set-field`. lazydev.nvim (below) supplies the Neovim API types.
 
-The keys live in `after/ftplugin/lua.lua`. Abridged (the hunk helper `new_row` and the body of `stylua_format`, lines 8-86, are left out and described below):
+The run key lives in `after/ftplugin/lua.lua`. Abridged:
 
 ```lua
 -- Disable inserting comment leader after hitting o/O/<Enter>
@@ -416,18 +417,12 @@ for _, lhs in ipairs({ "<F9>", "<leader>rf" }) do -- <leader>rf: the same withou
   vim.keymap.set("n", lhs, "<cmd>luafile %<CR>", { buffer = true, silent = true, desc = "run lua file" })
 end
 
--- ... local function stylua_format() ... end
-
-vim.keymap.set("n", "<Space>f", stylua_format, { buffer = true, silent = true, desc = "Format file (stylua)" })
--- one Lua formatter: <Space>fm (global: LSP format) runs stylua too; lua_ls formatting is off
-vim.keymap.set("n", "<Space>fm", stylua_format, { buffer = true, silent = true, desc = "Format file (stylua)" })
 ```
 
 In plain words:
 
 - `<F9>` and `<Space>rf` run the file with `:luafile %`.
-- `<Space>f` and `<Space>fm` both run `stylua_format`. In Lua buffers `<Space>fm` is stylua, not the LSP formatter, because lua_ls formatting is off.
-- `stylua_format` formats the buffer (not the file on disk) through stdin: `stylua --search-parent-directories --stdin-filepath <name> -` (so a project `stylua.toml` is honoured), compares old and new text, and applies only the changed hunks, bottom-up, in one undo step. Every window showing the buffer keeps its cursor and view. A missing stylua or a stylua error (for example a syntax error) gives ONE warning and leaves the buffer untouched. The Markdown prettier key uses the same idea (see the [Markdown chapter](languages/markdown.md#81-markdown-writing-preview-footnotes-pdf)).
+- Formatting has no Lua-specific key: `<Space>fm` and format on save run stylua through conform.nvim (the global key, see [Formatting (conform.nvim)](#formatting-conformnvim)). A project `stylua.toml` is honoured, and a missing stylua is skipped silently.
 
 ## typos_lsp: where it attaches
 
@@ -472,9 +467,55 @@ These keys work per buffer according to what the attached servers support: `K` a
 | `K` | **Hover documentation**. Shows docs in a floating window with a border (at most 100 x 40). | When you need to check what a function does, its parameters, return type, etc. |
 | `<Space>rn` | **Rename symbol**. Renames the symbol under cursor everywhere it appears in the project. | When refactoring: changing a function name, variable name, etc. |
 | `<Space>ca` | **Code action**. Shows a menu of available fixes and refactorings. | When the lightbulb icon appears, or when you want to auto-import, extract a variable, fix a lint warning, etc. |
-| `<Space>fm` | **Format file**. Runs the LSP formatter asynchronously (ruff, nixd, ...); in Markdown buffers Prettier, in Lua buffers stylua. | Before committing, or whenever you want clean formatting. |
+| `<Space>fm` | **Format file** (Visual mode: only the selection). Runs the formatter of the file type asynchronously (stylua, prettier, ruff format, ...); the LSP formatter only when none is installed. | Whenever you want clean formatting, also when format on save is off. |
+| `<Space>fo` | **Toggle format on save** for all buffers. | To save once without formatting; press again to turn it back on. |
 
 A worked example of `gd`, `K` and `<Space>rn` on a small Python file is in [section 13](#13-lsp-language-server-protocol) ("[LSP keymaps](#lsp-keymaps)").
+
+## Formatting (conform.nvim)
+
+**conform.nvim** (stevearc/conform.nvim) is the one formatter front end for every file type, also for files without a language server. It runs an external formatter program on the buffer text and applies only what changed, so marks and the cursor stay. Config: `lua/config/conform.lua`.
+
+Where the programs come from: most formatters are installed together with Neovim (the nix wrapper); the others must be on PATH. A formatter that a project devShell provides wins over the global one when you start Neovim inside that devShell. A formatter that is not installed is skipped silently; when no formatter of the file type is available the language server formats instead (if one is attached). `:ConformInfo` shows what will run for the current buffer.
+
+| File type | Formatter |
+| --- | --- |
+| Lua | stylua |
+| Markdown, YAML, JSON, JSONC, CSS, SCSS, HTML, JavaScript, TypeScript, JSX, TSX | prettier |
+| sh, bash | shfmt |
+| fish | fish_indent |
+| Nix | nixfmt |
+| TOML | taplo |
+| Typst | typstyle |
+| TeX, plain TeX, BibTeX | latexindent |
+| C, C++, Objective-C, Objective-C++ | clang-format |
+| Java | google-java-format |
+| Rust | rustfmt |
+| Go | goimports, then gofumpt |
+| Python | ruff format |
+| XML | xmllint |
+| SQL | sql-formatter |
+
+### Format on save
+
+Every explicit save formats the file first: `:w`, `:update`, `:x`, `ZZ`, `:wq` and `<Space>w`. The formatter gets 1000 ms. This applies to real file buffers only (not terminals, help or the quickfix window).
+
+Auto-saves never format: the file that auto-save.nvim writes when you leave a buffer or Neovim loses focus is written as it is, so a file you are in the middle of editing is not reshuffled (see [Auto-save](06-windows-terminal-sessions.md#auto-save-auto-savenvim)). Typst and LaTeX files are never auto-saved at all, so format them with `<Space>fm` or by saving with `:w`.
+
+### Keys and commands
+
+| Key / command | Mode | What it does |
+| --- | --- | --- |
+| `<Space>fm` | Normal, Visual | Format the whole file; in Visual mode (`v`, `V` or Ctrl-v) only the selection. Asynchronous; works also when format on save is off. The buffer changes as one undo step (`u` undoes it) and is not saved |
+| `<Space>fo` | Normal | Toggle format on save for ALL buffers. Prints `Format on save: off` or `Format on save: on` |
+| `:FormatDisable` + Enter | Command-line | Turn format on save off for all buffers |
+| `:FormatDisable!` + Enter | Command-line | Turn it off for the current buffer only (type `!` with Shift+1 right after `FormatDisable`, then Enter) |
+| `:FormatEnable` + Enter | Command-line | Turn it on again (undoes both of the above) |
+| `:ConformInfo` + Enter | Command-line | Show the formatters configured for this file type and which one will run |
+
+Example (any Lua file with messy spacing like `local x=1`): press `<Space>fm`: the line becomes `local x = 1` and the buffer shows as modified; `u` brings the old text back. Press `<Space>fo` once, save with `:w` and the file is written unformatted; press `<Space>fo` again to turn format on save back on.
+
+After a save that did not format (an auto-save, or format on save switched off) Python and Lua files can show the hint `<file>: file is not formatted (ruff)` or `(stylua)`. It is only a hint; press `<Space>fm` to format.
 
 ## Peeking without jumping (glance.nvim)
 
@@ -962,7 +1003,7 @@ Example (Python buffer): `K` on `open` in `with open(path) as f:` shows a border
 | `:LspInfo` | LSP status (runs `:checkhealth vim.lsp`) |
 | `:Lazy` | Open plugin manager |
 | `:Lazy update` | Update all plugins |
-| `:JSONFormat` | Format JSON (works on visual selection too) |
+| `:JSONFormat` | Pretty-print JSON through Python (whole file or visual range; no key; `<Space>fm` formats JSON with prettier) |
 | `:ToPDF` | Convert markdown to PDF via pandoc |
 | `:Redir <cmd>` | Capture any Neovim command output (e.g., `:Redir messages`) |
 | `:Telescope keymaps` | Browse all defined keymaps |
@@ -1036,7 +1077,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 1. `<Space>gbn` -- create a new branch (type name, Enter)
 2. `<Space>s` -- open file tree, navigate to where you'll add files
 3. `a` in the tree -- create a new file
-4. Write code; `<Space>fm` to format; `<Space>rr` to run/test
+4. Write code; saving with `:w` formats it (`<Space>fm` formats on demand); `<Space>rr` to run/test
 5. `<Space>de` -- jump through any errors
 6. `<Space>ca` -- apply code action fixes
 7. `<Space>gw` -- stage the file
@@ -1053,7 +1094,7 @@ Step-by-step walkthroughs of common developer tasks entirely within Neovim.
 ## Workflow: working with JSON
 
 1. Open the JSON file
-2. If it's messy: `:JSONFormat` to pretty-print it
+2. If it's messy: `<Space>fm` formats it with prettier (`:JSONFormat` also pretty-prints it)
 3. `<Space>fg` in another terminal to find references to JSON keys
 4. `za` to fold/unfold sections for readability
 5. `ci"` to change a value inside quotes

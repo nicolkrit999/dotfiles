@@ -10,14 +10,14 @@ This chapter covers the custom Nix snippets (file `my_snippets/nix.snippets`, 12
 | Feature | What it does | Needs |
 | --- | --- | --- |
 | **nixd** (language server) | The main language server of `nix` buffers: diagnostics, completion, hover, go to definition ([section 44](../07-code.md#44-language-server-protocol-lsp-in-depth)). Started with `--log=error` | `nixd` on PATH ([section 44](../07-code.md#44-language-server-protocol-lsp-in-depth); the nix devShell, [section 43](../07-code.md#43-how-the-development-toolchain-fits-together), has it) |
-| **Format file** (`<Space>fm`) | Runs the LSP formatter asynchronously (`vim.lsp.buf.format`). The formatter command set for nixd is `nixpkgs-fmt` | `nixd` attached and `nixpkgs-fmt` on PATH |
+| **Format file** (`<Space>fm`, and every `:w`) | Runs `nixfmt` through conform.nvim (see [Formatting (conform.nvim)](../07-code.md#formatting-conformnvim)). Without `nixfmt` the LSP formatter of nixd runs instead; the formatter command set for nixd is `nixpkgs-fmt` | `nixfmt` on PATH (nix devShell); otherwise `nixd` attached and `nixpkgs-fmt` on PATH |
 | **Word highlight** | In `.nix` files only the identical word is highlighted (text matching or Tree-sitter), because nixd would mark every package of a `with pkgs; [ ... ]` list ([section 3](../02-navigation.md#3-core-navigation-moving-without-the-mouse), "[Word references](../02-navigation.md#word-references-vim-illuminate)") | Nothing |
 | **Comments** | The smart comment plugin knows Nix: `#` line comments, `/* */` blocks and `'' ''` strings | Nothing |
 | **Line-length marker** | The coloured column marker sits at column 100 for Nix ([section 41](../10-various.md#41-filetype-specific-settings)) | Nothing |
 | **Tree-sitter** | Grammars on Nix systems come from the nix store ([section 21](../07-code.md#21-treesitter--text-objects), [section 46](../07-code.md#46-treesitter-in-depth-nvim-treesitter)) | Nothing extra |
 | **Snippets** | See [Snippets](#snippets) below | Nothing |
 
-Not stated here because the config does not show it: a Nix filetype plugin under `after/ftplugin` (there is none), any Nix-specific key, and any use of `nixfmt` or `statix` by the config (a search of `lua/`, `after/` and `plugin/` finds neither; `nixfmt` appears only in a comment about the column marker). The formatter setting for nixd names `nixpkgs-fmt`, not `nixfmt`.
+Not stated here because the config does not show it: a Nix filetype plugin under `after/ftplugin` (there is none), any Nix-specific key, and any use of `statix` by the config. The formatter setting for nixd names `nixpkgs-fmt`; conform.nvim prefers `nixfmt` when it is installed.
 
 ## The Nix devShell
 
@@ -33,7 +33,7 @@ packages = with pkgs; [
 
 The last entry is the `nix-tests` flake package (`github:danielefongo/nix-tests`). The guide names the tools and does not describe what each one does, except `nixd` (the language server, see above); [section 43](../07-code.md#43-how-the-development-toolchain-fits-together) lists the same packages in its devShell table.
 
-Which of these the config uses: only `nixd` (`lua/config/lsp.lua`: `cmd = { "nixd", "--log=error" }`, formatter `nixpkgs-fmt`). The config does not call `nixfmt`, `statix` or the others.
+Which of these the config uses: `nixd` (`lua/config/lsp.lua`: `cmd = { "nixd", "--log=error" }`, formatter `nixpkgs-fmt`) and `nixfmt` (run by conform.nvim for formatting). The config does not call `statix` or the others.
 
 How to enter it, as for the other languages ([section 43](../07-code.md#43-how-the-development-toolchain-fits-together)):
 
@@ -93,7 +93,7 @@ Source: `my_snippets/nix.snippets` (12 snippets). Type the trigger in insert mod
 
 Two things apply to all of them:
 
-- The snippets indent with tabs. The repo's Nix files use 2 spaces; the formatter (`<Space>fm`) reindents them.
+- The snippets indent with tabs. The repo's Nix files use 2 spaces; the formatter (`<Space>fm`, or saving with `:w`) reindents them.
 - Where a snippet uses `pkgs`, it must be in scope (a function argument such as `{ pkgs, ... }:`, or a `let` binding).
 
 **Group: Package lists**

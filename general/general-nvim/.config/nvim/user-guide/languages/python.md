@@ -1,7 +1,7 @@
 <!-- chapter: Python -->
 [Back to the guide index](../README.md)
 
-# 79. Python (pyright, ruff, black, uv, running and debugging)
+# 79. Python (pyright, ruff, uv, running and debugging)
 
 This section is one walk-through for everything Python in your config: what starts by itself, how to run, format and debug a file, how virtual environments are detected, and what to check when something does not work. Deeper background on the shared parts lives in the sections named in "[Related sections](#related-sections)" at the end.
 
@@ -10,14 +10,14 @@ This section is one walk-through for everything Python in your config: what star
 | Feature | What it does | Needs |
 | --- | --- | --- |
 | **pyright** (language server) | Type checking, import resolution, hover (`K`), go to definition (`gd`), rename (`<Space>rn`), references. Mode is `standard`, whole workspace is checked. Its own import sorting is turned off (ruff does that) | `pyright-langserver` on PATH (installed globally by `neovim.nix`, also in the python devShell) |
-| **ruff** (language server, `ruff server`) | Fast linting (diagnostics), quick fixes and "organise imports" through `<Space>ca`. It is the server that offers formatting for `<Space>fm` | `ruff` on PATH (python and jupyter devShells; NOT global) |
-| **black** (formatter) | `<Space>f` formats the file; after every save a background check warns when the file is not formatted | `black` on PATH (python devShell), or a uv project that has black (see [Running](#running-code)) |
+| **ruff** (language server, `ruff server`) | Fast linting (diagnostics), quick fixes and "organise imports" through `<Space>ca`. Formatting is a separate step: `ruff format` through conform.nvim | `ruff` on PATH (installed globally by `neovim.nix`, also in the python and jupyter devShells) |
+| **ruff format** (formatter, run by conform.nvim) | `:w` formats the file first; `<Space>fm` formats on demand (Visual mode: the selection); after a save that did not format, a background check warns when the file is not formatted | `ruff` on PATH |
 | **typos_lsp** | Spell checker for identifiers and comments, attaches to every file type (also Python) | `typos-lsp` on PATH (installed globally by `neovim.nix`) |
 | **tree-sitter** | Syntax highlighting (the `python` parser) | Nothing on Nix systems (parsers come from the nix store) |
 | **Snippets** | `print` (f-string), `impa`, `main`, `sol` (see [Snippets](#snippets) below) | Nothing |
-| **uv awareness** | In a project with `uv.lock` and no active virtual environment, `<Space>rf` / `<F9>` and `<Space>f` go through `uv run` | `uv` on PATH (it is: `/run/current-system/sw/bin/uv`) |
+| **uv awareness** | In a project with `uv.lock` and no active virtual environment, `<Space>rf` / `<F9>` go through `uv run` | `uv` on PATH (it is: `/run/current-system/sw/bin/uv`) |
 | **Statusline label** | Shows the active environment as `name (venv)` or `name (conda)` in Python buffers | An activated environment |
-| **Format check** | After saving, `black --check` runs in the background and warns `<file>: file is not formatted (black)` | `black` on PATH, otherwise silent |
+| **Format check** | After saving, `ruff format --check` runs in the background and warns `<file>: file is not formatted (ruff)` when the save did not format (auto-save, or format on save switched off) | `ruff` on PATH, otherwise silent |
 | **Run** | `<Space>rf` / `<F9>` (output in the quickfix window) and `<Space>rr` (output in a terminal split) | `python` / `python3` on PATH |
 | **Debug** | `<Space>dp` starts `python -m pdb` inside nvim-gdb | Linux or Windows |
 | **vim-illuminate** | Other uses of the word under the cursor are highlighted (Python is in its file type list) | Nothing |
@@ -30,7 +30,7 @@ This section is one walk-through for everything Python in your config: what star
 2. Open a file: `nvim hello.py`. Wait a second or two. `:LspAttached` lists the running servers; in the python devShell: `pyright`, `ruff`, `typos_lsp`. The statusline shows `pyright (+2)` (the first server and two more).
 3. Type a small program, save with `:w`, then run it with `<Space>rf` (or `<F9>`). A 6-line quickfix window opens at the bottom and shows the output.
 4. Run it again as a full terminal with `<Space>rr`. A terminal split opens on the LEFT of the code.
-5. Format with `<Space>f` (black). The file on disk is rewritten and the buffer reloads (`File changed on disk. Buffer reloaded!`).
+5. Format with `<Space>fm` (ruff format). The buffer changes in place (as one undo step, `u` undoes it) and is not saved; saving with `:w` formats too.
 6. Debug with `<Space>dp`. The code gets a `▶` marker and a pdb pane opens below it. Step with `<Space>dn` (or `<F10>`), quit with `:GdbDebugStop`. (`<F9>` and `<Space>rf` keep working afterwards.)
 
 ## Why each tool exists
@@ -39,8 +39,8 @@ This section is one walk-through for everything Python in your config: what star
 | --- | --- | --- |
 | pyright | Python does not check types by itself. Pyright finds wrong argument types, missing imports and typos in attribute names before you run the file | A language server (`pyright-langserver --stdio`). Neovim starts it when you open a `.py` file and it answers questions: errors, hover, definition, rename. Installed globally, so it also works outside a devShell |
 | ruff | Fast linter (unused imports, undefined names, style problems) with automatic fixes and import sorting | `ruff server` is a second language server in the same buffer. Its diagnostics appear next to pyright's, and `<Space>ca` lists its fixes |
-| black | One fixed code style, so you never decide about spaces or quotes | A command-line formatter. `<Space>f` runs it on the file, and a background check runs after each save |
-| uv | Fast Python project and package manager. Projects managed by uv have a `uv.lock` file | The config checks for `uv.lock` and then runs `<Space>rf` / `<F9>` and `<Space>f` through `uv run`, so they use the project's own environment |
+| ruff format | One fixed code style (black-compatible), so you never decide about spaces or quotes | A command-line formatter run by conform.nvim on save and by `<Space>fm`; a background check runs after saves that did not format |
+| uv | Fast Python project and package manager. Projects managed by uv have a `uv.lock` file | The config checks for `uv.lock` and then runs `<Space>rf` / `<F9>` through `uv run`, so they use the project's own environment |
 | venv / conda label | Tells you which environment nvim (and so pyright) was started with | Reads `$VIRTUAL_ENV` / `$CONDA_DEFAULT_ENV` |
 | direnv + devShell | Gives each project its own tools without installing them globally | `.envrc` with `use_dev_env python` loads the nix devShell; start nvim from that folder |
 | nvim-gdb | Step through a script with pdb (Python's built-in debugger) with the current line marked in your code | Starts `python -m pdb file.py` in a terminal pane and talks to it |
@@ -52,11 +52,11 @@ Python-specific configuration lives in only a few places:
 
 | File | What it holds |
 | --- | --- |
-| `after/ftplugin/python.lua` | indentation, no wrapping, `<Space>rf` / `<F9>`, `<Space>f`, `<Space>dp` |
+| `after/ftplugin/python.lua` | indentation, no wrapping, `<Space>rf` / `<F9>`, `<Space>dp` |
 | `after/lsp/pyright.lua`, `after/lsp/ruff.lua` | server settings |
 | `lua/config/lsp.lua` | which servers exist and when they are enabled |
 | `my_snippets/python.snippets` | snippets |
-| `lua/custom-autocmd.lua` | the after-save format check (`black --check`) |
+| `lua/custom-autocmd.lua` | the after-save format check (`ruff format --check`) |
 | `lua/options.lua` | `colorcolumn` 88 for Python |
 
 ## Devshell and tools
@@ -67,8 +67,8 @@ Python tools are not installed globally except two. Open nvim in a devShell to g
 | --- | --- | --- | --- |
 | `pyright` | yes | yes | no (uses the global one) |
 | `typos-lsp` | yes | no (uses the global one) | no (uses the global one) |
-| `ruff` | no | yes | yes |
-| `black` | no | yes | no |
+| `ruff` | yes (formatter and language server) | yes | yes |
+| `black` | no | yes (not used by the config) | no |
 | `uv` | yes, system-wide (`which uv` shows `/run/current-system/sw/bin/uv`; `python3` is also on the system PATH) | not added | not added |
 | `python` / `python3` | system `python3` exists | yes (version depends on the variant) | python 3.13 |
 
@@ -96,15 +96,15 @@ Your folders in `~/github-repos/personal/developing-projects/python-projects/`: 
 | Tool missing | What happens |
 | --- | --- |
 | `pyright` or `ruff` | That server is silently not enabled (no warning when opening the file). `:LspStart pyright` or `:LspStart ruff` names the missing program |
-| `black` | `<Space>f` shows ONE warning: `Python: black not found on PATH (open nvim inside the python devShell)`. The after-save format check stays silent |
-| `uv` (in a uv project) | Not a real case here (uv is installed system-wide). If it were missing, `<Space>f` would show the same black warning and `<Space>rf` / `<F9>` would fail inside the quickfix window |
+| `ruff` (formatter) | Formatting is skipped silently (no message on `:w` or `<Space>fm`; the language server formats instead when one is attached). The after-save format check stays silent |
+| `uv` (in a uv project) | Not a real case here (uv is installed system-wide). If it were missing, `<Space>rf` / `<F9>` would fail inside the quickfix window |
 | `python` / `python3` | `<Space>rf` / `<F9>` shows the shell error in the quickfix window. `<Space>rr` has no PATH check for Python: with an empty PATH, the terminal shows `bash: line 1: python3: command not found` and no nvim warning appears |
 | `typos-lsp` | Silent |
 
 
 ## How Python is set up (the real code)
 
-Python has no plugin spec of its own. It is a few small files, quoted here verbatim unless marked abridged. The binaries (`pyright-langserver`, `ruff`, `black`, `uv`) are never installed by Neovim: they come from the Nix system or the python devShell, and no Mason is used.
+Python has no plugin spec of its own. It is a few small files, quoted here verbatim unless marked abridged. The binaries (`pyright-langserver`, `ruff`, `uv`) are never installed by Neovim: they come from the Nix system or the python devShell, and no Mason is used.
 
 ### The server entries (lua/config/lsp.lua)
 
@@ -243,13 +243,13 @@ end
 In plain words:
 
 - The project root is the nearest folder with `.git` or `pyproject.toml`. No root: `nil`.
-- An active environment (`$VIRTUAL_ENV`, or else `$CONDA_DEFAULT_ENV`) always wins: result `"plain_venv"`, and the tools run as plain `python` / `black`.
+- An active environment (`$VIRTUAL_ENV`, or else `$CONDA_DEFAULT_ENV`) always wins: result `"plain_venv"`, and the tools run as plain `python`.
 - No active environment and a `uv.lock` in the root: `"uv"`, and the tools run through `uv run`.
 - Otherwise `""`: plain commands.
 
-### Run and format keys (after/ftplugin/python.lua)
+### Run keys (after/ftplugin/python.lua)
 
-Verbatim (lines 14-38; the indentation options at the top and the pdb part below are shown elsewhere):
+Verbatim (lines 14-26; the indentation options at the top and the pdb part below are shown elsewhere):
 
 ```lua
 -- `:compiler ruff` + `:make`: don't pass `--preview`
@@ -264,26 +264,13 @@ if vim.fn.exists(":AsyncRun") == 2 then
     vim.keymap.set("n", lhs, string.format(':<C-U>AsyncRun %s -u "%%"<CR>', py_cmd), { buffer = true, silent = true, desc = "run python file" })
   end
 end
-
--- <Space>f black: only when the formatter can run (black e.g. from the python devShell;
--- in a uv project black comes from the project env through `uv run`). Without it the key shows
--- ONE warning (an unmapped key would fall through to <Space> + f).
-local py_fmt_bin = (py_env == "uv") and "uv" or "black"
-if vim.fn.executable(py_fmt_bin) == 1 then
-  local py_fmt_cmd = (py_env == "uv") and "!uv run black" or "!black"
-  vim.keymap.set("n", "<Space>f", string.format("<cmd>silent %s %%<CR>", py_fmt_cmd), { buffer = true, silent = true, desc = "format file" })
-else
-  vim.keymap.set("n", "<Space>f", function()
-    vim.notify("Python: black not found on PATH (open nvim inside the python devShell)", vim.log.levels.WARN)
-  end, { buffer = true, desc = "format file (needs black)" })
-end
 ```
 
 In plain words:
 
 - `py_env` is computed once, when the Python file is opened. That is why activating a venv or creating `uv.lock` afterwards needs `:e!`.
 - The run keys exist only when the `:AsyncRun` command exists (the plugin is lazy and registers the command at startup). The `%%` in the format string becomes a literal `%`, which AsyncRun expands to the current file, in double quotes.
-- `<Space>f` is a buffer-local map that overrides the global `<Space>f`. It runs black on the file on disk (`!black %`, so save first), through `uv run` in a uv project. If black (or uv) is missing, the key shows ONE warning instead of falling through to `<Space>` + `f`.
+- Formatting has no Python-specific key: `<Space>fm` and format on save run `ruff format` through conform.nvim (see [Formatting (conform.nvim)](../07-code.md#formatting-conformnvim)).
 - `vim.g.ruff_makeprg_params = ""` is what lets `:compiler ruff` + `:make` work without `--preview` (see "[Linting from the command line](#linting-from-the-command-line-compiler-ruff)").
 
 ### AsyncRun (lua/plugin_specs.lua)
@@ -428,12 +415,12 @@ local py_cmd = (py_env == "uv") and "uv run python" or "python"
 vim.keymap.set("n", "<F9>", string.format(':<C-U>AsyncRun %s -u "%%"<CR>', py_cmd), ...)
 ```
 
-| Situation | `<Space>rf` / `<F9>` runs | `<Space>f` runs |
-| --- | --- | --- |
-| No project root (no `.git`, no `pyproject.toml`) | `python -u` | `black` |
-| An environment is active (`$VIRTUAL_ENV` or `$CONDA_DEFAULT_ENV` set) | `python -u` | `black` |
-| `uv.lock` in the project root and no active environment | `uv run python -u` (quickfix title `:AsyncRun uv run python -u "hello.py"`) | `uv run black` |
-| Project root without `uv.lock`, no active environment | `python -u` | `black` |
+| Situation | `<Space>rf` / `<F9>` runs |
+| --- | --- |
+| No project root (no `.git`, no `pyproject.toml`) | `python -u` |
+| An environment is active (`$VIRTUAL_ENV` or `$CONDA_DEFAULT_ENV` set) | `python -u` |
+| `uv.lock` in the project root and no active environment | `uv run python -u` (quickfix title `:AsyncRun uv run python -u "hello.py"`) |
+| Project root without `uv.lock`, no active environment | `python -u` |
 
 In a folder with `pyproject.toml` + `uv.lock` and a plain shell, the quickfix title showed `uv run python -u`; inside the python devShell (where `$VIRTUAL_ENV` is the project's `.venv`) it showed plain `python -u`.
 
@@ -460,10 +447,13 @@ Warning: `<Space>q` on a terminal window only **closes the window**; the running
 
 ## Formatting and linting
 
+Python is formatted by `ruff format`, run by conform.nvim (see [Formatting (conform.nvim)](../07-code.md#formatting-conformnvim)).
+
 | Key / command | What it does |
 | --- | --- |
-| `<Space>f` (Python buffers) | Runs `black` on the file **on disk** (`:silent !black %`); in a uv project `uv run black %`. Nvim then reloads the buffer and shows `File changed on disk. Buffer reloaded!` |
-| `<Space>fm` | LSP format, async, **in the buffer** (not saved). In Python the formatter is ruff's server, so it is `ruff format`, not black (the buffer became modified, `●` in the tab, and `{"a":1,\n "b":2}` became `{"a": 1, "b": 2}`) |
+| `:w` | Formats the file with `ruff format`, then saves it |
+| `<Space>fm` | Formats the buffer in place (Visual mode: only the selection), async, as one undo step. The file is not saved (the buffer is modified, `●` in the tab) |
+| `<Space>fo` | Toggles format on save for all buffers |
 
 Try it. Save as `messy.py`:
 
@@ -474,7 +464,7 @@ def f( a,b ):
 print(f(1,2))
 ```
 
-Press `:w`. Expect the warning `messy.py: file is not formatted (black)`. Press `<Space>f`. Expect the file to become:
+Press `<Space>fm`. Expect the buffer to become:
 
 ```python
 import os, sys
@@ -487,15 +477,14 @@ def f(a, b):
 print(f(1, 2))
 ```
 
-Save again: no warning. (`os` and `sys` stay; ruff still shows `E401` and `F401` hints. See "[Code actions from ruff](#code-actions-from-ruff)".)
+Save with `:w`: no warning. (`os` and `sys` stay; ruff still shows `E401` and `F401` hints. See "[Code actions from ruff](#code-actions-from-ruff)".)
 
 Key points:
 
-- Both formatters give almost the same result on normal code, but they are different programs. `<Space>f` (black) matches the after-save check; `<Space>fm` does not need black installed.
-- Nothing formats automatically on save.
-- **Format check after save:** every `:w` of a Python file runs `black --check --quiet <file>` in the background. If the file would change you get `<file>: file is not formatted (black)`. If black fails (for example a syntax error) you get `<file>: black could not check the file (syntax error?)` plus the first error line. Nothing is changed. If `black` is not on PATH the check is silent. It uses plain `black`, even in uv projects.
-- **Without black:** outside the devShell, `<Space>f` shows ONE warning `Python: black not found on PATH (open nvim inside the python devShell)`, and saving shows nothing. In a uv project (uv is on PATH) the key stays silent and changes nothing when the project has no black: the command fails inside `:silent`. When the project has black (with `uv add --dev black` in a scratch project), `<Space>f` runs `uv run black` and reformats the file, with the same `Buffer reloaded!` message.
-- **Line length:** black's default is 88, and the `colorcolumn` marker for Python is also 88 (default for other files: 100). A line touching the marker is too long for black. Black does not wrap long strings or comments.
+- **Format on save:** every explicit save (`:w`, `:x`, `ZZ`) formats first. Auto-saves (leaving the buffer, Neovim losing focus) never format.
+- **Format check after save:** after every save of a Python file `ruff format --check --quiet <file>` runs in the background. If the file would still change (an auto-save, or format on save switched off with `<Space>fo` / `:FormatDisable`) you get the hint `<file>: file is not formatted (ruff)`. If ruff fails (for example a syntax error) you get `<file>: ruff could not check the file (syntax error?)` plus the first error line. Nothing is changed. If `ruff` is not on PATH the check is silent.
+- **Without ruff:** formatting is skipped silently and the language server formats instead when one is attached. `:ConformInfo` shows what will run.
+- **Line length:** the `colorcolumn` marker for Python is at 88 (default for other files: 100), the line length of ruff format. A line touching the marker is too long. The formatter does not wrap long strings or comments.
 - **Indentation:** `tabstop`, `softtabstop`, `shiftwidth` = 4, `expandtab` on. No wrapping (`wrap` off, `sidescroll` 5, `sidescrolloff` 2).
 
 ### Code actions from ruff
@@ -544,7 +533,7 @@ Active in a Python buffer once pyright (and ruff) have attached. Maps are set pe
 | `<Space>dt` | Toggle diagnostics on and off | any |
 | `<Space>qb` / `<Space>qw` | Put buffer / all diagnostics in the quickfix list | any |
 | `<Ctrl-w>d` | Diagnostics under the cursor in a float | any |
-| `<Space>fm` | Format the buffer (see above) | ruff |
+| `<Space>fm` | Format the buffer (see above) | ruff format via conform.nvim |
 
 Commands:
 
@@ -646,7 +635,7 @@ Notes:
 | --- | --- |
 | Use the devShell tools and the project's `.venv` | Enter the project folder (direnv loads the devShell and the `venvShellHook` `.venv`), then start nvim there |
 | Plain venv | `python -m venv .venv`, `source .venv/bin/activate` (fish: `source .venv/bin/activate.fish`), then start nvim in that shell |
-| uv project | Either `source .venv/bin/activate` before starting nvim, or leave it inactive and use `<Space>rf` / `<F9>` / `<Space>f`, which run through `uv run` |
+| uv project | Either `source .venv/bin/activate` before starting nvim, or leave it inactive and use `<Space>rf` / `<F9>`, which run through `uv run` |
 | Switch environment | Close nvim, change environment, start nvim again (the shell environment is inherited at start) |
 
 **How pyright finds packages.** In a uv project (`.venv` with packages) opened from the python devShell (whose own `python` lacks them), `import pytokens` gave the error `Import "pytokens" could not be resolved`. After adding a `pyrightconfig.json` with `{"venvPath": ".", "venv": ".venv"}` the error was gone. So the `.venv` folder alone is not enough: pyright uses the `python` on PATH, unless `venvPath` / `venv` say otherwise. Background: Pyright runs as a child of nvim and uses the `python` on PATH. If `VIRTUAL_ENV` was set when nvim started, it resolves imports from that environment. With `autoSearchPaths` it also searches `src/`. To point pyright explicitly, put `venvPath` and `venv` in `pyrightconfig.json` or `[tool.pyright]` in `pyproject.toml`, then `:LspRestart`.
@@ -736,11 +725,10 @@ The snippet menu may also offer vim-snippets entries (`def`, `class`, `ifmain`, 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | Nothing highlights errors, `:LspAttached` shows no `pyright` | nvim was not started in a shell where `pyright-langserver` is on PATH | Check `which pyright-langserver`; start nvim in the python devShell or after `direnv allow`; `:LspStart pyright` names the missing program |
-| No `ruff` diagnostics | `ruff` is not global | Start nvim inside the python or jupyter devShell |
+| No `ruff` diagnostics | `ruff` is not on PATH of the shell nvim was started from | Check `which ruff`; start nvim from a shell where it is on PATH (global install, or the python or jupyter devShell) |
 | `Import "xyz" could not be resolved` | Package is not in the Python that pyright sees (no active venv when nvim started, or packages not installed) | Activate the environment BEFORE starting nvim, install the package, then `:LspRestart`; or set `venvPath` / `venv` in `pyrightconfig.json` |
 | Statusline shows no environment | No `$VIRTUAL_ENV` or `$CONDA_DEFAULT_ENV`, or it is a uv project that is not activated | Activate the environment before starting nvim; label only appears in Python buffers |
-| `<Space>f` says `black not found on PATH` | Not in the python devShell, or `uv` missing in a uv project | Start nvim in the python devShell; for uv projects make sure `uv` is on PATH (and `uv add --dev black`) |
-| No "not formatted" warning after save, although the file is untidy | `black` is not on PATH (check is silent), or the file type is not detected as `python` | `:!which black`; `:set ft?` |
+| No "not formatted" warning after save, although the file is untidy | `ruff` is not on PATH (check is silent), the save already formatted the file, or the file type is not detected as `python` | `:!which ruff`; `:set ft?` |
 | `<Space>rf` / `<F9>` prints `ModuleNotFoundError` | Wrong interpreter: plain `python` was used (environment not active when the file was opened) | Activate the environment, reopen the file with `:e` so the uv/venv choice is re-evaluated |
 | `<Space>rf` / `<F9>` does nothing visible | Quickfix window closed or scrolled, or `AsyncRun` not loaded | `:copen`; check `:AsyncRun echo hi` works |
 | `<Space>rr` opens nothing | Unnamed buffer (one warning: save the file first) or an unsupported file type | `:w file.py`; check `:set ft?` |

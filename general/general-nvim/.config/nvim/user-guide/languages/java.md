@@ -131,7 +131,7 @@ Consequences:
 - The first start of a project is slower: jdtls imports the project, runs Maven or Gradle and builds an index. The statusline and notifications show progress.
 - Compiled classes go to `target/` (Maven) next to `pom.xml`. jdtls also writes Eclipse files into the project (`.project`, `.classpath`, `.settings/`). In the test project `.gitignore` contains only `target/` and `.direnv/`, so `.project`, `.classpath` and `.settings/` show up in `git status`; add them to the project's `.gitignore` if you do not want them in git.
 - jdtls workspace data goes to `~/.cache/nvim/jdtls/` (`config_<hash>` and `workspace/proj_<hash>`), never into the project. The workspace folder name is a hash of the folder where Neovim was STARTED (`vim.fn.getcwd()` at startup), not of the jdtls root. Always start Neovim from the same project folder, otherwise jdtls builds a second workspace.
-- Saving: the auto-save plugin saves a buffer when you leave it or when Neovim loses focus. Refactor results and edits are therefore written to disk without `:w` once you switch windows (a refactor was saved this way).
+- Saving: the auto-save plugin saves a buffer when you leave it or when Neovim loses focus. Refactor results and edits are therefore written to disk without `:w` once you switch windows (a refactor was saved this way). Auto-saves do not format; saving with `:w` does (see `<Space>fm` below).
 
 ## 4. Keys and commands
 
@@ -257,7 +257,7 @@ All need jdtls attached. The general keys are described elsewhere ([section 13](
 | `K` | Hover: type and Javadoc. A hover float shows a "java" progress bar for a few seconds while loading; `<Esc>` closes it |
 | `<Space>rn` | Rename a class, method or variable in all files. In a scratch copy (steps still to be confirmed): the `New Name` box opens already filled with the old name (delete it with `<BS>` and type the new one; the text behind the box does NOT change while you type); after `<Enter>` the rename appears only after a delay: in the tests the answer took about 10 to 17 s (small project, jdtls started a minute earlier; can be longer), so wait before pressing anything else. If nothing has changed after about a minute, see [When a rename does nothing](#when-a-rename-does-nothing). It applies to ALL files that use the name, the other files are changed only in memory (hidden buffers, `:ls` shows them with `+`) until `:wa` (press `<Enter>` first if a "Press ENTER" prompt is showing); text in comments is not changed. A second `<Space>rn` while the first one is still pending starts from the NEW name (a mistaken second run gave `additaddition`) |
 | `<Space>ca` | Code actions: quick fix, organize imports, generate getters, constructors, `toString`; also the way to extract with a selection (see [Refactoring](#8-refactoring-extract)). Which generate entries work and how: see [Generate getters, setters and constructors](#generate-getters-setters-and-constructors) below |
-| `<Space>fm` | Format the file with the jdtls formatter (Eclipse style). Example: `calc.add(2,3)*4` became `calc.add(2, 3) * 4`. Formatting is never automatic. It runs asynchronously: wait a moment. It can re-indent the whole file (the template's 4 spaces became 2) and wrap long lines (`int   x=1+2 ;` became `int x = 1 + 2;`) |
+| `<Space>fm` | Format the file (Visual mode: the selection) with google-java-format, run by conform.nvim (see [Formatting (conform.nvim)](../07-code.md#formatting-conformnvim)); the jdtls formatter (Eclipse style) is used only when google-java-format is not installed. Example: `calc.add(2,3)*4` becomes `calc.add(2, 3) * 4`. Saving with `:w` formats too; auto-saves do not, and `<Space>fo` switches format on save off and on. It runs asynchronously: wait a moment. It can re-indent the whole file (the template's 4 spaces became 2) and wrap long lines (`int   x=1+2 ;` became `int x = 1 + 2;`) |
 | `:LspInlayHints enable` / `disable` | Inlay hints (parameter names, types); off by default (enable turns hints on) |
 | `<Space>t` | Symbol outline (aerial); in Java it shows `Main` and `main` |
 | diagnostics | Compile errors and warnings appear while you type, without running anything |
@@ -335,7 +335,7 @@ The `Select Fields` list (nvim-java's own multi-select) behaves differently from
 - `<Esc>` finishes the selection and writes the constructor. The first `<Esc>` sometimes had to be pressed twice.
 - Result with both fields marked: `public Person(String name, int age) { this.name = name; this.age = age; }`; with only `name` marked: `public Person(String name) { this.name = name; }`. The constructor is inserted before the fields.
 
-Indentation: the inserted code uses TAB indentation (jdtls does not format what it inserts), so it looks off next to 4-space code. `<Space>fm` formats the file (Eclipse style, normally 2 spaces in this config); to confirm that this fixes the inserted code.
+Indentation: the inserted code uses TAB indentation (jdtls does not format what it inserts), so it looks off next to 4-space code. `<Space>fm` formats the file and re-indents it; saving with `:w` does the same.
 
 ## 6. Tests (JUnit)
 
