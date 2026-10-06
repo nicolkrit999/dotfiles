@@ -981,7 +981,7 @@ More: sections [14](04-completion-snippets.md#14-autocompletion-nvim-cmp), [15](
 | `<Space>gu` | Unstage the current file |
 | `<Space>gv` | Vertical diff of the file against the index |
 | `<Space>gc` / `<Space>gA` | Commit / amend the last commit |
-| `<Space>gpl` / `<Space>gpu` | Pull / push |
+| `<Space>gp` / `<Space>gP` | Pull / push |
 | `<Space>gB` | Branch menu: pick a branch to switch to (same as clicking the branch in the statusline) |
 | `]c` / `[c` | Next / previous changed hunk |
 | `<Space>hp` / `<Space>hb` | Preview the hunk / blame the line |

@@ -20,8 +20,8 @@ keymap.set("n", "<leader>gR", ":Git rebase ", { desc = "Git: rebase (type args)"
 keymap.set("n", "<leader>gn", "<cmd>Neogit<cr>", { desc = "Git: open Neogit" })
 keymap.set("n", "<leader>gD", "<cmd>DiffviewOpen<cr>", { desc = "Git: open Diffview" })
 keymap.set("n", "<leader>gc", "<cmd>Git commit<cr>", { desc = "Git: commit changes" })
-keymap.set("n", "<leader>gpl", "<cmd>Git pull<cr>", { desc = "Git: pull changes" })
-keymap.set("n", "<leader>gpu", "<cmd>15 split|term git push<cr>", { desc = "Git: push changes" })
+keymap.set("n", "<leader>gp", "<cmd>Git pull<cr>", { desc = "Git: pull changes" })
+keymap.set("n", "<leader>gP", "<cmd>15 split|term git push<cr>", { desc = "Git: push changes" })
 keymap.set("x", "<leader>gb", ":Git blame<cr>", { desc = "Git: blame selected line" })
 
 -- convert git to Git in command line mode
