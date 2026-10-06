@@ -630,7 +630,7 @@ Inside math, a symbol is one typed word: you type its name instead of rememberin
 
 How to use them, step by step:
 
-1. Type `mk` for inline math or `dm` for a display math block, then press `<Ctrl-j>` (hold the Ctrl key and press j). `mk` writes `$` `$` on the line and puts the cursor between them; `dm` writes `$$`, an empty line and `$$` on three lines and puts the cursor on the empty middle line. Typing the `$` characters yourself works too.
+1. Type `mk` for inline math or `dm` for a display math block, then press `<Ctrl-j>` (hold the Ctrl key and press j). `mk` writes `$` `$` on the line and puts the cursor between them; `dm` writes `$$`, an empty line and `$$` on three lines, then one more empty line below them, and puts the cursor on the empty middle line (the last empty line is where the cursor goes after the final `<Ctrl-j>`). Typing the `$` characters yourself works too.
 2. Inside the math, type a symbol name such as `leq` and press `<Ctrl-j>` (or accept the name in the completion menu). The name is replaced by the symbol and the cursor ends right after it. The symbol snippets expand only while the cursor is inside math: outside math `<Ctrl-j>` does not expand them and only does what it does without a snippet (it starts a new line); the completion menu may still list the names.
 3. A snippet with placeholders (for example `frac`) selects the first placeholder; type over it, then press `<Ctrl-j>` to go to the next one. After the last placeholder, `<Ctrl-j>` moves the cursor to the end of the symbol, still inside the math. One more `<Ctrl-j>` then moves it past the closing `$` (for `dm`: onto the line below the closing `$$`). When the math contains only plain symbols (no placeholders), the first `<Ctrl-j>` after you finish typing already leaves the closing delimiter.
 
@@ -646,14 +646,14 @@ Worked example: inline math `x \leq y`.
 | `y` | `$x \leq y<cursor>$` |
 | `<Ctrl-j>` | `$x \leq y$<cursor>` (the cursor is after the closing `$`) |
 
-Where they work: the math symbols and the delimiters follow the Markdown structure of the file. These count as math: text between a pair of `$`, text after an opening `$` that is not closed yet on that line, and everything between `$$` and `$$` (also over several lines, also when the closing `$$` is not typed yet). These do not count as math: fenced code blocks (backticks or `~~~`), the YAML block at the top of the file, inline code between backticks, a `\$` with a backslash, and a lone dollar sign in prose such as `it costs $5` or `pay $ now`. `mk` and `dm` expand anywhere except in those code places. Limits: inline math that is split over several lines is not recognised; an indented code block (four spaces) is not recognised as code, so a `$` there still starts math; a `$` in front of a word without backticks (for example `$HOME`) is read as the start of math until the end of the line.
+Where they work: the math symbols and the delimiters follow the Markdown structure of the file. These count as math: text between a pair of `$`, text after an opening `$` that is not closed yet on that line, and everything between `$$` and `$$` (also over several lines, also when the closing `$$` is not typed yet). These do not count as math: fenced code blocks (backticks or `~~~`), the YAML block at the top of the file, inline code between backticks, a `\$` with a backslash, and a lone dollar sign in prose such as `it costs $5` or `pay $ now`. `mk` and `dm` expand anywhere except in those code places. Limits: inline math that is split over several lines is not recognised; an indented code block (four spaces) is not recognised as code, so a `$` there still starts math; a `$` in front of a word without backticks (for example `$HOME`) is read as the start of math until the end of the line; a `$` followed directly by a digit is read as a price, so math that starts with a digit right after the `$` (for example `$30degree`) is not recognised until other text follows; an unclosed `$$` makes everything below it count as math.
 
 #### Math delimiters
 
 | Trigger | Produces | Meaning |
 | --- | --- | --- |
 | `mk` | `$` `$` | Inline math, cursor between the dollar signs |
-| `dm` | `$$`, empty line, `$$` | Display math on its own lines, cursor on the empty line |
+| `dm` | `$$`, empty line, `$$`, empty line | Display math on its own lines, cursor on the empty line |
 
 #### Relations and operators
 

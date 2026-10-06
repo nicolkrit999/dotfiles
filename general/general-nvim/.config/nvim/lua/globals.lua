@@ -21,6 +21,10 @@ vim.g.mapleader = " "
 -- Enable highlighting for lua HERE doc inside vim script
 vim.g.vimsyn_embed = "l"
 
+-- A .tex file is always LaTeX (filetype "tex"); without this, a .tex file with no \documentclass in
+-- its first lines becomes "plaintex" and does not get the tex snippets (my_snippets/tex.snippets)
+vim.g.tex_flavor = "latex"
+
 -- Use English as main language
 -- (silent if the locale is not installed: fall back to C.UTF-8, then keep the default)
 if not pcall(vim.cmd, "silent language en_US.UTF-8") then

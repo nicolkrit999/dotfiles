@@ -305,6 +305,16 @@ Example, step by step:
 
 Cursor and spacing rules: the cursor always ends after the expansion. Symbol names made of letters (`lt.eq`, `plus.minus`, `arrow.r`, ...) are followed by one space so that the next letter you type does not glue onto the name. `sub`, `sup`, `inv`, `transpose` and `celsius` attach to what you typed before and leave no space. In structured snippets the placeholders are visited from left to right and the final cursor sits right after the whole construct. The default word of a placeholder (for example `x`) is selected: type to replace it, or press `<Ctrl-j>` to keep it.
 
+### Where they work and limits
+
+Where they work: the check counts the unescaped `$` characters in the file from the top down to the cursor; an odd number means the cursor is inside math. Comments (`// ...`), a `\$` with a backslash, and raw text (backticks, also code blocks with three backticks) are ignored when counting. `mk` and `dm` expand outside math and outside raw text only. `sub`, `sup`, `inv`, `transpose` and `celsius` also expand in the middle of a word (`xsub`); all other snippets need a space or an operator in front of the trigger (`xneq` does nothing, `x neq` expands).
+
+Limits:
+
+- The completion menu may list the symbol names outside math. Outside math `<Ctrl-j>` does not expand them; it only does what it does without a snippet (it starts a new line).
+- `integral` and `sup` are also names of Typst's own completions with another meaning: the language server's `integral` is the bare integral sign, the snippet `integral` writes `integral f(x) dif x`; the language server's `sup` is the supremum operator, the snippet `sup` writes a superscript. Both entries appear in the completion menu; the snippet is the one marked as a snippet.
+- Typing the Typst word `limsup` and pressing `<Ctrl-j>` right after it expands the `sup` at its end into a superscript (`lim^(n)`), because `sup` also expands in the middle of a word. Accepting `limsup` from the completion menu is not affected.
+
 ### Math delimiters
 
 These two work outside math only (not inside a `$ ... $` pair and not inside raw text or code blocks). Spaces inside the dollars make display (block) math in Typst; no spaces make inline math.

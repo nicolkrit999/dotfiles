@@ -674,6 +674,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
             - [What to try](languages/typst.md#what-to-try)
         - [Snippets](languages/typst.md#snippets)
             - [Starting flow](languages/typst.md#starting-flow)
+            - [Where they work and limits](languages/typst.md#where-they-work-and-limits)
             - [Math delimiters](languages/typst.md#math-delimiters)
             - [Math symbols](languages/typst.md#math-symbols)
         - [Troubleshooting](languages/typst.md#troubleshooting)
