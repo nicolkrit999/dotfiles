@@ -424,7 +424,7 @@ git_file_au = api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
 
 -- check if current file is formatted (upstream bc2c11e/8e4bf54, adapted: async + silent executable guard)
 local ft_to_command = {
-  python = { "black", "--check", "--quiet" },
+  python = { "ruff", "format", "--check", "--quiet" },
   lua = { "stylua", "--check" },
 }
 
@@ -447,7 +447,7 @@ api.nvim_create_autocmd("BufWritePost", {
       local name = vim.fs.basename(ev.file)
       local msg
       if result.code == 1 then
-        -- exit 1 = the check ran and found formatting differences (stylua and black)
+        -- exit 1 = the check ran and found formatting differences (stylua and ruff)
         msg = string.format("%s: file is not formatted (%s)", name, base[1])
       else
         -- other codes = the tool could not check the file (syntax error, crash, ...)

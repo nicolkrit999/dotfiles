@@ -24,18 +24,6 @@ if vim.fn.exists(":AsyncRun") == 2 then
   end
 end
 
--- <Space>f black: only when the formatter can run (black e.g. from the python devShell;
--- in a uv project black comes from the project env through `uv run`). Without it the key shows
--- ONE warning (an unmapped key would fall through to <Space> + f).
-local py_fmt_bin = (py_env == "uv") and "uv" or "black"
-if vim.fn.executable(py_fmt_bin) == 1 then
-  local py_fmt_cmd = (py_env == "uv") and "!uv run black" or "!black"
-  vim.keymap.set("n", "<Space>f", string.format("<cmd>silent %s %%<CR>", py_fmt_cmd), { buffer = true, silent = true, desc = "format file" })
-else
-  vim.keymap.set("n", "<Space>f", function()
-    vim.notify("Python: black not found on PATH (open nvim inside the python devShell)", vim.log.levels.WARN)
-  end, { buffer = true, desc = "format file (needs black)" })
-end
 
 -- <leader>dp: start pdb on the current file (nvim-gdb, lazy-loaded on :GdbStart*; pdb is the
 -- python stdlib module). nvim-gdb is disabled on macOS -> one warning instead.

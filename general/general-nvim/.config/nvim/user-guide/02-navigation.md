@@ -287,7 +287,7 @@ This section covers how developers typically navigate code in this setup.
 | --- | --- | --- |
 | Rename | `<Space>rn` | Rename a symbol across the entire project |
 | Code action | `<Space>ca` | Auto-import, extract variable, fix lint issue, etc. |
-| Format | `<Space>fm` | Auto-format the file (LSP formatting; stylua in Lua buffers, prettier in Markdown buffers) |
+| Format | `<Space>fm` | Format the file (Visual mode: the selection) with the formatter of the file type (stylua, prettier, ruff, ...); saving with `:w` formats too, `<Space>fo` toggles that. See [Formatting (conform.nvim)](07-code.md#formatting-conformnvim) |
 | Comment/uncomment | `gcc` / `gc` (toggle), `gcs` / `gcr` (comment / uncomment explicitly; `gcss` / `gcrr` for the current line) | Toggle or set comments |
 | Surround | `sa` / `sd` / `sr` | Add/delete/replace quotes, brackets, etc. |
 | Change inside | `ci(` / `ci"` / `ci{` | Change text inside delimiters |

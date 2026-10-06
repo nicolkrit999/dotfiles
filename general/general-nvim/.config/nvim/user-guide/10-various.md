@@ -8,7 +8,7 @@
 | `:CopyPath nameonly` | Copy filename to clipboard |
 | `:CopyPath relative` | Copy `<project-root>/path/to/file` (root = nearest `.git` or `pyproject.toml`; a warning when there is none) |
 | `:CopyPath absolute` | Copy absolute path |
-| `:JSONFormat` | Format JSON (whole file or visual range) |
+| `:JSONFormat` | Pretty-print JSON through Python (whole file or visual range; no key; `<Space>fm` formats JSON with prettier) |
 | `:Redir <cmd>` | Run the command and show its output in a new tab (scratch buffer, wiped when closed) |
 | `:Edit <pattern>...` | Open every file matching the glob patterns (`:Edit src/*.lua`); `:edit` typed as the first word expands to `:Edit` |
 | `:Datetime [format]` | Show date and time (optional format argument) |
@@ -48,7 +48,7 @@ Type these in command mode, then press space (or Enter) to expand:
 
 | Plugin | Trigger | Description |
 | --- | --- | --- |
-| `auto-save.nvim` | Automatic (active from right after the first screen) | Saves on `FocusLost` / `BufLeave` (message "AutoSave: saved at HH:MM:SS"); never saves unnamed, read-only or special buffers, nor Typst and LaTeX files |
+| `auto-save.nvim` | Automatic (active from right after the first screen) | Saves on `FocusLost` / `BufLeave` (a small nvim-notify popup "AutoSave: saved at HH:MM:SS"); never formats; never saves unnamed, read-only or special buffers, nor Typst and LaTeX files |
 | `better-escape.vim` | `jk` (insert) | Fast escape from insert mode (200ms window) |
 | `vim-repeat` | `.` | Makes plugin actions repeatable with `.` |
 | `vim-swap` | `gs` (n, x) | Interactively swap function arguments / list items |
@@ -200,14 +200,14 @@ New or changed config needs a restart. Mappings, options and plugin specs in `lu
 
 | Filetype | Settings |
 | --- | --- |
-| Python | 4-space indent, `<Space>rf` (or `<F9>`) to run, `<Space>f` to format with Black (needs `black`, python devShell; one warning otherwise; in a uv project both use `uv run`) |
-| Lua | `<Space>rf` (or `<F9>`) to execute (`:luafile %`), `<Space>f` and `<Space>fm` format with Stylua |
+| Python | 4-space indent, `<Space>rf` (or `<F9>`) to run, `<Space>fm` (and every `:w`) formats with `ruff format` |
+| Lua | `<Space>rf` (or `<F9>`) to execute (`:luafile %`), `<Space>fm` (and every `:w`) formats with stylua |
 | C++ | `<Space>rf` (or `<F9>`) to compile and run (only when a C++ compiler is on PATH, e.g. the c-cpp devShell) |
-| Markdown | Word wrap enabled, syntax highlighting continues up to column 3000 on long lines; `<Space>fm` formats with Prettier (one warning if `prettier` is missing); `<Space><Space>` does not strip trailing spaces |
-| JSON | `<Space>f` runs `:JSONFormat` on the buffer (in Visual mode on the selection) |
+| Markdown | Word wrap enabled, syntax highlighting continues up to column 3000 on long lines; `<Space>fm` (and every `:w`) formats with prettier; `<Space><Space>` does not strip trailing spaces |
+| JSON | `<Space>fm` (and every `:w`) formats with prettier (in Visual mode the selection); `:JSONFormat` pretty-prints through Python |
 | Typst | `<Space>tw` TypstWatch, `textwidth=100`, wrap |
 | Vim script | `<Space>rf` (or `<F9>`) sources the file |
-| Line-length marker | The coloured column marker (`colorcolumn`) sits at 100 by default and, per language, exactly at that language's convention: 80 for C, C++, shell, YAML, Vim script, Haskell, R, JavaScript and TypeScript (also jsx/tsx); 88 for Python (black); 100 for Java, Rust, Swift, Nix, Typst; 120 for Lua, PHP, TeX; plain `.txt` files show none. A line touching the marker is over that language's limit. Nothing wraps or reflows. |
+| Line-length marker | The coloured column marker (`colorcolumn`) sits at 100 by default and, per language, exactly at that language's convention: 80 for C, C++, shell, YAML, Vim script, Haskell, R, JavaScript and TypeScript (also jsx/tsx); 88 for Python (ruff format); 100 for Java, Rust, Swift, Nix, Typst; 120 for Lua, PHP, TeX; plain `.txt` files show none. A line touching the marker is over that language's limit. Nothing wraps or reflows. |
 
 ## Filetype syntax plugins (vim-tmux, vim-toml)
 
@@ -236,9 +236,10 @@ These happen without any keypress:
 | Diagnostic float | Diagnostics auto-show when cursor rests on a line |
 | Smart case | Case-insensitive search unless uppercase is used (only `/` and `?`; `:s` and `:g` always ignore case) |
 | Colorscheme | Fixed base16 theme on Nix systems (`NVIM_BASE16_THEME`, fallback Catppuccin Mocha); random on other systems |
-| Auto-save | Files save automatically on focus lost / buffer leave (not unnamed, read-only or special buffers, not Typst/LaTeX) |
+| Auto-save | Files save automatically on focus lost / buffer leave (not unnamed, read-only or special buffers, not Typst/LaTeX); these saves never format |
+| Format on save | Every explicit save (`:w`, `:x`, `ZZ`) formats the file with the formatter of its file type (conform.nvim); `<Space>fo` toggles it for all buffers, `:FormatDisable` / `:FormatDisable!` / `:FormatEnable` also work, `<Space>fm` formats on demand. See [Formatting (conform.nvim)](07-code.md#formatting-conformnvim) |
 | File changed on disk | Checked when Neovim gets focus and when idle. An unmodified buffer is reloaded ("File changed on disk. Buffer reloaded!"); if the buffer was changed too it is kept ("File changed on disk and in the buffer (buffer kept)"); a deleted file keeps its buffer (one warning) |
-| Format check after save | After saving a Python or Lua file, `black --check` / `stylua --check` run in the background; an unformatted file gives the warning `<file>: file is not formatted (black)` (`(stylua)` for Lua); a file the tool cannot check (syntax error) gives `<file>: <tool> could not check the file (syntax error?)` plus the first error line. Nothing is changed |
+| Format check after save | After saving a Python or Lua file, `ruff format --check` / `stylua --check` run in the background; when the save did not format (an auto-save, or format on save switched off) and the file is still unformatted it gives the hint `<file>: file is not formatted (ruff)` (`(stylua)` for Lua); a file the tool cannot check (syntax error) gives `<file>: <tool> could not check the file (syntax error?)` plus the first error line. Nothing is changed |
 | `nvim <directory>` | The directory becomes the working directory and the file tree opens there |
 | Git plugins | fugitive and gitlinker load when the working directory or an opened file is inside a git repository; neogit loads on its first `:Neogit*` command (with diffview and fzf-lua) |
 | Big files | Files over about 1.5 MB (or with very long lines) open in a light mode: no Treesitter, no completion, the language server starts a little later. `:set ft=<language>` gives the full mode back |

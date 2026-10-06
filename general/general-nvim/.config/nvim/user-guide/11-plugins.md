@@ -9,7 +9,7 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 
 **Loaded at startup.** An entry that begins with this label is loaded in every session without any trigger from you: either while Neovim starts or right after the first screen appears (lazy.nvim's `VeryLazy`), or on a bare `nvim` start for the dashboard. Entries without the label are loaded only when needed (a key, a command, a file type, a git repository, Insert mode and so on), so their startup cost is zero until then. The colorscheme of the current session is also loaded at startup, which theme that is depends on the machine (see [Colorschemes](#colorschemes)).
 
-<!-- plugin-count: 118 -->
+<!-- plugin-count: 119 -->
 
 ## LSP and code intelligence
 
@@ -17,6 +17,7 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 
 - `nvim-lspconfig`: **Loaded at startup.** Ships the ready-made definitions of language servers (command, filetypes, root markers). This config enables the servers itself in lua/config/lsp.lua; the plugin only provides the defaults. Keys such as `K`, `gd`, `<Space>rn`, `<Space>ca` are this config's own. In depth: [How LSP Is Managed](07-code.md#how-lsp-is-managed-nvim-lspconfig)
 - `lazydev.nvim`: Teaches the Lua language server the Neovim API, so editing this config gives completion, hover and no false "undefined global vim" warnings. Loads only in Lua files. In depth: [Editing the Neovim config in Lua (lazydev.nvim)](07-code.md#editing-the-neovim-config-in-lua-lazydevnvim)
+- `conform.nvim`: The one formatter front end for every file type, also files without a language server: runs stylua, prettier, ruff format, shfmt and others on every explicit save (`:w`), and on demand with `<Space>fm`; never on auto-saves. `<Space>fo` toggles format on save. In depth: [Formatting (conform.nvim)](07-code.md#formatting-conformnvim)
 - `glance.nvim`: **Loaded at startup.** Shows definitions, references and implementations in a popup so you can peek without leaving your file. Keys: `<Space>gd`, `<Space>gr`, `<Space>gi`. In depth: [Peeking Without Jumping (Glance)](07-code.md#peeking-without-jumping-glancenvim)
 - `nvim-lightbulb`: Shows a lightbulb in the sign column when the LSP has a code action for the current line; filters out ruff's two always-on actions. Press `<Space>ca` to use it. In depth: [The Lightbulb](07-code.md#the-lightbulb-nvim-lightbulb)
 - `trouble.nvim`: A tidy list window for diagnostics grouped by file. In this config it is opened by `<Space>dw` (`:Trouble diagnostics toggle`) to look at errors and warnings across the project. In depth: [Trouble (Better Quickfix UI)](05-search-and-files.md#troublenvim-better-quickfix-ui)
@@ -99,7 +100,7 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 
 - `persistence.nvim`: Saves one session per folder (and git branch) when you quit. Never restored automatically; restore it from the dashboard items. In depth: [Session Management](06-windows-terminal-sessions.md#session-management-persistencenvim-vim-obsession)
 - `vim-obsession`: **Loaded at startup.** Manual session recording with `:Obsession` into `Session.vim`; keeps updating a session started with `nvim -S Session.vim`. In depth: [Session Management](06-windows-terminal-sessions.md#session-management-persistencenvim-vim-obsession)
-- `auto-save.nvim`: **Loaded at startup.** Saves a changed file when you leave the buffer or Neovim loses focus; prints "AutoSave: saved at HH:MM:SS". In depth: [Auto-Save](06-windows-terminal-sessions.md#auto-save-auto-savenvim)
+- `auto-save.nvim`: **Loaded at startup.** Saves a changed file when you leave the buffer or Neovim loses focus; shows a small popup "AutoSave: saved at HH:MM:SS"; these saves never format. In depth: [Auto-Save](06-windows-terminal-sessions.md#auto-save-auto-savenvim)
 
 ## Git
 

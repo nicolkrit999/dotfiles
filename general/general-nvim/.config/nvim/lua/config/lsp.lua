@@ -13,7 +13,8 @@ vim.lsp.config("*", {
 --   <space>rn  rename supported -> LSP rename; else one warning
 --   <space>ca  codeAction supported -> LSP code action; else one warning
 -- No client attached at all: global one-warning fallbacks for <space>rn / <space>ca (below).
--- Formatting is not automatic: <space>fm formats on demand.
+-- Formatting: conform.nvim (lua/config/conform.lua), on explicit saves and with <space>fm; the LSP
+-- formatter is only its fallback.
 
 -- Go to definition, with duplicate locations (several servers, or one server reporting the same
 -- place twice) removed: one result jumps, several open the location list. Zero results never
@@ -185,7 +186,7 @@ local servers = {
     end,
     settings = {
       Lua = {
-        -- one Lua formatter: stylua (<Space>f / <Space>fm in after/ftplugin/lua.lua)
+        -- one Lua formatter: stylua through conform.nvim (lua/config/conform.lua)
         format = { enable = false },
         diagnostics = {
           disable = { "duplicate-set-field" },
@@ -212,8 +213,8 @@ local servers = {
     -- only plain markdown: nothing here sets markdown.mdx (lspconfig's default list has it, and
     -- :checkhealth vim.lsp warns "Unknown filetype 'markdown.mdx'")
     filetypes = { "markdown" },
-    -- no formatting here: marksman has no formatting provider; <Space>fm in markdown runs
-    -- prettier (after/ftplugin/markdown.lua)
+    -- no formatting here: marksman has no formatting provider; conform.nvim runs prettier
+    -- (lua/config/conform.lua)
   },
 
   -- Grammar/spell checking (LanguageTool) for prose filetypes

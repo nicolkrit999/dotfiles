@@ -18,7 +18,7 @@ Unless marked otherwise, the results below come from a real Neovim session. The 
 | markdown-preview.nvim | See the final look in a browser | Live preview, `<Alt-m>` toggles it |
 | vim-markdownfootnotes | Footnotes need numbering and a jump back | `^^` / `<Space>mf` create a footnote, `@@` / `<Space>mr` return |
 | `:AddRef` (your own command) | Reference-style links keep the text readable | Adds `[label]: url` at the end of the file |
-| prettier (via `<Space>fm`) | marksman cannot format | Tidies lists, tables, spacing |
+| prettier (via conform.nvim: `:w` and `<Space>fm`) | marksman cannot format | Tidies lists, tables, spacing |
 | tabular | Align table columns | `:Tabularize /\|` |
 | `ic` / `ac` (your own text objects) | Work on fenced code blocks quickly | `dic`, `yac`, `vic` ... |
 | `+` (your own operator) | Make a list from plain lines | `+ip` |
@@ -43,7 +43,7 @@ In a Markdown buffer: `wrap` is on (the global default is off), `textwidth` is 0
 
 1. Open a file, for example `nvim "my notes.md"`. In normal mode headings, lists, code blocks and tables are drawn nicely. While you type in insert mode the drawing pauses (`render_modes`), and returns after about half a second in normal mode.
 2. Press `<Alt-m>`. The browser opens with a live preview. Press `<Alt-m>` again to stop it.
-3. Press `<Space>fm`. Prettier tidies the file as one undo step (`u` undoes it). The file is not saved to disk.
+3. Press `<Space>fm`. Prettier tidies the file as one undo step (`u` undoes it). The file is not saved to disk. Saving with `:w` formats the same way.
 4. Footnote: put the cursor on the last letter of a sentence, press `<Space>mf`. A `[^1]` appears and the cursor jumps to the new `[^1]: ` line at the end of the file (in normal mode: press `A` to type the note). Press `@@` to jump back.
 5. PDF: save (`:w`) and run `:ToPDF` from a Neovim that was started inside the latex dev shell. Wait 30 seconds or more the first time. `my notes.pdf` appears next to the file.
 
@@ -51,7 +51,7 @@ In a Markdown buffer: `wrap` is on (the global default is off), `textwidth` is 0
 
 | Tool | Where it comes from | Needed for |
 | --- | --- | --- |
-| marksman, prettier, ltex-ls-plus, typos-lsp | Global nix profile (`~/nix/users/krit/common/programs/cli-programs/neovim.nix`) | LSP features, `<Space>fm`, grammar, typos |
+| marksman, prettier, ltex-ls-plus, typos-lsp | Global nix profile (`~/nix/users/krit/common/programs/cli-programs/neovim.nix`) | LSP features, formatting (`:w`, `<Space>fm`), grammar, typos |
 | node and npm | Needed once by lazy.nvim to build the preview server (`cd app && npm install`) | `<Alt-m>` |
 | A web browser | Your system default | `<Alt-m>` |
 | pandoc, xelatex | Only in the latex dev shell (`~/nix/templates/krit/dev-environments/language-specific/latex/flake.nix`: `pandoc` and `texlive.combined.scheme-full`) | `:ToPDF` |
@@ -60,7 +60,7 @@ Inside the latex dev shell `prettier`, `pandoc`, `xelatex` and `marksman` are al
 
 If a tool is missing, nothing falls back to a plain Vim key:
 
-- No prettier: `<Space>fm` shows one warning `Markdown: prettier not found on PATH`.
+- No prettier: formatting is skipped silently (neither `:w` nor `<Space>fm` shows a message) and the file stays as it is.
 - No pandoc: `:ToPDF` shows the error `pandoc not found`.
 - No xelatex: pandoc runs and fails, one warning `ToPDF: pandoc failed (exit N)`.
 - No marksman or ltex-ls-plus: that LSP simply does not start (check with `:checkhealth vim.lsp`).
@@ -104,7 +104,7 @@ All keys work only in Markdown buffers unless stated. `<Space>` is the leader ke
 | `<Space>mr` | n | Return from the footnote to the text. Elsewhere: one warning |
 | `^^` | n, i | Add a footnote before the character under the cursor (see the off-by-one note below) |
 | `@@` | n, i | Return from the footnote (replaces the macro replay `@@` in Markdown) |
-| `<Space>fm` | n | Format the file with prettier |
+| `<Space>fm` | n, x | Format the file (Visual mode: the selection) with prettier |
 | `<Space>mb` + motion | n | Add a trailing `\` (hard line break) to the lines of the motion, e.g. `<Space>mbip` |
 | `<Space>mb` | x | Same on a Visual selection |
 | `+` + motion | n | Put `+ ` in front of the lines of the motion: `+ip` |
@@ -323,13 +323,13 @@ Commands (all run without error; the global state changed `true`, `false`, `true
 
 An unknown name (for example `:RenderMarkdown bogus`) gives the plugin's error `invalid command - bogus`. `:checkhealth render-markdown` shows the setup.
 
-Big files: above 1.5 MB (or lines averaging over 5000 characters) the file gets the filetype `bigfile`: no tree-sitter, no ftplugin keys (so no `<Alt-m>`, `<Space>fm`, `^^`), and ltex_plus and typos_lsp are not attached. `:set ft=markdown` brings the full mode back (can be slow on huge files).
+Big files: above 1.5 MB (or lines averaging over 5000 characters) the file gets the filetype `bigfile`: no tree-sitter, no ftplugin keys (so no `<Alt-m>`, `^^`), and ltex_plus and typos_lsp are not attached. `:set ft=markdown` brings the full mode back (can be slow on huge files).
 
 ## Formatting with prettier
 
-Why: marksman has no formatting. Without this key `<Space>fm` (the global format key) would do nothing in Markdown.
+Why: marksman has no formatting. Markdown is formatted by prettier, run by conform.nvim (see [Formatting (conform.nvim)](../07-code.md#formatting-conformnvim)): when you save with `:w`, and on demand with `<Space>fm`.
 
-How: the key runs `prettier --parser markdown --stdin-filepath <file>` on the buffer text (so a project `.prettierrc` is honoured) and writes back only the changed hunks. Result on the example file:
+How: prettier gets the buffer text (so a project `.prettierrc` is honoured), and only the changed lines are written back. Result on an example file:
 
 ```text
 * item a            ->  - item a
@@ -339,63 +339,12 @@ How: the key runs `prettier --parser markdown --stdin-filepath <file>` on the bu
 |---|---|               | ----------- | --- |
 ```
 
-The code block and the `plain one` / `plain two` lines (two lines, no blank between) stayed as they were. Also `*emphasis*` becomes `_emphasis_` and a final newline is added (prettier defaults, not shown in the test).
+The code block and the `plain one` / `plain two` lines (two lines, no blank between) stay as they are. Also `*emphasis*` becomes `_emphasis_` and a final newline is added (prettier defaults).
 
-Why not `:%!prettier --parser markdown`? It would replace the whole buffer: one giant change, all marks lost, and the cursor jumps. The key changes only the differing lines, in one undo step (`u` restores everything), keeps marks and puts the cursor back on the same text. Nothing is written to disk. If you type while prettier runs, the result is discarded with a warning (`prettier: buffer changed while formatting, result discarded`): press the key again. A prettier error appears as `prettier failed: ...`.
-
-The core of the real code (`after/ftplugin/markdown.lua`, abridged: the cursor-restoring helpers `fm_cursor`, `squash` and `remap_col` above it, lines 15-90, and the two places marked `-- ...` that save and restore the cursors are left out; read the file for them):
-
-```lua
-if vim.fn.executable("prettier") == 1 then
-  vim.keymap.set("n", "<Space>fm", function()
-    local buf = vim.api.nvim_get_current_buf()
-    local tick = vim.b[buf].changedtick
-    local old = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-    local cmd = { "prettier", "--parser", "markdown" }
-    local name = vim.api.nvim_buf_get_name(buf)
-    if name ~= "" then
-      -- lets prettier find the project's .prettierrc / .prettierignore
-      vim.list_extend(cmd, { "--stdin-filepath", name })
-    end
-    vim.system(cmd, { stdin = table.concat(old, "\n") .. "\n", text = true }, function(res)
-      vim.schedule(function()
-        if res.code ~= 0 then
-          vim.notify("prettier failed: " .. vim.trim(res.stderr or ""), vim.log.levels.ERROR)
-          return
-        end
-        if not vim.api.nvim_buf_is_valid(buf) or vim.b[buf].changedtick ~= tick then
-          vim.notify("prettier: buffer changed while formatting, result discarded", vim.log.levels.WARN)
-          return
-        end
-        local new = vim.split(res.stdout:gsub("\n$", ""), "\n", { plain = true })
-        local diff = (vim.text and vim.text.diff) or vim.diff
-        local hunks = diff(table.concat(old, "\n") .. "\n", table.concat(new, "\n") .. "\n", { result_type = "indices" })
-        -- ... (cursors of all windows are saved here)
-        -- apply bottom-up so the earlier line numbers stay valid
-        for i = #hunks, 1, -1 do
-          local a_start, a_count, b_start, b_count = unpack(hunks[i])
-          local first = a_count == 0 and a_start or a_start - 1
-          vim.api.nvim_buf_set_lines(buf, first, first + a_count, false, vim.list_slice(new, b_start, b_start + b_count - 1))
-        end
-        -- ... (cursors of all windows are restored here)
-      end)
-    end)
-  end, { buffer = true, desc = "Format file (prettier)" })
-else
-  vim.keymap.set("n", "<Space>fm", function()
-    vim.notify("Markdown: prettier not found on PATH", vim.log.levels.WARN)
-  end, { buffer = true, desc = "Format file (needs prettier)" })
-end
-```
-
-In plain words:
-
-- The whole map exists in two versions, chosen when the Markdown file is opened: with `prettier` on PATH it formats; without it the key shows ONE warning (`Markdown: prettier not found on PATH`) instead of falling through to plain `<Space>` + `f` + `m`.
-- The buffer text goes to prettier through stdin (`vim.system` with `stdin = ...`), so the file on disk is never touched and unsaved text is formatted too. `--stdin-filepath` is added only for a named buffer; it is what lets prettier find `.prettierrc` and `.prettierignore`.
-- `changedtick` is remembered before the job starts and compared when it ends: if you typed in between, the result is thrown away with a warning.
-- `vim.text.diff` with `result_type = "indices"` compares old and new text and returns the changed hunks. They are applied from the bottom up so the line numbers of the hunks still to do stay valid. Only changed lines are replaced, which is why marks survive and `u` undoes it in one step.
-- The `fm_cursor` helpers (not quoted) move the cursor of every window showing the buffer back to the same text, even when lines above it changed.
-- The same hunk-applying idea is used for Lua in `after/ftplugin/lua.lua` (stylua), see ["Lua: lua_ls and stylua"](../07-code.md#lua-lua_ls-and-stylua) in the LSP chapter.
+- `<Space>fm` changes the buffer as one undo step (`u` restores everything), keeps marks, and does not write the file. In Visual mode only the selection is formatted.
+- Saving with `:w` formats first and then writes. Auto-saves (leaving the buffer, Neovim losing focus) never format.
+- `<Space>fo` turns format on save off and on again; `:FormatDisable!` + Enter does it for the current buffer only.
+- Without prettier on PATH nothing happens and no message appears. Start Neovim from a shell that has prettier (nix profile or dev shell). `:ConformInfo` shows whether prettier is found.
 
 Trailing spaces: two spaces at the end of a line are a Markdown hard line break, so they are never stripped here. The whitespace plugin excludes `markdown` (`trailing_whitespace_exclude_filetypes`), and `<Space><Space>` only warns. The other hard-break form is a trailing backslash; `<Space>mb` adds it. For rewrapping long paragraphs use `gq` after `:set textwidth=80` yourself.
 
@@ -933,8 +882,7 @@ Checks common typos in every normal buffer (not help, terminal, quickfix, or sta
 | `<Alt-m>` says "only in markdown buffers" | The buffer is not `markdown`: `:set ft=markdown` |
 | Preview does not open | Server not built or no browser: `:Lazy build markdown-preview.nvim` (needs `node` and `npm`) |
 | Preview tab stays open after I left the file | Intended (`mkdp_auto_close = 0`). Stop it with `<Alt-m>` in the Markdown buffer |
-| `<Space>fm` warns "prettier not found on PATH" | Start Neovim from a shell that has prettier (nix profile or dev shell) |
-| `<Space>fm`: "buffer changed while formatting" | You typed during the run. Press the key again |
+| `<Space>fm` or `:w` does not format | prettier is not on PATH (no message is shown): start Neovim from a shell that has prettier (nix profile or dev shell); `:ConformInfo` shows what will run. Or format on save is switched off: `<Space>fo` / `:FormatEnable` |
 | `:ToPDF`: "pandoc not found" / "pandoc failed (exit N)" | Start Neovim inside the latex dev shell. Run the pandoc command in a terminal to see the error |
 | `:ToPDF` does nothing visible | Normal: silent, 30 s or more the first time, no viewer on Linux. Look for the PDF next to the file |
 | `@@` does not replay my macro | In Markdown it means "return from footnote". Use `@a` (register name) |

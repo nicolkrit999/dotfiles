@@ -234,7 +234,7 @@ local colorcolumn_by_ft = {
   -- 80: Linux/LLVM/Google C++, Google shell, yamllint, Vim style, Haskell, tidyverse R, Prettier/Google JS
   c = 80, cpp = 80, sh = 80, bash = 80, yaml = 80, vim = 80, haskell = 80, r = 80,
   javascript = 80, javascriptreact = 80, typescript = 80, typescriptreact = 80,
-  -- 88: black (the Python formatter used here)
+  -- 88: ruff format = black style (the Python formatter used here)
   python = 88,
   -- 100: Google Java, rustfmt, swift-format, nixfmt; typst has textwidth=100
   java = 100, rust = 100, swift = 100, nix = 100, typst = 100,
