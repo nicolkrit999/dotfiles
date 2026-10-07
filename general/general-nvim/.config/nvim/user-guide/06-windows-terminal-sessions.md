@@ -255,7 +255,7 @@ The terminal automatically starts in insert mode (you can type immediately) and 
 
 | Keymap | Context | Description |
 | --- | --- | --- |
-| `<Esc>` | In terminal | **Exit terminal mode** and enter Normal mode. Now you can navigate away from the terminal window using `<Ctrl-w>h/j/k/l` or arrow keys. Exception: in a Claude terminal `<Esc>` goes to Claude; there `<Ctrl-w>h/j/k/l` work directly from terminal mode, and `<Ctrl-\><Ctrl-n>` leaves terminal mode (see [section 9](09-ai-and-writing.md#9-ai-assistant-window-claude-code-claude-codenvim)). |
+| `<Esc>` | In terminal | **Exit terminal mode** and enter Normal mode. Now you can navigate away from the terminal window using `<Ctrl-w>h/j/k/l` or arrow keys. Exception: in a Claude terminal `<Esc>` goes to Claude; there `<Ctrl-w>h/j/k/l` work directly from terminal mode, and `<Ctrl-q>` (or `<Ctrl-\><Ctrl-n>`) leaves terminal mode (see [section 9](09-ai-and-writing.md#9-ai-assistant-window-claude-code-claude-codenvim)). |
 | `i` or `a` | In terminal (Normal mode) | Re-enter terminal mode (start typing commands again) |
 | `<Ctrl-w>h/j/k/l` | In terminal (Normal mode) | Move to another window |
 | `<Left>/<Right>/<Up>/<Down>` | In terminal (Normal mode) | Move to another window (arrow key shortcuts) |
@@ -544,7 +544,7 @@ The same two keys work in every normal buffer and as dashboard items (shown as `
 | `<Space>?` | Open this user guide as a PDF (`user-guide/neovim-user-guide.pdf`, built from the markdown files) in its own zathura window next to Neovim, always at page 2, the table of contents (zathura's remembered last page is ignored); close it with `q` in zathura. Pressing the key again while it is open only shows a notice. Without zathura the system viewer opens the PDF |
 | `<Space>a` | Ask Claude how to do something in Neovim: a fresh `claude` session, always on the Sonnet model (`--model sonnet`), with the `answering-neovim-usage-questions` skill loaded, started in the nvim config folder with permissions bypassed (`--dangerously-skip-permissions`: it reads the guide and config, and can run commands or edit files, without asking). In a normal buffer it opens in a vertical split on the right (40% of the screen); on the dashboard it opens in its own tab. Type your question; `/exit` ends the session and closes the split or tab |
 
-In the Claude split, `<Esc>` goes to Claude (it interrupts a running answer). `<Ctrl-w>h` (or `j`/`k`/`l`) moves to another window directly, even from terminal mode; `<Ctrl-\><Ctrl-n>` still leaves terminal mode. To edit the guide itself open the `.md` files directly (`<A-m>` previews one in the browser).
+In the Claude split, `<Esc>` goes to Claude (it interrupts a running answer). `<Ctrl-w>h` (or `j`/`k`/`l`) moves to another window directly, even from terminal mode; `<Ctrl-q>` (or `<Ctrl-\><Ctrl-n>`) leaves terminal mode. To edit the guide itself open the `.md` files directly (`<A-m>` previews one in the browser).
 
 `:Dashboard` does the same as `\h`. To close the current buffer and get the dashboard instead: `:Dashboard | bdelete #` (a buffer with unsaved changes refuses with E89). `\d` deletes the buffer but shows the previous one, not the dashboard.
 

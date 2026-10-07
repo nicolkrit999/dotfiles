@@ -1255,6 +1255,8 @@ local plugin_specs = {
             vim.keymap.set("t", "<C-w>" .. dir, [[<C-\><C-n><C-w>]] .. dir,
               { buffer = ev.buf, desc = "Claude Code: move to the window " .. dir })
           end
+          -- <Esc> cannot leave terminal mode here, so <C-q> does it (same as <C-\><C-n>): then :q, <Space>q ...
+          vim.keymap.set("t", "<C-q>", [[<C-\><C-n>]], { buffer = ev.buf, desc = "Claude Code: leave terminal mode" })
           vim.b[ev.buf].claude_esc_passthrough = true
         end,
       })

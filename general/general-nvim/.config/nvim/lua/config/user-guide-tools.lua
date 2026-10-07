@@ -59,6 +59,7 @@ function M.ask_claude()
     vim.keymap.set("t", "<C-w>" .. dir, [[<C-\><C-n><C-w>]] .. dir,
       { buffer = buf, desc = "Claude: move to the window " .. dir })
   end
+  vim.keymap.set("t", "<C-q>", [[<C-\><C-n>]], { buffer = buf, desc = "Claude: leave terminal mode" })
   vim.cmd("startinsert")
 end
 
