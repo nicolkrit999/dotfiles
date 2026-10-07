@@ -181,7 +181,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Adding surrounding pairs (vim-sandwich plugin)](03-editing.md#adding-surrounding-pairs-vim-sandwich-plugin)
         - [Removing surrounding pairs (vim-sandwich plugin)](03-editing.md#removing-surrounding-pairs-vim-sandwich-plugin)
         - [Replacing surrounding pairs (vim-sandwich plugin)](03-editing.md#replacing-surrounding-pairs-vim-sandwich-plugin)
-            - [Wrap a whole list or part of it (headless in a scratch copy)](03-editing.md#wrap-a-whole-list-or-part-of-it-headless-in-a-scratch-copy)
+            - [Wrap a whole list or part of it](03-editing.md#wrap-a-whole-list-or-part-of-it)
         - [Auto-pairing (nvim-autopairs plugin)](03-editing.md#auto-pairing-nvim-autopairs-plugin)
     - [16. Code commenting](03-editing.md#16-code-commenting)
         - [vim-commentary (plugin)](03-editing.md#vim-commentary-plugin)

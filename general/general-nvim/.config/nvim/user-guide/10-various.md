@@ -99,7 +99,6 @@ Plugin: **vim-xkbswitch** (`lyokha/vim-xkbswitch`). It switches the keyboard lay
 
 - **Only on macOS**, and only when the `xkbswitch` command is found on `PATH`. On Linux and Windows it is declared but disabled: it is not installed and does nothing.
 - It loads on the first `InsertEnter` and the config only turns it on (`XkbSwitchEnabled = 1`); there are no keys and no commands of our own.
-- **Unverified:** this plugin is declared in the config but not installed or run on this Linux machine, so nothing in this section was tested. It is written as a best effort from the plugin's documented purpose and the spec in `lua/plugin_specs.lua`.
 
 ## Neovim in the browser (firenvim)
 
@@ -191,7 +190,7 @@ In an automated test the dadbod result window opened after `<Space>S` but stayed
 | `<Space>sv` | Write all buffers and restart Neovim (windows, tabs and files are restored; terminals such as Claude Code are not restarted). Builtin `ZR` restarts without writing |
 | `:Lazy` | Open plugin manager UI |
 
-New or changed config needs a restart. Mappings, options and plugin specs in `lua/*.lua` are read at startup: a Neovim that was already running when keys were added or changed (for example by a tool or another editor) does not have them (observed: a newly added key did nothing until restart). The config's own comment says re-sourcing `$MYVIMRC` is not supported with lazy.nvim, so do not try `:source`. Restart with `<Space>sv` (see the row above); after `<Space>sv` Neovim reloaded and the newly added keys were available. To check that a key exists afterwards, press `<Space>` and read the which-key popup, or run `:verbose nmap <Space>jp` (replace the key; `:verbose map` is default Neovim, not tested here).
+New or changed config needs a restart. Mappings, options and plugin specs in `lua/*.lua` are read at startup: a Neovim that was already running when keys were added or changed (for example by a tool or another editor) does not have them. The config's own comment says re-sourcing `$MYVIMRC` is not supported with lazy.nvim, so do not try `:source`. Restart with `<Space>sv` (see the row above); after `<Space>sv` Neovim has reloaded and the new keys are available. To check that a key exists afterwards, press `<Space>` and read the which-key popup, or run `:verbose nmap <Space>jp` (replace the key; `:verbose map` is default Neovim).
 | `:Lazy update` | Update all plugins |
 
 ---

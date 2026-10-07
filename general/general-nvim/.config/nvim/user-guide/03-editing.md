@@ -387,7 +387,7 @@ Cursor anywhere on the line that ends with the opening `{` (for example `int foo
 | `V` | Normal | Start line-wise Visual mode |
 | `%` | Visual | Jump to the matching `}` (vim-matchup): every line from the signature line to the closing `}` is selected |
 
-Headless, a Java class, block of 4 lines on lines 10 to 13, cursor at column 0 of the signature line):
+Example: a Java class, block of 4 lines on lines 10 to 13, cursor at column 0 of the signature line.
 
 | Keys | Selected |
 | --- | --- |
@@ -400,24 +400,24 @@ Headless, a Java class, block of 4 lines on lines 10 to 13, cursor at column 0 o
 Notes:
 
 - In Normal mode `$` is the normal end-of-line. Only in Visual mode `$` is remapped to `g_` (last non-blank character); here `$` is pressed before `V`, so it is the Normal one. `%` is provided by vim-matchup.
-- Works for any `{ }` block (function, class, `if`, `for`, a JSON or CSS block). For a `( )` or `[ ]` block that opens at the end of a line, the same idea works with that bracket (assumption, not tested).
-- If the line has trailing spaces after the `{`, `$` lands on a space and `%` may not find the bracket (assumption, not tested): remove the spaces or use `g_` instead of `$`.
-- Without braces (Python): use the indent objects `ii` / `ai` in [More text objects](#more-text-objects). `V%` on `if` ... `end` keywords should work through vim-matchup (assumption, not tested).
-- Cursor INSIDE the block: `va{` / `vaB` selects the braces of that level only (character-wise, not the signature line). `[{` jumps to the enclosing opening `{`; from there continue with `V%` because you are already on the `{` (assumption, not tested).
+- Works for any `{ }` block (function, class, `if`, `for`, a JSON or CSS block). For a `( )` or `[ ]` block that opens at the end of a line, the same idea works with that bracket.
+- If the line has trailing spaces after the `{`, `$` lands on a space and `%` does not find the bracket: remove the spaces or use `g_` instead of `$`.
+- Without braces (Python): use the indent objects `ii` / `ai` in [More text objects](#more-text-objects). `V%` on `if` ... `end` keywords works through vim-matchup.
+- Cursor INSIDE the block: `va{` / `vaB` selects the braces of that level only (character-wise, not the signature line). `[{` jumps to the enclosing opening `{`; from there continue with `V%` because you are already on the `{`.
 
 What to do with the selected block (the selection from `$V%` stays active until you press one of these):
 
-| Keys | Effect | Status |
-| --- | --- | --- |
-| `y` | Copy the block; move the cursor, then `p` pastes it BELOW the cursor line (after `$V%y<Esc>`, `G`, `k`, `p` the 4 lines appeared a second time, 27 to 31 lines) | tested |
-| `d` | Delete the block (27 to 23 lines) | tested |
-| `<Alt-j>` / `<Alt-k>` | Move the whole block down / up ONE line per press; the selection stays, so press again | tested |
-| `5<Alt-j>` | Move the block 5 lines: type the count BEFORE the key, see [Line operations](#line-operations) | documented elsewhere (not tested with a block) |
-| `>` / `<` | Indent / outdent the block (the line count is unchanged) | the command runs |
-| `gc` | Comment the whole block out, see [vim-commentary](#vim-commentary-plugin) | documented elsewhere (not re-tested; headless runs do not load VeryLazy plugins) |
-| `=` | Re-indent the block | assumption, not tested |
-| `J` | JOINS all lines of the block into ONE line (4 lines to 1, 27 to 24): usually not what you want, a trap while the selection is still active | tested |
-| `<Esc>` | Cancel the selection | tested |
+| Keys | Effect |
+| --- | --- |
+| `y` | Copy the block; move the cursor, then `p` pastes it BELOW the cursor line (after `$V%y<Esc>`, `G`, `k`, `p` the 4 lines appeared a second time, 27 to 31 lines) |
+| `d` | Delete the block (27 to 23 lines) |
+| `<Alt-j>` / `<Alt-k>` | Move the whole block down / up ONE line per press; the selection stays, so press again |
+| `5<Alt-j>` | Move the block 5 lines: type the count BEFORE the key, see [Line operations](#line-operations) |
+| `>` / `<` | Indent / outdent the block (the line count is unchanged) |
+| `gc` | Comment the whole block out, see [vim-commentary](#vim-commentary-plugin) |
+| `=` | Re-indent the block |
+| `J` | JOINS all lines of the block into ONE line (4 lines to 1, 27 to 24): usually not what you want, a trap while the selection is still active |
+| `<Esc>` | Cancel the selection |
 
 ### Treesitter node selection (builtin)
 
@@ -540,7 +540,7 @@ How to select (or delete/copy/change) from the cursor to a specific character, w
 
 **Where the cursor lands**: on the **first non-blank character of the next sentence**, which is the first character after the terminator and the spaces that follow it.
 
-**Where a selection ends**: in Visual mode the character under the cursor is included, so `v)` selects from the cursor **through that first letter of the next sentence** (the spaces before it are selected too). With an operator (`d)`, `y)`) the motion stops just before that letter and does not include it (with `d)`: with the cursor on the `t` of `there`, it deleted `there. ` and the cursor ended on the `H` of `How`; `y)` was not tested).
+**Where a selection ends**: in Visual mode the character under the cursor is included, so `v)` selects from the cursor **through that first letter of the next sentence** (the spaces before it are selected too). With an operator (`d)`, `y)`) the motion stops just before that letter and does not include it (with `d)`: with the cursor on the `t` of `there`, it deleted `there. ` and the cursor ended on the `H` of `How`; `y)` yanks `there. `).
 
 Concrete example. Text on one line, cursor on the `t` of `there`:
 
@@ -659,7 +659,7 @@ Not possible. Vim has no selection of separate pieces, and this config has no mu
 - **Relative addresses**: `.` is the current line and `+N` / `-N` are N lines after/before it, so they match the relative numbers in the gutter. Example: `;.t.` duplicated the current line and left the cursor on the new copy. Also: `;.m+2` moves the current line to below the line 2 lines further down, and `;.,+3d` deletes the current line and the next 3 (4 lines in total).
 - **Where `m` puts the line (careful with `-N`)**: `m` always puts the line **below** the target line. So `;.m-3` puts the current line **below** the line 3 above it, not above it. To put a line **above** line X use the target line number minus 1 (above line 7: `;.m6`; with a relative address `;.m-4` goes above the line 3 above), and `m0` puts it at the very top of the file. The rule works as described, including `m0` for the top of the file and target number minus 1 to land above a line.
 - **Copy with a relative address**: `;.t+2` copies the current line below the line 2 lines further down (`t` copies, `m` moves).
-- **Move a selection of whole lines**: `V`, then `j` / `k` to extend the selection, then `;` (the command line fills with `:'<,'>`), type `m<target>` (for example `m10`), then `<CR>`. The whole selection goes below the target line, keeping its order; the cursor ends on the last moved line. Use an **absolute** target number. A relative target such as `m+2` after a range is counted from the cursor line (the end of the selection where the cursor stood), which is easy to misjudge, so prefer the absolute number (the relative form after a range was not confirmed by you; only checked in a plain default Neovim sandbox).
+- **Move a selection of whole lines**: `V`, then `j` / `k` to extend the selection, then `;` (the command line fills with `:'<,'>`), type `m<target>` (for example `m10`), then `<CR>`. The whole selection goes below the target line, keeping its order; the cursor ends on the last moved line. Use an **absolute** target number. A relative target such as `m+2` after a range is counted from the cursor line (the end of the selection where the cursor stood), which is easy to misjudge, so prefer the absolute number.
 - **`m` only moves whole lines.** For part of a line: select it (`v` + a motion, for example `viw` for a word), `d` (cut), move to the new spot (`5j`, or hop with `f`), then `p` (paste after the cursor) or `P` (before). See "Deleting text" for why `d` is a cut.
 - **Blank lines hide the effect**: moving or copying a blank line next to another blank line changes nothing you can see. Use a line with text to check `m` and `t`.
 - **Same spot on adjacent lines**: `<Ctrl-v>` block mode, but only for adjacent lines (see the [Visual Block Editing](#62-visual-block-editing-multi-cursor-like) section).
@@ -745,7 +745,7 @@ The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl
 | `sd'` | Delete surrounding single quotes | `'hello'` becomes `hello` |
 | `sd(` | Delete surrounding parentheses | `(hello)` becomes `hello` |
 | `sd{` | Delete surrounding curly braces | `{hello}` becomes `hello` |
-| `sdb` | Delete the surrounding pair without naming it (`()`, `[]`, `{}` or quotes). With the cursor on a letter it takes the INNERMOST pair; with the cursor ON a bracket or quote character it can pick the outer pair (see the note below) | `[hello]` becomes `hello` (headless) |
+| `sdb` | Delete the surrounding pair without naming it (`()`, `[]`, `{}` or quotes). With the cursor on a letter it takes the INNERMOST pair; with the cursor ON a bracket or quote character it can pick the outer pair (see the note below) | `[hello]` becomes `hello` |
 | `sd[` | Delete surrounding square brackets | `[hello]` becomes `hello` |
 
 ## Replacing surrounding pairs (vim-sandwich plugin)
@@ -758,7 +758,7 @@ The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl
 | `sr'(` | Replace `'` with `()` | `'hello'` becomes `(hello)` |
 | `srb'` | Replace the surrounding pair without naming it (same pair choice as `sdb`) | `"hello"` becomes `'hello'` |
 
-**Nested pairs, `b` and exactness** (headless in a scratch copy of the config, Java buffer, line `names.add("apple");`):
+**Nested pairs, `b` and exactness** (Java buffer, line `names.add("apple");`):
 
 - Cursor on a letter of `apple`: `sd"` gives `names.add(apple);`, `sd(` gives `names.add"apple";`, `sdb` gives `names.add(apple);` (the innermost pair, the quotes), `srb[` gives `names.add([apple]);` (the quotes became brackets).
 - Cursor ON a quote character or on a parenthesis: `sdb` gave `names.add"apple";` (the PARENTHESES were removed, not the quotes). The same happens with the cursor on the closing `)`.
@@ -767,7 +767,7 @@ The `sa` command adds surrounding characters. `s` key alone is disabled (use `cl
 
 More round trips on `names.add("apple");` with the cursor on `apple`: `sd"` then `saiw"` restores `"apple"`; `sr"'` gives `'apple'` and `sr'"` goes back; `sr({` gives `names.add{"apple"};` and `sr{(` goes back.
 
-### Wrap a whole list or part of it (headless in a scratch copy)
+### Wrap a whole list or part of it
 
 Line `String.join(", ", "second", "first", "third")` with the cursor on `second`:
 

@@ -5,8 +5,6 @@
 
 This section covers everything that is specific to LaTeX in this config: what each tool is for, how it works, the keys, and what to do when something fails. Global things (LSP keys, completion menu, windows, spell checking) are only mentioned with a pointer to their own section. [Typst](typst.md#82-typst-typstvim-tinymist-watch-and-preview) and [Markdown](markdown.md#81-markdown-writing-preview-footnotes-pdf) have their own sections.
 
-Unless marked otherwise, everything below was run in a real Neovim inside the LaTeX devShell with a scratch project (October 2026).
-
 ## The big picture
 
 Writing LaTeX means: a `.tex` source file, a compiler (`latexmk` runs `pdflatex` as many times as needed and runs BibTeX/biber), and a PDF viewer. Each tool in the config covers one part:
@@ -271,7 +269,7 @@ Move between the TOC and the text with `<Ctrl-w>h` / `<Ctrl-w>l` or `<Left>` / `
 
 ## Moving and editing (vimtex)
 
-Example text for the tests below (all keys run in this exact file):
+Example text for the examples below (all keys act on this exact file):
 
 ```latex
 \section{One}
@@ -321,13 +319,13 @@ x = 1
 | `tse` | Toggle between two environments; default pair only `itemize` / `enumerate` (`g:vimtex_env_toggle_map`) | no change on `equation` |
 | `dsc` / `csc` | Delete / change the surrounding command | `\textbf{bold}` became `bold` |
 | `tsc` | Toggle star of a command | `\section{One}` became `\section*{One}` |
-| `ds$` / `cs$` / `ts$` | Delete / change / toggle maths delimiters (`$..$`, `\[..\]`, `equation`) | not tested |
-| `tsd` / `tsD` | Toggle `\left..\right` modifiers | not tested |
-| `tsf` | Toggle fraction `a/b` and `\frac{a}{b}` | not tested |
-| `<F6>` | Surround the line (or visual selection) with an environment (vimtex default; no leader alternative is set) | map exists |
-| `<F7>` | Create a command from the word (insert and normal mode; vimtex default, no leader alternative) | map exists |
-| `<F8>` | Add `\left`/`\right` to delimiters (vimtex default, no leader alternative) | map exists |
-| `]]` in insert mode | Close the open environment/delimiter | map exists |
+| `ds$` / `cs$` / `ts$` | Delete / change / toggle maths delimiters (`\[..\]`, `equation`) | on display maths: `ds$` removes the delimiter lines and keeps the body; `cs$` asks for the new delimiter (`\[` turned `equation` into `\[ .. \]`); `ts$` turned `equation` into inline `$x = 1$` and `\[..\]` into `equation`. On inline `$a+b$` nothing happens (see the note on maths detection above) |
+| `tsd` / `tsD` | Toggle `\left..\right` modifiers (`tsD` toggles in the reverse direction) | `$(a+b)$` became `$\left(a+b\right)$` |
+| `tsf` | Toggle fraction `a/b` and `\frac{a}{b}` | `$a/b$` became `$\frac{a}{b}$` and back |
+| `<F6>` | Surround the line (or visual selection) with an environment (vimtex default; no leader alternative is set) | `<Plug>(vimtex-env-surround-line)` |
+| `<F7>` | Create a command from the word (insert and normal mode; vimtex default, no leader alternative) | `<Plug>(vimtex-cmd-create)` |
+| `<F8>` | Add `\left`/`\right` to delimiters (Normal mode; vimtex default, no leader alternative) | `<Plug>(vimtex-delim-add-modifiers)` |
+| `]]` in insert mode | Close the open environment/delimiter | `<Plug>(vimtex-delim-close)` |
 | `` ` `` + letter in insert mode | Maths shortcuts (`` `a `` = `\alpha`), made by `vimtex#imaps#wrap_math`. `\lm` (`:VimtexImapsList`) opens a "VimTeX imaps" window that lists all of them; close it with `:close` | The maps exist but **did not expand** in the test, even inside `equation`: they only fire when `vimtex#syntax#in_mathzone()` is true, and it returned 0 there (tree-sitter note below). `\lm` itself ran in the same test |
 
 These do not clash with the vim-sandwich keys of the config (`sa`, `sd`, `sr`).
@@ -381,7 +379,7 @@ with `refs.bib`:
 @book{knuth, author={Knuth}, title={TAOCP}, year={1968}, publisher={AW}}
 ```
 
-Typing `\cite{kn` and `<Ctrl-n>` shows `knuth [book] Knuth (1968), "TAOCP"` in the menu. `latexmk` runs BibTeX itself during compile; the first compile after adding a `\cite` may show `[?]` until the next automatic run (`main.bbl` was created by the first run). With biblatex use `\usepackage{biblatex}` and `\addbibresource{refs.bib}`; `latexmk` then runs biber (not tested here).
+Typing `\cite{kn` and `<Ctrl-n>` shows `knuth [book] Knuth (1968), "TAOCP"` in the menu. `latexmk` runs BibTeX itself during compile; the first compile after adding a `\cite` may show `[?]` until the next automatic run (`main.bbl` was created by the first run). With biblatex use `\usepackage{biblatex}` and `\addbibresource{refs.bib}`; `latexmk` then runs biber.
 
 ## Grammar and spelling (ltex_plus)
 

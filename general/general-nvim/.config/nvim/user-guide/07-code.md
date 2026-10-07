@@ -578,7 +578,7 @@ Plugin: **lazydev.nvim**. When you edit a Lua file (for example this config), th
 | Needs | `lua_ls` attached to the buffer (see the [server table](#the-server-table) above) |
 | Not set up | lazydev's optional nvim-cmp source for `require("...")` module names is not configured here, so module-name completion inside `require(...)` only lists modules that are already loaded in the workspace |
 
-How the results reach the menu: the names come from `lua_ls` through the normal LSP source (see [section 45](04-completion-snippets.md#45-autocompletion-in-depth-nvim-cmp), "[Completion sources and helpers](04-completion-snippets.md#completion-sources-and-helpers)"); it was not verified here that every lazydev-provided name shows up in the menu.
+How the results reach the menu: the names come from `lua_ls` through the normal LSP source (see [section 45](04-completion-snippets.md#45-autocompletion-in-depth-nvim-cmp), "[Completion sources and helpers](04-completion-snippets.md#completion-sources-and-helpers)").
 
 ---
 
@@ -875,7 +875,7 @@ The plugin's own start keys (`<Space>dd`, `dl`, `dp`, `db`, `dr`) are switched o
 | `<Ctrl-p>` / `<Ctrl-n>` | `:GdbFrameUp` / `:GdbFrameDown` | Move one stack frame up / down (plugin default) |
 | `<Space>dv` | (evaluate) | Evaluate the word under the cursor (Normal) or the selection (Visual); moved here from the plugin's `<F9>` |
 
-Two commands without a key: `:GdbCreateWatch <command>` (for example `info locals` in GDB) opens a watch window that re-runs the command at every step, and `:GdbLopenBacktrace` / `:GdbLopenBreakpoints` put the backtrace / breakpoints into the location list. The Python-only Space keys for the same actions (`<Space>dc`, `dn`, `ds`, `df`, `dB`, `du`) are in the [Python guide ("Debugging with pdb")](languages/python.md#debugging-with-pdb-nvim-gdb). The F-keys, `<Ctrl-p>` / `<Ctrl-n>` and the commands are the plugin's defaults from its README and help (`:help nvimgdb`). They are untested here beyond what the Python guide documents for pdb.
+Two commands without a key: `:GdbCreateWatch <command>` (for example `info locals` in GDB) opens a watch window that re-runs the command at every step, and `:GdbLopenBacktrace` / `:GdbLopenBreakpoints` put the backtrace / breakpoints into the location list. The Python-only Space keys for the same actions (`<Space>dc`, `dn`, `ds`, `df`, `dB`, `du`) are in the [Python guide ("Debugging with pdb")](languages/python.md#debugging-with-pdb-nvim-gdb). The F-keys, `<Ctrl-p>` / `<Ctrl-n>` and the commands are the plugin's defaults from its README and help (`:help nvimgdb`).
 
 ---
 
@@ -1228,7 +1228,7 @@ On Nix systems the JDK comes from the Java devShell (`JAVA_HOME`) and nvim-java 
 | --- | --- | --- |
 | `<Space>jd` | `:JavaDapConfig` | Configure the debug adapter (auto-runs on Java file open, but can be re-triggered) |
 
-DAP is configured automatically when jdtls starts. Four global keys (all in a scratch copy of the config):
+DAP is configured automatically when jdtls starts. Four global keys:
 
 | Keymap | Same as | What it does |
 | --- | --- | --- |

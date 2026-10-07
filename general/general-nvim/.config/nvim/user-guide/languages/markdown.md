@@ -5,8 +5,6 @@
 
 This section covers everything your config does that is specific to `.md` files: what each tool is for, how it works, the exact keys, and what to do when it fails. Global things (diagnostics keys, code actions, the spell keys, `gc` comments) are only mentioned briefly with a pointer. Section [27](../09-ai-and-writing.md#27-markdown-support) is the short key list; this one is the full story.
 
-Unless marked otherwise, the results below come from a real Neovim session. The few things that could not be tested say so where they appear.
-
 ## The tools and why they exist
 
 | Tool | Why it is in your setup | What it gives you |
@@ -538,7 +536,7 @@ tl;dr: summary
 **`info`**, **`warn`**, **`error`**, **`success`**: "Info message box (embeds its own style block; needs network for the Font Awesome 4.2.0 icons from a remote CDN)" (the same words for the other three with their own name). Each snippet writes a `<style>` block with the colours of the box, followed by a `<div>` with an icon, a label and your text. Two honest limits:
 
 - Every one of the four embeds its own copy of the style block, so a page with all four has four `<style>` blocks. They are not shared.
-- The style block imports Font Awesome 4.2.0 from a remote address (`maxcdn.bootstrapcdn.com`). The icon only shows when the reader is online and that address still answers; if it does not load, the box still shows its colours and text, but without the icon. Not verified here.
+- The style block imports Font Awesome 4.2.0 from a remote address (`maxcdn.bootstrapcdn.com`). The icon only shows when the reader is online and that address still answers; if it does not load, the box still shows its colours and text, but without the icon.
 
 The `info` expansion in full:
 

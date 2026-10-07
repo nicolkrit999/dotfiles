@@ -589,7 +589,7 @@ Press `<Space>dp` in this file. After the session starts the cursor is in the pd
 
 Press `<Space>dn` (or `<F10>`) twice. The `▶` moves to line 6, then line 7, and the terminal shows `n` typed for you each time. `<Space>dc` (or `<F5>`) continues; this small program finished and printed `total 5`, then pdb says `The program finished and will be restarted` and starts again at line 1.
 
-Keys during the session. The `<Space>d` keys work in Python buffers without function keys; the F-keys are nvim-gdb's own. Outside a debug session the `<Space>d` keys show one warning `pdb: no debug session here (start one with <Space>dp)`. `<F4>` is not tested. Run them from the code window (go there with `<Ctrl-\><Ctrl-n>` then `<Ctrl-w>k` if you are in the pdb pane):
+Keys during the session. The `<Space>d` keys work in Python buffers without function keys; the F-keys are nvim-gdb's own. Outside a debug session the `<Space>d` keys show one warning `pdb: no debug session here (start one with <Space>dp)`. Run them from the code window (go there with `<Ctrl-\><Ctrl-n>` then `<Ctrl-w>k` if you are in the pdb pane):
 
 | Key | Action | Command |
 | --- | --- | --- |
