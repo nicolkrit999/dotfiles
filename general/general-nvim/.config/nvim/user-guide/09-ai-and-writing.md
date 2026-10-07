@@ -14,13 +14,14 @@
 | `:ClaudeCodeResume` | cmd | Start `claude --resume` (pick an older conversation; command only, no key) |
 | `<Ctrl-h/j/k/l>` | t, n (Claude panel) | Move to the window left / below / above / right |
 | `<Ctrl-w>h/j/k/l` | t (any Claude terminal, including the `<Space>a` split) | Move to the window left / below / above / right. Works even after you typed and pressed `<Esc>` (which goes to Claude). Press `<Ctrl-w>` (hold Ctrl, press `w`, release both), then `h`, `j`, `k` or `l` |
+| `<Ctrl-q>` | t (any Claude terminal, including the `<Space>a` split) | **Leave terminal mode** (Normal mode in the same window), the one-chord form of `<Ctrl-\><Ctrl-n>`. Needed because `<Esc>` goes to Claude. Afterwards `:q`, `<Space>q`, `<Space>Q` and `<Space>cc` work; `i` goes back into Claude. Only Claude terminals have it, other terminals leave with `<Esc>` |
 | `<Ctrl-f>` / `<Ctrl-b>` | t (Claude panel) | Scroll a page down / up |
 
 Claude Code opens as a **vertical split on the right**, 30% of the screen width. It is a terminal buffer. There is no toggle key in terminal mode. To navigate:
 
 1. **Move to the Claude window**: `<Ctrl-w>l` or `<Right>` (it opens on the right). Focusing it puts you in terminal (insert) mode by itself.
 2. **Move back to code**: `<Ctrl-h>` or `<Ctrl-w>h` (both work directly in the Claude terminal; no need for `<Ctrl-\><Ctrl-n>` first). `<Ctrl-w>j/k/l` move to the other neighbours the same way. Afterwards you are in Normal mode in the target window. `<Esc>` is sent to Claude (for example to interrupt it) and does **not** leave terminal mode.
-3. **Close Claude**: from the code window `<Space>cc` toggles it closed. Inside the Claude terminal press `<Ctrl-\><Ctrl-n>` first, then `<Space>cc` or `<Space>q`.
+3. **Close Claude**: from the code window `<Space>cc` toggles it closed. Inside the Claude terminal press `<Ctrl-q>` first (or `<Ctrl-\><Ctrl-n>`), then `<Space>cc` or `<Space>q`. If Claude is the only window (for example after `:only`) you are in terminal mode, so `:q`, `<Space>q` and `<Space>Q` are typed into Claude until you press `<Ctrl-q>`.
 4. **Type in Claude**: If in Normal mode inside the Claude terminal, press `i` to re-enter terminal mode
 
 Example for `<Space>a`: press it, then type a plain question such as `how do I delete everything inside quotes` and press `<Enter>`. The skill it loads answers as numbered steps that name the exact keys. `/exit` ends the session and closes the split.
@@ -48,7 +49,7 @@ Claude Code is an AI coding assistant that runs in a terminal inside Neovim. The
 2. It opens as a terminal buffer in a vertical split on the right
 3. Type your request and press Enter
 4. Claude can read and edit your files directly
-5. To go back to your code press `<Ctrl-w>h` (or `<Ctrl-h>`); a plain `<Esc>` goes to Claude (e.g. to interrupt it) and does not leave terminal mode. To close the panel, press `<Ctrl-\><Ctrl-n>` (leaves terminal mode), then `<Space>cc`
+5. To go back to your code press `<Ctrl-w>h` (or `<Ctrl-h>`); a plain `<Esc>` goes to Claude (e.g. to interrupt it) and does not leave terminal mode. To close the panel, press `<Ctrl-q>` (leaves terminal mode), then `<Space>cc`
 
 Claude Code uses your project's git root as the working directory. `:ClaudeCodeResume` starts `claude --resume`. Inside the panel `<Ctrl-h/j/k/l>` and `<Ctrl-w>h/j/k/l` move to the neighbour windows (the `<Ctrl-w>` forms also work in the `<Space>a` split and after typing and pressing `<Esc>`) and `<Ctrl-f>` / `<Ctrl-b>` scroll.
 
