@@ -62,7 +62,7 @@ One above the other: the same, but `:sbuffer <name or number>` without `vert`. T
 
 Example with four open buffers (`:ls` shows `1 a.txt`, `2 b.txt`, `3 c.txt`, `4 d.txt`): to see `a.txt` and `d.txt` side by side, run `:b 1` then `:vert sbuffer 4`, or by name `:b a` then `:vert sbuffer d`. No need to go through 2 and 3.
 
-Headless Neovim with this config, 4 buffers open: `:vert sbuffer <name>` with another buffer in the current window gave two windows side by side (current buffer left, requested buffer right, cursor in the new right window); `:sbuffer <name>` gave a stacked layout (new window below, cursor in it); `:vs <file>` gave side by side; `:sbuffer 99` (no such buffer) gives `E86: Buffer 99 does not exist`.
+With 4 buffers open: `:vert sbuffer <name>` with another buffer in the current window gave two windows side by side (current buffer left, requested buffer right, cursor in the new right window); `:sbuffer <name>` gave a stacked layout (new window below, cursor in it); `:vs <file>` gave side by side; `:sbuffer 99` (no such buffer) gives `E86: Buffer 99 does not exist`.
 
 Gotchas:
 
@@ -196,24 +196,24 @@ This only changes the order of the tabs. If the two files are shown side by side
 
 ### Reading the `:ls` flags
 
-Each `:ls` line shows the buffer number, then up to four flag columns, then the name. Example (headless Neovim): ` 1 #a + "a.txt"`, ` 2  h   "b.txt"`, ` 3 %aF "term://..."`.
+Each `:ls` line shows the buffer number, then up to four flag columns, then the name. Example: ` 1 #a + "a.txt"`, ` 2  h   "b.txt"`, ` 3 %aF "term://..."`.
 
-| Flag | Meaning | Status |
-| --- | --- | --- |
-| `%` | The buffer in the current window (line 3 above) | tested |
-| `#` | The alternate buffer, the one `<Ctrl-^>` flips to (line 1) | tested |
-| `a` | Active: loaded and visible in a window | tested |
-| `h` | Hidden: loaded but shown in no window (line 2) | tested |
-| `+` | Modified, unsaved changes (line 1) | tested |
-| `F` | Terminal buffer whose job has finished (a terminal showing `Process exited`) | tested |
-| `u` | Unlisted buffer; only shown with `:ls!` | from `:help :ls`, not tested |
-| `R` | Terminal buffer with a running job | from `:help :ls`, not tested |
-| `?` | Terminal buffer without a job (`:terminal NONE`) | from `:help :ls`, not tested |
-| `-` | Buffer with `modifiable` off | from `:help :ls`, not tested |
-| `=` | Read-only buffer | from `:help :ls`, not tested |
-| `x` | Buffer with read errors | from `:help :ls`, not tested |
+| Flag | Meaning |
+| --- | --- |
+| `%` | The buffer in the current window (line 3 above) |
+| `#` | The alternate buffer, the one `<Ctrl-^>` flips to (line 1) |
+| `a` | Active: loaded and visible in a window |
+| `h` | Hidden: loaded but shown in no window (line 2) |
+| `+` | Modified, unsaved changes (line 1) |
+| `F` | Terminal buffer whose job has finished (a terminal showing `Process exited`) |
+| `u` | Unlisted buffer; only shown with `:ls!` |
+| `R` | Terminal buffer with a running job |
+| `?` | Terminal buffer without a job (`:terminal NONE`) |
+| `-` | Buffer with `modifiable` off |
+| `=` | Read-only buffer |
+| `x` | Buffer with read errors |
 
-Use these when choosing buffers for [Put two chosen buffers side by side or one above the other](#put-two-chosen-buffers-side-by-side-or-one-above-the-other): `h` buffers are loaded but not on screen. A closed test terminal that shows `hF` is the case described in [The test terminal window does not come back after you close it](languages/java.md#the-test-terminal-window-does-not-come-back-after-you-close-it). `:help :ls` also lists `:ls` filter flags (for example `:ls h` for hidden buffers only; from help, not tested).
+Use these when choosing buffers for [Put two chosen buffers side by side or one above the other](#put-two-chosen-buffers-side-by-side-or-one-above-the-other): `h` buffers are loaded but not on screen. A closed test terminal that shows `hF` is the case described in [The test terminal window does not come back after you close it](languages/java.md#the-test-terminal-window-does-not-come-back-after-you-close-it). `:help :ls` also lists `:ls` filter flags (for example `:ls h` for hidden buffers only).
 
 ## Tabs
 

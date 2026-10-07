@@ -316,16 +316,15 @@ Example (scratch copy of a small Java project, headless Neovim with this config)
 
 - The word-boundary form `\<word\>` avoids matching inside longer words.
 - With a local variable `total`: `:grep "total"` then `:cfdo %s/\<total\>/result/g | update` also changed a string literal `"total is "` and a comment. Fine when you want that, wrong when the string is output text.
-- In a folder WITHOUT a `.git` directory: a `.gitignore` entry (`target`) was NOT honored; `:grep` also listed a file in the ignored `target/` folder, so `:cfdo` would have changed it too. Ripgrep honors `.gitignore` only inside a git repository (inside one: assumption, not tested here). Check build output folders such as `target/` in the `:copen` list before running `:cfdo`.
+- In a folder WITHOUT a `.git` directory: a `.gitignore` entry (`target`) was NOT honored; `:grep` also listed a file in the ignored `target/` folder, so `:cfdo` would have changed it too. Ripgrep honors `.gitignore` only inside a git repository (inside one, an ignored `target/` folder is skipped). Check build output folders such as `target/` in the `:copen` list before running `:cfdo`.
 
 Which to use (rule of thumb):
 
 - A method, field, class or local variable whose name also occurs elsewhere (`add`, `get`, `name`, `size`, `value`): `<Space>rn`.
 - A long, unique name (`calculateInvoiceTotal`), or a name in non-code text (config key, string, docs, comment wording): `:grep`, review with `:copen`, then `:cfdo`.
 - `<Space>rn` fails or hangs: first the repair `<Space>jbc` (Java: [When a rename does nothing](languages/java.md#when-a-rename-does-nothing)); the text rename is a fallback only when the matches are reviewed.
-- Renaming a class by text does NOT rename its file. (Whether the LSP rename of a public class renames the file too: assumption, not tested.)
-
-Status: reported by the user, not verified here: `<Space>rn` stays slow even after `<Space>jbc`; slow jdtls rename is a known issue reported online.
+- A Java package or folder cannot be renamed with `<Space>rn` ("not supported on this element"); rename the folder in the file tree and fix the `package` and `import` lines with `:grep` + `:cfdo`: [Renaming a package or folder](languages/java.md#rename-grep--cfdo-instead-of-spacern).
+- Renaming a class by text does NOT rename its file.
 
 ---
 
@@ -523,9 +522,9 @@ Scratch Java project, headless Neovim:
 
 **Gotcha: always add the `e` flag** for `:bufdo`, `:argdo`, `:windo` and `:tabdo` substitutions: `%s/old/new/ge`. Without it, `:bufdo %s/\<total\>/buf/g | update` STOPPED at the first buffer without a match with `E486: Pattern not found` and the following buffers were not processed (the same stop rule as the `:cdo` stop below). `:cfdo` after `:grep` is safe without `e` only because every file in the list has a match.
 
-The `|` chain: `{cmd} | update` runs the command and then saves the buffer. Without `update` (or `set hidden` / autowrite) a modified buffer may refuse to be left (`E37: No write since last change`). The auto-save plugin of this config saves when you leave a buffer, but do not rely on it for these commands (assumption, not tested).
+The `|` chain: `{cmd} | update` runs the command and then saves the buffer. Without `update` (or `set hidden` / autowrite) a modified buffer may refuse to be left (`E37: No write since last change`). The auto-save plugin of this config saves when you leave a buffer, but do not rely on it for these commands.
 
-`:argdo` as a project-wide file set without grep: `:args **/*.java` (assumption, not tested), then `:argdo %s/old/new/ge | update`.
+`:argdo` as a project-wide file set without grep: `:args **/*.java`, then `:argdo %s/old/new/ge | update`.
 
 For search-and-replace use `:cfdo %s/old/new/g` (see [Method 2](#method-2-grep--cfdo-best-for-plain-text) for why a plain `:cdo s/old/new/g` can stop early). `:cdo` is fine for commands that act on the entry's line once, or with the `e` flag.
 
