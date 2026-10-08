@@ -6,15 +6,15 @@
             }
         },
         "font": {
-            "family": {
-                "clock": "Rubik",
-                "material": "Material Symbols Rounded",
-                "mono": "JetBrainsMono Nerd Font Mono",
-                "sans": "JetBrainsMonoNL Nerd Font"
-            },
-            "size": {
-                "scale": 0.9976679372842348
-            }
+            "scale": 0.9976679372842348,
+            "clock": "JetBrainsMono Nerd Font Propo",
+            "workspaces": "JetBrainsMono Nerd Font Propo",
+            "headline": { "family": "JetBrainsMono Nerd Font Propo" },
+            "title": { "family": "JetBrainsMono Nerd Font Propo" },
+            "body": { "family": "JetBrainsMono Nerd Font Propo" },
+            "label": { "family": "JetBrainsMono Nerd Font Propo" },
+            "mono": { "family": "JetBrainsMono Nerd Font" },
+            "icon": { "family": "Material Symbols Rounded" }
         },
         "padding": {
             "scale": 1
