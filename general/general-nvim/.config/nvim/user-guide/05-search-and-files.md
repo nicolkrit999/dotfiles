@@ -556,7 +556,7 @@ Plugin: **fzf-lua**. A powerful popup interface that connects to FZF (a command-
 
 ## Moving inside any picker (lists with a search bar)
 
-Several things look the same: a search bar on top and a filtered list below it. They are the fzf-lua pickers (`<Space>ff`, `<Space>fg`, `<Space>fb`, `<Space>fr`, `<Space>gbl` ...), the snacks pickers (the branch menu you get by clicking the branch in the statusline, the code-action menu `<Space>ca`, every other `vim.ui.select` list) and Telescope (`:Telescope`, `<Space>db`, the devdocs commands). The search bar takes your typing, so `j` and `k` type the letters `j` and `k` there. Move through the list with these keys (all in a real terminal):
+Several things look the same: a search bar on top and a filtered list below it. They are the fzf-lua pickers (`<Space>ff`, `<Space>fg`, `<Space>fb`, `<Space>fr`, `<Space>gbl` ...), the snacks pickers (the branch menu you get by clicking the branch in the statusline, the code-action menu `<Space>ca`, every other `vim.ui.select` list) and Telescope (`:Telescope`, `<Space>db`). The `:DevDocs` lists are `vim.ui.select` lists, so they are snacks pickers too. The search bar takes your typing, so `j` and `k` type the letters `j` and `k` there. Move through the list with these keys (all in a real terminal):
 
 | Keys | What it does |
 | --- | --- |

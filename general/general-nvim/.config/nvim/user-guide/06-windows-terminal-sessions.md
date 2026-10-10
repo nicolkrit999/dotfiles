@@ -371,7 +371,7 @@ The setting is global (all buffers and windows) and is on at every start. There 
 | **nvim-lightbulb** | Lightbulb icon when code actions are available |
 | **vim-illuminate** | Highlights the other uses of the word under the cursor (`<Alt-n>` / `<Alt-p>` jump between them) |
 | **vimade** | Dims inactive windows |
-| **Borders** | Floating windows and the completion menu have a single-line border (exceptions: `:Lazy` and the DevDocs float use rounded corners) |
+| **Borders** | Floating windows and the completion menu have a single-line border (exception: `:Lazy` uses rounded corners) |
 
 ## Breadcrumb bar (dropbar.nvim)
 

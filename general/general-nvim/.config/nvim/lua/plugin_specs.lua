@@ -1071,21 +1071,16 @@ local plugin_specs = {
   },
 
   {
-    "luckasRanarison/nvim-devdocs",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "nvim-telescope/telescope.nvim",
-      "nvim-treesitter/nvim-treesitter",
-    },
-    config = function()
-      require("config.devdocs")
+    "maskudo/devdocs.nvim",
+    -- only used through :DevDocs (needs jq, curl and pandoc); picker is vim.ui.select (snacks)
+    -- lua/config/devdocs.lua defines a loading :DevDocs stub (with Tab completion) instead of `cmd`
+    lazy = true,
+    init = function()
+      require("config.devdocs").stub()
     end,
-    -- only used through its commands; loading at VeryLazy also pulled in telescope on every startup
-    cmd = {
-      "DevdocsFetch", "DevdocsInstall", "DevdocsUninstall", "DevdocsOpen", "DevdocsOpenFloat",
-      "DevdocsOpenCurrent", "DevdocsOpenCurrentFloat", "DevdocsKeywordprg", "DevdocsUpdate",
-      "DevdocsUpdateAll", "DevdocsToggle",
-    },
+    config = function()
+      require("config.devdocs").setup()
+    end,
   },
 
 

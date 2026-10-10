@@ -428,7 +428,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
     - [43. How the development toolchain fits together](07-code.md#43-how-the-development-toolchain-fits-together)
         - [Enter a language devShell from a running Neovim (:DevEnv)](07-code.md#enter-a-language-devshell-from-a-running-neovim-devenv)
     - [53. Documentation lookup](07-code.md#53-documentation-lookup)
-        - [nvim-devdocs (plugin)](07-code.md#nvim-devdocs-plugin)
+        - [devdocs.nvim (plugin)](07-code.md#devdocsnvim-plugin)
         - [Hover documentation (LSP)](07-code.md#hover-documentation-lsp)
     - [59. Useful developer commands](07-code.md#59-useful-developer-commands)
     - [Part III: everyday scenarios & recipes](07-code.md#part-iii-everyday-scenarios--recipes)
