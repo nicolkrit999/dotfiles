@@ -1073,8 +1073,14 @@ local plugin_specs = {
   {
     "maskudo/devdocs.nvim",
     -- only used through :DevDocs (needs jq, curl and pandoc); picker is vim.ui.select (snacks)
-    cmd = { "DevDocs" },
-    opts = {},
+    -- lua/config/devdocs.lua defines a loading :DevDocs stub (with Tab completion) instead of `cmd`
+    lazy = true,
+    init = function()
+      require("config.devdocs").stub()
+    end,
+    config = function()
+      require("config.devdocs").setup()
+    end,
   },
 
 
