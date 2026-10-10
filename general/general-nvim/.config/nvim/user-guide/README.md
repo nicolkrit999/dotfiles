@@ -429,6 +429,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Enter a language devShell from a running Neovim (:DevEnv)](07-code.md#enter-a-language-devshell-from-a-running-neovim-devenv)
     - [53. Documentation lookup](07-code.md#53-documentation-lookup)
         - [devdocs.nvim (plugin)](07-code.md#devdocsnvim-plugin)
+            - [devdocs.nvim: a set is missing from :DevDocs get](07-code.md#devdocsnvim-a-set-is-missing-from-devdocs-get)
         - [Hover documentation (LSP)](07-code.md#hover-documentation-lsp)
     - [59. Useful developer commands](07-code.md#59-useful-developer-commands)
     - [Part III: everyday scenarios & recipes](07-code.md#part-iii-everyday-scenarios--recipes)
