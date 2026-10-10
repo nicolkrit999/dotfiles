@@ -979,6 +979,37 @@ Example (with the Lua 5.1 set; tested headless: it installs and `:DevDocs get lu
 2. `:DevDocs install lua~5.1` downloads and converts the set; wait until the messages stop.
 3. `:DevDocs get` lists `lua~5.1`; press `<Enter>`, then pick a page from the second list (the Lua set has a single page, `Index`) and press `<Enter>` again: it opens in a read-only split.
 
+### devdocs.nvim: a set is missing from `:DevDocs get`
+
+`:DevDocs get` lists only sets whose entry in `~/.local/share/nvim/devdocs/state.json` has `"extracted": true`. A set stuck at `{"downloaded": true}` without `extracted` (the extraction was interrupted or failed) is on disk but invisible. Look at the file and search for entries that are downloaded but not extracted.
+
+Set names (slugs) use `~`, not `-`: `openjdk~25`, `python~3.15`. An install downloads `https://documents.devdocs.io/<slug>/db.json`, turns it into `docs/<slug>.json` with `jq`, then converts every entry to markdown with `pandoc` into `docs/<slug>/`. If a slug is rejected, refresh the list with `nvim --headless -c 'DevDocs fetch' -c 'qa!'`.
+
+The work is asynchronous, so a headless run must wait for `extracted` to become true, otherwise it quits too early. Install a set (large sets such as `openjdk~25`, about 115 MB of JSON, take a while):
+
+```
+nvim --headless -c 'DevDocs install <slug>' \
+  -c 'lua vim.wait(900000, function() local f=io.open(vim.fn.stdpath("data").."/devdocs/state.json"); local s=vim.json.decode(f:read("*a")); f:close(); return (s["<slug>"] or {}).extracted == true end, 1000)' \
+  -c 'qa!'
+```
+
+Repair a downloaded but unextracted set without downloading again: delete the partial output, then extract only:
+
+```
+rm -rf ~/.local/share/nvim/devdocs/docs/<slug>
+nvim --headless -c 'lua require("devdocs.docs").ExtractDocs("<slug>")' \
+  -c 'lua vim.wait(900000, function() local f=io.open(vim.fn.stdpath("data").."/devdocs/state.json"); local s=vim.json.decode(f:read("*a")); f:close(); return (s["<slug>"] or {}).extracted == true end, 1000)' \
+  -c 'qa!'
+```
+
+Check the result (this is the list `:DevDocs get` shows):
+
+```
+nvim --headless -c 'lua print(vim.inspect(vim.tbl_keys(require("devdocs").GetInstalledDocs())))' -c 'qa!'
+```
+
+`:DevDocs delete <slug>` only sets `downloaded` and `extracted` to false and leaves the key in `state.json`. To remove a set completely, delete `docs/<slug>/` and `docs/<slug>.json`, and drop the key (for example with `jq 'del(.["<slug>"])'`). Setting `ensure_installed = { ... }` in the devdocs.nvim options would install sets on startup.
+
 ## Hover documentation (LSP)
 
 Press `K` on any symbol to see its documentation in a floating window. This pulls from:
