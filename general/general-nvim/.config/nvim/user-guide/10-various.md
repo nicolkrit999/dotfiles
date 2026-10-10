@@ -71,7 +71,7 @@ Type these in command mode, then press space (or Enter) to expand:
 
 ## telescope.nvim (second picker)
 
-Plugins: **telescope.nvim** and **telescope-symbols.nvim**. Telescope is a second popup picker next to fzf-lua (the file, grep and buffer pickers are fzf-lua, see [`05-search-and-files.md`](05-search-and-files.md#12-fuzzy-finding--project-wide-search-fzf-lua)). It is lazy: it loads only on its first `:Telescope` command, so nothing starts at launch. nvim-devdocs lists it as a dependency too.
+Plugins: **telescope.nvim** and **telescope-symbols.nvim**. Telescope is a second popup picker next to fzf-lua (the file, grep and buffer pickers are fzf-lua, see [`05-search-and-files.md`](05-search-and-files.md#12-fuzzy-finding--project-wide-search-fzf-lua)). It is lazy: it loads only on its first `:Telescope` command, so nothing starts at launch.
 
 | Command / key | Effect |
 | --- | --- |
@@ -142,7 +142,7 @@ These plugins have no commands or keys. Other plugins need them, and lazy.nvim l
 
 | Plugin | What it is | Needed by (in this configuration) |
 | --- | --- | --- |
-| plenary.nvim | Lua helper library (async, paths, jobs) | claude-code.nvim, neogit, nvim-devdocs and Telescope |
+| plenary.nvim | Lua helper library (async, paths, jobs) | claude-code.nvim, neogit and Telescope |
 | promise-async | Promise and async library | nvim-ufo (code folding) |
 | lush.nvim | Library for writing colour themes in Lua | the arctic colorscheme (see "[Colorschemes](06-windows-terminal-sessions.md#colorschemes)" in `06-windows-terminal-sessions.md`) |
 | nui.nvim | Popup, menu and layout building blocks | nvim-java, nvim-dbee, ascii.nvim (see "[Icons and UI libraries](06-windows-terminal-sessions.md#icons-and-ui-libraries)" in `06-windows-terminal-sessions.md`) |

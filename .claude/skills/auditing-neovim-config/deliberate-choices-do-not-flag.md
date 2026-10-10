@@ -81,7 +81,7 @@ Rule of thumb the owner uses: if a behaviour is wanted AND default, keep it; if 
 - nvim-dbee stays ENV-source only (`EnvSource:new("DBEE_CONNECTIONS")`): connections added in the drawer are not persisted, no secrets on disk -> do not add FileSource.
 - gx.nvim, firenvim, markdown-preview enabled on all platforms; markdown-preview keeps the browser tab open (`mkdp_auto_close = 0`).
 - vim-illuminate: allowlist includes c, tex, plaintex, rust, cpp, javascriptreact, typescriptreact (plus the earlier ones); in `.nix` files illuminate uses only providers `treesitter` and `regex` (nixd's documentHighlight highlights every package of a `with pkgs; [...]` list) -> do not re-enable the LSP provider for nix.
-- instant.nvim, dbee, dadbod, devdocs, trouble, asyncrun stay as user-only plugins; devdocs keeps only `dir_path`, `float_win`, `wrap`, `mappings.open_in_browser`.
+- instant.nvim, dbee, dadbod, devdocs, trouble, asyncrun stay as user-only plugins; devdocs is now maskudo/devdocs.nvim (switched from nvim-devdocs; no options, no keys, command `:DevDocs`).
 - whitespace.nvim excludes markdown.
 - claude-code.nvim: `refresh.show_notifications = false`; one accurate notification from the config based on `v:fcs_reason` (reloaded vs deleted vs conflict); the panel is a vsplit terminal reset to 30% columns after `VimResized`/`wincmd =`.
 - bufferline: close button uses `bdelete` (not force); unsaved buffer is kept and one warning "unsaved changes, buffer kept" appears; a running terminal says "running terminal, buffer kept"; clicking the x/dot of an unsaved buffer keeps Vim's "Save changes?" dialog; the Neovim right-click menu stays (its useful entries are documented); `right_mouse_command` not disabled in the final state.

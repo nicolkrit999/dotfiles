@@ -958,32 +958,26 @@ Language chapters: Java [section 78](languages/java.md#78-java-nvim-java-jdtls-t
 
 # 53. Documentation lookup
 
-## nvim-devdocs (plugin)
+## devdocs.nvim (plugin)
 
-Plugin: **nvim-devdocs**. Browse programming documentation without leaving Neovim.
+Plugin: **devdocs.nvim**. Browse programming documentation (the DevDocs collection) without leaving Neovim. It needs `jq`, `curl` and `pandoc` on the PATH.
 
 | Command | What it does |
 | --- | --- |
-| `:DevdocsOpen` | Open the documentation in a normal buffer (current window) |
-| `:DevdocsOpenFloat` | Open in floating window (25 lines tall, 100 chars wide) |
-| `:DevdocsInstall` | Install documentation for a language (e.g., `:DevdocsInstall python`) |
-| `:DevdocsUninstall` | Remove installed docs |
-| `:DevdocsFetch` | Download the list of available documentation sets (the registry); if another command says the registry is not found, run this first |
-| `:DevdocsOpenCurrent` | Open the documentation for the current file's filetype in a normal buffer |
-| `:DevdocsOpenCurrentFloat` | The same in a floating window |
-| `:DevdocsToggle` | Show or hide the floating documentation window |
-| `:DevdocsKeywordprg <word>` | Look a word up in the documentation set that is currently open (needs the word as argument; the plugin sets it as `keywordprg` in its documentation buffers, so `K` there uses it) |
-| `:DevdocsUpdate [name]` / `:DevdocsUpdateAll` | Update one / all installed documentation sets |
+| `:DevDocs fetch` | Download the list of available documentation sets (the metadata) |
+| `:DevDocs install` | Pick a set from a list (each entry shows its download size) and install it |
+| `:DevDocs install <doc>` | Install the set named `<doc>` directly (e.g. `lua~5.1`; some sets need a version after `~`) |
+| `:DevDocs get` | Pick one of the installed sets, then pick a page; the page opens read-only in a horizontal split |
+| `:DevDocs get <doc>` | Skip the first list and pick a page of the installed set `<doc>` |
+| `:DevDocs delete` / `:DevDocs delete <doc>` | Remove an installed set (from a list, or by name) |
 
-The plugin loads only when you run one of these commands. Without an argument, `:DevdocsOpen`, `:DevdocsInstall` and the others use a Telescope picker. Installing builds the documentation synchronously (large sets can block input for a while) and needs the network; `:DevdocsFetch`, `:DevdocsInstall` and the updates download, reading an installed set is local. The command descriptions follow the plugin's README (not run for this guide). No keys are mapped; the plugin's own "open in browser" key is disabled in `lua/config/devdocs.lua`.
+Without a sub-command, `:DevDocs` only prints the available ones. The lists are `vim.ui.select` lists, so they look like the snacks pickers (see [section 12](05-search-and-files.md#12-fuzzy-finding--project-wide-search-fzf-lua)). The plugin loads only when you run `:DevDocs`; on its first load it fetches the metadata in the background. Downloads and conversion run in the background and need the network; reading an installed set is local. No keys are mapped and no plugin options are set (the install list is not preset, so nothing downloads on its own). Documentation is stored in the `devdocs` folder of Neovim's data directory.
 
-Example (with the Python 3.9 set; downloading and building it took about 40 seconds and freezes Neovim meanwhile, after the question "Building large docs can freeze neovim, continue? y/n"; answer `y` and `<Enter>`):
+Example (with the Lua 5.1 set; tested headless: it installs and `:DevDocs get lua~5.1` opens its page list):
 
-1. `:DevdocsFetch` downloads the list of available sets.
-2. `:DevdocsInstall` opens a picker; type `python`, move to the set you want (the list offers `python-3.9`, `python-3.14`, ...) and press `<Enter>`.
-3. In a Python buffer `:DevdocsOpenCurrentFloat` opens a picker over all entries of the installed set (`[python-3.9] print()`, ...) with a preview on the right. Type `print()`, press `<Enter>`: a float (100 columns wide) shows `print(*objects, sep=' ', end='\n', file=sys.stdout, flush=False)` and its description.
-
-The picker filters on the entry names, so typing a file name such as `functions.html print` finds nothing.
+1. `:DevDocs fetch` downloads the list of available sets (needed only if `:DevDocs install` shows an empty list).
+2. `:DevDocs install lua~5.1` downloads and converts the set; wait until the messages stop.
+3. `:DevDocs get` lists `lua~5.1`; press `<Enter>`, then pick a page from the second list (the Lua set has a single page, `Index`) and press `<Enter>` again: it opens in a read-only split.
 
 ## Hover documentation (LSP)
 
@@ -1011,7 +1005,7 @@ Example (Python buffer): `K` on `open` in `with open(path) as f:` shows a border
 | `:Flog` | Git log graph |
 | `:DiffviewOpen` | Side-by-side diff view |
 | `:Neogit` | Full git UI |
-| `:DevdocsOpen` | Browse programming documentation |
+| `:DevDocs get` | Browse programming documentation |
 | `:YankyRingHistory` | Browse yank history |
 | `:LspAttached` | Popup with the LSP servers attached to this buffer |
 | `:LspLog` | Open the LSP log |
