@@ -69,6 +69,10 @@ All of it is the `init` function of the vimtex spec in `lua/plugin_specs.lua`, q
 
 ```lua
 vim.g.vimtex_view_method = (utils.executable("zathura") and "zathura") or "general"
+if utils.executable("zathura") then
+  -- always light, whatever the host's zathura theme is (lua/zathura_light.lua)
+  vim.g.vimtex_view_zathura_options = "--config-dir=" .. vim.fn.shellescape(require("zathura_light").config_dir())
+end
 vim.cmd([[
   if executable('latex')
     " Hacks for inverse search to work semi-automatically,
@@ -87,7 +91,7 @@ vim.cmd([[
 
 In plain words:
 
-- `vimtex_view_method` is `zathura` when zathura is installed, otherwise `general` (the system default PDF program).
+- `vimtex_view_method` is `zathura` when zathura is installed, otherwise `general` (the system default PDF program). With zathura, `vimtex_view_zathura_options` starts it with a config (in `~/.cache/nvim/zathura-light`) that includes your own zathurarc and overrides only the colors to Catppuccin Latte, so the PDF always opens light even when your desktop and zathura are dark.
 - `s:write_server_name` writes Neovim's address (`v:servername`) into `/tmp/vimtexserver.txt` (`%TEMP%` on Windows) every time a `tex` file is opened. The viewer's inverse search (Ctrl+click) uses it to find the right Neovim; see ["The viewer"](#the-viewer).
 - The autocommand sets the compile key twice, buffer-local, for `tex` files only: `<F9>` and `<leader>rf` both map to `<Plug>(vimtex-compile)`. `remap = true` is required because the target is a `<Plug>` mapping; it is set from Lua so the key can carry a `desc`.
 

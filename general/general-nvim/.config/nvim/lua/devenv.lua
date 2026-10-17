@@ -128,6 +128,8 @@ function M.apply(vars)
       vim.env[name] = value
     end
   end
+  -- a devShell's zathura must stay behind the light shim (lua/zathura_light.lua)
+  require("zathura_light").shim_path()
 end
 
 --- a cached result is only trusted while its store paths still exist (nix-collect-garbage)

@@ -244,6 +244,17 @@ local servers = {
         or vim.fs.dirname(fname)
       on_dir(root)
     end,
+    -- multi-file projects: section files are #included by main.typ and only resolve cross-references
+    -- (labels, @refs) when main.typ is the compile root. Without a pin tinymist treats each opened
+    -- file as its own entry and reports false "label does not exist" errors. Pin the nearest
+    -- main.typ above the file (per project, nothing pinned when there is none).
+    on_attach = function(client, bufnr)
+      local fname = vim.api.nvim_buf_get_name(bufnr)
+      local main = vim.fs.find("main.typ", { path = vim.fs.dirname(fname), upward = true })[1]
+      if main and main ~= fname then
+        client:exec_cmd({ command = "tinymist.pinMain", arguments = { main } }, { bufnr = bufnr })
+      end
+    end,
     settings = {
       exportPdf = "never",
       outputPath = "$root/out/$name",

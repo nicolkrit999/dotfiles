@@ -2,6 +2,8 @@ vim.loader.enable()
 
 -- some global settings
 require("globals")
+-- every zathura spawned from nvim opens light
+require("zathura_light").shim_path()
 -- setting options in nvim
 require("options")
 -- various autocommands
