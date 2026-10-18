@@ -54,7 +54,7 @@ which typst tinymist typstyle zathura
 1. In a terminal, enter the project folder (the devShell loads through direnv).
 2. Open a file: `nvim main.typ`.
 3. Wait a few seconds until the statusline on the right shows `tinymist` (it is the main server; `(+2)` means two more servers: `ltex_plus` and `typos_lsp`). `ltex_plus` attaches last: in a test it was still missing after 14 seconds and present within 40.
-4. Press `<Space>tw`. The command line shows `Starting: typst watch  --diagnostic-format short 'main.typ' --open zathura` and the PDF opens in zathura.
+4. Press `<Space>tw`. The command line shows `Starting: typst watch  --diagnostic-format short 'main.typ' --open <cache>/zathura-light` (a tiny wrapper that starts zathura) and the PDF opens in zathura, always in light colors.
 5. Edit the text and save with `:w` (Typst files are never saved automatically, see "Auto-save" below). The PDF is rebuilt and zathura reloads it.
 6. If the document has an error, a quickfix window opens at the bottom with the message. Fix it and save again: the window closes by itself.
 7. To stop: quit Neovim (`:qa`). The watcher is a child job and ends with Neovim (no `typst watch` process was left). Closing the zathura window alone does not stop the watcher.
@@ -96,6 +96,13 @@ tinymist = {
       or vim.fs.dirname(fname)
     on_dir(root)
   end,
+  on_attach = function(client, bufnr)
+    local fname = vim.api.nvim_buf_get_name(bufnr)
+    local main = vim.fs.find("main.typ", { path = vim.fs.dirname(fname), upward = true })[1]
+    if main and main ~= fname then
+      client:exec_cmd({ command = "tinymist.pinMain", arguments = { main } }, { bufnr = bufnr })
+    end
+  end,
   settings = {
     exportPdf = "never",
     outputPath = "$root/out/$name",
@@ -107,6 +114,7 @@ tinymist = {
 | Setting | Meaning |
 | --- | --- |
 | `root_dir` | The project root is the nearest folder above the file with `typst.toml` (a Typst package) or `.git`; with neither, the folder of the file. Example: a file in a folder without `.git` got that folder as root |
+| `on_attach` | Multi-file projects: when a `main.typ` exists in the file's folder or above it, tinymist is told to use it as the entry file (`tinymist.pinMain`). Without the pin, a section file that `main.typ` `#include`s is checked as its own root, so cross-references to labels defined in other sections show false errors such as `label <sec-03> does not exist`. Per project: no `main.typ` above the file means no pin; opening `main.typ` itself pins nothing |
 | `exportPdf = "never"` | The server does not export PDFs; only `typst watch` does. So there is one PDF writer, not two |
 | `outputPath` | Only used when the server exports (it does not here); it is a leftover default |
 | `formatterMode = "typstyle"` | The server's own formatter is typstyle too; it is used only when conform.nvim finds no `typstyle` program |
@@ -159,8 +167,9 @@ The real typst.vim spec (`lua/plugin_specs.lua`, verbatim):
     vim.g.typst_folding       = 0
     -- Auto-open quickfix window on compile errors.
     vim.g.typst_auto_open_quickfix = 1
-    -- Use zathura for auto-reloading PDF preview; fall back to env var or system default.
-    vim.g.typst_pdf_viewer = vim.env.TYPST_PDF_VIEWER or (utils.executable("zathura") and "zathura") or ""
+    -- zathura goes through a wrapper so it always opens light (lua/zathura_light.lua).
+    vim.g.typst_pdf_viewer = vim.env.TYPST_PDF_VIEWER
+      or (utils.executable("zathura") and require("zathura_light").wrapper()) or ""
   end,
 },
 ```
@@ -172,7 +181,7 @@ In plain words:
 - `typst_conceal`, `typst_conceal_math`, `typst_conceal_emoji` = 0: no concealing; you see the raw source. Set one to 1 locally to hide markup / render math symbols / emoji names.
 - `typst_folding = 0`: the plugin's folding is off. Set `vim.g.typst_folding = 1` to get folds by headings.
 - `typst_auto_open_quickfix = 1`: a compile error opens the quickfix window by itself.
-- `typst_pdf_viewer`: `$TYPST_PDF_VIEWER` if set, else `zathura` if installed, else an empty string (typst's `--open` then uses the system default PDF program).
+- `typst_pdf_viewer`: `$TYPST_PDF_VIEWER` if set, else zathura if installed (through the wrapper `~/.cache/nvim/zathura-light`, which runs `zathura` with a config that includes your own zathurarc and overrides only the colors to Catppuccin Latte, so it opens light even when your desktop and zathura are dark), else an empty string (typst's `--open` then uses the system default PDF program).
 - Not set: `typst_output_to_tmp` (so the PDF stays next to the source).
 
 The Typst-side filetype file is `after/ftplugin/typst.lua` (verbatim, whole file); it sets the two prose options and the `<Space>tw` key:
@@ -204,7 +213,7 @@ The `<Space>tw` part of this file is the block above ("[Watch, compile and the P
 | Question | Answer |
 | --- | --- |
 | What runs? | `typst watch  --diagnostic-format short '<file>' --open <viewer>` in a background job, started from the current folder of Neovim |
-| Which viewer? | `$TYPST_PDF_VIEWER` if set, else `zathura` if installed, else (empty value) `--open` alone, i.e. the system default PDF program |
+| Which viewer? | `$TYPST_PDF_VIEWER` if set, else zathura (light, via the wrapper) if installed, else (empty value) `--open` alone, i.e. the system default PDF program |
 | Where is the PDF? | Next to the `.typ` file with the same name (`main.typ` gives `main.pdf`). (`g:typst_output_to_tmp` is not set, so `/tmp/typst_out` is not used) |
 | When does it recompile? | Every time the `.typ` file (or a file it imports) is saved |
 | Why is auto-save off for Typst? | A recompile on every focus change would restart the watcher over and over; save with `:w` ([section 42](../10-various.md#42-automatic-behaviors)) |
@@ -479,6 +488,7 @@ These two work outside math only (not inside a `$ ... $` pair and not inside raw
 | --- | --- | --- |
 | `<Space>tw` shows "Typst: typst not found on PATH" | Neovim was not started inside the devShell | `cd` into the project (direnv), check `which typst`, restart Neovim |
 | `E492: Not an editor command: TypstWatch` | Same: typst.vim did not load without `typst` | Same fix |
+| `label <...> does not exist` in a section file that `main.typ` includes | The section file was checked as its own root | Keep the entry file named `main.typ` in the project folder or above; reopen the file (the pin happens when tinymist attaches); `typst compile main.typ` must be clean |
 | No `tinymist` in the statusline | `tinymist` not on PATH, or file is not `typst` filetype | `which tinymist`; `:set ft?` must say `typst`; `:LspAttached` |
 | `direnv: error ... .envrc is blocked` | The project's `.envrc` is not approved | `direnv allow` once in the project |
 | Watch starts but the PDF does not change | The file has a compile error (old PDF stays), or you did not save | Look at the quickfix window or `:copen`; save with `:w` |

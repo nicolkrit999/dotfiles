@@ -660,6 +660,10 @@ local plugin_specs = {
     lazy = not utils.executable("latex"),
     init = function()
       vim.g.vimtex_view_method = (utils.executable("zathura") and "zathura") or "general"
+      if utils.executable("zathura") then
+        -- always light, whatever the host's zathura theme is (lua/zathura_light.lua)
+        vim.g.vimtex_view_zathura_options = "--config-dir=" .. vim.fn.shellescape(require("zathura_light").config_dir())
+      end
       vim.cmd([[
         if executable('latex')
           " Hacks for inverse search to work semi-automatically,
@@ -743,7 +747,9 @@ local plugin_specs = {
       -- Auto-open quickfix window on compile errors.
       vim.g.typst_auto_open_quickfix = 1
       -- Use zathura for auto-reloading PDF preview; fall back to env var or system default.
-      vim.g.typst_pdf_viewer = vim.env.TYPST_PDF_VIEWER or (utils.executable("zathura") and "zathura") or ""
+      -- zathura goes through a wrapper so it always opens light (lua/zathura_light.lua).
+      vim.g.typst_pdf_viewer = vim.env.TYPST_PDF_VIEWER
+        or (utils.executable("zathura") and require("zathura_light").wrapper()) or ""
     end,
   },
 

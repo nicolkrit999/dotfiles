@@ -742,7 +742,7 @@ The things you do all day, in one place. Details are in the sections named at th
 
 ### Reading the guide PDF (zathura keys)
 
-`<Space>?` opens this guide in zathura. Zathura has its own keys (the defaults, from its man page), not Neovim's:
+`<Space>?` opens this guide in zathura, always in light colors whatever your own zathura theme is. This holds for every zathura Neovim starts (this guide, LaTeX, Typst, `:!zathura`): `lua/zathura_light.lua` puts a small `zathura` shim first on Neovim's PATH (`~/.cache/nvim/zathura-shim`) that adds a light config on top of yours. Zathura started outside Neovim is unchanged. Zathura has its own keys (the defaults, from its man page), not Neovim's:
 
 | Keys | What it does |
 | --- | --- |
@@ -755,6 +755,8 @@ The things you do all day, in one place. Details are in the sections named at th
 | `f` | Show the clickable links of the page as numbers; type a number to follow it. `<Ctrl-o>` goes back |
 | `a` / `s` | Fit the whole page / the page width in the window |
 | `R` | Reload the file (after rebuilding the PDF) |
+| `r` | Rotate the page clockwise by 90 degrees (press again for each further 90 degrees) |
+| `<Ctrl-r>` | Switch recolor (inverted colors) on / off; the guide starts with it off, i.e. light |
 | `q` | Close zathura |
 
 ### Navigation

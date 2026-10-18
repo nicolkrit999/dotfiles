@@ -18,7 +18,7 @@ function M.open_guide()
       vim.notify("user guide is already open in zathura", vim.log.levels.INFO)
       return
     end
-    vim.g.user_guide_zathura_job = vim.fn.jobstart({ "zathura", "--page=2", pdf }, { detach = true })
+    vim.g.user_guide_zathura_job = vim.fn.jobstart({ "zathura", "--config-dir=" .. require("zathura_light").config_dir(), "--page=2", pdf }, { detach = true })
     return
   end
   local _, err = vim.ui.open(pdf)
