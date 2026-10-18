@@ -229,12 +229,14 @@ To test the viewer by hand without Neovim: `zathura main.pdf` (reloads on change
 
 | Tool | Result in a `.typ` file |
 | --- | --- |
-| `ltex_plus` | LanguageTool (English, `en-US`) on the text: `'smal': Possible spelling mistake found.`, `Don't put a space before the full stop.`. Source name `LTeX`. Needs `ltex-ls-plus` installed globally |
+| `ltex_plus` | LanguageTool on the text, language detected automatically per file (`auto`: an Italian file is checked as Italian, an English one as English): `'smal': Possible spelling mistake found.`, `Don't put a space before the full stop.`. Source name `LTeX`. Needs `ltex-ls-plus` installed globally |
 | `typos_lsp` | Common typos: `` `smal` should be `small` ``. Source name `typos` |
 | `<Space>cz` | Toggles Vim's own spell checker ([section 31](../09-ai-and-writing.md#31-spell-checking)); `zg` adds a word to your English list, `2zg`/`3zg`/`4zg` Italian/German/French |
 | `<Space>ca` on a warning | Offers the fix (replace the word) |
 
 All three appear as diagnostics together with the `tinymist` ones (use `]d`, `<Space>dd`). Typst code is not skipped: LanguageTool may complain about markup such as `#link(...)`. Both tools never attach to files that are too big ([section 42](../10-various.md#42-automatic-behaviors)).
+
+**Italian (or other non-English) projects**: every file of a project (`main.typ` and each subfile) is a separate document for LanguageTool, and the language is detected for each one on its own, so no setting per project is needed. Tested with a `main.typ` plus an included subfile in Italian: no diagnostics on the Italian text, English files still checked. A magic comment `// LTeX: language=it-IT` on a line of its own forces a language, but only for the file that contains it (it does not reach included files). If a file is detected wrongly (mixed languages, very short text), put that comment at its top, or `// LTeX: enabled=false` to switch LTeX off for it.
 
 ## Filetype settings
 

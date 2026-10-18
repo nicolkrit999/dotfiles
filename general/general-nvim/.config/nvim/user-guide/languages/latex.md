@@ -398,9 +398,12 @@ return {
   settings = {
     ltex = {
       -- user's spelllang is en,it,de,fr; LanguageTool checks ONE language per document.
-      -- Alternative: language = "auto" (LanguageTool detects the language per document;
-      -- less reliable on short texts such as commit messages).
-      language = "en-US",
+      -- "auto": LanguageTool detects the language of each document (so every subfile of an Italian
+      -- Typst project is its own document and gets checked as Italian). Tested: detection is correct
+      -- even on one-line English/Italian commit messages. Weak spot: mixed-language or very short
+      -- text may be detected wrongly; pin a file with a magic comment (LaTeX: % LTeX: language=it-IT)
+      -- or set language = "en-US" here to go back to English-only.
+      language = "auto",
       -- language ids (after get_language_id): this list REPLACES lspconfig's default list
       enabled = { "markdown", "latex", "tex", "plaintex", "typst", "gitcommit", "git-commit", "plaintext", "text" },
       -- setting ltex.ltex-ls.logLevel: the default ("fine") writes whole documents to stderr,
@@ -413,7 +416,7 @@ return {
 
 The file is quoted in full (`after/lsp/ltex_plus.lua`). `enabled` lists language ids and **replaces** the plugin default list; `logLevel = "warning"` stops the server from logging whole documents on every check.
 
-- **One language per document: `en-US`**, although `spelllang` is `en,it,de,fr`. LaTeX commands are skipped; only the prose is checked.
+- **One language per document, detected automatically (`auto`)**, although `spelllang` is `en,it,de,fr`: an Italian file gets Italian rules, an English one English rules. Before this change the language was fixed to `en-US` and every Italian word was flagged. Detection was right in tests even on one-line commit messages; mixed-language or very short text can be misdetected (use the magic comment below, or set `language = "en-US"` again). LaTeX commands are skipped; only the prose is checked.
 - Problems are diagnostics. In my test a misspelled word got **two** underlines, one from `typos` and one from `LTeX`; this is normal.
 - **Fix**: `<Space>ca` on the word opens the list:
 
@@ -425,7 +428,7 @@ The file is quoted in full (`after/lsp/ltex_plus.lua`). `enabled` lists language
   | `Hide false positive`, `Disable rule` | No effect, same as `Add to dictionary` (see [section 81](markdown.md#81-markdown-writing-preview-footnotes-pdf)) |
   | `sentence`, `Ignore ... in the project` (typos_lsp) | typos fix; "Ignore" is a typos command |
 
-- **What works for false positives**: ltex magic comments in the file. `% LTeX: enabled=false` on a line of its own switches ltex off for the file (the LTeX underlines disappeared, typos stayed). `% LTeX: language=de-DE` makes the file checked as German (German messages). Remove the line to undo.
+- **What works for false positives**: ltex magic comments in the file. `% LTeX: enabled=false` on a line of its own switches ltex off for the file (the LTeX underlines disappeared, typos stayed). `% LTeX: language=de-DE` makes the file checked as German (German messages), which is the way to override a wrong `auto` detection. Remove the line to undo. In Typst the same comments work with `//` (`// LTeX: language=it-IT`, tested), in Markdown with `<!-- LTeX: ... -->`; they apply to the one file only, not to files it includes.
 - **Built-in spell checker** (different thing): `<Space>cz` toggles, `]s` / `[s`, `z=`, `zg` (adds to `spell/en.utf-8.add`, a file in the public repo). More in [section 31](../09-ai-and-writing.md#31-spell-checking).
 
 ## Snippets
