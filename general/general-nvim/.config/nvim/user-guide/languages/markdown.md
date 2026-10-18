@@ -10,7 +10,7 @@ This section covers everything your config does that is specific to `.md` files:
 | Tool | Why it is in your setup | What it gives you |
 | --- | --- | --- |
 | marksman (LSP) | Markdown has links and headings that point to each other | Link and heading completion, jump to a heading, symbols. Only for plain `markdown` files |
-| ltex_plus (LSP, LanguageTool) | Prose needs grammar checking, not only spelling | Grammar and spelling problems as diagnostics. Language fixed to `en-US` |
+| ltex_plus (LSP, LanguageTool) | Prose needs grammar checking, not only spelling | Grammar and spelling problems as diagnostics. Language detected automatically per file (`auto`, so Italian or German notes are not flagged as English) |
 | typos_lsp | Catches common typos in every file type | Diagnostics like `recieve` to `receive` |
 | render-markdown.nvim | Raw Markdown is hard to read | Headings, lists, code blocks, tables, checkboxes drawn nicely inside the buffer |
 | markdown-preview.nvim | See the final look in a browser | Live preview, `<Alt-m>` toggles it |

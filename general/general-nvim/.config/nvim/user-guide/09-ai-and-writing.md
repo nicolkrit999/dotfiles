@@ -143,7 +143,7 @@ Languages: English, Italian, German, French.
 
 Example: in a text file with the line `The recieve button`, `<Space>cz` switches spell checking on, `recieve` is marked, and with the cursor on it `z=` opens a popup titled "Spelling suggestions" that lists the suggestions, each with a key (`1 ➜ receive`, `2 ➜ relieve`, ...; this config's popup lists the keys `1`-`9`, `0` and `a`-`j`). Press `1` (no `<Enter>`): the line is now `The receive button`. `zg` on `recieve` instead adds the word to `spell/en.utf-8.add`, so it is no longer marked.
 
-Besides the builtin spell checker two language servers report problems as diagnostics: `ltex_plus` (grammar and spelling in prose files) and `typos_lsp` (typos in identifiers and comments of source files). The statusline shows `[SPELL]` while spell checking is on.
+Besides the builtin spell checker two language servers report problems as diagnostics: `ltex_plus` (grammar and spelling in prose files; the language is detected per file, so Italian, German and French text is checked in its own language; force one with a magic comment, see [section 80](languages/latex.md#grammar-and-spelling-ltex_plus)) and `typos_lsp` (typos in identifiers and comments of source files). The statusline shows `[SPELL]` while spell checking is on.
 
 ---
 
