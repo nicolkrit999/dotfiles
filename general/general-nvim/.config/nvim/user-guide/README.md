@@ -495,6 +495,8 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Neovim in the browser (firenvim)](10-various.md#neovim-in-the-browser-firenvim)
         - [Live preview of :norm (live-command.nvim)](10-various.md#live-preview-of-norm-live-commandnvim)
         - [Vim-script debugging (vim-scriptease)](10-various.md#vim-script-debugging-vim-scriptease)
+        - [WhatsApp in Neovim (whatsapp.nvim)](10-various.md#whatsapp-in-neovim-whatsappnvim)
+        - [Practice game (vim-be-good)](10-various.md#practice-game-vim-be-good)
         - [Libraries and dependencies](10-various.md#libraries-and-dependencies)
         - [SQL databases (nvim-dbee, vim-dadbod-ui)](10-various.md#sql-databases-nvim-dbee-vim-dadbod-ui)
     - [40. Configuration management](10-various.md#40-configuration-management)

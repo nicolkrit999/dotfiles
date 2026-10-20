@@ -508,7 +508,7 @@ The dashboard opens for a bare `nvim` (no file, no directory, no stdin) or with 
 | `e` | New file |
 | `q` | Quit Neovim |
 
-The other items show their normal key: Find File `<Space>ff`, Recently opened files `<Space>fr`, Project grep `<Space>fg`, Open tree view `<Space>s`, Search help `<Space>fh`, Claude Code `<Space>cc`, Open Nvim config `<Space>ev`. With nothing saved, `r` / `L` show one warning ("no saved session for this folder" / "no saved session"). Sessions are never restored automatically.
+The other items show their normal key: Find File `<Space>ff`, Recently opened files `<Space>fr`, Project grep `<Space>fg`, Open tree view `<Space>s`, Search help `<Space>fh`, Claude Code `<Space>cc`, Open Nvim config `<Space>ev`, Open WhatsApp `\w` (the second-to-last item, just above Quit Nvim; it runs `:WhatsApp`, see "[WhatsApp in Neovim](10-various.md#whatsapp-in-neovim-whatsappnvim)"). With nothing saved, `r` / `L` show one warning ("no saved session for this folder" / "no saved session"). Sessions are never restored automatically.
 
 What a bare `nvim` shows (in a terminal; the header picture is random, here a penguin, and the Nerd Font icons before each item are left out; the real list continues below "Open tree view"):
 
@@ -533,6 +533,7 @@ What a bare `nvim` shows (in a terminal; the header picture is random, here a pe
 | Keymap | Description |
 | --- | --- |
 | `\h` | Open the dashboard in the current window (the previous buffer stays open in the background; inside the dashboard it only says "already in the dashboard") |
+| `\w` / `\W` | Open WhatsApp (open or jump to its tab) / close it; the same as `:WhatsApp` and `:WhatsApp close`, and the dashboard item `Open WhatsApp` uses `\w` (works in any normal-mode buffer) |
 | `\H` | Close the dashboard and return to the previous buffer (the dashboard buffer is deleted so it does not pile up); outside the dashboard it only warns "not in the dashboard", with no previous buffer "no previous buffer to resume" |
 
 ### Help keys: the user guide and Claude (any buffer, and the dashboard)
