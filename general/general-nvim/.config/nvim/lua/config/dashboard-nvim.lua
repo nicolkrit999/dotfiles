@@ -278,6 +278,11 @@ vim.list_extend(conf.center, {
     key_format = "[%s]",
   },
   {
+    icon = icon(0xf05a3),
+    desc = with_hint("Open WhatsApp", "\\w"),
+    action = "WhatsApp",
+  },
+  {
     icon = icon(0xf05fc),
     desc = "Quit Nvim",
     action = "qa",

@@ -1090,7 +1090,7 @@ local plugin_specs = {
   },
 
   {
-    -- WhatsApp client (unofficial, whatsmeow Go bridge); only used through :WhatsApp, no keys mapped.
+    -- WhatsApp client (unofficial, whatsmeow Go bridge); used through :WhatsApp, \w / \W (lua/mappings.lua) and a dashboard item (lua/config/dashboard-nvim.lua).
     -- The plugin lives in the repo's dist/ subfolder and its Go bridge needs make, go and a C compiler (cgo) to
     -- build; without all three on nvim's PATH the build is skipped silently and :WhatsApp explains how to build.
     "dwmkerr/whatsapp.nvim",

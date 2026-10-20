@@ -68,7 +68,7 @@ Type these in command mode, then press space (or Enter) to expand:
 | `vim-oscyank` | `:OSCYank {text}`, `:OSCYankVisual`, `:OSCYankRegister` | Copy to the system clipboard through the terminal (works over SSH; Linux). `:OSCYank` needs the text as an argument; in Visual mode use `:OSCYankVisual`, for a register `:OSCYankRegister {reg}` |
 | `vim-scriptease` | `:Messages`, `:Scriptnames`, `:Verbose {command}` | Vim-script debugging helpers |
 | `nvim-dbee`, `vim-dadbod-ui` | `<Space>D...` | SQL clients (see below) |
-| `whatsapp.nvim` | `:WhatsApp` | WhatsApp chats inside Neovim (see below) |
+| `whatsapp.nvim` | `:WhatsApp`, `\w`, `\W` | WhatsApp chats inside Neovim (see below) |
 | `vim-be-good` | `:VimBeGood` | Practice game for basic Vim movements (see below) |
 
 ## telescope.nvim (second picker)
@@ -140,7 +140,7 @@ Plugin: **vim-scriptease**. Loaded on the first use of one of its three commands
 
 ## WhatsApp in Neovim (whatsapp.nvim)
 
-Plugin: **whatsapp.nvim**. An unofficial WhatsApp client: the chat list is on the left, the conversation on the right and a compose buffer underneath. It runs a small Go program (`bin/wa-bridge`, built on the whatsmeow library) as a child process and shows up on your phone as a linked device. It may violate the WhatsApp terms of service, and attachments can be malicious, so every open asks for confirmation. No keys are mapped by this config; the plugin has its own keys inside its window, and `g?` lists all of them.
+Plugin: **whatsapp.nvim**. An unofficial WhatsApp client: the chat list is on the left, the conversation on the right and a compose buffer underneath. It runs a small Go program (`bin/wa-bridge`, built on the whatsmeow library) as a child process and shows up on your phone as a linked device. It may violate the WhatsApp terms of service, and attachments can be malicious, so every open asks for confirmation. This config maps two keys in Normal mode, `\w` (open or jump to the WhatsApp tab, same as `:WhatsApp`) and `\W` (close it, same as `:WhatsApp close`), and the dashboard has an `Open WhatsApp` item (second to last, above `Quit Nvim`). The plugin has its own keys inside its window, and `g?` lists all of them.
 
 The plugin loads on the first `:WhatsApp`. Its repository keeps the Lua part in the `dist/` subfolder, so the config adds that folder to the runtime path when the plugin loads.
 

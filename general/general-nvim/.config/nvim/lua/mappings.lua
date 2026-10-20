@@ -261,6 +261,10 @@ end, { silent = true, desc = "Dashboard: close and resume previous buffer" })
 keymap.set("n", [[\t]], "<cmd>tabclose<cr>", { silent = true, desc = "close current tab" })
 keymap.set("n", [[\T]], "<cmd>tabonly<cr>", { silent = true, desc = "close other tabs" })
 
+-- WhatsApp (whatsapp.nvim, lazy: the :WhatsApp command loads it): open or jump to its tab / close it
+keymap.set("n", [[\w]], "<cmd>WhatsApp<cr>", { silent = true, desc = "WhatsApp: open" })
+keymap.set("n", [[\W]], "<cmd>WhatsApp close<cr>", { silent = true, desc = "WhatsApp: close" })
+
 -- Move the cursor based on physical lines, not the actual lines.
 keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true, desc = "Move down by display line" })
 keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", { expr = true, desc = "Move up by display line" })
