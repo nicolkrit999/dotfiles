@@ -9,7 +9,7 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 
 **Loaded at startup.** An entry that begins with this label is loaded in every session without any trigger from you: either while Neovim starts or right after the first screen appears (lazy.nvim's `VeryLazy`), or on a bare `nvim` start for the dashboard. Entries without the label are loaded only when needed (a key, a command, a file type, a git repository, Insert mode and so on), so their startup cost is zero until then. The colorscheme of the current session is also loaded at startup, which theme that is depends on the machine (see [Colorschemes](#colorschemes)).
 
-<!-- plugin-count: 119 -->
+<!-- plugin-count: 121 -->
 
 ## LSP and code intelligence
 
@@ -204,3 +204,5 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 - `vim-tmux`: Syntax highlighting, commenting and `K` lookup for `tmux.conf` files; loads only for the `tmux` filetype and only when tmux is installed. In depth: [Filetype syntax plugins (vim-tmux, vim-toml)](10-various.md#filetype-syntax-plugins-vim-tmux-vim-toml)
 - `vim-toml`: Syntax highlighting for `.toml` files (for example `pyproject.toml`); follows the plugin's `main` branch. Only in `.toml` files. In depth: [Filetype syntax plugins (vim-tmux, vim-toml)](10-various.md#filetype-syntax-plugins-vim-tmux-vim-toml)
 - `vim-xkbswitch`: Switches the keyboard layout automatically when you enter and leave Insert mode. macOS only (needs the `xkbswitch` command); declared but disabled elsewhere, so it does nothing on Linux. In depth: [Keyboard layout switching (vim-xkbswitch)](10-various.md#keyboard-layout-switching-vim-xkbswitch)
+- `whatsapp.nvim`: WhatsApp chats inside Neovim through an unofficial client with a Go bridge; used through `:WhatsApp` (no keys mapped). The bridge is built only when make, go and a C compiler are on PATH. In depth: [WhatsApp in Neovim (whatsapp.nvim)](10-various.md#whatsapp-in-neovim-whatsappnvim)
+- `vim-be-good`: A small game collection to practice basic Vim movements, started with `:VimBeGood` in an empty buffer. In depth: [Practice game (vim-be-good)](10-various.md#practice-game-vim-be-good)

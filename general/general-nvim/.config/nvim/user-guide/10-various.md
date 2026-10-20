@@ -68,6 +68,8 @@ Type these in command mode, then press space (or Enter) to expand:
 | `vim-oscyank` | `:OSCYank {text}`, `:OSCYankVisual`, `:OSCYankRegister` | Copy to the system clipboard through the terminal (works over SSH; Linux). `:OSCYank` needs the text as an argument; in Visual mode use `:OSCYankVisual`, for a register `:OSCYankRegister {reg}` |
 | `vim-scriptease` | `:Messages`, `:Scriptnames`, `:Verbose {command}` | Vim-script debugging helpers |
 | `nvim-dbee`, `vim-dadbod-ui` | `<Space>D...` | SQL clients (see below) |
+| `whatsapp.nvim` | `:WhatsApp` | WhatsApp chats inside Neovim (see below) |
+| `vim-be-good` | `:VimBeGood` | Practice game for basic Vim movements (see below) |
 
 ## telescope.nvim (second picker)
 
@@ -135,6 +137,44 @@ Plugin: **vim-scriptease**. Loaded on the first use of one of its three commands
 | `:Messages` | Load the output of `:messages` into the quickfix list; `:Messages clear` clears the messages. Not the same as the built-in lower-case `:messages` |
 | `:Scriptnames` | Load the list of `:scriptnames` into the quickfix list and open it |
 | `:Verbose {command}` | Like `:verbose {command}`, but the output goes to a file and is shown in the preview window (handy for noisy commands; a count in front raises the verbosity) |
+
+## WhatsApp in Neovim (whatsapp.nvim)
+
+Plugin: **whatsapp.nvim**. An unofficial WhatsApp client: the chat list is on the left, the conversation on the right and a compose buffer underneath. It runs a small Go program (`bin/wa-bridge`, built on the whatsmeow library) as a child process and shows up on your phone as a linked device. It may violate the WhatsApp terms of service, and attachments can be malicious, so every open asks for confirmation. No keys are mapped by this config; the plugin has its own keys inside its window, and `g?` lists all of them.
+
+The plugin loads on the first `:WhatsApp`. Its repository keeps the Lua part in the `dist/` subfolder, so the config adds that folder to the runtime path when the plugin loads.
+
+**Building the bridge.** The bridge needs `make`, `go` and a C compiler (SQLite uses cgo). lazy.nvim builds it on install and update only when all three are on Neovim's PATH (they do not have to be on your shell's PATH); otherwise the build is skipped without a message. If you run `:WhatsApp` without a built bridge you get a warning (nothing at startup) that names the fix: once the three tools are on Neovim's PATH, run `:Lazy build whatsapp.nvim` and restart Neovim. The build downloads the Go modules, so it needs the network.
+
+| Command | Effect |
+| --- | --- |
+| `:WhatsApp pair` | Show a QR code; scan it on the phone under WhatsApp > Settings > Linked Devices > Link a Device (needed once) |
+| `:WhatsApp` | Open (or jump to) the WhatsApp tab; `nvim +WhatsApp` starts Neovim straight into it |
+| `:WhatsApp {chat name}` | Open the chat with that name |
+| `:WhatsApp toggle`, `close`, `status`, `stop`, `names` | Toggle or close the tab, show the connection status, stop the bridge, refresh contact names |
+| `:WhatsApp logout` | Unlink the device and forget the local session |
+
+Keys inside the WhatsApp window (from the plugin's README):
+
+| Key | Effect |
+| --- | --- |
+| `<CR>` / `i` | Open the chat under the cursor / open it and start composing |
+| `u` | Jump to the next unread chat |
+| `gU` / `gu` / `~` | Mark unread / read / toggle (mirrored to the phone) |
+| `<Tab>` / `<S-Tab>` | Cycle between the list, the conversation and the compose pane |
+| `R` / `r` | Reply to / react to the message under the cursor |
+| `K` / `L` | Load older messages / toggle bubbles and plain lines |
+| `:w` in the compose pane | Send the message (several lines are fine) |
+| `gx`, `[m`, `]m` | Download if needed and open an attachment / move between attachments |
+| `g?` / `q` | Show every key and command / go back |
+
+Each chat keeps its own unsent draft until Neovim exits. New messages in a chat you are not viewing raise a `vim.notify` notification. Pictures are drawn inside the bubble in terminals with the Kitty graphics protocol (kitty, Ghostty); elsewhere you get a tag line and `gx`.
+
+## Practice game (vim-be-good)
+
+Plugin: **vim-be-good**. A small game collection to practice basic Vim movements. Open an **empty** buffer first (in a non-empty file the plugin raises an error), then run `:VimBeGood`. The menu lists the games: `words`, `ci{`, `relative`, `hjkl`, `whackamole`, `snake` and `random`. Delete a line of the list to pick it: deleting a difficulty selects that difficulty, deleting a game starts it. The instructions are at the top of each game. For example, in `relative` you delete the line that says `DELETE ME` using relative jumps, and in `whackamole` you move to the character that has the caret under it and flip its case.
+
+The plugin loads on the first `:VimBeGood`; no keys are mapped. `let g:vim_be_good_delete_me_offset = 35` would fix the offset of the `relative` game instead of a random one (not set in this config). Please note that the difficulty only works on a few games.
 
 ## Libraries and dependencies
 

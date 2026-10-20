@@ -1089,6 +1089,42 @@ local plugin_specs = {
     end,
   },
 
+  {
+    -- WhatsApp client (unofficial, whatsmeow Go bridge); only used through :WhatsApp, no keys mapped.
+    -- The plugin lives in the repo's dist/ subfolder and its Go bridge needs make, go and a C compiler (cgo) to
+    -- build; without all three on nvim's PATH the build is skipped silently and :WhatsApp explains how to build.
+    "dwmkerr/whatsapp.nvim",
+    cmd = "WhatsApp",
+    build = function(plugin)
+      local has_cc = vim.fn.executable("cc") == 1 or vim.fn.executable("gcc") == 1
+      if vim.fn.executable("make") == 1 and vim.fn.executable("go") == 1 and has_cc then
+        vim.system({ "make", "-C", vim.fs.joinpath(plugin.dir, "dist"), "build" }):wait()
+      end
+    end,
+    config = function(plugin)
+      local dist = vim.fs.joinpath(plugin.dir, "dist")
+      if not vim.uv.fs_stat(vim.fs.joinpath(dist, "bin", "wa-bridge")) then
+        -- keep :WhatsApp defined (lazy.nvim re-runs it after loading) and warn only when it is actually used
+        vim.api.nvim_create_user_command("WhatsApp", function()
+          vim.notify(
+            "whatsapp.nvim: the Go bridge is not built. With make, go and a C compiler on Neovim's PATH run :Lazy build whatsapp.nvim, then restart Neovim",
+            vim.log.levels.WARN
+          )
+        end, { nargs = "*", desc = "WhatsApp: explain how to build the missing bridge" })
+        return
+      end
+      vim.opt.rtp:append(dist)
+      vim.cmd.runtime("plugin/whatsapp.lua") -- dist/ is not the plugin root, so lazy.nvim did not source it
+      require("whatsapp").setup()
+    end,
+  },
+
+  -- practice game for basic Vim movements; only used through :VimBeGood, no keys mapped
+  {
+    "ThePrimeagen/vim-be-good",
+    cmd = "VimBeGood",
+  },
+
 
   {
     -- formatter front end: format on explicit save + <Space>fm (config: lua/config/conform.lua)
