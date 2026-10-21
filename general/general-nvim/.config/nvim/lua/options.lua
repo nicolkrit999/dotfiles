@@ -31,6 +31,35 @@ opt.updatetime = 500 -- For CursorHold events
 
 -- Clipboard settings, always use clipboard for all delete, yank, change, put
 -- operation, see https://stackoverflow.com/q/30691466/6064933
+-- wl-paste exits 1 ("Nothing is copied") on an empty clipboard, which nvim reports as a red error. The
+-- startup read (e.g. yanky) is silenced; after boot an empty clipboard still warns as usual.
+if vim.env.WAYLAND_DISPLAY and fn.executable("wl-paste") == 1 and fn.executable("wl-copy") == 1 then
+  local booted = false
+  vim.api.nvim_create_autocmd("VimEnter", {
+    once = true,
+    callback = function() vim.defer_fn(function() booted = true end, 500) end,
+  })
+  local function paste(reg)
+    return function()
+      local cmd = { "wl-paste", "--no-newline" }
+      if reg == "*" then table.insert(cmd, "--primary") end
+      local res = vim.system(cmd, { text = true }):wait()
+      if res.code ~= 0 and booted then
+        local msg = "clipboard: " .. vim.trim(res.stderr or "paste failed")
+        vim.schedule(function() vim.notify(msg, vim.log.levels.ERROR) end)
+      end
+      return { vim.split(res.stdout or "", "\n", { plain = true }), "v" }
+    end
+  end
+  vim.g.clipboard = {
+    name = "wl-clipboard (quiet boot)",
+    copy = { ["+"] = { "wl-copy", "--foreground", "--type", "text/plain" },
+             ["*"] = { "wl-copy", "--foreground", "--primary", "--type", "text/plain" } },
+    paste = { ["+"] = paste("+"), ["*"] = paste("*") },
+    cache_enabled = 1,
+  }
+end
+
 if fn["provider#clipboard#Executable"]() ~= "" then
   opt.clipboard:append("unnamedplus")
 end
