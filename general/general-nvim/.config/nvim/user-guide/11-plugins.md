@@ -9,7 +9,7 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 
 **Loaded at startup.** An entry that begins with this label is loaded in every session without any trigger from you: either while Neovim starts or right after the first screen appears (lazy.nvim's `VeryLazy`), or on a bare `nvim` start for the dashboard. Entries without the label are loaded only when needed (a key, a command, a file type, a git repository, Insert mode and so on), so their startup cost is zero until then. The colorscheme of the current session is also loaded at startup, which theme that is depends on the machine (see [Colorschemes](#colorschemes)).
 
-<!-- plugin-count: 121 -->
+<!-- plugin-count: 122 -->
 
 ## LSP and code intelligence
 
@@ -133,6 +133,7 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 - `bufferline.nvim`: **Loaded at startup.** The top line showing one tab per open buffer (not Vim tabpages). Click to switch, click the x or the modified dot to close; qf, fugitive and git buffers are hidden from it. In depth: [Buffer Tabs (the Top Line)](06-windows-terminal-sessions.md#buffer-tabs-the-top-line-bufferlinenvim)
 - `dashboard-nvim`: **Loaded at startup.** The start screen shown for a bare `nvim`, with a menu (sessions, files, keymap search, user guide, Claude help) and random ASCII art. `\h` reopens it, `\H` closes it again. The menu also has an Open WhatsApp item (`\w`). In depth: [Dashboard (Start Screen)](06-windows-terminal-sessions.md#dashboard-start-screen-dashboard-nvim)
 - `statuscol.nvim`: **Loaded at startup.** Builds the column left of the text: signs (git, diagnostics), line numbers and the fold column (fold levels deeper than 3 are not shown). Clicks on the three parts have their own handlers. In depth: [Line number column (`statuscol.nvim`)](06-windows-terminal-sessions.md#line-number-column-statuscolnvim)
+- `tiny-cmdline.nvim`: **Loaded at startup.** Shows the `:` command line as a centred floating window (search stays at the bottom); needs the hidden command line, so pending keys and macro recording show in the statusline. Colours follow the active colorscheme. In depth: [Centred command line (tiny-cmdline.nvim)](06-windows-terminal-sessions.md#centred-command-line-tiny-cmdlinenvim)
 - `nvim-notify`: **Loaded at startup.** Animated popup notifications (fade in, slide out, 1.5 s) that replace the plain message line for everything that calls vim.notify. The popup background follows the active colorscheme; `:Notifications` shows the history. In depth: [33. UI features](06-windows-terminal-sessions.md#33-ui-features)
 - `snacks.nvim`: **Loaded at startup.** A toolbox of which three parts are used: nicer `vim.ui.input` popup at the cursor, the picker (used for `vim.ui.select` and some lists), and the light mode for very big files (over 1.5 MB or lines averaging over 5000 characters). In depth: [Input popups and big files (`snacks.nvim`)](06-windows-terminal-sessions.md#input-popups-and-big-files-snacksnvim)
 

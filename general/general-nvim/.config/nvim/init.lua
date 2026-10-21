@@ -12,6 +12,8 @@ require("custom-autocmd")
 require("mappings")
 -- :z / :Z zoxide jump
 require("zoxide")
+-- insert mode <Tab> / <S-Tab> jump out of / back before bracket and quote pairs (nvim-cmp falls back to it)
+require("tabout")
 -- :DevEnv <lang> enters a language devShell from the running session
 require("devenv")
 -- all the plugins installed and their configurations

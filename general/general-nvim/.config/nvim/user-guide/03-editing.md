@@ -788,6 +788,39 @@ When typing in insert mode, opening characters automatically insert their closin
 - Type `[` and `]` appears: `[|]`
 - Pressing `<BS>` right after typing `(` removes both brackets (`(` `<BS>` `x` gives `x`).
 
+## Tabbing out of pairs (custom, `lua/tabout.lua`)
+
+In Insert mode `<Tab>` jumps the cursor out past the closing character of the pair you are in, so you do not have to leave Insert mode or reach for the arrow keys. You stay in Insert mode and keep typing. It reads the text of the current line only (no language parser needed), so a pair has to open and close on the same line.
+
+| Keys (Insert mode) | What it does | Example (`\|` is the cursor) |
+| --- | --- | --- |
+| `<Tab>` | Jump past the closing character of the innermost pair around the cursor | `foo("ab\|")`: `<Tab>` gives `foo("ab"\|)`, a second `<Tab>` gives `foo("ab")\|` |
+| `<S-Tab>` (Shift + Tab) | Jump back to before the opening character of the innermost pair around the cursor (or the one you just left) | `foo("ab")\|`: `<S-Tab>` gives `foo\|("ab")` |
+| `<Tab>` with nothing to jump out of | Inserts a normal tab / indent as before | an empty line: `<Tab>` indents |
+
+Pairs known in every file type: `( )`, `[ ]`, `{ }`, `" "`, `' '` and `` ` ` ``. An apostrophe inside a word (`don't`) is not treated as a quote. A backslash protects the next character (`"a\"b"` is one string).
+
+Extra pairs per file type:
+
+| File type | Extra pairs |
+| --- | --- |
+| Lua | `[[ ]]`, `[=[ ]=]` |
+| Python | `""" """`, `''' '''`; `{ }` inside a string (f-string fields) |
+| Nix | `'' ''` (indented string), `${ }` also inside strings |
+| Shell (bash, zsh) | `${ }`, `$( )`, `$(( ))`, `[[ ]]` |
+| fish | `$( )` |
+| LaTeX | `$ $`, `$$ $$`, `\( \)`, `\[ \]`, `\left( \right)`, `\left[ \right]` |
+| Markdown | `** **`, `~~ ~~`, `* *`, `_ _` (the marker must touch the text: `snake_case` and `2 * 3` are left alone) |
+| Typst | the Markdown ones plus `$ $` |
+| C++ and Java | `< >` for templates, generics and `#include <x.h>`, but not for a comparison like `a < b` |
+
+Good to know:
+- With the completion menu open, `<Tab>` selects the next menu item instead (section [14](04-completion-snippets.md#14-autocompletion-nvim-cmp)). Close the menu with `<Esc>` or `<Ctrl-e>`, then press `<Tab>`.
+- `<S-Tab>` does not select the previous menu item; use `<Ctrl-p>` for that.
+- In Select mode (a snippet placeholder is highlighted) `<Tab>` and `<S-Tab>` do nothing; jump between placeholders with `<Ctrl-j>` / `<Ctrl-k>` (section [15](04-completion-snippets.md#15-snippets-ultisnips)).
+- Normal mode `<Tab>` is not changed.
+- A pair left open on the line (`foo(a`) has nothing to jump out of, so `<Tab>` inserts a tab.
+
 ---
 
 # 16. Code commenting

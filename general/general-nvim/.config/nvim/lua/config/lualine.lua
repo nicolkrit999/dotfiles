@@ -518,6 +518,25 @@ local show_lsp_menu = function()
   vim.cmd("LspAttached")
 end
 
+-- cmdheight=0 (tiny-cmdline) hides Neovim's own "recording @a" message, so show it here
+local function macro_recording()
+  local reg = vim.fn.reg_recording()
+  return reg ~= "" and ("recording @" .. reg) or ""
+end
+
+vim.api.nvim_create_autocmd({ "RecordingEnter", "RecordingLeave" }, {
+  group = vim.api.nvim_create_augroup("lualine_macro_recording", { clear = true }),
+  callback = function()
+    -- RecordingLeave fires before reg_recording() is cleared
+    vim.schedule(function()
+      pcall(function()
+        require("lualine").refresh()
+      end)
+    end)
+  end,
+  desc = "lualine: update the macro-recording item at once",
+})
+
 require("lualine").setup {
   options = {
     icons_enabled = true,
@@ -573,6 +592,10 @@ require("lualine").setup {
       {
         "%S",
         color = colors.special_bold,
+      },
+      {
+        macro_recording,
+        color = colors.warn_text,
       },
       {
         spell,

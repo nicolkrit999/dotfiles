@@ -397,6 +397,19 @@ local plugin_specs = {
     config = true,
   },
 
+  -- command line as a centred floating window on Neovim's built-in ui2 (needs cmdheight=0)
+  {
+    "rachartier/tiny-cmdline.nvim",
+    lazy = false,
+    init = function()
+      vim.o.cmdheight = 0
+      require("vim._core.ui2").enable({})
+    end,
+    config = function()
+      require("config.tiny-cmdline")
+    end,
+  },
+
   -- Comment plugin
   {
     "tpope/vim-commentary",
