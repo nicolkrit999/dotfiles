@@ -183,6 +183,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
         - [Replacing surrounding pairs (vim-sandwich plugin)](03-editing.md#replacing-surrounding-pairs-vim-sandwich-plugin)
             - [Wrap a whole list or part of it](03-editing.md#wrap-a-whole-list-or-part-of-it)
         - [Auto-pairing (nvim-autopairs plugin)](03-editing.md#auto-pairing-nvim-autopairs-plugin)
+        - [Tabbing out of pairs (custom, lua/tabout.lua)](03-editing.md#tabbing-out-of-pairs-custom-luataboutlua)
     - [16. Code commenting](03-editing.md#16-code-commenting)
         - [vim-commentary (plugin)](03-editing.md#vim-commentary-plugin)
         - [Smart commenting (custom)](03-editing.md#smart-commenting-custom)
@@ -364,6 +365,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
     - [32. Statusline (lualine.nvim)](06-windows-terminal-sessions.md#32-statusline-lualinenvim)
         - [Long-line warning](06-windows-terminal-sessions.md#long-line-warning)
     - [33. UI features](06-windows-terminal-sessions.md#33-ui-features)
+        - [Centred command line (tiny-cmdline.nvim)](06-windows-terminal-sessions.md#centred-command-line-tiny-cmdlinenvim)
         - [Breadcrumb bar (dropbar.nvim)](06-windows-terminal-sessions.md#breadcrumb-bar-dropbarnvim)
         - [LSP progress messages (fidget.nvim)](06-windows-terminal-sessions.md#lsp-progress-messages-fidgetnvim)
         - [Colorschemes](06-windows-terminal-sessions.md#colorschemes)
@@ -763,17 +765,58 @@ The things you do all day, in one place. Details are in the sections named at th
 
 ### Navigation
 
+Move one step at a time (a number before the key repeats it: `5j` is five lines down):
+
 | Keys | What it does |
 | --- | --- |
-| `h` `j` `k` `l`, `w` `b`, `H` `L`, `gg` `G` | Move by character, word, line start / end, file start / end |
+| `h` / `l` | One character left / right |
+| `j` / `k` | One line down / up |
+
+Move by word (a "word" stops at punctuation; a "WORD", the capital letters, only at spaces):
+
+| Keys | What it does |
+| --- | --- |
+| `w` / `b` | Start of the next / previous word |
+| `e` / `ge` | End of the next / previous word |
+| `W` / `B` / `E` | The same with WORDs (`foo.bar` counts as one) |
+
+Move inside a line:
+
+| Keys | What it does |
+| --- | --- |
+| `H` | First non-blank character of the line (same as `^`) |
+| `L` | Last non-blank character of the line (same as `g_`) |
+| `0` / `$` | Very first column / very end of the line |
+
+Move through the file:
+
+| Keys | What it does |
+| --- | --- |
+| `gg` / `G` | First / last line of the file |
+| `42G` or `:42` | Line 42 |
+| `{` / `}` | Previous / next blank line (paragraph) |
+| `<Ctrl-d>` / `<Ctrl-u>` | Half a screen down / up |
+| `<Ctrl-f>` / `<Ctrl-b>` | A full screen down / up |
+| `zz` / `zt` / `zb` | Put the cursor line in the middle / at the top / at the bottom of the window |
+
+Jump far in one go:
+
+| Keys | What it does |
+| --- | --- |
 | `f` + two characters | Hop to any matching spot on screen (then press the label letter) |
 | `%` | Jump to the matching bracket |
 | `<Ctrl-o>` / `<Ctrl-i>` | Back / forward through your jump history (after `gd`, searches, `gg` ...) |
 | `ma`, then `` `a `` | Set mark `a`, jump back to it later |
 | `gd` | Go to definition (use `<Ctrl-o>` to come back) |
+
+Move between files and views:
+
+| Keys | What it does |
+| --- | --- |
 | `<Space>ff` / `<Space>fg` / `<Space>fr` | Find a file / search text in the project / recent files |
 | `<Space>s` | File tree (follows `:cd`, `:Z`, `:z`) |
-| `gb` / `gB`, `<Space>bp` | Next / previous buffer, pick a buffer by letter |
+| `gb` / `gB` | Next / previous buffer |
+| `<Space>bp` | Pick a buffer by letter |
 | `<Space>t` | Symbol outline of the file |
 | `:Z <word>` | Change the working folder with zoxide |
 
@@ -965,7 +1008,8 @@ The completion menu opens by itself while you type in Insert mode (from 1 charac
 
 | Keys | What it does |
 | --- | --- |
-| `<Tab>` | Menu open: select the next item. Menu closed: insert a normal tab |
+| `<Tab>` | Menu open: select the next item. Menu closed with the cursor before a closing `)` `]` `}` `"` `'` or `` ` ``: jump out past it (press twice to leave `("ab")`). Otherwise: insert a normal tab |
+| `<S-Tab>` (Shift + Tab) | Jump back to before the opening bracket or quote of the pair you are in. With the menu open it does NOT select the previous item: use `<Ctrl-p>` |
 | `<CR>` | Confirm the item you picked with `<Tab>`; with nothing picked it is a plain newline |
 | `<Ctrl-e>` / `<Esc>` | Close the menu (without it: end of line / leave Insert mode) |
 | `<Ctrl-d>` / `<Ctrl-f>` | Scroll the documentation window up / down (menu open) |

@@ -240,16 +240,17 @@ For LaTeX files the sources are **omni** (BibTeX/citations), the texlab LSP (onl
 
 ## The smart tab behavior
 
-`<Tab>` has two behaviors depending on context:
+`<Tab>` has three behaviors depending on context:
 
 1. **Completion menu is visible**: Selects the next item in the menu
-2. **Otherwise**: Inserts a normal tab character
+2. **Menu closed and the cursor is before a closing bracket or quote**: Jumps out past it (see [Tabbing out of pairs](03-editing.md#tabbing-out-of-pairs-custom-luataboutlua))
+3. **Otherwise**: Inserts a normal tab character
 
 ## Completion keymaps
 
 | Keymap | In completion menu | Outside menu |
 | --- | --- | --- |
-| `<Tab>` | Select next item | Insert tab |
+| `<Tab>` | Select next item | Jump out of a bracket or quote pair, else insert tab |
 | `<CR>` (Enter) | Confirm the item you picked (with nothing picked: newline) | Insert newline |
 | `<Ctrl-e>` | Close menu | Go to end of line |
 | `<Esc>` | Close menu | Exit insert mode |

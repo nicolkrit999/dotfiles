@@ -311,7 +311,7 @@ Example (with two Neovim instances on one machine): the host runs `:InstantStart
 | --- | --- | --- |
 | A | Leftmost | Filename + a lock icon (Nerd Font) when the file is read-only |
 | B | Left | Git branch (click: pick a branch and check it out), `↑[n]` / `↓[n]` commits ahead / behind the upstream (the upstream is refreshed with a silent `git fetch origin` at most once a minute; long branch names are cut at 20 characters), diff stats (+~-), diagnostic counts (same icons as the sign column), Python virtualenv (Python buffers only) |
-| C | Center-left | Pending command (e.g. `2d`), spell indicator (`[SPELL]`) |
+| C | Center-left | Pending command (e.g. `2d`), `recording @a` while a macro is being recorded (the command line is hidden, so Neovim's own message is not visible), spell indicator (`[SPELL]`) |
 | X | Center-right | Active LSP (gear icon; ` (+N)` = other attached clients; click: popup with the attached clients), `[N]>L` (long-line warning, see "[Long-line warning](#long-line-warning)" below), `[N]trailing` (first line with trailing whitespace), `MI:N` (mixed tabs and spaces) |
 | Y | Right | Encoding (only when not UTF-8) and file format (only when not unix), both in red; `[CN]` input-method badge on macOS |
 | Z | Rightmost | Progress through the file (%). The line:column position is shown only in inactive windows |
@@ -372,6 +372,16 @@ The setting is global (all buffers and windows) and is on at every start. There 
 | **vim-illuminate** | Highlights the other uses of the word under the cursor (`<Alt-n>` / `<Alt-p>` jump between them) |
 | **vimade** | Dims inactive windows |
 | **Borders** | Floating windows and the completion menu have a single-line border (exception: `:Lazy` uses rounded corners) |
+
+## Centred command line (tiny-cmdline.nvim)
+
+Pressing `:` opens the command line as a small bordered window in the middle of the screen instead of at the bottom. The bottom line of the editor is permanently hidden (`cmdheight=0`) and Neovim's built-in message window (`ui2`) draws messages.
+
+- `/` and `?` (search) keep the normal place at the bottom.
+- The completion menu (`<Tab>` in the `:` line) opens just under the centred window.
+- Pending keys such as `2d` show in the statusline, and `recording @a` shows there while you record a macro.
+- Colours: window, border and title are derived from the active colorscheme (on Nix systems the base16 theme named by `NVIM_BASE16_THEME`, otherwise the Catppuccin Mocha fallback or the random theme), and follow `:colorscheme`. A theme without the needed colours keeps the plugin's default links.
+- The plugin has no keys or commands of its own, and this config keeps its default settings (60 % wide, between 40 and 80 columns).
 
 ## Breadcrumb bar (dropbar.nvim)
 
