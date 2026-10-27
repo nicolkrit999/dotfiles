@@ -1174,6 +1174,7 @@ The Java keys work only in a Java buffer with the Java language server (jdtls) a
 | `<Space>jbc` | Clean workspace |
 | `<Space>jrr` | Run main class |
 | `<Space>jrs` | Stop running main |
+| `<Space>jrc` | Run compact source file (Java 25, `java <file>`) |
 | `<Space>jrl` | Toggle runner log window |
 | `<Space>jrp` | Profiles UI |
 
@@ -1234,6 +1235,7 @@ On Nix systems the JDK comes from the Java devShell (`JAVA_HOME`) and nvim-java 
 | `<Space>jbc` | `:JavaBuildCleanWorkspace` | Clear the jdtls workspace cache (after a Yes/No question; jdtls is restarted automatically) |
 | `<Space>jrr` | `:JavaRunnerRunMain` | Run the main class |
 | `<Space>jrs` | `:JavaRunnerStopMain` | Stop the running program |
+| `<Space>jrc` | (Lua function, Java buffers only) | Run a Java 25 compact source file with `java <file>` in a bottom terminal split; see [Compact source files](languages/java.md#compact-source-files-java-25-spacejrc) |
 | `<Space>jrl` | `:JavaRunnerToggleLogs` | Show/hide the runner log window (it opens as a full-width, 15-line split at the bottom) |
 | `<Space>jrp` | `:JavaProfile` | Profiles UI |
 

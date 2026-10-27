@@ -25,6 +25,19 @@ function M.setup()
     settings = {
       java = { home = vim.env.JAVA_HOME },
     },
+    handlers = {
+      -- Java 25 compact files (JEP 512) cannot declare a package, so jdtls always reports 536871240
+      -- 'declared package "" does not match the expected package' for them. Drop only that code,
+      -- and only for compact files; real package mismatches in normal classes still show.
+      ["textDocument/publishDiagnostics"] = function(err, result, ctx)
+        if result and result.diagnostics and require("java_compact").uri_is_compact(result.uri) then
+          result.diagnostics = vim.tbl_filter(function(d)
+            return tostring(d.code) ~= "536871240"
+          end, result.diagnostics)
+        end
+        return vim.lsp.diagnostic.on_publish_diagnostics(err, result, ctx)
+      end,
+    },
   })
   if has_java then
     vim.lsp.enable("jdtls")
