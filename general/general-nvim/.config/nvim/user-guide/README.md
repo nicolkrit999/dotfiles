@@ -569,6 +569,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
             - [Profiles window (<Space>jrp)](languages/java.md#profiles-window-spacejrp)
             - [Clean workspace (<Space>jbc)](languages/java.md#clean-workspace-spacejbc)
             - [Change runtime (<Space>jj)](languages/java.md#change-runtime-spacejj)
+            - [Compact source files (Java 25, <Space>jrc)](languages/java.md#compact-source-files-java-25-spacejrc)
         - [5. Language server features in a Java buffer](languages/java.md#5-language-server-features-in-a-java-buffer)
             - [Go to definition, back, hover, references](languages/java.md#go-to-definition-back-hover-references)
             - [When a rename does nothing](languages/java.md#when-a-rename-does-nothing)

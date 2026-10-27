@@ -150,6 +150,7 @@ All `<Space>j` keys are normal mode only. The real maps are created per buffer w
 | --- | --- | --- | --- |
 | `<Space>jrr` | `:JavaRunnerRunMain` | Run the main class | n |
 | `<Space>jrs` | `:JavaRunnerStopMain` | Stop the running program (the java process is gone and the runner shows `Process finished with exit code::129`); with nothing running it does nothing visible | n |
+| `<Space>jrc` | (Lua function, Java buffers only) | Run a Java 25 compact source file (no package line, no top-level type) with `java <file>` in a bottom terminal split, see [Compact source files](#compact-source-files-java-25-spacejrc) | n |
 | `<Space>jrl` | `:JavaRunnerToggleLogs` | Show or hide the runner log window (toggles between 1 and 2 windows) | n |
 | `<Space>jrp` | `:JavaProfile` | Run profiles window (main class and arguments), see below | n |
 
@@ -247,6 +248,18 @@ A profile stores VM arguments and program arguments for the runner of one main c
 
 In the test project it only shows a notification: `No configured runtimes available` plus a link to the nvim-java README. The list of JDKs comes from jdtls setting `java.configuration.runtimes`, which this config does not set (only `java.home = $JAVA_HOME`). So `<Space>jj` is a no-op here; the JDK in use is the devShell JDK.
 
+### Compact source files (Java 25, `<Space>jrc`)
+
+A compact source file (JEP 512) has no `package` line and no top-level `class`, `interface`, `record` or `enum`; it holds only methods (and fields), for example a bare `void main() { ... }`. jdtls compiles a stub class for such a file and reports `Unresolved compilation problem: declared package "" does not match the expected package`, and `<Space>jrr` still fails on it. Use `<Space>jrc` instead:
+
+1. `<Space>jrc` (Normal mode, in the compact file's buffer). Saves the buffer first if it was modified, then opens a bottom terminal split and runs the JDK source launcher `java <file>`.
+2. The terminal inherits `JAVA_HOME` and `JAVA_TOOL_OPTIONS` from Neovim, so it needs `java` on PATH: open Neovim inside the Java devShell, or run `:DevEnv java`. Without `java`, the key shows a warning.
+3. On a file that has a `package` line or a top-level type, the key only shows the warning `Java: not a compact source file ...`. Use `<Space>jrr` for normal classes.
+
+Limits: `<Space>jrc` runs a single file with no project classpath, so it cannot use other classes of the project. The key exists only in Java buffers.
+
+Diagnostics: for compact files the jdtls diagnostic `declared package "" does not match the expected package` (code 536871240) is dropped, so the file shows no false error. A real package mismatch in a normal class (the `package` line disagrees with the folder) is still shown.
+
 ## 5. Language server features in a Java buffer
 
 All need jdtls attached. The general keys are described elsewhere ([section 13](../07-code.md#13-lsp-language-server-protocol) for LSP); here is what they do in Java.
@@ -260,7 +273,7 @@ All need jdtls attached. The general keys are described elsewhere ([section 13](
 | `<Space>fm` | Format the file (Visual mode: the selection) with google-java-format, run by conform.nvim (see [Formatting (conform.nvim)](../07-code.md#formatting-conformnvim)); the jdtls formatter (Eclipse style) is used only when google-java-format is not installed. Example: `calc.add(2,3)*4` becomes `calc.add(2, 3) * 4`. Saving with `:w` formats too; auto-saves do not, and `<Space>fo` switches format on save off and on. It runs asynchronously: wait a moment. It can re-indent the whole file (the template's 4 spaces became 2) and wrap long lines (`int   x=1+2 ;` became `int x = 1 + 2;`) |
 | `:LspInlayHints enable` / `disable` | Inlay hints (parameter names, types); off by default (enable turns hints on) |
 | `<Space>t` | Symbol outline (aerial); in Java it shows `Main` and `main` |
-| diagnostics | Compile errors and warnings appear while you type, without running anything |
+| diagnostics | Compile errors and warnings appear while you type, without running anything (in compact source files the false `declared package ""` error is hidden, see [Compact source files](#compact-source-files-java-25-spacejrc)) |
 
 Other notes:
 
@@ -1263,6 +1276,7 @@ See [section 7](../06-windows-terminal-sessions.md#7-windows-splits-and-buffers)
 | `<Space>j...` shows `Java: jdtls not attached (open nvim inside the Java devShell, or run :DevEnv java)` | `java` is not on PATH (not in the devShell) or jdtls has not finished starting | Quit, `cd` into the project, check `direnv allow` and `which java`, start nvim again; inside the devShell wait about 10 s and check `:LspAttached` |
 | jdtls never attaches | Neovim started before direnv loaded; jdtls crashed | `:LspLog`, `:checkhealth vim.lsp`, `:edit` the file; check `which java` |
 | Tests or debugger do not start, adapter not found | The devShell was not entered since the extensions were linked, or the links broke | Enter the project with direnv once (the shell hook relinks `~/.local/share/nvim/nvim-java/packages/java-debug-adapter/extension` and `java-test/extension`), restart nvim |
+| `<Space>jrr` fails with `declared package "" does not match the expected package` | The file is a Java 25 compact source file (no package line, no top-level type); jdtls cannot run it | Use `<Space>jrc` ([Compact source files](#compact-source-files-java-25-spacejrc)) |
 | `<Space>jrr` prints nothing | jdtls not finished importing, or the file is not under `src/main/java`, or no `main` method | Wait for the first import, `<Space>jbb`, then `<Space>jrr` again; a project that is its own git root and one nested in a bigger git repo both work |
 | Old errors or deleted classes still shown | Stale jdtls workspace | `<Space>jbc` then Yes (jdtls restarts); if it stays wrong: `rm -r ~/.cache/nvim/jdtls/workspace` |
 | A different, empty workspace appears after starting from another folder | The workspace folder name is a hash of the START folder of Neovim | Always start nvim in the same project folder |
