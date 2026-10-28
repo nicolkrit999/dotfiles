@@ -166,6 +166,13 @@ local ignore = {
   "In mode `n`, <gc([sr])> overlaps with <gc%1%1>:", -- smart_comment gcs/gcss, gcr/gcrr (accepted prefix wait)
   "In mode `x`, <@> overlaps with <@%(targets%)>:",
   "In mode `[xo]`, <[ai]> overlaps with <[ai][%%isancS]>", -- targets / matchup / mini.indentscope (order varies per run)
+  -- nvjup: optional extras that are deliberately not provided (pdflatex is heavy, Awrit needs kitty remote control)
+  "nvjup Markdown rendering ~ |.*pdflatex is unavailable",
+  "nvjup interactive renderer ~ |.*Awrit is unavailable",
+  "nvjup interactive renderer ~ |.*KITTY_LISTEN_ON is unset",
+  -- truth-table.nvim registers its which-key groups <leader>T / <leader>l twice (third-party; which-key calls it informational)
+  "Duplicates for <<leader>T> in mode [nx]",
+  "Duplicates for <<leader>l> in mode n",
 }
 local unexpected = {}
 for _, l in ipairs(h) do
