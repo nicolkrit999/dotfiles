@@ -52,7 +52,7 @@ Type these in command mode, then press space (or Enter) to expand:
 | `better-escape.vim` | `jk` (insert) | Fast escape from insert mode (200ms window) |
 | `vim-repeat` | `.` | Makes plugin actions repeatable with `.` |
 | `vim-swap` | `gs` (n, x) | Interactively swap function arguments / list items |
-| `vim-eunuch` | `:Rename`, `:Delete` | Unix file operations |
+| `vim-eunuch` | `:Rename`, `:Delete` | Unix file operations (language servers are not told; for that rename in the file tree, see [section 11](05-search-and-files.md#file-operations-and-language-servers-nvim-lsp-file-operations)) |
 | `vim-obsession` | `:Obsession` | Session save/restore |
 | `instant.nvim` | `:InstantStartServer`, `:InstantStartSession {host} {port}`, `:InstantJoinSession {host} {port}` | Collaborative editing (loads on its first `:Instant...` command) |
 | `firenvim` | Browser | Neovim in browser text areas |

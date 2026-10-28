@@ -2,8 +2,31 @@ local M = {}
 
 -- Nvim 0.12's defaults already advertise foldingRange (lineFoldingOnly + foldingRangeKind), which
 -- is what nvim-ufo needs; overriding it would drop the fold kinds that ufo filters on.
+--
+-- workspace.fileOperations: what nvim-lsp-file-operations (lua/plugin_specs.lua) advertises so that
+-- jdtls (package/import fix-up on rename or move of a .java file or package folder) and tinymist
+-- (.typ) answer workspace/willRenameFiles when nvim-tree renames, moves or deletes a file. Servers
+-- only offer these requests to a client that advertises them. The table is the plugin's own
+-- default_capabilities() (every operation on), inlined on purpose: the plugin is lazy-loaded after
+-- nvim-tree, and requiring it here (at startup) would force-load it and nvim-tree. If the plugin is
+-- already loaded, ITS answer wins (it honours its `operations` options).
 M.get_default_capabilities = function()
-  return vim.lsp.protocol.make_client_capabilities()
+  local caps = vim.lsp.protocol.make_client_capabilities()
+  local file_ops = {
+    didCreate = true,
+    didDelete = true,
+    didRename = true,
+    willCreate = true,
+    willDelete = true,
+    willRename = true,
+  }
+  if package.loaded["lsp-file-operations"] then
+    local ok, extra = pcall(require("lsp-file-operations").default_capabilities)
+    if ok and extra and extra.workspace and extra.workspace.fileOperations then
+      file_ops = extra.workspace.fileOperations
+    end
+  end
+  return vim.tbl_deep_extend("force", caps, { workspace = { fileOperations = file_ops } })
 end
 
 --- Get the names of the LSP clients attached to the current buffer (sorted)

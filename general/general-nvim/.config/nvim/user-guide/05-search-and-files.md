@@ -323,7 +323,7 @@ Which to use (rule of thumb):
 - A method, field, class or local variable whose name also occurs elsewhere (`add`, `get`, `name`, `size`, `value`): `<Space>rn`.
 - A long, unique name (`calculateInvoiceTotal`), or a name in non-code text (config key, string, docs, comment wording): `:grep`, review with `:copen`, then `:cfdo`.
 - `<Space>rn` fails or hangs: first the repair `<Space>jbc` (Java: [When a rename does nothing](languages/java.md#when-a-rename-does-nothing)); the text rename is a fallback only when the matches are reviewed.
-- A Java package or folder cannot be renamed with `<Space>rn` ("not supported on this element"); rename the folder in the file tree and fix the `package` and `import` lines with `:grep` + `:cfdo`: [Renaming a package or folder](languages/java.md#rename-grep--cfdo-instead-of-spacern).
+- A Java package or folder cannot be renamed with `<Space>rn` ("not supported on this element"); rename the folder in the file tree with `r` instead: jdtls then rewrites the `package` and `import` lines by itself ([File operations and language servers](#file-operations-and-language-servers-nvim-lsp-file-operations)), with `:grep` + `:cfdo` as the fallback: [Renaming a package or folder](languages/java.md#rename-grep--cfdo-instead-of-spacern).
 - Renaming a class by text does NOT rename its file.
 
 ---
@@ -778,7 +778,7 @@ Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or 
 | `<BS>` | in tree | Close (collapse) the directory under the cursor; on a file it closes its parent directory |
 | `a` | in tree | Create a new file. Type the name and press Enter. Add `/` at the end for a directory. |
 | `d` | in tree | Delete file/directory (asks for confirmation) |
-| `r` | in tree | Rename file/directory |
+| `r` | in tree | Rename file/directory. A language server that knows file operations (jdtls for Java) is told and can fix the references: [File operations and language servers](#file-operations-and-language-servers-nvim-lsp-file-operations) |
 | `c` | in tree | Copy file to clipboard |
 | `x` | in tree | Cut file to clipboard |
 | `p` | in tree | Paste from clipboard |
@@ -797,6 +797,26 @@ Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or 
 `nvim <dir>` opens the tree on that directory and makes it the working directory.
 
 **Moving between tree and code**: Use `<Ctrl-w>h` / `<Ctrl-w>l` or `<Left>` / `<Right>` arrow keys.
+
+## File operations and language servers (nvim-lsp-file-operations)
+
+Why: renaming or moving a file or folder changes things the language server tracks, above all in Java the `package` line and the `import` lines of other files. nvim-lsp-file-operations tells the server about every rename, move, create and delete done in the file tree (the LSP requests `workspace/willRenameFiles`, `didRenameFiles` and the create/delete equivalents), and the server answers with the text edits that keep the project consistent.
+
+How it is wired:
+
+- It adds NO keys. You use the tree's own keys (`r` rename, `x` + `p` cut and paste, `a` create, `d` delete, see the table above). The one command is `:LFO` (`create`, `delete`, `rename`), for scripts.
+- It loads right after nvim-tree's setup, so it costs nothing at startup. The matching client capabilities (`workspace.fileOperations`) are advertised to every language server from `lua/lsp_utils.lua`; a server only offers file operations to a client that advertises them.
+- Servers that react: jdtls (it offers `willRename` for `**/*.java` files and for folders; this is the case documented here) and tinymist (it offers `willRename` for `**/*.typ` files). For servers that do not handle file operations, nothing changes.
+- Only the file tree is hooked. The vim-eunuch commands `:Rename` and `:Move` and a plain `:w` do NOT tell the server.
+
+Example (Java, Maven project): the folder `src/main/java/com/acme/util` holds `Helper.java` with `package com.acme.util;`, and `App.java` has `import com.acme.util.Helper;`.
+
+1. `<Space>s` opens the tree, put the cursor on the folder `util`.
+2. `r`, type `helpers`, `<Enter>`.
+3. The folder is renamed on disk. In the moved `Helper.java` the line becomes `package com.acme.helpers;` and the file is saved. A file that imports it (here `App.java`) gets `import com.acme.helpers.Helper;` in its BUFFER: the buffer is marked modified but NOT saved.
+4. `:wa` saves all changed buffers.
+
+If jdtls is not attached (a project without a Maven or Gradle marker, or the server still starting), the rename is only a rename on disk and the `package` / `import` lines stay as they were: use the manual steps in [Renaming a package or folder](languages/java.md#rename-grep--cfdo-instead-of-spacern).
 
 ---
 
@@ -829,7 +849,7 @@ Plugin: nvim-tree.lua. A sidebar file tree. It loads on the first `<Space>s` or 
 | Plugin / Feature | What it does |
 | --- | --- |
 | **nvim-tree** (`<Space>s`) | Visual file browser. Create (`a`), delete (`d`), rename (`r`), copy (`c`), cut (`x`), paste (`p`). |
-| **vim-eunuch** | Unix file commands, all available from a fresh start (lazy `cmd` list): `:Rename <newname>`, `:Move <path>` (move the file, creating directories), `:Duplicate <name>`, `:Copy <path>`, `:Delete` / `:Remove` / `:Unlink` (delete the file; `:Delete` also the buffer, and it needs `!` for a file that has content), `:Mkdir <dir>` (always creates the missing parent folders, like `mkdir -p`; do NOT type `-p`, it would become part of the folder name; a `!` makes no difference; with no argument it creates the folder of the current file; an existing folder only gives the message "Directory already exists"), `:Chmod <mode>`, `:Cfind` / `:Lfind` / `:Clocate` / `:Llocate` (find / locate into the quickfix / location list), `:SudoEdit`, `:SudoWrite`, `:Wall` (write all) and `:W` (= `:Wall`). |
+| **vim-eunuch** | Unix file commands (they do NOT notify language servers: to have jdtls fix `package` and `import` lines after a rename or move, use `r` / `x` + `p` in the file tree, see [File operations and language servers](#file-operations-and-language-servers-nvim-lsp-file-operations)), all available from a fresh start (lazy `cmd` list): `:Rename <newname>`, `:Move <path>` (move the file, creating directories), `:Duplicate <name>`, `:Copy <path>`, `:Delete` / `:Remove` / `:Unlink` (delete the file; `:Delete` also the buffer, and it needs `!` for a file that has content), `:Mkdir <dir>` (always creates the missing parent folders, like `mkdir -p`; do NOT type `-p`, it would become part of the folder name; a `!` makes no difference; with no argument it creates the folder of the current file; an existing folder only gives the message "Directory already exists"), `:Chmod <mode>`, `:Cfind` / `:Lfind` / `:Clocate` / `:Llocate` (find / locate into the quickfix / location list), `:SudoEdit`, `:SudoWrite`, `:Wall` (write all) and `:W` (= `:Wall`). |
 | **gx.nvim** (`gx`) | Open the URL or file path under cursor in a browser. |
 | `:CopyPath absolute` | Copy the full file path to clipboard. |
 | `:CopyPath relative` | Copy path relative to project root. |

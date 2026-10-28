@@ -57,11 +57,15 @@ Claude Code uses your project's git root as the working directory. `:ClaudeCodeR
 
 # 27. Markdown support
 
-## Preview (markdown-preview.nvim)
+## Preview (mdkite.nvim)
 
 | Keymap | Description |
 | --- | --- |
-| `<Alt-m>` | Toggle markdown preview in browser (markdown buffers only) |
+| `<Alt-m>` | Toggle markdown preview in browser (`:MdKite toggle`; markdown buffers only). Needs internet; with a preview running, `<Alt-m>` in a second Markdown buffer stops it (`:MdKite start` there moves it). Details: [Preview (mdkite.nvim)](languages/markdown.md#preview-mdkitenvim) |
+
+## Truth tables and Boolean algebra (truth-table.nvim)
+
+For digital-logic notes: `:TruthTable A B` builds a table, `:TruthTableExpand A xor B` adds columns, `:TruthTableKarnaugh` draws a Karnaugh map, `:TruthTableDeMorgan` / `:TruthTableSimplify` preview rewrites that `:TruthTableApplyStep` writes as `≡` steps, `:TruthTableVerify!` proves them, `:TruthTableTutor` is a built-in course. Keys `<Space>T...` (tables) and `<Space>l...` (rewrites); `and@` in insert mode types `∧`. Full guide with a worked lesson: [Truth tables and Boolean algebra](languages/markdown.md#truth-tables-and-boolean-algebra-truth-tablenvim).
 
 ## Footnotes (vim-markdownfootnotes)
 

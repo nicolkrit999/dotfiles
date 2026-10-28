@@ -9,7 +9,7 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 
 **Loaded at startup.** An entry that begins with this label is loaded in every session without any trigger from you: either while Neovim starts or right after the first screen appears (lazy.nvim's `VeryLazy`), or on a bare `nvim` start for the dashboard. Entries without the label are loaded only when needed (a key, a command, a file type, a git repository, Insert mode and so on), so their startup cost is zero until then. The colorscheme of the current session is also loaded at startup, which theme that is depends on the machine (see [Colorschemes](#colorschemes)).
 
-<!-- plugin-count: 122 -->
+<!-- plugin-count: 127 -->
 
 ## LSP and code intelligence
 
@@ -36,6 +36,7 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 ### Debugging and running code
 
 - `nvim-gdb`: Visual front end for GDB, LLDB and pdb: starts the debugger in a terminal pane and marks the current line in your code. Used mainly to step through Python with pdb (`<Space>dp`) and for C/C++ with `:GdbStart` in the c-cpp devShell. In depth: [GDB Integration](07-code.md#gdb-integration-nvim-gdb) and [Debugging with pdb](languages/python.md#debugging-with-pdb-nvim-gdb)
+- `nvjup`: **Loaded at startup.** Edits and runs Jupyter notebooks: opening an `.ipynb` file shows its cells, outputs and a kernel session (run with `<Space>nr`, `<C-CR>`). Needs `uv` for a one-time build (`:Lazy build nvjup`) and `ipykernel` (jupyter devShell). In depth: [Jupyter notebooks (nvjup)](languages/python.md#jupyter-notebooks-nvjup)
 - `asyncrun.vim`: Runs a shell command as a background job and streams its output into the quickfix window (opened 6 lines tall). Here `<Space>rf` / `<F9>` for Python goes through it. In depth: [The AsyncRun Plugin](10-various.md#the-asyncrunvim-plugin)
 
 ## Completion and snippets
@@ -94,7 +95,8 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 - `nvim-tree.lua`: Sidebar file tree toggled with `<Space>s`; `<Tab>` opens a file but keeps the cursor in the tree. Has its own window picker when several windows are open. In depth: [11. File explorer (`nvim-tree`)](05-search-and-files.md#11-file-explorer-nvim-tree)
 - `nvim-bqf`: Better quickfix window: item preview, marking items, fuzzy filter. The preview does not start by itself here. Only inside the quickfix window. In depth: [Inside the quickfix window (nvim-bqf, quicker.nvim)](05-search-and-files.md#inside-the-quickfix-window-nvim-bqf-quickernvim)
 - `quicker.nvim`: Nicer quickfix and location list display (grouped by file). Editing the list as a buffer is switched off. In depth: [Inside the quickfix window (nvim-bqf, quicker.nvim)](05-search-and-files.md#inside-the-quickfix-window-nvim-bqf-quickernvim)
-- `vim-eunuch`: Unix file commands inside Neovim: rename, move, delete, mkdir, chmod, sudo write. In depth: [File operations](05-search-and-files.md#file-operations)
+- `nvim-lsp-file-operations`: Tells language servers about renames, moves, creates and deletes done in the nvim-tree file tree, so jdtls rewrites the `package` and `import` lines when a Java file or package folder is renamed there. No keys, only the command `:LFO`; it loads after nvim-tree. In depth: [File operations and language servers (nvim-lsp-file-operations)](05-search-and-files.md#file-operations-and-language-servers-nvim-lsp-file-operations)
+- `vim-eunuch`: Unix file commands inside Neovim: rename, move, delete, mkdir, chmod, sudo write. They do not notify language servers. In depth: [File operations](05-search-and-files.md#file-operations)
 
 ## Sessions and saving
 
@@ -178,7 +180,10 @@ The catalog is kept in sync by `build-pdf.py --check`: it fails when a plugin of
 
 ## Writing: Markdown, LaTeX, Typst
 
-- `markdown-preview.nvim`: Live browser preview of a Markdown file; `<Alt-m>` toggles it in Markdown buffers. Only in Markdown files. In depth: [Preview (markdown-preview.nvim)](languages/markdown.md#preview-markdown-previewnvim)
+- `mdkite.nvim`: Live browser preview of a Markdown file with Mermaid diagrams, KaTeX math and scroll sync; `<Alt-m>` toggles it in Markdown buffers. A pure-Lua server, no npm build; the preview page needs internet. Only in Markdown files. In depth: [Preview (mdkite.nvim)](languages/markdown.md#preview-mdkitenvim)
+- `kitehost.nvim`: The small HTTP server library that mdkite.nvim uses to serve the preview. Loaded together with mdkite.nvim, nothing to use directly. In depth: [Preview (mdkite.nvim)](languages/markdown.md#preview-mdkitenvim)
+- `truth-table.nvim`: **Loaded at startup.** Builds truth tables, Karnaugh maps and step-by-step Boolean-algebra rewrites inside Markdown notes (`:TruthTable`, `:TruthTableKarnaugh`, `:TruthTableTutor`; keys `<Space>T...` and `<Space>l...`); `and@` types `∧` in note buffers. In depth: [Truth tables and Boolean algebra (truth-table.nvim)](languages/markdown.md#truth-tables-and-boolean-algebra-truth-tablenvim)
+- `cds-lua-fp`: **Loaded at startup.** Small Lua helper library that truth-table.nvim needs; nothing to use directly. In depth: [Truth tables and Boolean algebra (truth-table.nvim)](languages/markdown.md#truth-tables-and-boolean-algebra-truth-tablenvim)
 - `render-markdown.nvim`: Draws headings, lists, code blocks, tables and checkboxes nicely inside the buffer; pauses in Insert mode. Only in Markdown files. In depth: [Rendering inside the buffer (render-markdown.nvim)](languages/markdown.md#rendering-inside-the-buffer-render-markdownnvim)
 - `vim-markdownfootnotes`: Fast footnote insertion and jump back in Markdown files. Only in Markdown files. In depth: [Footnotes](languages/markdown.md#footnotes-vim-markdownfootnotes)
 - `vimtex`: **Loaded at startup.** Full LaTeX support (compile with `latexmk`, forward and inverse search with the PDF viewer, table of contents, motions and text objects). Only loaded when `latex` is on PATH, in practice inside the LaTeX devShell. In depth: [LaTeX (vimtex, texlab, ltex, PDF viewer)](languages/latex.md#80-latex-vimtex-texlab-ltex-pdf-viewer)

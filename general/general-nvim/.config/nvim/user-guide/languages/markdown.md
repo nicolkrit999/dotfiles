@@ -13,8 +13,9 @@ This section covers everything your config does that is specific to `.md` files:
 | ltex_plus (LSP, LanguageTool) | Prose needs grammar checking, not only spelling | Grammar and spelling problems as diagnostics. Language detected automatically per file (`auto`, so Italian or German notes are not flagged as English) |
 | typos_lsp | Catches common typos in every file type | Diagnostics like `recieve` to `receive` |
 | render-markdown.nvim | Raw Markdown is hard to read | Headings, lists, code blocks, tables, checkboxes drawn nicely inside the buffer |
-| markdown-preview.nvim | See the final look in a browser | Live preview, `<Alt-m>` toggles it |
+| mdkite.nvim (with kitehost.nvim) | See the final look in a browser | Live preview with Mermaid diagrams and math, `<Alt-m>` toggles it |
 | vim-markdownfootnotes | Footnotes need numbering and a jump back | `^^` / `<Space>mf` create a footnote, `@@` / `<Space>mr` return |
+| truth-table.nvim | Digital-logic notes need truth tables and Boolean algebra by hand otherwise | `:TruthTable` builds tables, Karnaugh maps and step-by-step rewrites inside the note; `and@` types `∧` (see [Truth tables and Boolean algebra](#truth-tables-and-boolean-algebra-truth-tablenvim)) |
 | `:AddRef` (your own command) | Reference-style links keep the text readable | Adds `[label]: url` at the end of the file |
 | prettier (via conform.nvim: `:w` and `<Space>fm`) | marksman cannot format | Tidies lists, tables, spacing |
 | tabular | Align table columns | `:Tabularize /\|` |
@@ -40,7 +41,7 @@ In a Markdown buffer: `wrap` is on (the global default is off), `textwidth` is 0
 ## Quick start
 
 1. Open a file, for example `nvim "my notes.md"`. In normal mode headings, lists, code blocks and tables are drawn nicely. While you type in insert mode the drawing pauses (`render_modes`), and returns after about half a second in normal mode.
-2. Press `<Alt-m>`. The browser opens with a live preview. Press `<Alt-m>` again to stop it.
+2. Press `<Alt-m>`. The browser opens with a live preview (it needs an internet connection, see [Preview](#preview-mdkitenvim)). Press `<Alt-m>` again to stop it.
 3. Press `<Space>fm`. Prettier tidies the file as one undo step (`u` undoes it). The file is not saved to disk. Saving with `:w` formats the same way.
 4. Footnote: put the cursor on the last letter of a sentence, press `<Space>mf`. A `[^1]` appears and the cursor jumps to the new `[^1]: ` line at the end of the file (in normal mode: press `A` to type the note). Press `@@` to jump back.
 5. PDF: save (`:w`) and run `:ToPDF` from a Neovim that was started inside the latex dev shell. Wait 30 seconds or more the first time. `my notes.pdf` appears next to the file.
@@ -50,8 +51,7 @@ In a Markdown buffer: `wrap` is on (the global default is off), `textwidth` is 0
 | Tool | Where it comes from | Needed for |
 | --- | --- | --- |
 | marksman, prettier, ltex-ls-plus, typos-lsp | Global nix profile (`~/nix/users/krit/common/programs/cli-programs/neovim.nix`) | LSP features, formatting (`:w`, `<Space>fm`), grammar, typos |
-| node and npm | Needed once by lazy.nvim to build the preview server (`cd app && npm install`) | `<Alt-m>` |
-| A web browser | Your system default | `<Alt-m>` |
+| A web browser and an internet connection | Your system default browser. The preview page loads its Mermaid, KaTeX, markdown-it and highlight.js libraries from CDNs. The preview server itself is Lua inside Neovim: no node, no npm, no build step | `<Alt-m>` |
 | pandoc, xelatex | Only in the latex dev shell (`~/nix/templates/krit/dev-environments/language-specific/latex/flake.nix`: `pandoc` and `texlive.combined.scheme-full`) | `:ToPDF` |
 
 Inside the latex dev shell `prettier`, `pandoc`, `xelatex` and `marksman` are all found by Neovim, and the attached LSP clients on a `.md` file are `ltex_plus`, `marksman`, `typos_lsp`. Note that `pandoc` is also found on this system outside the dev shell (it is on the system PATH), but `xelatex` and `prettier` are not found by a plain shell: Neovim must be started from a shell where they are on PATH (the dev shell, or the nix profile that provides them).
@@ -97,7 +97,7 @@ All keys work only in Markdown buffers unless stated. `<Space>` is the leader ke
 
 | Keymap | Mode | What it does |
 | --- | --- | --- |
-| `<Alt-m>` | n | Toggle the browser preview. In another file type: one warning `Markdown preview: only in markdown buffers` |
+| `<Alt-m>` | n | Toggle the browser preview (`:MdKite toggle`). In another file type: one warning `Markdown preview: only in markdown buffers` |
 | `<Space>mf` | n | Add a footnote after the character under the cursor (see [Footnotes](#footnotes-vim-markdownfootnotes)). Elsewhere: one warning |
 | `<Space>mr` | n | Return from the footnote to the text. Elsewhere: one warning |
 | `^^` | n, i | Add a footnote before the character under the cursor (see the off-by-one note below) |
@@ -222,46 +222,169 @@ Tabularize pads the separator row with spaces. `<Space>fm` is the better table a
 
 Checkboxes (`- [ ]`): render-markdown draws them; no key toggles them.
 
-## Preview (markdown-preview.nvim)
+## Preview (mdkite.nvim)
 
 Why: render-markdown shows structure in the editor, the browser preview shows the final look (fonts, images, math, diagrams).
 
-How: the plugin starts a small node server and opens your default browser. The server follows the text and the cursor while you edit.
+How: mdkite.nvim starts a small web server written in Lua inside Neovim (its dependency kitehost.nvim is the HTTP server) and opens your default browser. The page follows the text and the cursor while you edit (instant updates, scroll sync).
 
 Config (from `lua/plugin_specs.lua`):
 
 ```lua
 {
-  "iamcco/markdown-preview.nvim",
-  build = "cd app && npm install && git restore .",
+  "selimacerbas/mdkite.nvim",
   ft = { "markdown" },
-  init = function()
-    -- Do not close the preview tab when switching to other buffers (all platforms)
-    vim.g.mkdp_auto_close = 0
-  end,
+  cmd = { "MdKite" },
+  dependencies = { { "selimacerbas/kitehost.nvim", lazy = true } },
+  opts = {},
 },
 ```
 
 | Command | What it does |
 | --- | --- |
-| `:MarkdownPreview` | Start the preview and open the browser |
-| `:MarkdownPreviewStop` | Stop it |
-| `:MarkdownPreviewToggle` | Start or stop (what `<Alt-m>` runs) |
+| `:MdKite` or `:MdKite start` | Start the preview of the current buffer and open the browser |
+| `:MdKite stop` | Stop it |
+| `:MdKite refresh` | Force a refresh of the page |
+| `:MdKite toggle` | Start the preview, or stop the one that is running (what `<Alt-m>` runs) |
 
-- The three commands exist in a Markdown buffer and `vim.g.mkdp_auto_close` is `0`.
-- Server life cycle (browser launch replaced by a no-op function, port fixed to 18765): before `<Alt-m>` nothing listens; after `<Alt-m>` a server listens on `127.0.0.1:18765` and the plugin reports `Preview page: http://localhost:18765/page/1`; after the second `<Alt-m>` the port is closed. By default the port is random and only the local machine can connect (`mkdp_open_to_the_world = 0`).
-- To try this yourself without a browser tab: `:let g:mkdp_browserfunc = 'NoBrowser'` after defining `function! NoBrowser(url)` that does nothing, and `:let g:mkdp_echo_preview_url = 1` to see the address.
-- `mkdp_auto_close = 0`: the browser tab stays open when you switch to another buffer. It ends when you press `<Alt-m>` again or leave Neovim.
-- No browser, port or theme is set, so the plugin defaults and your system default browser are used.
-- Outside Markdown buffers `<Alt-m>` shows one warning (the real map is buffer-local in `after/ftplugin/markdown.lua`).
-- After a fresh install the server may not be built: `:Lazy build markdown-preview.nvim` (needs `npm`).
+What the page shows: headings, tables and code with syntax colours, relative images next to the file, Mermaid diagrams (fenced ` ```mermaid `), KaTeX math (`$E = mc^2$` inline, `$$ ... $$` display), and a light/dark switch in the page header.
+
+- `opts = {}` means the plugin defaults: one preview at a time ("takeover" mode) on port 8421, the browser opens when the preview starts, dark theme.
+- The commands exist after the first Markdown buffer is opened, or when you type `:MdKite` (the plugin loads on that command).
+- Switching to another buffer does not stop the preview and does not close the browser tab. It stays bound to the buffer it was started in. It ends with `:MdKite stop`, with `<Alt-m>` in a Markdown buffer, or when you quit Neovim.
+- `:MdKite toggle` is global (there is only one server). If a preview of buffer A is running and you press `<Alt-m>` in a second Markdown buffer B, that STOPS the preview. To move the preview to B, run `:MdKite start` in B.
+- Outside Markdown buffers `<Alt-m>` shows one warning (the real map is buffer-local in `after/ftplugin/markdown.lua`: `vim.keymap.set("n", "<A-m>", "<cmd>MdKite toggle<cr>", { buffer = true, ... })`). The plugin sets no keys of its own.
+- The preview page loads Mermaid, KaTeX, markdown-it and highlight.js from CDNs, so it needs internet. Raw HTML written in the previewed file runs in the page, so do not preview a file you do not trust.
+- No build step: after a fresh install there is nothing to compile. Node stays installed for other reasons (`:run` on `.js`/`.ts` files), the preview does not use it.
 
 In plain words:
 
-- `build = "cd app && npm install && git restore ."`: lazy.nvim runs this when the plugin is installed or updated. It installs the node dependencies of the preview server (so `npm` must be on PATH), then `git restore .` throws away the lockfile change that `npm install` makes, so the plugin's git checkout stays clean and updates do not conflict.
-- `ft = { "markdown" }`: the plugin loads only for Markdown files.
-- `init` runs at startup (before the plugin loads) and sets the one option, `mkdp_auto_close = 0`.
-- The key `<Alt-m>` is not in this spec. It is one line in `after/ftplugin/markdown.lua` (`vim.keymap.set("n", "<A-m>", "<cmd>MarkdownPreviewToggle<cr>", { buffer = true, ... })`), buffer-local because the plugin defines `:MarkdownPreviewToggle` only for Markdown buffers.
+- `ft = { "markdown" }` and `cmd = { "MdKite" }`: the plugin loads for Markdown files or on its command.
+- `dependencies`: kitehost.nvim is the server library. It is marked `lazy = true` so it does not start with Neovim (without that, lazy.nvim would load it at startup).
+
+## Truth tables and Boolean algebra (truth-table.nvim)
+
+Why: notes on digital logic (computer architecture) are full of truth tables, simplifications such as De Morgan, and Karnaugh maps. truth-table.nvim builds and checks them inside the Markdown note, so you do not draw or verify them by hand.
+
+How: it is loaded shortly after Neovim starts (lazy.nvim `VeryLazy`); its one dependency, cds-lua-fp, comes with it. The tables are GitHub-style pipe tables, so this is for Markdown. The symbols are plain Unicode text, so they can also be pasted into Typst; in LaTeX they need xelatex or lualatex with a font that has them.
+
+Config (from `lua/plugin_specs.lua`, shortened):
+
+```lua
+{
+  "cds-io/truth-table.nvim",
+  main = "truth-table",
+  event = "VeryLazy",
+  opts = { abbreviations = false },
+  config = function(_, opts)
+    require("truth-table").setup(opts)
+    -- re-creates the plugin's word@ abbreviations as :iabbrev <buffer>
+    -- for the filetypes markdown, tex, plaintex and typst
+  end,
+},
+```
+
+### The expression language
+
+Used inside the commands below. Words and symbols both work:
+
+| You type | Meaning | Written in the table |
+| --- | --- | --- |
+| `not X`, `!X`, `¬X` | negation | `¬` |
+| `A and B`, `∧` | and | `∧` |
+| `A or B`, `∨` | or | `∨` |
+| `A xor B`, `⊕` | exclusive or | `⊕` |
+| `A implies B`, `->`, `=>`, `→` | implication | `→` |
+| `A iff B`, `=`, `<->`, `⇔` | equivalence | `⇔` |
+| `0`, `1`, `true`, `false`, `⊤`, `⊥` | constants | |
+
+There are NO `nand` or `nor` operators (`:TruthTableExpand A nand B` gives a parse error). Write `not (A and B)` and `not (A or B)`. Binary operators group from the left, so use parentheses for `A -> (B -> C)`. A table with N variables has 2^N rows: keep the expressions small.
+
+### Commands
+
+| Command | What it does |
+| --- | --- |
+| `:TruthTable A B` | Insert a table ABOVE the current line with the variables `A` and `B` (`:TruthTable 3` gives `A B C`) |
+| `:TruthTable A and B \| A implies B` | Insert a table from expressions (separated by `\|` or a comma): the variables they use plus one computed column per expression |
+| `:.TruthTable` (or a Visual range, `:'<,'>TruthTable`) | Turn the expression on the line (or the selected lines, one expression each) into a table |
+| `:TruthTableExpand A xor B, A and B` | With the cursor in a table, append one computed column per comma-separated expression |
+| `:TruthTableKarnaugh` | With the cursor in a column of a table, insert a Karnaugh map (2 to 4 inputs) and a minimal sum-of-products formula for that column below the table |
+| `:TruthTableDeMorgan` | Preview a De Morgan rewrite of the expression at the cursor (run again to dismiss) |
+| `:TruthTableSimplify` | Preview one simplification (complement, identity, domination, idempotence, absorption, reduction, consensus) and name the law |
+| `:TruthTableFactor`, `:TruthTableDistribute`, `:TruthTableCommute`, `:TruthTableXor`, `:TruthTableUnfold`, `:TruthTableDNF`, `:TruthTableCNF` | Other rewrite previews (factor, distribute, swap operands, recognise exclusive or, unfold `→ ⊕ ⇔` into and/or/not, disjunctive and conjunctive normal form) |
+| `:TruthTableRewrites` | List every rewrite of the expression and write the one you pick as the next step |
+| `:TruthTableApply` | Replace the expression by the pending preview |
+| `:TruthTableApplyStep` | Keep the line and add the pending preview below it as a derivation step: `≡ expression  \| by <law>` |
+| `:TruthTableVerify` | Check that every `≡` step of the derivation under the cursor is a real equivalence |
+| `:TruthTableVerify!` | Same, and insert a proof table (one column per step; identical columns mean equivalent) |
+| `:TruthTableEquiv a ∧ b \| b ∧ a` | Are these expressions equivalent? (`!` inserts the proof table) |
+| `:TruthTableToggle`, `:TruthTableDropRow`, `:TruthTableDropColumn` | Switch cells between `0/1` and `F/T`, drop the row or column under the cursor |
+| `:TruthTableTutor` | Open the built-in course (see below) |
+| `:TruthTableTutorNext` / `:TruthTableTutorPrev` | Next / previous tutor step |
+
+While a rewrite preview is shown, two transient keys exist in that buffer: `<Space>` applies it in place and `<CR>` writes it as a `≡` step. They disappear when the preview is applied, dismissed, or the buffer is edited.
+
+### Keys
+
+All in normal mode, global, and each key only does something when its context holds (cursor in a table, on an expression, in a derivation, or with a preview pending); otherwise the command says what is missing. which-key shows the keys that are valid at the cursor under the groups `Truth table` and `Logic rewrite` (the per-key description is deliberately hidden). The prefixes are fixed by the plugin.
+
+| Keymap | Context | Same as |
+| --- | --- | --- |
+| `<Space>Tn` | anywhere (also Visual) | `:TruthTable` on the current line or the selected lines; on an empty line it types `:TruthTable ` for you |
+| `<Space>Te` | in a table | types `:TruthTableExpand ` for you |
+| `<Space>Tt` | in a table | `:TruthTableToggle` |
+| `<Space>Tr` / `<Space>Tc` | in a table | drop row / drop column (`.` repeats) |
+| `<Space>Tk` | in a table | `:TruthTableKarnaugh` |
+| `<Space>T=` | in a table | switch the `≡` / `≢` marks under equivalent columns on or off |
+| `<Space>ld` | on an expression | `:TruthTableDeMorgan` |
+| `<Space>lf` / `<Space>lx` | on an expression | factor / distribute |
+| `<Space>ls` / `<Space>lS` | on an expression | swap with the next / previous operand |
+| `<Space>lo` | on an expression | recognise exclusive or |
+| `<Space>lu` | on an expression | unfold `→`, `⊕`, `⇔` |
+| `<Space>lm` / `<Space>lM` | on an expression | disjunctive / conjunctive normal form |
+| `<Space>lz` | on an expression | `:TruthTableSimplify` |
+| `<Space>ll` | on an expression | `:TruthTableRewrites` |
+| `<Space>lv` / `<Space>lV` | in a derivation | `:TruthTableVerify` / `:TruthTableVerify!` |
+| `<Space>la` / `<Space>lA` | preview pending | `:TruthTableApply` / `:TruthTableApplyStep` |
+
+There was no `<Space>T…` or `<Space>l…` key before, so nothing in the global keys clashes. Inside a Jupyter notebook buffer `<Space>ls` is the notebook's LSP signature help instead (see [Jupyter notebooks](python.md#jupyter-notebooks-nvjup)).
+
+### Typing the symbols
+
+In insert mode, in Markdown, LaTeX, plain TeX and Typst buffers only, a word followed by `@` and then a space (or any character that is not a letter) turns into the symbol:
+
+| Type | Result | Type | Result |
+| --- | --- | --- | --- |
+| `and@` | `∧` | `or@` | `∨` |
+| `not@` | `¬` | `xor@` | `⊕` |
+| `implies@` | `→` | `iff@` | `⇔` |
+| `forall@` | `∀` | `exists@` | `∃` |
+| `true@` | `⊤` | `false@` | `⊥` |
+| `equiv@` | `≡` | `nequiv@` | `≢` |
+
+`p and@ q` followed by a space gives `p ∧ q`. The plain word `and` never changes, and `not@a` (a letter right after the `@`) does not expand. The plugin's own version of these abbreviations is global in every buffer; this config switches that off (`abbreviations = false`) and defines them per buffer for the four note filetypes.
+
+### Worked lesson: a half adder and a proof
+
+Open a Markdown note and put the cursor on an empty line.
+
+| # | What you press or type | What happens |
+| --- | --- | --- |
+| 1 | `:TruthTable A B` then `<Enter>`, move the cursor into the table (`k`), then `:TruthTableExpand A xor B, A and B` | A table with the four input rows appears above the cursor line. The expand adds the columns `A ⊕ B` (the sum) and `A ∧ B` (the carry): that is a half adder |
+| 2 | In insert mode type `p and@ q` and a space | The text becomes `p ∧ q` |
+| 3 | On its own line type `not (A and B) or A` in insert mode, `<Esc>`, then `:TruthTableDeMorgan` | A preview appears at the end of the line: `⇒ ¬A ∨ ¬B ∨ A \| by De Morgan`. Run `:TruthTableApplyStep` (or press `<CR>` while the preview shows): the line `≡ ¬A ∨ ¬B ∨ A \| by De Morgan` is added below and the cursor moves onto it |
+| 4 | `:TruthTableSimplify`, then `:TruthTableApplyStep`. Repeat the pair once more | The first step is `≡ 1 ∨ ¬B \| by complement` (`A ∨ ¬A` is always true), the second `≡ 1 \| by domination`. The whole expression is always true |
+| 5 | `:TruthTableVerify!` with the cursor in the derivation | The message `every step holds (3 steps)` and a proof table below it: one column per line of the derivation, all four rows identical |
+| 6 | Make a 4-variable table from one expression: on a line with `(A and B) or (A and not C) or (not A and C and D) or (B and C and D)` run `:.TruthTable` (the line becomes a table), put the cursor on a row of the last column, then `:TruthTableKarnaugh` | A Karnaugh map (rows `AB`, columns `CD` in Gray order) appears below the table, followed by the line `<expression> ≡ (¬A ∧ C ∧ D) ∨ (A ∧ B) ∨ (A ∧ ¬C)`: the minimal formula |
+| 7 | `:TruthTableTutor` | The built-in course opens in a new tab: lesson on the left, an exercise pane on the right. `:TruthTableTutorNext` (or `]]` inside it) goes on; `:TruthTableTutor!` starts over |
+
+The tutor keeps your place in `~/.local/state/nvim/truth-table/tutor.json` (under `stdpath("state")`), so `:TruthTableTutor` in a new Neovim opens where you stopped. The lesson pane shows plain Markdown (the optional vellum.nvim is not installed).
+
+### Limits and open points
+
+- prettier (conform) runs on every `:w` and reformats the generated tables: the separator row `|:---:|` becomes `| :-: |` (still centred and valid) and the `\| by` marks of a derivation lose their alignment padding. Cosmetic only.
+- `:ToPDF` (pandoc and xelatex) with the default font prints `∧` and `∨` as blank (missing glyphs). Adding `-V mainfont='DejaVu Serif'` to the pandoc command fixes it, but `:ToPDF` has not been changed, so tables with those symbols show blanks in the PDF for now.
+- The plugin is young and written with a coding agent. It makes no network calls and runs no shell commands; it writes only the tutor progress file above.
 
 ## Rendering inside the buffer (render-markdown.nvim)
 
@@ -878,8 +1001,11 @@ Checks common typos in every normal buffer (not help, terminal, quickfix, or sta
 | --- | --- |
 | No rendering, raw `#` and `**` visible | Insert mode (press `<Esc>`), file over 1.5 MB, or rendering toggled off: `:RenderMarkdown enable`. Check `:set ft?` is `markdown` |
 | `<Alt-m>` says "only in markdown buffers" | The buffer is not `markdown`: `:set ft=markdown` |
-| Preview does not open | Server not built or no browser: `:Lazy build markdown-preview.nvim` (needs `node` and `npm`) |
-| Preview tab stays open after I left the file | Intended (`mkdp_auto_close = 0`). Stop it with `<Alt-m>` in the Markdown buffer |
+| Preview does not open, or the page is blank (no diagrams or math) | No browser, or no internet (the page loads its libraries from CDNs). Check `:MdKite refresh` and that `:Lazy` shows mdkite.nvim installed |
+| Preview tab stays open after I left the file | Intended: the preview keeps running until `:MdKite stop`, `<Alt-m>` in a Markdown buffer, or quitting Neovim |
+| `<Alt-m>` in a second Markdown file stopped the preview instead of showing it | `:MdKite toggle` is global: with a preview running it stops it. Run `:MdKite start` in the second buffer |
+| `and@` does not turn into `∧` | The buffer is not markdown, tex, plaintex or typst, or there is no space (non-letter) after the `@`; check `:iabbrev` |
+| `:TruthTableExpand A nand B` gives a parse error | There is no `nand` / `nor`; write `not (A and B)` |
 | `<Space>fm` or `:w` does not format | prettier is not on PATH (no message is shown): start Neovim from a shell that has prettier (nix profile or dev shell); `:ConformInfo` shows what will run. Or format on save is switched off: `<Space>fo` / `:FormatEnable` |
 | `:ToPDF`: "pandoc not found" / "pandoc failed (exit N)" | Start Neovim inside the latex dev shell. Run the pandoc command in a terminal to see the error |
 | `:ToPDF` does nothing visible | Normal: silent, 30 s or more the first time, no viewer on Linux. Look for the PDF next to the file |

@@ -940,7 +940,7 @@ Every devShell it supports (path: `~/nix/templates/krit/dev-environments/languag
 | `go` | `~/nix/templates/krit/dev-environments/language-specific/go` | go, gopls, gotools, golangci-lint |
 | `haskell` | `~/nix/templates/krit/dev-environments/language-specific/haskell` | ghc, cabal-install, haskell-language-server, ormolu |
 | `java` | `~/nix/templates/krit/dev-environments/language-specific/java` | JDK (`JAVA_HOME`), Maven, Gradle, Lombok agent, jdtls wrapper, java-debug and java-test extensions (see [section 78](languages/java.md#78-java-nvim-java-jdtls-tests-debugging)) |
-| `jupyter` | `~/nix/templates/krit/dev-environments/language-specific/jupyter` | python313, poetry, ruff, ipykernel, pip and a `.venv` virtual-environment hook |
+| `jupyter` | `~/nix/templates/krit/dev-environments/language-specific/jupyter` | python313, poetry, ruff, ipykernel, pip, a `.venv` virtual-environment hook, and for notebooks in Neovim chafa, ffmpeg, imagemagick, librsvg and (Linux) `NVJUP_CHROMIUM` (see [Jupyter notebooks](languages/python.md#jupyter-notebooks-nvjup)) |
 | `latex` | `~/nix/templates/krit/dev-environments/language-specific/latex` | texlive (scheme-full: `latex`, `latexmk`), texlab, tectonic, pandoc, zathura, latex2html, latex2mathml |
 | `nix` | `~/nix/templates/krit/dev-environments/language-specific/nix` | nixd, nixfmt, statix, nh, niv, cachix, lorri, vulnix, dhall-nix |
 | `node` | `~/nix/templates/krit/dev-environments/language-specific/node` | nodejs, typescript, typescript-language-server, eslint, prettier, pnpm, yarn |
@@ -1140,7 +1140,7 @@ Result of step 2: the one-line file `{"a":1,"b":[2,3]}` becomes seven lines with
 ## Workflow: writing documentation (Markdown)
 
 1. Open the `.md` file
-2. `<Alt-m>` -- live preview in browser
+2. `<Alt-m>` -- live preview in browser (needs internet: [Preview](languages/markdown.md#preview-mdkitenvim))
 3. Write content; wrapping is auto-enabled for markdown
 4. `^^` -- add a footnote
 5. `+` (operator) -- convert lines to a bulleted list
