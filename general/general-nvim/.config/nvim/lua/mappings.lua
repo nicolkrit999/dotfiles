@@ -484,8 +484,8 @@ vim.api.nvim_create_autocmd("LspDetach", {
 
 -- Previews
 -- <A-m> markdown preview: the real map is buffer-local in after/ftplugin/markdown.lua
--- (:MarkdownPreviewToggle only exists in markdown buffers). Elsewhere: ONE warning instead of
--- E492 (an unmapped <A-m> would act as <Esc> m, i.e. wait for a mark name).
+-- (mdkite.nvim previews markdown buffers; the map stays out of other filetypes). Elsewhere: ONE
+-- warning instead of an unmapped <A-m>, which would act as <Esc> m, i.e. wait for a mark name.
 keymap.set("n", "<A-m>", function()
   vim.notify("Markdown preview: only in markdown buffers", vim.log.levels.WARN)
 end, { desc = "Markdown Preview (markdown only)" })

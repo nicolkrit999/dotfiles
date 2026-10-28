@@ -23,6 +23,7 @@ This section is one walk-through for everything Python in your config: what star
 | **vim-illuminate** | Other uses of the word under the cursor are highlighted (Python is in its file type list) | Nothing |
 | **aerial** | Symbol outline of classes, functions and methods (`<Space>t`) | Nothing |
 | **Indentation** | 4 spaces, no wrapping, `colorcolumn` marker at 88 | Nothing |
+| **Jupyter notebooks** (nvjup) | Opening an `.ipynb` file shows its cells; run them, see the output, edit with LSP. See [Jupyter notebooks](#jupyter-notebooks-nvjup) | `uv` for the one-time build, `ipykernel` (the jupyter devShell has it) |
 
 ## Quick start
 
@@ -77,7 +78,7 @@ Templates live in `~/nix/templates/krit/dev-environments/language-specific/`:
 | Template | What it gives you |
 | --- | --- |
 | `python` | Python, black, flake8, isort, pip, matplotlib, pylint, setuptools, numpy, pyright, ruff, and `venvShellHook` which creates `.venv` in the project folder (`venvDir = ".venv"`). It warns when `.venv` was built with a different Python version than the shell (delete `.venv` and reload) |
-| `jupyter` | poetry, Python 3.13, ruff, ipykernel, pip, `venvShellHook` (also `.venv`). No black, no pyright of its own |
+| `jupyter` | poetry, Python 3.13, ruff, ipykernel, pip, `venvShellHook` (also `.venv`). For notebooks in Neovim ([nvjup](#jupyter-notebooks-nvjup)) it also has chafa, ffmpeg, imagemagick, librsvg and, on Linux, the variable `NVJUP_CHROMIUM` (for interactive Plotly/Bokeh charts). No black, no pyright of its own |
 
 Variants of the `python` template (flake outputs): `default` = Python 3.15, `py-stable` = 3.13, `py-lts` = 3.12, `py311` = 3.11.
 
@@ -720,6 +721,136 @@ solution = Solution()
 
 The snippet menu may also offer vim-snippets entries (`def`, `class`, `ifmain`, ...). Section [15](../04-completion-snippets.md#15-snippets-ultisnips) and section [52](../04-completion-snippets.md#52-snippets-for-developers-ultisnips) explain the engine.
 
+## Jupyter notebooks (nvjup)
+
+Why: a `.ipynb` file is JSON; nvjup lets you edit and run it as cells inside Neovim without converting it.
+
+How: opening an `.ipynb` file shows it as a text view where every cell starts with a marker line (`# %%[nvjup:cell id=... type=code]`), with Tree-sitter colours, outputs under the cells, and a Python process (the "sidecar") that talks to the Jupyter kernel. The file type is `nvjup` and the buffer is not an ordinary file buffer: `:w` writes the notebook (including the outputs and the execution counts). Other plugins of this config stay out of it: no LSP server of this config attaches (nvjup runs its own pyright and ruff for the cells), gitsigns does not attach, auto-save does not write the file and the conform on-save format skips it. A 2.5 MB notebook opened normally.
+
+Config (from `lua/plugin_specs.lua`, shortened):
+
+```lua
+{
+  "LumbaBalumba/nvjup",
+  lazy = false, -- it must register its BufReadCmd for *.ipynb before such a file is opened
+  build = function(plugin) ... end, -- uv sync --frozen in the plugin folder, fail-soft
+  opts = {
+    keymaps = {
+      lsp_type_definition = "gy",
+      lsp_rename = "<leader>rn",
+      lsp_references = "grr",
+      cursor_up_alt = false, cursor_down_alt = false,
+      cursor_left_alt = false, cursor_right_alt = false,
+    },
+  },
+},
+```
+
+### Requirements
+
+| What | Where it comes from |
+| --- | --- |
+| `uv` | Global on Neovim's PATH after the next rebuild of the nix configuration (`neovim.nix`). Needed for the build |
+| A Python that can run binary wheels | On nix hosts the build uses uv's own standalone Python 3.13 (not the nix-built Python, which cannot load wheels such as pyzmq: libstdc++ is missing). That needs `nix-ld` with libstdc++, enabled on both NixOS hosts, and internet once, at the first build, to download that Python |
+| `ipykernel` | The kernel's Python needs it: the jupyter devShell has it, or a project `.venv` / `venv` that contains it (uv project: `uv add --dev ipykernel`) |
+| pyright, ruff | Global (nvjup's own LSP for the cells) |
+| chafa, ffmpeg, imagemagick, librsvg, `NVJUP_CHROMIUM` | The jupyter devShell: text-mode images, animations, LaTeX and SVG pictures, interactive Plotly/Bokeh charts |
+| `pdflatex` | NOT provided: LaTeX formulas inside Markdown cells are not drawn as pictures |
+| Awrit, `KITTY_LISTEN_ON`, `google-colab-cli` | Not available (optional): `<Space>nF` (external chart window) and Colab connections do not work |
+
+The build never fails hard: without `uv` it warns once ("nvjup: `uv` is not on Neovim's PATH ...") and skips; with `uv` it runs `uv sync --frozen` in the plugin folder. Run it by hand with `:Lazy build nvjup` (after a fresh install, after the nix rebuild, or when it printed a warning). `:checkhealth nvjup` lists what is found; with this setup it prints three harmless warnings (no `pdflatex`, no Awrit, no `KITTY_LISTEN_ON`).
+
+### Quick start
+
+1. Once: `:Lazy build nvjup` (needs `uv` and internet, see above). Check with `:checkhealth nvjup`.
+2. Start Neovim from a jupyter devShell project (a folder whose `.envrc` has `use_dev_env jupyter`, then `direnv allow`) so that `ipykernel` is found: `nvim analysis.ipynb`.
+3. Move with `j` / `k` (they cross from one cell into the next) and `]c` / `[c` (next / previous cell).
+4. `<Space>nr` runs the current cell and moves to the next one (`<S-CR>` does the same where your terminal sends it); `<C-CR>` runs the current cell only. The output appears under the cell.
+5. `<Space>nb` inserts a cell below, `<Space>nd` deletes the current cell, `<Space>nt` cycles its type (code, Markdown, raw).
+6. `:w` saves the notebook with the outputs.
+
+`<C-CR>` and `<S-CR>` often do not reach Neovim through tmux or kitty; `<Space>nr` is the reliable key. Running only the current cell without advancing has no `<Space>` key: use `<C-CR>` or `:NvJupRunCurrent`.
+
+### Keys (notebook buffers only)
+
+All of nvjup's 71 keymaps are buffer-local: they exist only in a notebook buffer and every one has a description (`:map` or which-key shows them). `<Space>` is the leader and `\` the local leader.
+
+Cells and movement:
+
+| Keymap | Mode | What it does |
+| --- | --- | --- |
+| `j` / `k` | n | Move down / up inside the cell; at the edge, cross into the next / previous cell (instead of the global display-line movement) |
+| `h` / `l` | n | Move left / right within the current cell |
+| `]c` / `[c` | n, x, o | Next / previous cell |
+| `]C` / `[C` | n, x, o | Next / previous code cell |
+| `ic` / `ac` | x, o | Inner / around a cell |
+| `<Space>na` / `<Space>nb` | n | Insert a cell above / below |
+| `<Space>nd` | n | Delete the cell |
+| `<Space>nj` / `<Space>nk` | n | Move the cell down / up |
+| `<Space>nq` | n | Split the cell at the cursor |
+| `<Space>nM` | n | Merge the cell with the one below |
+| `<Space>nyy` | n | Duplicate the cell |
+| `<Space>nt` | n | Change the cell type (cycle code, Markdown, raw) |
+| `<Space>nm` / `<Space>ny` | n | Convert to a Markdown cell / to a code cell |
+| `<Space>nz` | n | Collapse or expand the cell source (a Markdown cell shows rendered or as source) |
+| `<Space>nl` | n | Notebook outline (Telescope list of cells) |
+| `<Space>/` | n, x | Comment the line / the selected lines using the cell's language |
+| `<Space>fm` | n | Format the current cell (conform) |
+| `<Space>n` | n | Notebook actions |
+
+Running and the kernel:
+
+| Keymap | What it does | Command |
+| --- | --- | --- |
+| `<C-CR>` | Run the current cell (normal and insert mode) | `:NvJupRunCurrent` |
+| `<S-CR>` / `<Space>nr` | Run the current cell and advance | `:NvJupRunAndAdvance` |
+| `<Space>nA` / `<Space>nB` | Run the cells above / below | `:NvJupRunAbove` / `:NvJupRunBelow` |
+| `<Space>nR` | Run all cells | `:NvJupRunAll` |
+| `<Space>ns` | Start the kernel | |
+| `<Space>ni` | Interrupt the running cell | `:NvJupKernelInterrupt` |
+| `<Space>nx` | Restart the kernel | `:NvJupKernelRestart` (also `:NvJupKernelRestartRunAll`, `:NvJupKernelShutdown`, `:NvJupKernelStatus`) |
+| `<Space>nS` | Stop the kernel | |
+| `<Space>nv` | Inspect the variables of the live kernel | `:NvJupVariables` |
+
+Outputs:
+
+| Keymap | What it does | Command |
+| --- | --- | --- |
+| `<Space>nc` / `<Space>nC` | Clear the output of this cell / of all cells | `:NvJupCellClearOutput` / `:NvJupClearAllOutputs` |
+| `<Space>no` | Expand or collapse a long output | `:NvJupCellToggleOutput` |
+| `<Space>np` | Open the full output of the cell | `:NvJupOutputOpen` |
+| `<Space>nL` | Refresh the display | `:NvJupRefresh` |
+| `<Space>nf` | Open an interactive chart (Plotly/Bokeh) in the Neovim view | `:NvJupPlotFocusTui` |
+| `<Space>nF` | Same in an external Awrit window (not available here) | `:NvJupPlotFocus` |
+
+Interactive charts and animations need trust first: `:NvJupTrustInteractive` trusts the notebook's active content; `:NvJupTrustRevoke` takes it back and `:NvJupTrustStatus` shows the state. Output of a cell you ran yourself on a local kernel is trusted automatically, and notebook HTML and JavaScript are never executed.
+
+Language server (nvjup's own pyright and ruff for the cells, across all code cells):
+
+| Keymap | What it does |
+| --- | --- |
+| `K` | Hover |
+| `gd` / `gD` / `gi` | Definition / declaration / implementation |
+| `gy` | Type definition |
+| `grr` | References |
+| `<Space>rn` | Rename |
+| `<Space>ca` | Code action (n, x) |
+| `<Space>ls` | Signature help |
+| `\ls` | Document symbols |
+| `<C-Space>` | LSP completion (insert mode) |
+
+Remote Jupyter: `<Space>nK` (`:NvJupRemoteConnect`) connects to a remote Jupyter server and `<Space>ne` (`:NvJupRemoteFiles`) opens the local/remote file manager.
+
+### What differs from the rest of the config
+
+nvjup's own default keys were changed on purpose:
+
+- Rename is `<Space>rn` and references is `grr`, the same keys as everywhere else (nvjup's default was `gr`, which would make Neovim wait for the longer built-in `gr...` keys).
+- Type definition is `gy` (nvjup's default `<Space>D` would be a prefix of the `<Space>D...` database keys and make them wait).
+- The arrow keys are not remapped, so they keep moving between windows (`<Left>` / `<Right>` / `<Up>` / `<Down>`); `h` `j` `k` `l` are cell-aware.
+
+Inside notebook buffers only, these global keys are replaced by notebook-aware versions: `<Space>ca`, `<Space>rn`, `<Space>fm` and `grr` (same meaning), `j` / `k` (cell-aware movement), and `<Space>ls`: in a notebook it is LSP signature help, not the truth-table "swap operands" key ([Truth tables](markdown.md#truth-tables-and-boolean-algebra-truth-tablenvim)).
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
@@ -737,6 +868,8 @@ The snippet menu may also offer vim-snippets entries (`def`, `class`, `ifmain`, 
 | `<Space>dp` shows one warning | Not a Python buffer, or macOS | Open a `.py` file; on macOS pdb is not available through this key |
 | Pyright hover looks plain | Hover is set to plain text on purpose | None needed |
 | Program keeps running after closing its terminal | `<Space>q` only closes the window | Reopen the buffer with `:ls`, `:b <n>`, `<Ctrl-c>`, or `:bd!` |
+| Opening an `.ipynb` shows the raw JSON, or `:checkhealth nvjup` complains about the sidecar | The one-time build did not run (no `uv` on Neovim's PATH, or no internet at that moment) | Fix the cause, then `:Lazy build nvjup` |
+| Running a cell fails with a missing-kernel or `ipykernel` error | The kernel's Python has no `ipykernel` | Start Neovim from the jupyter devShell, or install `ipykernel` in the project's `.venv` |
 | Spelling squiggles on names | typos_lsp | Add the word to a `typos.toml` or `_typos.toml` at the project root |
 
 ## Related sections

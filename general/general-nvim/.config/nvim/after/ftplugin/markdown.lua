@@ -1,6 +1,6 @@
--- <A-m> markdown preview (markdown-preview.nvim defines :MarkdownPreviewToggle only for
--- markdown buffers); overrides the global "markdown only" warning map in lua/mappings.lua
-vim.keymap.set("n", "<A-m>", "<cmd>MarkdownPreviewToggle<cr>", { buffer = true, silent = true, desc = "Markdown Preview" })
+-- <A-m> markdown preview (mdkite.nvim, :MdKite toggle starts or stops the preview); overrides the
+-- global "markdown only" warning map in lua/mappings.lua
+vim.keymap.set("n", "<A-m>", "<cmd>MdKite toggle<cr>", { buffer = true, silent = true, desc = "Markdown Preview" })
 
 -- footnotes (vim-markdownfootnotes); override the global "markdown only" warning maps
 vim.keymap.set("n", "<leader>mf", "<Plug>AddVimFootnote", { buffer = true, desc = "Add Footnote" })

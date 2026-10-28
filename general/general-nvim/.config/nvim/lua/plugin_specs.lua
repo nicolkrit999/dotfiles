@@ -553,15 +553,103 @@ local plugin_specs = {
   -- Vim tabular plugin for manipulate tabular, required by markdown plugins
   { "godlygeek/tabular",                ft = { "markdown" }, cmd = { "Tabularize" } },
 
-  -- Markdown previewing in the browser
+  -- Markdown previewing in the browser (pure Lua server, no npm/node build step; mermaid + KaTeX
+  -- render in the browser from CDNs, so the preview page needs internet). Sets no keymaps: <A-m> lives
+  -- in after/ftplugin/markdown.lua (:MdKite toggle). Like the old mkdp_auto_close = 0, switching
+  -- buffers does not close the tab or the server: the preview stays bound to the buffer it was
+  -- started in and stops only with :MdKite stop, <A-m> again, or quitting Neovim.
   {
-    "iamcco/markdown-preview.nvim",
-    build = "cd app && npm install && git restore .",
+    "selimacerbas/mdkite.nvim",
     ft = { "markdown" },
-    init = function()
-      -- Do not close the preview tab when switching to other buffers (all platforms)
-      vim.g.mkdp_auto_close = 0
+    cmd = { "MdKite" },
+    -- kitehost.nvim v2.0.0 or newer is the pure-Lua HTTP server. lazy = true: the plugin's own lazy.lua
+    -- lists it as a plain spec, which lazy.nvim would load at startup (and its VimLeave handler prints
+    -- "kitehost: stopped all instances." on every exit)
+    dependencies = { { "selimacerbas/kitehost.nvim", lazy = true } },
+    opts = {},
+  },
+
+  -- Truth tables, Boolean algebra rewrites, Karnaugh maps and a tutor for Markdown notes (:TruthTable,
+  -- :TruthTableExpand, :TruthTableTutor ...). Default keys are global and context-gated: <leader>T (tables)
+  -- and <leader>l (logic rewrites), grouped in which-key. cds-lua-fp (its one dependency) comes in through
+  -- the plugin's own lazy.lua. The plugin's own lazy.lua says lazy = false, which would win over the
+  -- event and load it at the first screen (about 20 ms); lazy = true here makes VeryLazy apply, since
+  -- nothing needs it earlier. The upstream insert-mode abbreviations (and@ -> ∧, not@ -> ¬ ...) are
+  -- GLOBAL, so they are switched off here and defined buffer-local for markdown, LaTeX and Typst only.
+  {
+    "cds-io/truth-table.nvim",
+    main = "truth-table",
+    lazy = true,
+    event = "VeryLazy",
+    opts = { abbreviations = false },
+    config = function(_, opts)
+      require("truth-table").setup(opts)
+      -- the plugin's own word -> symbol table (trigger "@"), as :iabbrev <buffer> in note filetypes
+      local abbreviations = require("truth-table.abbreviations").resolve()
+      local function define(buf)
+        vim.api.nvim_buf_call(buf, function()
+          for lhs, rhs in pairs(abbreviations) do
+            vim.cmd.iabbrev({ args = { "<buffer>", lhs, rhs } })
+          end
+        end)
+      end
+      local note_filetypes = { "markdown", "tex", "plaintex", "typst" }
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("truth_table_abbreviations", { clear = true }),
+        pattern = note_filetypes,
+        desc = "Truth table: logic-symbol abbreviations (and@ -> ∧) in note buffers only",
+        callback = function(ev) define(ev.buf) end,
+      })
+      -- buffers that were opened before this plugin loaded (VeryLazy)
+      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_loaded(buf) and vim.tbl_contains(note_filetypes, vim.bo[buf].filetype) then
+          define(buf)
+        end
+      end
     end,
+  },
+
+  -- Jupyter notebook editor: opening an .ipynb shows cells, outputs and a kernel session (python sidecar
+  -- for the kernels, run with <C-CR>/<S-CR>; all keys are buffer-local, :help nvjup). Needs `uv` on
+  -- Neovim's PATH for the build and ipykernel in the kernel's python (the jupyter devShell or a project
+  -- .venv). The build never errors: without uv it warns once and :checkhealth nvjup says what is missing.
+  {
+    "LumbaBalumba/nvjup",
+    lazy = false, -- it must register its BufReadCmd for *.ipynb before such a file is opened
+    build = function(plugin)
+      if vim.fn.executable("uv") ~= 1 then
+        vim.notify("nvjup: `uv` is not on Neovim's PATH, the python sidecar is not installed. Put uv on the PATH and run :Lazy build nvjup", vim.log.levels.WARN)
+        return
+      end
+      -- nix: the python on PATH is a nix build, and the binary wheels of the sidecar (pyzmq needs
+      -- libstdc++) cannot find their libraries there. uv's own standalone python runs through nix-ld
+      -- (programs.nix-ld) instead, so use only that one (downloaded once into uv's python dir); 3.13
+      -- matches the jupyter devShell and keeps uv from picking a brand-new interpreter.
+      local is_nix_managed = vim.uv.fs_stat("/etc/nixos") or vim.uv.fs_stat("/etc/nix")
+      local env = is_nix_managed and { UV_PYTHON_PREFERENCE = "only-managed", UV_PYTHON = "3.13" } or nil
+      local res = vim.system({ "uv", "sync", "--frozen" }, { cwd = plugin.dir, env = env, text = true }):wait()
+      if res.code ~= 0 then
+        vim.notify("nvjup: `uv sync --frozen` failed (offline?), retry with :Lazy build nvjup\n" .. (res.stderr or ""), vim.log.levels.WARN)
+      end
+    end,
+    opts = {
+      keymaps = {
+        -- <leader>D is the prefix of the database keys (<leader>Du, <leader>Dt, ...): a buffer-local
+        -- <leader>D would make them wait for timeoutlen. gy is free in this config and in Nvim
+        lsp_type_definition = "gy",
+        -- same rename key as everywhere else in this config (lua/config/lsp.lua)
+        lsp_rename = "<leader>rn",
+        -- gr would be a prefix of Nvim's builtin grr/gra/grn/gri/grt/grx (500 ms wait); grr is the same
+        -- "references" key as the builtin, now notebook-aware
+        lsp_references = "grr",
+        -- the arrow keys keep their global meaning (go to the window left/right/up/down); h/j/k/l stay
+        -- cell-aware
+        cursor_down_alt = false,
+        cursor_up_alt = false,
+        cursor_left_alt = false,
+        cursor_right_alt = false,
+      },
+    },
   },
 
   -- SQL database client (browse connections/schema, run queries, view results).
@@ -1010,6 +1098,24 @@ local plugin_specs = {
     cmd = { "NvimTreeToggle", "NvimTreeOpen", "NvimTreeFocus", "NvimTreeFindFile", "NvimTreeFindFileToggle" },
     config = function()
       require("config.nvim-tree")
+      -- nvim-lsp-file-operations must load AFTER nvim-tree (it hooks nvim-tree's rename/create/delete
+      -- events), so nvim-tree loads it here, once its own setup() has run
+      require("lazy").load({ plugins = { "nvim-lsp-file-operations" } })
+    end,
+  },
+  -- Tell language servers about renames/moves/creates/deletes done in nvim-tree (workspace/willRenameFiles
+  -- etc.): jdtls rewrites package/import lines when a .java file or package folder moves, tinymist
+  -- fixes .typ imports. Only nvim-tree's events are hooked (vim-eunuch :Rename/:Move and plain :w are not).
+  -- Load order matters: the plugin depends on nvim-tree, not the reverse (loaded from nvim-tree's config
+  -- above; :LFO also loads it, with nvim-tree first through `dependencies`). The matching client
+  -- capabilities live in lua/lsp_utils.lua.
+  {
+    "antosha417/nvim-lsp-file-operations",
+    lazy = true,
+    dependencies = { "nvim-tree/nvim-tree.lua" },
+    cmd = "LFO",
+    config = function()
+      require("lsp-file-operations").setup()
     end,
   },
 
