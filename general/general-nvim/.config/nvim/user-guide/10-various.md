@@ -31,6 +31,44 @@ Examples (in the file `lua/mappings.lua` of a git repository at `/tmp/demo`):
 | `:Edit lua/*.lua` | With `lua/mappings.lua`, `lua/x.lua` and `lua/y.lua` on disk, all three are in the buffer list (the last one, `lua/y.lua`, is shown) |
 | `:Redir echo 1` | A new tab opens with a scratch buffer that contains the output (`1`); the buffer is wiped when the tab is closed |
 
+### Code screenshots and gists (Space s s, Space s g)
+
+`<Space>ss` turns code into a picture to share with another person, for example to paste into a chat. Everything is rendered locally with the `freeze` program; nothing leaves the machine. `<Space>sg` uploads the code as a secret GitHub gist instead (see below).
+
+| Keys | Mode | What it does |
+| --- | --- | --- |
+| `<Space>ss` | Normal | Render the whole buffer as a PNG |
+| `<Space>ss` | Visual | Render the selected lines (always whole lines) as a PNG |
+| `<Space>sg` | Normal | Upload the whole buffer as a secret gist and copy the link |
+| `<Space>sg` | Visual | Upload the selected lines (always whole lines) as a secret gist and copy the link |
+
+- The picture uses the Catppuccin Mocha theme with window dots, line numbers and a shadow; syntax highlighting follows the buffer's filetype.
+- It is saved as `~/Pictures/code-shots/<filename>-<YYYYmmdd-HHMMSS>.png` (or under `$XDG_PICTURES_DIR/code-shots/`) and copied to the clipboard as an image with `wl-copy`, so it can be pasted straight into a chat. A notification shows the saved path.
+- The line numbers in the picture always start at 1, also for a selection from the middle of a file.
+- One picture holds at most 300 lines (about 70 pixels of height per line; far more makes `freeze` crash or crawl). With a bigger buffer, select a range with `V` first, or share the file or a gist instead.
+- Needs `freeze` (nixpkgs package `charm-freeze`) on Neovim's PATH. The clipboard step needs `wl-copy` (wl-clipboard) and a Wayland session (Hyprland); there is no X11 or macOS fallback. Without `wl-copy` the PNG is still saved and the notification says "not copied".
+- `<Space>s` alone toggles the file tree, so after `<Space>s` Neovim waits for the next key until the key timeout (500 ms) passes. `<Space>sv` behaves the same way.
+- For a very large piece of code a file or a gist is the better way to share it than a picture.
+
+About `<Space>sg` (gist):
+
+- It runs `gh gist create` with the text and the buffer's file name (so GitHub highlights it by extension), then copies the link to the clipboard and shows it in a notification. No size limit like the picture has.
+- The gist is **secret**, which only means unlisted: it is not in search or on your profile, but anyone who has the link can open it. It is tied to your GitHub account (`gh` must be logged in; check with `gh auth status`). Never upload passwords or keys. A public gist is not offered on purpose; use `gh gist create --public file` in a terminal for that.
+- Nothing asks for confirmation: pressing `<Space>sg` uploads immediately. Delete a gist with `gh gist delete <id-or-url>`.
+
+Problems:
+
+| Message or symptom | Cause and fix |
+| --- | --- |
+| "codeshot: `freeze` is not installed (nixpkgs: charm-freeze)" | Install `charm-freeze`, restart Neovim, check with `:echo exepath('freeze')` |
+| "codeshot: nothing to render" or "nothing to upload" | The buffer or the selection is empty |
+| "codeshot: `gh` is not installed" | Install `gh` (GitHub CLI) and log in with `gh auth login` |
+| "codeshot: gist failed: ..." | The text after the colon is gh's own error, usually not logged in (`gh auth status`) or no network |
+| "codeshot: N lines is too many for one image (max 300)" | Select a smaller range with `V` and press `<Space>ss` again |
+| "codeshot: freeze failed: ..." | The text after the colon is freeze's own error (for example an unknown language) |
+| Wrong or no highlighting | The filetype is empty or not known to freeze; check with `:set ft?` |
+| Nothing arrives in the clipboard | `wl-copy` is missing or the session is not Wayland; the file is still in `code-shots` |
+
 ### Plugin manager shortcuts (lazy.nvim)
 
 Type these in command mode, then press space (or Enter) to expand:

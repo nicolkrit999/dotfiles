@@ -158,7 +158,7 @@ local ignore = {
   "In mode `n`, <c> overlaps with <cc>:",
   "In mode `n`, <<Space>f> overlaps with <<Space>f%a>", -- buffer-local lua/python/json <Space>f (accepted)
   "In mode `n`, <<Space>q> overlaps with <<Space>q%a>",
-  "In mode `n`, <<Space>s> overlaps with <<Space>sv>:",
+  "In mode `n`, <<Space>s> overlaps with <<Space>s", -- <Space>sv restart, <Space>ss codeshot (accepted prefix wait)
   "In mode `n`, <s[rd]> overlaps with <s[rd]b>:", -- vim-sandwich
   "In mode `n`, <g!> overlaps with <g!!>", -- vim-scriptease own defaults (accepted noise)
   "In mode `n`, <g=> overlaps with <g==>", -- vim-scriptease own defaults (accepted noise)

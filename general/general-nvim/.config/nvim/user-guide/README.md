@@ -491,6 +491,7 @@ Every section keeps its number; the text "see section N" in the guide refers to 
 
 11. **[Various: custom commands, other plugins, configuration, Neovide](10-various.md)**
     - [34. Custom commands](10-various.md#34-custom-commands)
+        - [Code screenshots and gists (Space s s, Space s g)](10-various.md#code-screenshots-and-gists-space-s-s-space-s-g)
         - [Plugin manager shortcuts (lazy.nvim)](10-various.md#plugin-manager-shortcuts-lazynvim)
     - [39. Other plugins](10-various.md#39-other-plugins)
         - [telescope.nvim (second picker)](10-various.md#telescopenvim-second-picker)
@@ -1000,6 +1001,8 @@ More: section [72](01-basics.md#72-saving-quitting-and-file-state).
 | `:Z <word>` / `:z <word>` | Jump to the best zoxide match (the file tree follows) |
 | `:Obsession`, `nvim -S Session.vim` | Keep a `Session.vim` up to date, restore it later |
 | `<Space>sv` | Restart nvim (writes all files first) |
+| `<Space>ss` | Screenshot the buffer (normal) or the selected lines (visual) as a PNG, copied to the clipboard; see [Code screenshots and gists](10-various.md#code-screenshots-and-gists-space-s-s-space-s-g) |
+| `<Space>sg` | Upload the buffer (normal) or the selected lines (visual) as a secret GitHub gist and copy the link; see [Code screenshots and gists](10-various.md#code-screenshots-and-gists-space-s-s-space-s-g) |
 
 More: sections [30](05-search-and-files.md#30-working-with-directories) and [58](06-windows-terminal-sessions.md#58-session-and-productivity).
 
