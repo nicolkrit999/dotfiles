@@ -12,6 +12,8 @@ require("custom-autocmd")
 require("mappings")
 -- :z / :Z zoxide jump
 require("zoxide")
+-- <leader>ss: freeze code screenshot (PNG + clipboard) of the selection / buffer
+require("codeshot")
 -- insert mode <Tab> / <S-Tab> jump out of / back before bracket and quote pairs (nvim-cmp falls back to it)
 require("tabout")
 -- :DevEnv <lang> enters a language devShell from the running session

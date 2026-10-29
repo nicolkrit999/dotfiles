@@ -188,7 +188,7 @@ Source of the lines: `:checkhealth which-key`. A NEW overlap not matching one of
 | `In mode \`n\`, <c> overlaps with <cc>:` | stale (`cc` map removed), harmless leftover |
 | `In mode \`n\`, <<Space>f> overlaps with <<Space>f%a>` | buffer-local `<Space>f` (lua/python/json) vs fzf `ff fg ...`; accepted. Appears only in those buffers |
 | `In mode \`n\`, <<Space>q> overlaps with <<Space>q%a>` | `<Space>q` vs `qb qw` |
-| `In mode \`n\`, <<Space>s> overlaps with <<Space>sv>:` | nvim-tree toggle vs restart |
+| `In mode \`n\`, <<Space>s> overlaps with <<Space>s` (prefix: matches `<Space>sv`, `<Space>ss` or both) | nvim-tree toggle vs restart / codeshot |
 | `In mode \`n\`, <s[rd]> overlaps with <s[rd]b>:` | sandwich `sd/sdb`, `sr/srb` (own prefix pairs) |
 | `In mode \`n\`, <g!> overlaps with <g!!>` | vim-scriptease own default (Q-pol-3, accepted noise) |
 | `In mode \`n\`, <g=> overlaps with <g==>` | vim-scriptease own default |
