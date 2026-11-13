@@ -3,7 +3,10 @@ local utils = require("utils")
 local plugin_dir = vim.fs.joinpath(vim.fn.stdpath("data"), "lazy")
 local lazypath = vim.fs.joinpath(plugin_dir, "lazy.nvim")
 
-if not vim.uv.fs_stat(lazypath) then
+-- Check for lazy's entry file, not just the directory: an interrupted first clone leaves a directory with only .git,
+-- which would otherwise skip the clone forever and fail on require("lazy").
+if not vim.uv.fs_stat(vim.fs.joinpath(lazypath, "lua", "lazy", "init.lua")) then
+  vim.fn.delete(lazypath, "rf")
   local out = vim.fn.system {
     "git",
     "clone",
