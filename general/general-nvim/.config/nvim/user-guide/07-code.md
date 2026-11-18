@@ -502,6 +502,8 @@ Every explicit save formats the file first: `:w`, `:update`, `:x`, `ZZ`, `:wq` a
 
 Auto-saves never format: the file that auto-save.nvim writes when you leave a buffer or Neovim loses focus is written as it is, so a file you are in the middle of editing is not reshuffled (see [Auto-save](06-windows-terminal-sessions.md#auto-save-auto-savenvim)). Typst and LaTeX files are never auto-saved at all, so format them with `<Space>fm` or by saving with `:w`.
 
+Java: google-java-format runs with `--skip-removing-unused-imports`, so formatting (on save or `<Space>fm`) sorts the imports but never deletes unused ones.
+
 ### Keys and commands
 
 | Key / command | Mode | What it does |

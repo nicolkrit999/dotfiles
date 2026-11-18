@@ -59,6 +59,11 @@ conform.setup {
     sql = installed("sql_formatter"),
   },
 
+  formatters = {
+    -- keep imports that are unused for now (they are usually about to be used); imports are still sorted
+    ["google-java-format"] = { prepend_args = { "--skip-removing-unused-imports" } },
+  },
+
   -- also used by <Space>fm and :ConformInfo's "will run"; LSP only when no formatter is installed
   default_format_opts = { lsp_format = "fallback" },
 
