@@ -39,6 +39,18 @@ function M.setup()
       end,
     },
   })
+  -- nvim-java reuses ONE terminal buffer per main class and appends every run to it: wipe the screen
+  -- and scrollback at the start of each run so the buffer only shows the latest one.
+  local ok, Run = pcall(require, "java-runner.run")
+  if ok and not Run._clean_start then
+    Run._clean_start = true
+    local start = Run.start
+    function Run:start(cmd)
+      self:send_term("\27[H\27[2J\27[3J") -- cursor home, clear screen, clear scrollback
+      return start(self, cmd)
+    end
+  end
+
   if has_java then
     vim.lsp.enable("jdtls")
   end
