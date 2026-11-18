@@ -61,7 +61,13 @@ conform.setup {
 
   formatters = {
     -- keep imports that are unused for now (they are usually about to be used); imports are still sorted
-    ["google-java-format"] = { prepend_args = { "--skip-removing-unused-imports" } },
+    -- the java devShell exports JAVA_TOOL_OPTIONS=-javaagent:lombok.jar, which makes every JVM start
+    -- (this one too) load lombok and is the main cause of timeouts; the formatter does not need it.
+    -- Quick-start JVM flags: C1 only, no profiling overhead for a short-lived process.
+    ["google-java-format"] = {
+      prepend_args = { "--skip-removing-unused-imports" },
+      env = { JAVA_TOOL_OPTIONS = "-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xshare:auto" },
+    },
   },
 
   -- also used by <Space>fm and :ConformInfo's "will run"; LSP only when no formatter is installed
@@ -81,7 +87,9 @@ conform.setup {
     if vim.bo[bufnr].buftype ~= "" then
       return
     end
-    return { timeout_ms = 1000, lsp_format = "fallback" }
+    -- JVM based formatter: a cold start easily exceeds 1s
+    local timeout = vim.bo[bufnr].filetype == "java" and 5000 or 1000
+    return { timeout_ms = timeout, lsp_format = "fallback" }
   end,
 
   notify_on_error = true,
